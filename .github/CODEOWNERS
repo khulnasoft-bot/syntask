@@ -1,0 +1,11 @@
+# global
+*                                    @cicdw @desertaxle @zzstoatzz
+
+# ui
+/ui                                  @znicholasbrown
+
+# documentation
+/docs                                @discdiver @cicdw @desertaxle @zzstoatzz
+# imports
+/src/prefect/__init__.py              @aaazzam @chrisguidry @cicdw @desertaxle @zzstoatzz
+/src/prefect/main.py                  @aaazzam @chrisguidry @cicdw @desertaxle @zzstoatzz
