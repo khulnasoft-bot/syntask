@@ -143,7 +143,7 @@ class TestTaskKey:
                 return x
 
         # set up class to trigger certain code path
-        # see https://github.com/PrefectHQ/prefect/issues/15058
+        # see https://github.com/synopkg/synopkg/issues/15058
         funky = Funky()
         funky.__qualname__ = "__main__.Funky"
         if hasattr(funky, "__code__"):
@@ -1255,7 +1255,7 @@ class TestTaskRetries:
         run_counts = []
         start_times = []
 
-        # Added retry_delay_seconds as a regression check for https://github.com/PrefectHQ/prefect/issues/15422
+        # Added retry_delay_seconds as a regression check for https://github.com/synopkg/synopkg/issues/15422
         @task(retries=3, retry_delay_seconds=1)
         def flaky_function():
             ctx = TaskRunContext.get()
@@ -5213,7 +5213,7 @@ class TestTransactions:
 
     def test_run_task_in_serializable_transaction(self):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/15503
+        Regression test for https://github.com/synopkg/synopkg/issues/15503
         """
 
         @task

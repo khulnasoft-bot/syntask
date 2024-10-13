@@ -21,7 +21,7 @@ from prefect.utilities.asyncutils import run_sync_in_worker_thread
 from prefect.workers.base import BaseWorker
 from prefect.workers.process import ProcessWorker
 
-MOCK_PREFECT_UI_URL = "https://api.prefect.io"
+MOCK_PREFECT_UI_URL = "https://api.syntask.khulnasoft.com"
 
 FAKE_DEFAULT_BASE_JOB_TEMPLATE = {
     "job_configuration": {

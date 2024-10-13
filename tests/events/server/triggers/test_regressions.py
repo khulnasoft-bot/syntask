@@ -50,7 +50,7 @@ async def unhealthy_work_queue_automation(
     cleared_automations: None,
     automations_session: AsyncSession,
 ) -> Automation:
-    # Automation for issue 8871: https://github.com/PrefectHQ/prefect/issues/8871
+    # Automation for issue 8871: https://github.com/synopkg/synopkg/issues/8871
     automation = await automations.create_automation(
         automations_session,
         Automation(
@@ -563,7 +563,7 @@ async def test_rapid_fire_events(
     automations_session: AsyncSession,
     frozen_time: pendulum.DateTime,
 ):
-    """Regression test for https://github.com/PrefectHQ/prefect/issues/11199, where very
+    """Regression test for https://github.com/synopkg/synopkg/issues/11199, where very
     rapidly arriving events wouldn't all trigger an action.
 
     Note: there's a small false negative rate in this test when we're trying to detect

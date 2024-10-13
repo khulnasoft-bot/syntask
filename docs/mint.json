@@ -4,7 +4,7 @@
     {
       "icon": "github",
       "name": "GitHub",
-      "url": "https://github.com/PrefectHQ/prefect"
+      "url": "https://github.com/synopkg/synopkg"
     },
     {
       "icon": "slack",
@@ -32,7 +32,7 @@
     "thumbsRating": true
   },
   "footerSocials": {
-    "github": "https://github.com/PrefectHQ/prefect",
+    "github": "https://github.com/synopkg/synopkg",
     "linkedin": "https://www.linkedin.com/company/prefect/mycompany/",
     "slack": "https://communityinviter.com/apps/prefect-community/prefect-community",
     "twitter": "https://x.com/prefectio",
@@ -41,7 +41,7 @@
   "logo": {
     "dark": "/logos/logo-word-white.svg",
     "light": "/logos/logo-word-black.svg",
-    "href": "https://prefect.io"
+    "href": "https://syntask.khulnasoft.com"
   },
   "modeToggle": {
     "default": "light",

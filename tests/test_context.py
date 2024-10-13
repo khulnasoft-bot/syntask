@@ -506,7 +506,7 @@ class TestHydratedContext:
         the context is hydrated. This enables calling .submit and .map on tasks
         running in remote environments like Dask and Ray.
 
-        Regression test for https://github.com/PrefectHQ/prefect/issues/14788
+        Regression test for https://github.com/synopkg/synopkg/issues/14788
         """
 
         @flow

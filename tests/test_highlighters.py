@@ -22,7 +22,7 @@ def test_highlight_level(level):
 
 @pytest.mark.parametrize("url_kind", ["web", "local"])
 def test_highlight_url(url_kind):
-    url = "https://www.prefect.io/" if url_kind == "web" else "file://tests.py"
+    url = "https://www.syntask.khulnasoft.com/" if url_kind == "web" else "file://tests.py"
     text = Text(f"10:21:34.114 | INFO    | Flow run 'polite-jackal' - {url}")
     highlighter = UrlHighlighter()
     highlighter.highlight(text)

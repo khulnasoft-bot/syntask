@@ -26,7 +26,7 @@
           <p-text-input
             :id
             v-model="email"
-            placeholder="hello@prefect.io"
+            placeholder="hello@syntask.khulnasoft.com"
             :state
           />
         </p-label>
@@ -59,7 +59,7 @@
 
   const showModal = defineModel<boolean>('showModal')
 
-  const joinSlackUrl = 'http://prefect.io/slack?utm_source=oss&utm_medium=oss&utm_campaign=oss_popup&utm_term=none&utm_content=none'
+  const joinSlackUrl = 'http://syntask.khulnasoft.com/slack?utm_source=oss&utm_medium=oss&utm_campaign=oss_popup&utm_term=none&utm_content=none'
   const showJoinSlackThankYouMessage = ref(false)
 
   const formId = 'join-the-community-modal'

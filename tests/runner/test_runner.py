@@ -633,7 +633,7 @@ class TestRunner:
 
     async def test_handles_spaces_in_sys_executable(self, monkeypatch, prefect_client):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/10820
+        Regression test for https://github.com/synopkg/synopkg/issues/10820
         """
         import sys
 
@@ -670,7 +670,7 @@ class TestRunner:
         self, monkeypatch, prefect_client
     ):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/10851
+        Regression test for https://github.com/synopkg/synopkg/issues/10851
         """
         env_var_value = None
 
@@ -761,7 +761,7 @@ class TestRunner:
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_runner_does_not_raise_on_duplicate_submission(self, prefect_client):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/11093
+        Regression test for https://github.com/synopkg/synopkg/issues/11093
 
         The runner has a race condition where it can try to borrow a limit slot
         that it already has. This test ensures that the runner does not raise

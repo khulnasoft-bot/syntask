@@ -11,22 +11,22 @@ def read_requirements(file):
     return requirements
 
 
-client_requires = read_requirements("requirements-client.txt")
-install_requires = read_requirements("requirements.txt")[1:] + client_requires
-dev_requires = read_requirements("requirements-dev.txt")
+client_requires = read_requirements("requirements/requirements-client.txt")
+install_requires = read_requirements("requirements/requirements.txt")[1:] + client_requires
+dev_requires = read_requirements("requirements/requirements-dev.txt")
 
 setup(
     # Package metadata
-    name="prefect",
+    name="syntask",
     description="Workflow orchestration and management.",
-    author="Prefect Technologies, Inc.",
-    author_email="help@prefect.io",
-    url="https://www.prefect.io",
+    author="KhulnaSoft, Ltd.",
+    author_email="help@syntask.khulnasoft.com",
+    url="https://www.syntask.khulnasoft.com",
     project_urls={
-        "Changelog": "https://github.com/PrefectHQ/prefect/releases",
-        "Documentation": "https://docs.prefect.io",
-        "Source": "https://github.com/PrefectHQ/prefect",
-        "Tracker": "https://github.com/PrefectHQ/prefect/issues",
+        "Changelog": "https://github.com/synopkg/synopkg/releases",
+        "Documentation": "https://docs.syntask.khulnasoft.com",
+        "Source": "https://github.com/synopkg/synopkg",
+        "Tracker": "https://github.com/synopkg/synopkg/issues",
     },
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

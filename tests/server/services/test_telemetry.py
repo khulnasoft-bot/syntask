@@ -13,7 +13,7 @@ from prefect.server.services.telemetry import Telemetry
 def sens_o_matic_mock():
     with respx.mock:
         sens_o_matic = respx.post(
-            "https://sens-o-matic.prefect.io/",
+            "https://sens-o-matic.syntask.khulnasoft.com/",
         ).mock(return_value=Response(200, json={}))
 
         yield sens_o_matic
@@ -23,7 +23,7 @@ def sens_o_matic_mock():
 def error_sens_o_matic_mock():
     with respx.mock:
         sens_o_matic = respx.post(
-            "https://sens-o-matic.prefect.io/",
+            "https://sens-o-matic.syntask.khulnasoft.com/",
         ).mock(return_value=Response(500, json={}))
 
         yield sens_o_matic

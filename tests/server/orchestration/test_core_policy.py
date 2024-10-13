@@ -734,7 +734,7 @@ class TestUpdatingFlowRunTrackerOnTasks:
 
 class TestPermitRerunningFailedTaskRuns:
     """
-    Following https://github.com/PrefectHQ/prefect/pull/9152 some of these test names
+    Following https://github.com/synopkg/synopkg/pull/9152 some of these test names
     may be stale however they are retained to simplify understanding of changed
     behavior. Generally, failed task runs can just retry whenever they want now.
     """

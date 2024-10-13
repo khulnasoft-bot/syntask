@@ -121,7 +121,7 @@ Save the block with desired commands:
 from prefect_shell import ShellOperation
 
 
-ping_op = ShellOperation(commands=["ping -t 1 prefect.io"])
+ping_op = ShellOperation(commands=["ping -t 1 syntask.khulnasoft.com"])
 ping_op.save("block-name")
 
 # Load the saved block:

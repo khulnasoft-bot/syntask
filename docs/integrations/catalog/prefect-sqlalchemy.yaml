@@ -1,6 +1,6 @@
 integrationName: prefect-sqlalchemy
 author: Prefect
-authorUrl: https://prefect.io
+authorUrl: https://syntask.khulnasoft.com
 documentation: prefect-sqlalchemy
 iconUrl: /images/integrations/sqlalchemy.png
 tag: SQLAlchemy

@@ -800,7 +800,7 @@ class GcsBucket(WritableDeploymentStorage, WritableFileSystem, ObjectStorageBloc
 
         NOTE: If a method reuses another method in this class, be careful to not
         call this  twice because it'll join the bucket folder twice.
-        See https://github.com/PrefectHQ/prefect-aws/issues/141 for a past issue.
+        See https://github.com/synopkg/synopkg-aws/issues/141 for a past issue.
         """
         bucket_path = str(bucket_path)
         if self.bucket_folder != "" and bucket_path.startswith(self.bucket_folder):

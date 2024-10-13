@@ -1,6 +1,6 @@
 integrationName: prefect-databricks
 author: Prefect
-authorUrl: https://prefect.io
+authorUrl: https://syntask.khulnasoft.com
 documentation: https://prefecthq.github.io/prefect-databricks/
 iconUrl: /images/integrations/databricks.png
 tag: Databricks

@@ -351,7 +351,7 @@ async def test_run_deployment_handles_json_workspace_variables(
 async def test_run_deployment_parameter_validation_handles_top_level_hydration_error(
     snap_that_naughty_woodchuck: TriggeredAction,
 ):
-    # regression test for: https://github.com/PrefectHQ/prefect/issues/12585
+    # regression test for: https://github.com/synopkg/synopkg/issues/12585
     # Model instantiation would fail with `AttributeError` instead of correctly raising a ValidationError
 
     with pytest.raises(ValidationError) as exc:
@@ -368,7 +368,7 @@ async def test_run_deployment_parameter_validation_handles_top_level_hydration_e
 async def test_running_a_deployment_handles_top_level_hydration_error(
     snap_that_naughty_woodchuck: TriggeredAction,
 ):
-    # regression test for: https://github.com/PrefectHQ/prefect/issues/12585
+    # regression test for: https://github.com/synopkg/synopkg/issues/12585
     # The action would fail due to an `AttributeError` instead of `InvalidJSON`
 
     action = snap_that_naughty_woodchuck.action

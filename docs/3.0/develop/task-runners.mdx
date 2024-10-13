@@ -12,8 +12,8 @@ The default task runner in Prefect is the [`ThreadPoolTaskRunner`](https://prefe
 which runs tasks concurrently within a thread pool.
 For parallel or distributed task execution, you must additionally install one of the following task runners, available as integrations:
 
-- [`DaskTaskRunner`](https://github.com/PrefectHQ/prefect/tree/main/src/integrations/prefect-dask) can run tasks using [`dask.distributed`](http://distributed.dask.org/).
-- [`RayTaskRunner`](https://github.com/PrefectHQ/prefect/tree/main/src/integrations/prefect-ray) can run tasks using [Ray](https://www.ray.io/).
+- [`DaskTaskRunner`](https://github.com/synopkg/synopkg/tree/main/src/integrations/prefect-dask) can run tasks using [`dask.distributed`](http://distributed.dask.org/).
+- [`RayTaskRunner`](https://github.com/synopkg/synopkg/tree/main/src/integrations/prefect-ray) can run tasks using [Ray](https://www.ray.io/).
 
 <Note>
 **Concurrency vs. parallelism**

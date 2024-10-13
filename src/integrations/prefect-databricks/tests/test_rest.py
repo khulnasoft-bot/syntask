@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict
 @pytest.mark.parametrize("params", [dict(a="A", b="B"), None])
 @pytest.mark.parametrize("http_method", ["get", HTTPMethod.GET, "post"])
 async def test_execute_endpoint(params, http_method, respx_mock):
-    url = "https://prefect.io/"
+    url = "https://syntask.khulnasoft.com/"
 
     respx_mock.get(url).mock(return_value=httpx.Response(200))
     respx_mock.post(url).mock(return_value=httpx.Response(200))

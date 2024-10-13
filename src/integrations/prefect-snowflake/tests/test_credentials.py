@@ -337,7 +337,7 @@ def test_snowflake_credentials_encrypted_private_key_is_valid(
 
 def test_snowflake_with_no_private_key_flow():
     """
-    https://github.com/PrefectHQ/prefect-snowflake/issues/62
+    https://github.com/synopkg/synopkg-snowflake/issues/62
     """
 
     @flow
@@ -364,7 +364,7 @@ def test_snowflake_with_no_private_key_flow():
 
 def test_snowflake_with_private_key_path_flow():
     """
-    https://github.com/PrefectHQ/prefect-snowflake/issues/62
+    https://github.com/synopkg/synopkg-snowflake/issues/62
     """
 
     @flow

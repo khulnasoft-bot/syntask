@@ -88,7 +88,7 @@ jobs:
           ./scripts/wait-for-server.py
 
           # TODO: Replace `wait-for-server` with dedicated command
-          #       https://github.com/PrefectHQ/prefect/issues/6990
+          #       https://github.com/synopkg/synopkg/issues/6990
 
       - name: Start server
         if: ${{ matrix.server-version.version == 'main' }}
@@ -101,7 +101,7 @@ jobs:
           ./scripts/wait-for-server.py
 
           # TODO: Replace `wait-for-server` with dedicated command
-          #       https://github.com/PrefectHQ/prefect/issues/6990
+          #       https://github.com/synopkg/synopkg/issues/6990
 
       - name: Run integration flows
         env:

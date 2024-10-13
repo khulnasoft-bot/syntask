@@ -63,13 +63,13 @@ class TestGitHubRepository:
         monkeypatch.setattr(prefect_github.repository, "run_process", mock)
         credential = GitHubCredentials(token="XYZ")
         g = GitHubRepository(
-            repository_url="https://github.com/PrefectHQ/prefect.git",
+            repository_url="https://github.com/synopkg/synopkg.git",
             credentials=credential,
         )
         await g.get_directory()
         assert mock.await_count == 1
         assert (
-            "git clone https://XYZ@github.com/PrefectHQ/prefect.git --depth 1"
+            "git clone https://XYZ@github.com/synopkg/synopkg.git --depth 1"
             in " ".join(mock.await_args[0][0])
         )
 
@@ -143,7 +143,7 @@ class TestGitHubRepository:
                 )
 
                 g = GitHubRepository(
-                    repository_url="https://github.com/PrefectHQ/prefect.git",
+                    repository_url="https://github.com/synopkg/synopkg.git",
                 )
                 await g.get_directory(local_path=tmp_dst)
 
@@ -183,7 +183,7 @@ class TestGitHubRepository:
                 )
 
                 g = GitHubRepository(
-                    repository_url="https://github.com/PrefectHQ/prefect.git",
+                    repository_url="https://github.com/synopkg/synopkg.git",
                 )
                 await g.get_directory(local_path=tmp_dst, from_path=sub_dir_name)
 

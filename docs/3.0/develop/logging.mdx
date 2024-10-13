@@ -130,14 +130,14 @@ prefect config set PREFECT_LOGGING_LOG_PRINTS=True
 ## Logging configuration
 
 Prefect relies on [the standard Python implementation of logging configuration](https://docs.python.org/3/library/logging.config.html).
-The full specification of the default logging configuration for any version of Prefect can always be inspected [here](https://github.com/PrefectHQ/prefect/blob/main/src/prefect/logging/logging.yml).
+The full specification of the default logging configuration for any version of Prefect can always be inspected [here](https://github.com/synopkg/synopkg/blob/main/src/prefect/logging/logging.yml).
 The default logging level is `INFO`.
 
 ### Customize logging configuration
 
 Prefect provides several settings to configure the logging level and individual loggers.
 
-Any value in [Prefect's logging configuration file](https://github.com/PrefectHQ/prefect/blob/main/src/prefect/logging/logging.yml) can be overridden through 
+Any value in [Prefect's logging configuration file](https://github.com/synopkg/synopkg/blob/main/src/prefect/logging/logging.yml) can be overridden through 
 a Prefect setting of the form `PREFECT_LOGGING_[PATH]_[TO]_[KEY]=value` corresponding to the nested address of the field you are configuring.
 
 For example, to change the default logging level for flow runs but not task runs, update your profile with:
@@ -224,7 +224,7 @@ PREFECT_LOGGING_COLORS=False
 ```
 
 You can also change what gets highlighted and even adjust the colors by updating the styles - see the `styles`
-section of [the Prefect logging configuration file](https://github.com/PrefectHQ/prefect/blob/main/src/prefect/logging/logging.yml) for available keys.
+section of [the Prefect logging configuration file](https://github.com/synopkg/synopkg/blob/main/src/prefect/logging/logging.yml) for available keys.
 
 <Note>
 Note that these style settings only impact the display within a terminal, not the Prefect UI.

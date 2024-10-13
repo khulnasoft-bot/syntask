@@ -16,8 +16,8 @@ from prefect.settings import PREFECT_API_URL, PREFECT_UI_URL, temporary_settings
 from prefect.utilities.urls import url_for, validate_restricted_url
 from prefect.variables import Variable
 
-MOCK_PREFECT_UI_URL = "https://ui.prefect.io"
-MOCK_PREFECT_API_URL = "https://api.prefect.io"
+MOCK_PREFECT_UI_URL = "https://ui.syntask.khulnasoft.com"
+MOCK_PREFECT_API_URL = "https://api.syntask.khulnasoft.com"
 
 RESTRICTED_URLS = [
     ("", ""),
@@ -310,7 +310,7 @@ def test_url_for_missing_url(flow_run):
 
 
 def test_url_for_with_default_base_url(flow_run, enable_ephemeral_server):
-    default_base_url = "https://default.prefect.io"
+    default_base_url = "https://default.syntask.khulnasoft.com"
     expected_url = f"{default_base_url}/runs/flow-run/{flow_run.id}"
     assert (
         url_for(
@@ -325,7 +325,7 @@ def test_url_for_with_default_base_url(flow_run, enable_ephemeral_server):
 def test_url_for_with_default_base_url_with_path_fragment(
     flow_run, enable_ephemeral_server
 ):
-    default_base_url = "https://default.prefect.io/api"
+    default_base_url = "https://default.syntask.khulnasoft.com/api"
     expected_url = f"{default_base_url}/runs/flow-run/{flow_run.id}"
     assert (
         url_for(
@@ -340,7 +340,7 @@ def test_url_for_with_default_base_url_with_path_fragment(
 def test_url_for_with_default_base_url_with_path_fragment_and_slash(
     flow_run, enable_ephemeral_server
 ):
-    default_base_url = "https://default.prefect.io/api/"
+    default_base_url = "https://default.syntask.khulnasoft.com/api/"
     expected_url = f"{default_base_url}runs/flow-run/{flow_run.id}"
     assert (
         url_for(

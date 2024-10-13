@@ -1,6 +1,6 @@
 integrationName: prefect-gcp
 author: Prefect
-authorUrl: https://prefect.io
+authorUrl: https://syntask.khulnasoft.com
 documentation: prefect-gcp
 iconUrl: /images/integrations/gcp.png
 tag: GCP

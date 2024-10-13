@@ -1,6 +1,6 @@
 integrationName: prefect-bitbucket
 author: Prefect
-authorUrl: https://prefect.io
+authorUrl: https://syntask.khulnasoft.com
 documentation: prefect-bitbucket
 iconUrl: /images/integrations/bitbucket.png
 tag: Bitbucket

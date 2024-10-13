@@ -22,7 +22,7 @@ def example_event_1() -> Event:
                 "prefect.resource.role": "actor",
                 "prefect.resource.id": "prefect-cloud.actor.5c83c6e4-3a6b-42db-93b1-b81d2773a0ec",
                 "prefect.resource.name": "Peter Francis Geraci",
-                "prefect-cloud.email": "george@prefect.io",
+                "prefect-cloud.email": "george@syntask.khulnasoft.com",
                 "prefect-cloud.name": "George Coyne",
                 "prefect-cloud.handle": "georgeprefectio",
             }

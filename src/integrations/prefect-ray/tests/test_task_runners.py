@@ -512,7 +512,7 @@ class TestRayTaskRunner:
 
     def test_can_run_many_tasks_without_crashing(self, task_runner):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/15539
+        Regression test for https://github.com/synopkg/synopkg/issues/15539
         """
 
         @task

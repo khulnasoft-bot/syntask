@@ -130,7 +130,7 @@ Then, create the deployment either on the UI or through the CLI:
 prefect deployment build a_flow_module.py:log_hello_flow --name aci-dev -ib container-instance-job/aci-dev
 ```
 
-Visit [Prefect Deployments](https://docs.prefect.io/latest/deploy/) for more information about deployments.
+Visit [Prefect Deployments](https://docs.syntask.khulnasoft.com/latest/deploy/) for more information about deployments.
 
 ## Azure Container Instance Worker
 

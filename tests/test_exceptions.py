@@ -31,7 +31,7 @@ class TestParameterTypeError:
             Foo(**{"num": "not an int", "string": [1, 2]})
 
     def test_construction_with_list_of_model_type_inputs(self):
-        """regression test for https://github.com/PrefectHQ/prefect/issues/14406"""
+        """regression test for https://github.com/synopkg/synopkg/issues/14406"""
 
         errored = False
 

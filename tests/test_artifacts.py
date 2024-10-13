@@ -29,7 +29,7 @@ class TestCreateArtifacts:
     async def test_create_and_read_link_artifact_with_linktext_succeeds(
         self, artifact, client
     ):
-        my_link = "prefect.io"
+        my_link = "syntask.khulnasoft.com"
         link_text = "Prefect"
 
         @flow

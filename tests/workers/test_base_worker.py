@@ -1439,9 +1439,9 @@ class TestPrepareForFlowRun:
         }
         assert job_config.labels == {
             "my-label": "foo",
-            "prefect.io/flow-run-id": str(flow_run.id),
-            "prefect.io/flow-run-name": flow_run.name,
-            "prefect.io/version": prefect.__version__,
+            "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+            "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+            "syntask.khulnasoft.com/version": prefect.__version__,
         }
         assert job_config.name == "my-job-name"
         assert job_config.command == "prefect flow-run execute"
@@ -1456,9 +1456,9 @@ class TestPrepareForFlowRun:
         }
         assert job_config.labels == {
             "my-label": "foo",
-            "prefect.io/flow-run-id": str(flow_run.id),
-            "prefect.io/flow-run-name": flow_run.name,
-            "prefect.io/version": prefect.__version__,
+            "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+            "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+            "syntask.khulnasoft.com/version": prefect.__version__,
         }
         assert job_config.name == "my-job-name"
         # only thing that changes is the command
@@ -1476,13 +1476,13 @@ class TestPrepareForFlowRun:
         }
         assert job_config.labels == {
             "my-label": "foo",
-            "prefect.io/flow-run-id": str(flow_run.id),
-            "prefect.io/flow-run-name": flow_run.name,
-            "prefect.io/version": prefect.__version__,
-            "prefect.io/deployment-id": str(deployment.id),
-            "prefect.io/deployment-name": deployment.name,
-            "prefect.io/flow-id": str(flow.id),
-            "prefect.io/flow-name": flow.name,
+            "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+            "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+            "syntask.khulnasoft.com/version": prefect.__version__,
+            "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+            "syntask.khulnasoft.com/deployment-name": deployment.name,
+            "syntask.khulnasoft.com/flow-id": str(flow.id),
+            "syntask.khulnasoft.com/flow-name": flow.name,
         }
         assert job_config.name == "my-job-name"
         assert job_config.command == "prefect flow-run execute"
@@ -1551,7 +1551,7 @@ async def test_worker_set_last_polled_time(
 ):
     now = pendulum.now("utc")
 
-    # https://github.com/PrefectHQ/prefect/issues/11619
+    # https://github.com/synopkg/synopkg/issues/11619
     # Pendulum 3 Test Case
     if version.parse(pendulum.__version__) >= version.parse("3.0"):
         # https://github.com/sdispater/pendulum/blob/master/docs/docs/testing.md
@@ -1600,7 +1600,7 @@ async def test_worker_last_polled_health_check(
 ):
     now = pendulum.now("utc")
 
-    # https://github.com/PrefectHQ/prefect/issues/11619
+    # https://github.com/synopkg/synopkg/issues/11619
     # Pendulum 3 Test Case
     if version.parse(pendulum.__version__) >= version.parse("3.0"):
         # https://github.com/sdispater/pendulum/blob/master/docs/docs/testing.md

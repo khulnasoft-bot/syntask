@@ -97,7 +97,7 @@ allocated to Kubernetes jobs created by workers in this work pool, but the limit
 is hard-coded and cannot be changed by deployments.
 
 For more information about work pools and workers,
-checkout out the [Prefect docs](https://docs.prefect.io/concepts/work-pools/).
+checkout out the [Prefect docs](https://docs.syntask.khulnasoft.com/concepts/work-pools/).
 """
 
 import asyncio
@@ -336,9 +336,9 @@ class KubernetesWorkerJobConfiguration(BaseJobConfiguration):
         Generate a dictionary of labels for a flow run job.
         """
         return {
-            "prefect.io/flow-run-id": str(flow_run.id),
-            "prefect.io/flow-run-name": flow_run.name,
-            "prefect.io/version": _slugify_label_value(
+            "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+            "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+            "syntask.khulnasoft.com/version": _slugify_label_value(
                 prefect.__version__.split("+")[0]
             ),
         }

@@ -14,7 +14,7 @@ import typer
 import yaml
 
 DEFAULT_ROOT_PATH = os.environ.get(
-    "PREFECT_INSTALL_PATH", "~/src/github.com/PrefectHQ/prefect"
+    "PREFECT_INSTALL_PATH", "~/src/github.com/synopkg/synopkg"
 )
 DEFAULT_ROOT = Path(DEFAULT_ROOT_PATH).expanduser()
 COLLECTIONS_DIR = DEFAULT_ROOT / "src" / "integrations"

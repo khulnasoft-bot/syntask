@@ -12,7 +12,7 @@ def test_cast_to_enum(obj):
     assert _cast_to_enum(obj, SMTPServer, restrict=False) == SMTPServer.GMAIL
 
 
-@pytest.mark.parametrize("obj", ["smtp.prefect.io", "smtp.gmail.com"])
+@pytest.mark.parametrize("obj", ["smtp.syntask.khulnasoft.com", "smtp.gmail.com"])
 def test_cast_to_enum_no_restrict_server(obj):
     assert _cast_to_enum(obj, SMTPServer, restrict=False) == obj
 

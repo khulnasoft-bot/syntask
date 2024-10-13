@@ -16,7 +16,7 @@ prefect worker start --pool 'my-vertex-pool'
 
 ## Configuration
 Read more about configuring work pools
-[here](https://docs.prefect.io/3.0/deploy/infrastructure-concepts/work-pools).
+[here](https://docs.syntask.khulnasoft.com/3.0/deploy/infrastructure-concepts/work-pools).
 """
 
 import asyncio
@@ -591,7 +591,7 @@ class VertexAIWorker(BaseWorker):
         Ensures labels are compatible with GCP label requirements.
         https://cloud.google.com/resource-manager/docs/creating-managing-labels
 
-        Ex: the Prefect provided key of prefect.io/flow-name -> prefect-io_flow-name
+        Ex: the Prefect provided key of syntask.khulnasoft.com/flow-name -> prefect-io_flow-name
         """
         compatible_labels = {}
         for key, val in configuration.labels.items():

@@ -198,7 +198,7 @@ class TestGitRepository:
         We need to handle username+password combo for backwards compatibility with
         previous `git_clone` pull step implementation.
 
-        Regression test for https://github.com/PrefectHQ/prefect/issues/11051
+        Regression test for https://github.com/synopkg/synopkg/issues/11051
         """
         monkeypatch.setattr("pathlib.Path.exists", lambda x: False)
 
@@ -290,7 +290,7 @@ class TestGitRepository:
         async def test_credential_formatting_maintains_secrets(
             self, mock_run_process: AsyncMock
         ):
-            """Regression test for https://github.com/PrefectHQ/prefect/issues/11135"""
+            """Regression test for https://github.com/synopkg/synopkg/issues/11135"""
             access_token = Secret(value="testtoken")
             await access_token.save("test-token")
 

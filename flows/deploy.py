@@ -21,7 +21,7 @@ def main():
         )
 
         flow_instance = prefect.flow.from_source(
-            source="https://github.com/PrefectHQ/prefect-recipes.git",
+            source="https://github.com/synopkg/synopkg-recipes.git",
             entrypoint="flows-starter/hello.py:hello",
         )
 

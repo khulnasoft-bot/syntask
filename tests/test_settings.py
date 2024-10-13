@@ -572,7 +572,7 @@ class TestDatabaseSettings:
 
     def test_connection_string_with_dollar_sign(self):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/11067.
+        Regression test for https://github.com/synopkg/synopkg/issues/11067.
 
         This test ensures that passwords with dollar signs do not cause issues when
         templating the connection string.

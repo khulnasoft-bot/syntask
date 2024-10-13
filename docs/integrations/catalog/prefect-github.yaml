@@ -1,6 +1,6 @@
 integrationName: prefect-github
 author: Prefect
-authorUrl: https://prefect.io
+authorUrl: https://syntask.khulnasoft.com
 documentation: prefect-github
 iconUrl: /images/integrations/github.png
 tag: GitHub

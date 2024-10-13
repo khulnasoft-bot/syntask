@@ -147,7 +147,7 @@ prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
 ```
 
 If using Prefect Cloud, set the `PREFECT_API_URL` value to the Prefect Cloud API URL and add your 
-[API key](https://docs.prefect.io/cloud/users/api-keys/).
+[API key](https://docs.syntask.khulnasoft.com/cloud/users/api-keys/).
 
 The examples that use docker (examples 4 and 5) use a Prefect server by default.
 You can switch to Prefect Cloud by changing the `PREFECT_API_URL` and adding a variable for your API key in the 
@@ -165,7 +165,7 @@ prefect server start
 Clone the repository to get the code files for the examples:
 
 ```bash
-git clone https://github.com/PrefectHQ/prefect-background-task-examples.git
+git clone https://github.com/synopkg/synopkg-background-task-examples.git
 ```
 
 Move into the directory:
@@ -312,4 +312,4 @@ Run the file to see the work get distributed across both task workers.
 This guide showed you how to send tasks to multiple Prefect task workers running in the background.
 This allows you to observe these tasks executing in parallel and very quickly with web sockets, with no polling required.
 
-See additional examples in the [deferred tasks GitHub repository](https://github.com/PrefectHQ/prefect-background-task-examples.git).
+See additional examples in the [deferred tasks GitHub repository](https://github.com/synopkg/synopkg-background-task-examples.git).

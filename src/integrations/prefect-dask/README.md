@@ -7,4 +7,4 @@
         <img src="https://img.shields.io/pypi/dm/prefect-dask?color=26272B&labelColor=090422" /></a>
 </p>
 
-See the docs at [https://docs.prefect.io/integrations/prefect-dask](https://docs.prefect.io/integrations/prefect-dask) for more information.
+See the docs at [https://docs.syntask.khulnasoft.com/integrations/prefect-dask](https://docs.syntask.khulnasoft.com/integrations/prefect-dask) for more information.

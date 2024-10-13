@@ -41,11 +41,11 @@ def test_use_profile_unknown_key():
 class TestChangingProfileAndCheckingServerConnection:
     @pytest.fixture
     def profiles(self):
-        prefect_cloud_api_url = "https://mock-cloud.prefect.io/api"
+        prefect_cloud_api_url = "https://mock-cloud.syntask.khulnasoft.com/api"
         prefect_cloud_server_api_url = (
             f"{prefect_cloud_api_url}/accounts/{uuid4()}/workspaces/{uuid4()}"
         )
-        hosted_server_api_url = "https://hosted-server.prefect.io/api"
+        hosted_server_api_url = "https://hosted-server.syntask.khulnasoft.com/api"
 
         return ProfilesCollection(
             profiles=[
@@ -83,7 +83,7 @@ class TestChangingProfileAndCheckingServerConnection:
         # to Prefect Cloud as opposed to a hosted Prefect server instance
         with respx.mock:
             authorized = respx.get(
-                "https://mock-cloud.prefect.io/api/me/workspaces",
+                "https://mock-cloud.syntask.khulnasoft.com/api/me/workspaces",
             ).mock(return_value=Response(200, json=[]))
 
             yield authorized
@@ -93,7 +93,7 @@ class TestChangingProfileAndCheckingServerConnection:
         # requests to cloud with an invalid key will result in a 401 response
         with respx.mock:
             unauthorized = respx.get(
-                "https://mock-cloud.prefect.io/api/me/workspaces",
+                "https://mock-cloud.syntask.khulnasoft.com/api/me/workspaces",
             ).mock(return_value=Response(401, json={}))
 
             yield unauthorized
@@ -103,7 +103,7 @@ class TestChangingProfileAndCheckingServerConnection:
         # Cloud may respond with a 500 error when having connection issues
         with respx.mock:
             unhealthy_cloud = respx.get(
-                "https://mock-cloud.prefect.io/api/me/workspaces",
+                "https://mock-cloud.syntask.khulnasoft.com/api/me/workspaces",
             ).mock(return_value=Response(500, json={}))
 
             yield unhealthy_cloud
@@ -113,7 +113,7 @@ class TestChangingProfileAndCheckingServerConnection:
         # if the API URL points to a hosted Prefect server instance, no Cloud API will be found
         with respx.mock:
             hosted = respx.get(
-                "https://hosted-server.prefect.io/api/me/workspaces",
+                "https://hosted-server.syntask.khulnasoft.com/api/me/workspaces",
             ).mock(return_value=Response(404, json={}))
 
             yield hosted
@@ -122,7 +122,7 @@ class TestChangingProfileAndCheckingServerConnection:
     def healthy_hosted_server(self):
         with respx.mock:
             hosted = respx.get(
-                "https://hosted-server.prefect.io/api/health",
+                "https://hosted-server.syntask.khulnasoft.com/api/health",
             ).mock(return_value=Response(200, json={}))
 
             yield hosted
@@ -134,7 +134,7 @@ class TestChangingProfileAndCheckingServerConnection:
     def unhealthy_hosted_server(self):
         with respx.mock:
             badly_hosted = respx.get(
-                "https://hosted-server.prefect.io/api/health",
+                "https://hosted-server.syntask.khulnasoft.com/api/health",
             ).mock(side_effect=self.connection_error)
 
             yield badly_hosted
@@ -633,7 +633,7 @@ class TestProfilesPopulateDefaults:
             profiles=[
                 Profile(
                     name="ephemeral",
-                    settings={PREFECT_API_URL: "https://api.prefect.io"},
+                    settings={PREFECT_API_URL: "https://api.syntask.khulnasoft.com"},
                 ),
                 Profile(
                     name="local", settings={PREFECT_API_URL: "http://localhost:4200"}

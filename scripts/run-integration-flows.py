@@ -22,7 +22,7 @@ from typing import Union
 import prefect
 from prefect import __version__
 
-# See https://github.com/PrefectHQ/prefect/pull/9136
+# See https://github.com/synopkg/synopkg/pull/9136
 DEFAULT_PATH = prefect.__development_base_path__ / "flows"
 
 

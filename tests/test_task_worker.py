@@ -130,7 +130,7 @@ async def test_task_worker_client_id_is_set():
 
 
 async def test_task_worker_stays_running_on_errors(monkeypatch):
-    # regression test for https://github.com/PrefectHQ/prefect/issues/13911
+    # regression test for https://github.com/synopkg/synopkg/issues/13911
     # previously any error with submitting the task run would be raised
     # and uncaught, causing the task worker to stop and this test to fail
 

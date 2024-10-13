@@ -103,7 +103,7 @@ in your environment are virtually identical.
 <Tip>
 **Worker Helm chart**
 
-If you host your agents in a Kubernetes cluster, you can use the [Prefect worker Helm chart](https://github.com/PrefectHQ/prefect-helm/tree/main/charts/prefect-worker) 
+If you host your agents in a Kubernetes cluster, you can use the [Prefect worker Helm chart](https://github.com/synopkg/synopkg-helm/tree/main/charts/prefect-worker) 
 to host workers in your cluster.
 </Tip>
 
@@ -116,7 +116,7 @@ be compatible with workers by following these steps:
 
 This new work pool replaces your infrastructure block.
 
-You can use the [`.publish_as_work_pool`](https://docs.prefect.io/2.19.2/api-ref/prefect/infrastructure/#prefect.infrastructure.Infrastructure.publish_as_work_pool) 
+You can use the [`.publish_as_work_pool`](https://docs.syntask.khulnasoft.com/2.19.2/api-ref/prefect/infrastructure/#prefect.infrastructure.Infrastructure.publish_as_work_pool) 
 method on any infrastructure block to create a work pool with the same configuration.
 
 {/*

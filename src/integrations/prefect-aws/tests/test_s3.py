@@ -885,7 +885,7 @@ class TestS3Bucket:
     def test_download_object_with_bucket_folder(
         self, s3_bucket_empty: S3Bucket, client_parameters, tmp_path
     ):
-        """regression test for https://github.com/PrefectHQ/prefect/issues/12848"""
+        """regression test for https://github.com/synopkg/synopkg/issues/12848"""
         s3_bucket_empty.bucket_folder = "some_folder"
 
         test_content = b"This is a test file."
@@ -1131,7 +1131,7 @@ class TestS3Bucket:
 
     def test_round_trip_default_credentials(self):
         # Regression test for
-        # https://github.com/PrefectHQ/prefect/issues/13349
+        # https://github.com/synopkg/synopkg/issues/13349
         S3Bucket(bucket_name="round-trip-bucket").save("round-tripper")
         loaded = S3Bucket.load("round-tripper")
         assert hasattr(

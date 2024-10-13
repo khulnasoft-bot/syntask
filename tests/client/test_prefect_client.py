@@ -766,7 +766,7 @@ async def test_read_deployment_by_name(prefect_client):
 
 
 async def test_read_deployment_by_name_fails_with_helpful_suggestion(prefect_client):
-    """this is a regression test for https://github.com/PrefectHQ/prefect/issues/15571"""
+    """this is a regression test for https://github.com/synopkg/synopkg/issues/15571"""
 
     @flow
     def moo_deng():

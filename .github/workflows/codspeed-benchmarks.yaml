@@ -69,7 +69,7 @@ jobs:
           PREFECT_API_URL="http://127.0.0.1:4200/api" ./scripts/wait-for-server.py
 
           # TODO: Replace `wait-for-server` with dedicated command
-          #       https://github.com/PrefectHQ/prefect/issues/6990
+          #       https://github.com/synopkg/synopkg/issues/6990
 
       - name: Run benchmarks
         uses: CodSpeedHQ/action@v3

@@ -723,7 +723,7 @@ class S3Bucket(WritableFileSystem, WritableDeploymentStorage, ObjectStorageBlock
         Joins the base bucket folder to the bucket path.
         NOTE: If a method reuses another method in this class, be careful to not
         call this  twice because it'll join the bucket folder twice.
-        See https://github.com/PrefectHQ/prefect-aws/issues/141 for a past issue.
+        See https://github.com/synopkg/synopkg-aws/issues/141 for a past issue.
         """
         if not self.bucket_folder and not bucket_path:
             # there's a difference between "." and "", at least in the tests

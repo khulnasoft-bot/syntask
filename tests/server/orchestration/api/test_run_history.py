@@ -121,7 +121,7 @@ async def data(db, work_queue):
 
         # Pendulum renamed 'period' method to 'interval' in 3.0
         # and changed weeks to start on Mondays
-        # https://github.com/PrefectHQ/prefect/issues/11619
+        # https://github.com/synopkg/synopkg/issues/11619
         if version.parse(pendulum.__version__) >= version.parse("3.0"):
             pendulum_interval = pendulum.interval
             weekend_days = (5, 6)

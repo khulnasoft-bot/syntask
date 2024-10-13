@@ -789,7 +789,7 @@ async def test_labels(
         (
             {
                 "flow-name": "Hello, World"
-            },  # regression test for https://github.com/PrefectHQ/prefect/issues/13174
+            },  # regression test for https://github.com/synopkg/synopkg/issues/13174
             {
                 "flow-name": "Hello-World",
             },

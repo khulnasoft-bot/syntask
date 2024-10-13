@@ -311,7 +311,7 @@ def test_safe_load_namespace_ignores_code_in_if_name_equals_main_block():
 
 def test_safe_load_namespace_does_not_execute_function_body():
     """
-    Regression test for https://github.com/PrefectHQ/prefect/issues/14402
+    Regression test for https://github.com/synopkg/synopkg/issues/14402
     """
     source_code = dedent(
         """
@@ -334,7 +334,7 @@ def test_safe_load_namespace_does_not_execute_function_body():
 
 def test_safe_load_namespace_implicit_relative_imports():
     """
-    Regression test for https://github.com/PrefectHQ/prefect/issues/15352
+    Regression test for https://github.com/synopkg/synopkg/issues/15352
     """
     path = TEST_PROJECTS_DIR / "flat-project" / "implicit_relative.py"
     source_code = path.read_text()

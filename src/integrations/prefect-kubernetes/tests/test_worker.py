@@ -239,15 +239,15 @@ from_template_and_values_cases = [
                 "PREFECT__FLOW_RUN_ID": str(flow_run.id),
             },
             labels={
-                "prefect.io/flow-run-id": str(flow_run.id),
-                "prefect.io/flow-run-name": flow_run.name,
-                "prefect.io/version": _slugify_label_value(
+                "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                "syntask.khulnasoft.com/version": _slugify_label_value(
                     prefect.__version__.split("+")[0]
                 ),
-                "prefect.io/deployment-id": str(deployment.id),
-                "prefect.io/deployment-name": deployment.name,
-                "prefect.io/flow-id": str(flow.id),
-                "prefect.io/flow-name": flow.name,
+                "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                "syntask.khulnasoft.com/deployment-name": deployment.name,
+                "syntask.khulnasoft.com/flow-id": str(flow.id),
+                "syntask.khulnasoft.com/flow-name": flow.name,
             },
             name=flow_run.name,
             namespace="default",
@@ -258,15 +258,15 @@ from_template_and_values_cases = [
                     "namespace": "default",
                     "generateName": f"{flow_run.name}-",
                     "labels": {
-                        "prefect.io/flow-run-id": str(flow_run.id),
-                        "prefect.io/flow-run-name": flow_run.name,
-                        "prefect.io/version": _slugify_label_value(
+                        "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                        "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                        "syntask.khulnasoft.com/version": _slugify_label_value(
                             prefect.__version__.split("+")[0]
                         ),
-                        "prefect.io/deployment-id": str(deployment.id),
-                        "prefect.io/deployment-name": deployment.name,
-                        "prefect.io/flow-id": str(flow.id),
-                        "prefect.io/flow-name": flow.name,
+                        "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                        "syntask.khulnasoft.com/deployment-name": deployment.name,
+                        "syntask.khulnasoft.com/flow-id": str(flow.id),
+                        "syntask.khulnasoft.com/flow-name": flow.name,
                     },
                 },
                 "spec": {
@@ -524,15 +524,15 @@ from_template_and_values_cases = [
                 "PREFECT__FLOW_RUN_ID": str(flow_run.id),
             },
             labels={
-                "prefect.io/flow-run-id": str(flow_run.id),
-                "prefect.io/flow-run-name": flow_run.name,
-                "prefect.io/version": _slugify_label_value(
+                "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                "syntask.khulnasoft.com/version": _slugify_label_value(
                     prefect.__version__.split("+")[0]
                 ),
-                "prefect.io/deployment-id": str(deployment.id),
-                "prefect.io/deployment-name": deployment.name,
-                "prefect.io/flow-id": str(flow.id),
-                "prefect.io/flow-name": flow.name,
+                "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                "syntask.khulnasoft.com/deployment-name": deployment.name,
+                "syntask.khulnasoft.com/flow-id": str(flow.id),
+                "syntask.khulnasoft.com/flow-name": flow.name,
             },
             name=flow_run.name,
             namespace="default",
@@ -543,15 +543,15 @@ from_template_and_values_cases = [
                     "namespace": "default",
                     "generateName": f"{flow_run.name}-",
                     "labels": {
-                        "prefect.io/flow-run-id": str(flow_run.id),
-                        "prefect.io/flow-run-name": flow_run.name,
-                        "prefect.io/version": _slugify_label_value(
+                        "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                        "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                        "syntask.khulnasoft.com/version": _slugify_label_value(
                             prefect.__version__.split("+")[0]
                         ),
-                        "prefect.io/deployment-id": str(deployment.id),
-                        "prefect.io/deployment-name": deployment.name,
-                        "prefect.io/flow-id": str(flow.id),
-                        "prefect.io/flow-name": flow.name,
+                        "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                        "syntask.khulnasoft.com/deployment-name": deployment.name,
+                        "syntask.khulnasoft.com/flow-id": str(flow.id),
+                        "syntask.khulnasoft.com/flow-name": flow.name,
                     },
                 },
                 "spec": {
@@ -682,15 +682,15 @@ from_template_and_values_cases = [
                 "TEST_ENV": "test",
             },
             labels={
-                "prefect.io/flow-run-id": str(flow_run.id),
-                "prefect.io/flow-run-name": flow_run.name,
-                "prefect.io/version": _slugify_label_value(
+                "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                "syntask.khulnasoft.com/version": _slugify_label_value(
                     prefect.__version__.split("+")[0]
                 ),
-                "prefect.io/deployment-id": str(deployment.id),
-                "prefect.io/deployment-name": deployment.name,
-                "prefect.io/flow-id": str(flow.id),
-                "prefect.io/flow-name": flow.name,
+                "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                "syntask.khulnasoft.com/deployment-name": deployment.name,
+                "syntask.khulnasoft.com/flow-id": str(flow.id),
+                "syntask.khulnasoft.com/flow-name": flow.name,
                 "TEST_LABEL": "test label",
             },
             name="test",
@@ -702,15 +702,15 @@ from_template_and_values_cases = [
                     "namespace": "test-namespace",
                     "generateName": "test-",
                     "labels": {
-                        "prefect.io/flow-run-id": str(flow_run.id),
-                        "prefect.io/flow-run-name": flow_run.name,
-                        "prefect.io/version": _slugify_label_value(
+                        "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                        "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                        "syntask.khulnasoft.com/version": _slugify_label_value(
                             prefect.__version__.split("+")[0]
                         ),
-                        "prefect.io/deployment-id": str(deployment.id),
-                        "prefect.io/deployment-name": deployment.name,
-                        "prefect.io/flow-id": str(flow.id),
-                        "prefect.io/flow-name": flow.name,
+                        "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                        "syntask.khulnasoft.com/deployment-name": deployment.name,
+                        "syntask.khulnasoft.com/flow-id": str(flow.id),
+                        "syntask.khulnasoft.com/flow-name": flow.name,
                         "test_label": "test-label",
                     },
                 },
@@ -964,13 +964,13 @@ from_template_and_values_cases = [
                 "TEST_ENV": "test",
             },
             labels={
-                "prefect.io/flow-run-id": str(flow_run.id),
-                "prefect.io/flow-run-name": flow_run.name,
-                "prefect.io/version": prefect.__version__.split("+")[0],
-                "prefect.io/deployment-id": str(deployment.id),
-                "prefect.io/deployment-name": deployment.name,
-                "prefect.io/flow-id": str(flow.id),
-                "prefect.io/flow-name": flow.name,
+                "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                "syntask.khulnasoft.com/version": prefect.__version__.split("+")[0],
+                "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                "syntask.khulnasoft.com/deployment-name": deployment.name,
+                "syntask.khulnasoft.com/flow-id": str(flow.id),
+                "syntask.khulnasoft.com/flow-name": flow.name,
                 "TEST_LABEL": "test label",
             },
             name="test",
@@ -982,15 +982,15 @@ from_template_and_values_cases = [
                     "namespace": "default",
                     "generateName": "test-",
                     "labels": {
-                        "prefect.io/flow-run-id": str(flow_run.id),
-                        "prefect.io/flow-run-name": flow_run.name,
-                        "prefect.io/version": _slugify_label_value(
+                        "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
+                        "syntask.khulnasoft.com/flow-run-name": flow_run.name,
+                        "syntask.khulnasoft.com/version": _slugify_label_value(
                             prefect.__version__.split("+")[0]
                         ),
-                        "prefect.io/deployment-id": str(deployment.id),
-                        "prefect.io/deployment-name": deployment.name,
-                        "prefect.io/flow-id": str(flow.id),
-                        "prefect.io/flow-name": flow.name,
+                        "syntask.khulnasoft.com/deployment-id": str(deployment.id),
+                        "syntask.khulnasoft.com/deployment-name": deployment.name,
+                        "syntask.khulnasoft.com/flow-id": str(flow.id),
+                        "syntask.khulnasoft.com/flow-name": flow.name,
                         "test_label": "test-label",
                     },
                 },

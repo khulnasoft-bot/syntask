@@ -217,7 +217,7 @@ async def test_scheduled_tasks_are_enqueued_server_side(
 async def test_tasks_are_not_enqueued_server_side_when_executed_directly(
     foo_task: Task,
 ):
-    # Regression test for https://github.com/PrefectHQ/prefect/issues/13674
+    # Regression test for https://github.com/synopkg/synopkg/issues/13674
     # where executing a task would cause it to be enqueue server-side
     # and executed twice.
     foo_task(x=42)

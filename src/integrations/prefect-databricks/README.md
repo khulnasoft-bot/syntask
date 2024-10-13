@@ -5,7 +5,7 @@
         <img alt="PyPI" src="https://img.shields.io/pypi/v/prefect-databricks?color=0052FF&labelColor=090422"></a>
     <a href="https://pepy.tech/badge/prefect-databricks/" alt="Downloads">
         <img src="https://img.shields.io/pypi/dm/prefect-databricks?color=0052FF&labelColor=090422" /></a>
-    <a href="https://github.com/PrefectHQ/prefect-databricks/pulse" alt="Activity">
+    <a href="https://github.com/synopkg/synopkg-databricks/pulse" alt="Activity">
 </p>
 
-See the docs at [https://docs.prefect.io/integrations/prefect-databricks](https://docs.prefect.io/integrations/prefect-databricks) for more information.
+See the docs at [https://docs.syntask.khulnasoft.com/integrations/prefect-databricks](https://docs.syntask.khulnasoft.com/integrations/prefect-databricks) for more information.

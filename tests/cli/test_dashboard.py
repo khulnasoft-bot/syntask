@@ -82,7 +82,7 @@ def test_open_current_workspace_in_browser_success(mock_webbrowser, respx_mock):
 
 
 @pytest.mark.usefixtures("mock_webbrowser")
-@pytest.mark.parametrize("api_url", ["http://localhost:4200", "https://api.prefect.io"])
+@pytest.mark.parametrize("api_url", ["http://localhost:4200", "https://api.syntask.khulnasoft.com"])
 def test_open_current_workspace_in_browser_failure_no_workspace_set(
     respx_mock, api_url
 ):
@@ -113,7 +113,7 @@ def test_open_current_workspace_in_browser_failure_no_workspace_set(
 
 
 @pytest.mark.usefixtures("mock_webbrowser")
-@pytest.mark.parametrize("api_url", ["http://localhost:4200", "https://api.prefect.io"])
+@pytest.mark.parametrize("api_url", ["http://localhost:4200", "https://api.syntask.khulnasoft.com"])
 def test_open_current_workspace_in_browser_failure_unauthorized(respx_mock, api_url):
     save_profiles(
         ProfilesCollection(

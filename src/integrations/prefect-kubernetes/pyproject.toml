@@ -17,7 +17,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "Apache License 2.0" }
 keywords = ["prefect"]
-authors = [{ name = "Prefect Technologies, Inc.", email = "help@prefect.io" }]
+authors = [{ name = "Prefect Technologies, Inc.", email = "help@syntask.khulnasoft.com" }]
 classifiers = [
     "Natural Language :: English",
     "Intended Audience :: Developers",
@@ -51,7 +51,7 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/PrefectHQ/prefect/tree/main/src/integrations/prefect-kubernetes"
+Homepage = "https://github.com/synopkg/synopkg/tree/main/src/integrations/prefect-kubernetes"
 
 [project.entry-points."prefect.collections"]
 prefect_kubernetes = "prefect_kubernetes"

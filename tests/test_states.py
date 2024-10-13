@@ -384,7 +384,7 @@ class TestStateGroup:
 
 def test_state_returns_expected_result(ignore_prefect_deprecation_warnings):
     """
-    Regression test for https://github.com/PrefectHQ/prefect/issues/14927
+    Regression test for https://github.com/synopkg/synopkg/issues/14927
     """
     state = Completed(data="test")
     assert state.result() == "test"

@@ -1749,7 +1749,7 @@ class TestLoadFlowAndFlowRun:
         compatible function is correctly runs as sync and does not prevent the flow from
         being loaded.
 
-        Regression test for https://github.com/PrefectHQ/prefect/issues/14625
+        Regression test for https://github.com/synopkg/synopkg/issues/14625
         """
         flow_id = await prefect_client.create_flow_from_name(flow_name="uses_block")
         deployment_id = await prefect_client.create_deployment(

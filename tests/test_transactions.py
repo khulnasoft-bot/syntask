@@ -88,7 +88,7 @@ class TestGetParent:
 
     def test_get_parent_works_in_rollback_hook_after_success(self):
         """
-        This is a regression test for https://github.com/PrefectHQ/prefect/issues/15593
+        This is a regression test for https://github.com/synopkg/synopkg/issues/15593
         """
         spy = MagicMock()
 

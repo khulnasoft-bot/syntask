@@ -322,7 +322,7 @@ class TestRunDeployment:
     ):
         """
         Regression test for deployments in a task on Dask and Ray task runners
-        which do not have access to the flow run context - https://github.com/PrefectHQ/prefect/issues/9135
+        which do not have access to the flow run context - https://github.com/synopkg/synopkg/issues/9135
         """
         deployment = test_deployment
 

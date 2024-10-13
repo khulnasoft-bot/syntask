@@ -91,7 +91,7 @@ def mock_webbrowser(monkeypatch):
             "pcu_foo",
             (
                 "Unable to authenticate with Prefect Cloud. It looks like you're using"
-                " API key from Cloud 1 (https://cloud.prefect.io). Make sure that you"
+                " API key from Cloud 1 (https://cloud.syntask.khulnasoft.com). Make sure that you"
                 " generate API key using Cloud 2 (https://app.prefect.cloud)"
             ),
         ),

@@ -171,7 +171,7 @@ class SnowflakeCredentials(CredentialsBlock):
         authenticator = values.get("authenticator")
 
         # did not want to make a breaking change so we will allow both
-        # see https://github.com/PrefectHQ/prefect-snowflake/issues/44
+        # see https://github.com/synopkg/synopkg-snowflake/issues/44
         if "okta_endpoint" in values.keys():
             warnings.warn(
                 "Please specify `endpoint` instead of `okta_endpoint`; "

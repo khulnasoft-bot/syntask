@@ -1,4 +1,4 @@
-<p align="center"><img src="https://github.com/PrefectHQ/prefect/assets/3407835/c654cbc6-63e8-4ada-a92a-efd2f8f24b85" width=1000></p>
+<p align="center"><img src="https://github.com/synopkg/synopkg/assets/3407835/c654cbc6-63e8-4ada-a92a-efd2f8f24b85" width=1000></p>
 
 <p align="center">
     <a href="https://pypi.python.org/pypi/prefect-client/" alt="PyPI version">
@@ -10,9 +10,9 @@
     <a href="https://github.com/prefecthq/prefect/pulse" alt="Activity">
         <img src="https://img.shields.io/github/commit-activity/m/prefecthq/prefect?color=0052FF&labelColor=090422" /></a>
     <br>
-    <a href="https://prefect.io/slack" alt="Slack">
+    <a href="https://syntask.khulnasoft.com/slack" alt="Slack">
         <img src="https://img.shields.io/badge/slack-join_community-red.svg?color=0052FF&labelColor=090422&logo=slack" /></a>
-    <a href="https://discourse.prefect.io/" alt="Discourse">
+    <a href="https://discourse.syntask.khulnasoft.com/" alt="Discourse">
         <img src="https://img.shields.io/badge/discourse-browse_forum-red.svg?color=0052FF&labelColor=090422&logo=discourse" /></a>
     <a href="https://www.youtube.com/c/PrefectIO/" alt="YouTube">
         <img src="https://img.shields.io/badge/youtube-watch_videos-red.svg?color=0052FF&labelColor=090422&logo=youtube" /></a>
@@ -89,21 +89,21 @@ query_api()
 By design, `prefect-client` omits all CLI and server components. This means that the CLI is not available for use
 and attempts to access server objects will fail. Furthermore, some classes, methods, and objects may be available
 for import in `prefect-client` but may not be "runnable" if they tap into server-oriented functionality. If you
-encounter such a limitation, feel free to [open an issue](https://github.com/PrefectHQ/prefect/issues/new/choose)
+encounter such a limitation, feel free to [open an issue](https://github.com/synopkg/synopkg/issues/new/choose)
 describing the functionality you are interested in using and we will do our best to make it available.
 
 
 ## Next steps
 
 There's lots more you can do to orchestrate and observe your workflows with Prefect!
-Start with our [friendly tutorial](https://docs.prefect.io/tutorials) or explore the [core concepts of Prefect workflows](https://docs.prefect.io/concepts/).
+Start with our [friendly tutorial](https://docs.syntask.khulnasoft.com/tutorials) or explore the [core concepts of Prefect workflows](https://docs.syntask.khulnasoft.com/concepts/).
 
 ## Join the community
 
-Prefect is made possible by the fastest growing community of thousands of friendly data engineers. Join us in building a new kind of workflow system. The [Prefect Slack community](https://prefect.io/slack) is a fantastic place to learn more about Prefect, ask questions, or get help with workflow design. All community forums, including code contributions, issue discussions, and slack messages are subject to our [Code of Conduct](https://discourse.prefect.io/faq).
+Prefect is made possible by the fastest growing community of thousands of friendly data engineers. Join us in building a new kind of workflow system. The [Prefect Slack community](https://syntask.khulnasoft.com/slack) is a fantastic place to learn more about Prefect, ask questions, or get help with workflow design. All community forums, including code contributions, issue discussions, and slack messages are subject to our [Code of Conduct](https://discourse.syntask.khulnasoft.com/faq).
 
 ## Contribute
 
-See our [documentation on contributing to Prefect](https://docs.prefect.io/contributing/overview/).
+See our [documentation on contributing to Prefect](https://docs.syntask.khulnasoft.com/contributing/overview/).
 
 Thanks for being part of the mission to build a new kind of workflow system and, of course, **happy engineering!**

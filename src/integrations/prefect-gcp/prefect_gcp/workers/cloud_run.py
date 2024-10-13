@@ -16,7 +16,7 @@ prefect worker start --pool 'my-cloud-run-pool'
 
 ## Configuration
 Read more about configuring work pools
-[here](https://docs.prefect.io/3.0/deploy/infrastructure-concepts/work-pools).
+[here](https://docs.syntask.khulnasoft.com/3.0/deploy/infrastructure-concepts/work-pools).
 
 ## Advanced Configuration
 !!! example "Using a custom Cloud Run job template"

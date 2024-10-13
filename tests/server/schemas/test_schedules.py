@@ -456,7 +456,7 @@ class TestCronScheduleDaylightSavingsTime:
         assert [d.in_tz("America/New_York").hour for d in dates] == [23, 0, 1, 2, 3]
 
         # pendulum fixed a UTC-offset issue in 3.0
-        # https://github.com/PrefectHQ/prefect/issues/11619
+        # https://github.com/synopkg/synopkg/issues/11619
         if version.parse(pendulum.__version__) >= version.parse("3.0"):
             assert [d.in_tz("UTC").hour for d in dates] == [3, 4, 5, 7, 8]
         else:

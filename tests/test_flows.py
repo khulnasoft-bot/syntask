@@ -1335,7 +1335,7 @@ class TestSubflowCalls:
     @pytest.mark.skip(reason="Fails with new engine, passed on old engine")
     async def test_sync_flow_with_async_subflow_and_task_that_awaits_result(self):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/12053, where
+        Regression test for https://github.com/synopkg/synopkg/issues/12053, where
         we discovered that a sync flow running an async flow that awaits `.result()`
         on a submitted task's future can hang indefinitely.
         """
@@ -1555,7 +1555,7 @@ class TestFlowTimeouts:
     async def test_subflow_timeout_waits_until_execution_starts(self, tmp_path):
         """
         Subflow with a timeout shouldn't start their timeout before the subflow is started.
-        Fixes: https://github.com/PrefectHQ/prefect/issues/7903.
+        Fixes: https://github.com/synopkg/synopkg/issues/7903.
         """
 
         completed = False
@@ -1736,7 +1736,7 @@ class TestFlowParameterTypes:
         assert isinstance(instance, Test)
 
     def test_flow_parameter_kwarg_can_be_literally_keys(self):
-        """regression test for https://github.com/PrefectHQ/prefect/issues/15610"""
+        """regression test for https://github.com/synopkg/synopkg/issues/15610"""
 
         @flow
         def my_flow(keys: str):
@@ -1899,7 +1899,7 @@ class TestSubflowTaskInputs:
 
     async def test_subflow_with_upstream_task_passes_validation(self, prefect_client):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/14036
+        Regression test for https://github.com/synopkg/synopkg/issues/14036
         """
 
         @task
@@ -3948,7 +3948,7 @@ class TestFlowToDeployment:
                 await self.flow.to_deployment(__file__, **kwargs)
 
     async def test_to_deployment_respects_with_options_name_from_flow(self):
-        """regression test for https://github.com/PrefectHQ/prefect/issues/15380"""
+        """regression test for https://github.com/synopkg/synopkg/issues/15380"""
 
         @flow(name="original-name")
         def test_flow():
@@ -3964,7 +3964,7 @@ class TestFlowToDeployment:
     async def test_to_deployment_respects_with_options_name_from_storage(
         self, monkeypatch
     ):
-        """regression test for https://github.com/PrefectHQ/prefect/issues/15380"""
+        """regression test for https://github.com/synopkg/synopkg/issues/15380"""
 
         @flow(name="original-name")
         def test_flow():

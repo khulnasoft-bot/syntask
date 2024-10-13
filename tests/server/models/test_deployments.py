@@ -55,7 +55,7 @@ class TestCreateDeployment:
         self, session, flow
     ):
         # There was an issue where create_deployment always created a work queue when its name was provided.
-        # This test ensures that this no longer happens. See: https://github.com/PrefectHQ/prefect/pull/9046
+        # This test ensures that this no longer happens. See: https://github.com/synopkg/synopkg/pull/9046
         wq = await models.work_queues.read_work_queue_by_name(
             session=session, name="wq-1"
         )
@@ -1166,7 +1166,7 @@ class TestUpdateDeployment:
         # a work_queue_name was provided. This also happened when the work_pool_name was provided. In case of
         # the latter, the work_queue should only have been created in the specified pool, not duplicated in
         # the default pool.
-        # This test ensures that this no longer happens. See: https://github.com/PrefectHQ/prefect/pull/9046
+        # This test ensures that this no longer happens. See: https://github.com/synopkg/synopkg/pull/9046
 
         new_queue_name = "new-work-queue-name"
 

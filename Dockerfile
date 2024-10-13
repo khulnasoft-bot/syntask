@@ -81,11 +81,11 @@ FROM ${BASE_IMAGE} as final
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-LABEL maintainer="help@prefect.io"
+LABEL maintainer="help@syntask.khulnasoft.com"
 LABEL io.prefect.python-version=${PYTHON_VERSION}
 LABEL org.label-schema.schema-version = "1.0"
 LABEL org.label-schema.name="prefect"
-LABEL org.label-schema.url="https://www.prefect.io/"
+LABEL org.label-schema.url="https://www.syntask.khulnasoft.com/"
 
 WORKDIR /opt/prefect
 

@@ -275,7 +275,7 @@ def test_drain_many_instances_many_threads():
 
 
 def test_drain_on_global_loop_shutdown():
-    # Regression test https://github.com/PrefectHQ/prefect/issues/9275#issuecomment-1520468276
+    # Regression test https://github.com/synopkg/synopkg/issues/9275#issuecomment-1520468276
     for i in range(10):
         MockService.instance().send(i)
 

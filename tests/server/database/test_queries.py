@@ -127,7 +127,7 @@ class TestGetRunsInQueueQuery:
         Tests that the query sorts by scheduled time correctly; the unit tests with a small number of runs
         can return the correct order even though no sort is applied.
 
-        https://github.com/PrefectHQ/prefect/pull/7457
+        https://github.com/synopkg/synopkg/pull/7457
         """
 
         # clear all runs

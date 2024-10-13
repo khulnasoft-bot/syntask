@@ -204,7 +204,7 @@ class TestThreadPoolTaskRunner:
 
     def test_handles_recursively_submitted_tasks(self):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/14194.
+        Regression test for https://github.com/synopkg/synopkg/issues/14194.
 
         This test ensures that the ThreadPoolTaskRunner doesn't place an upper limit on the
         number of submitted tasks active at once. The highest default max workers on a

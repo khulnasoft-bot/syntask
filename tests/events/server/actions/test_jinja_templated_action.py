@@ -505,7 +505,7 @@ async def test_flow_run_state_comes_from_event_resource_empty_message(
     took_a_picture: TriggeredAction,
     take_a_picture: FlowRun,
 ):
-    """Regression test for https://github.com/PrefectHQ/prefect/issues/9230
+    """Regression test for https://github.com/synopkg/synopkg/issues/9230
     where the flow run event had all of the correct state information but the
     message, as is the case in many events, was empty causing the state to not
     be rehydrated but instead use the state from the API"""

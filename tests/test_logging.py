@@ -1291,7 +1291,7 @@ class TestObfuscateApiKeyFilter:
         self, caplog, raw_log_record, expected_log_record
     ):
         """
-        This is a regression test for https://github.com/PrefectHQ/prefect/issues/12139
+        This is a regression test for https://github.com/synopkg/synopkg/issues/12139
         """
 
         @flow()
