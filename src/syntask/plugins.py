@@ -1,18 +1,18 @@
 """
-Utilities for loading plugins that extend Prefect's functionality.
+Utilities for loading plugins that extend Syntask's functionality.
 
 Plugins are detected by entry point definitions in package setup files.
 
 Currently supported entrypoints:
-    - prefect.collections: Identifies this package as a Prefect collection that
-        should be imported when Prefect is imported.
+    - syntask.collections: Identifies this package as a Syntask collection that
+        should be imported when Syntask is imported.
 """
 
 from types import ModuleType
 from typing import Any, Dict, Union
 
-import prefect.settings
-from prefect.utilities.compat import EntryPoints, entry_points
+import syntask.settings
+from syntask.utilities.compat import EntryPoints, entry_points
 
 COLLECTIONS: Union[None, Dict[str, Union[ModuleType, Exception]]] = None
 
@@ -40,17 +40,17 @@ def safe_load_entrypoints(entrypoints: EntryPoints) -> Dict[str, Union[Exception
     return results
 
 
-def load_prefect_collections() -> Dict[str, Union[ModuleType, Exception]]:
+def load_syntask_collections() -> Dict[str, Union[ModuleType, Exception]]:
     """
-    Load all Prefect collections that define an entrypoint in the group
-    `prefect.collections`.
+    Load all Syntask collections that define an entrypoint in the group
+    `syntask.collections`.
     """
     global COLLECTIONS
 
     if COLLECTIONS is not None:
         return COLLECTIONS
 
-    collection_entrypoints: EntryPoints = entry_points(group="prefect.collections")
+    collection_entrypoints: EntryPoints = entry_points(group="syntask.collections")
     collections = safe_load_entrypoints(collection_entrypoints)
 
     # TODO: Consider the utility of this once we've established this pattern.
@@ -65,7 +65,7 @@ def load_prefect_collections() -> Dict[str, Union[ModuleType, Exception]]:
                 f" {type(result).__name__}: {result}"
             )
         else:
-            if prefect.settings.PREFECT_DEBUG_MODE:
+            if syntask.settings.SYNTASK_DEBUG_MODE:
                 print(f"Loaded collection {name!r}.")
 
     COLLECTIONS = collections

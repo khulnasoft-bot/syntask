@@ -10,42 +10,42 @@ import typer
 from rich.pretty import Pretty
 from rich.table import Table
 
-from prefect.cli._prompts import prompt_select_from_table
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import (
+from syntask.cli._prompts import prompt_select_from_table
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import (
     exit_with_error,
     exit_with_success,
 )
-from prefect.cli.root import app, is_interactive
-from prefect.client.collections import get_collections_metadata_client
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.actions import WorkPoolCreate, WorkPoolUpdate
-from prefect.exceptions import ObjectAlreadyExists, ObjectNotFound
-from prefect.infrastructure.provisioners import (
+from syntask.cli.root import app, is_interactive
+from syntask.client.collections import get_collections_metadata_client
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.actions import WorkPoolCreate, WorkPoolUpdate
+from syntask.exceptions import ObjectAlreadyExists, ObjectNotFound
+from syntask.infrastructure.provisioners import (
     _provisioners,
     get_infrastructure_provisioner_for_work_pool_type,
 )
-from prefect.settings import update_current_profile
-from prefect.utilities import urls
-from prefect.workers.utilities import (
+from syntask.settings import update_current_profile
+from syntask.utilities import urls
+from syntask.workers.utilities import (
     get_available_work_pool_types,
     get_default_base_job_template_for_infrastructure_type,
 )
 
-work_pool_app = PrefectTyper(name="work-pool", help="Manage work pools.")
+work_pool_app = SyntaskTyper(name="work-pool", help="Manage work pools.")
 app.add_typer(work_pool_app, aliases=["work-pool"])
 
 
 def set_work_pool_as_default(name: str):
-    profile = update_current_profile({"PREFECT_DEFAULT_WORK_POOL_NAME": name})
+    profile = update_current_profile({"SYNTASK_DEFAULT_WORK_POOL_NAME": name})
     app.console.print(
         f"Set {name!r} as default work pool for profile {profile.name!r}\n",
         style="green",
     )
     app.console.print(
         (
-            "To change your default work pool, run:\n\n\t[blue]prefect config set"
-            " PREFECT_DEFAULT_WORK_POOL_NAME=<work-pool-name>[/]\n"
+            "To change your default work pool, run:\n\n\t[blue]syntask config set"
+            " SYNTASK_DEFAULT_WORK_POOL_NAME=<work-pool-name>[/]\n"
         ),
     )
 
@@ -71,7 +71,7 @@ async def create(
         "--base-job-template",
         help=(
             "The path to a JSON file containing the base job template to use. If"
-            " unspecified, Prefect will use the default base job template for the given"
+            " unspecified, Syntask will use the default base job template for the given"
             " worker type."
         ),
     ),
@@ -114,15 +114,15 @@ async def create(
         \b
         Create a Kubernetes work pool in a paused state:
             \b
-            $ prefect work-pool create "my-pool" --type kubernetes --paused
+            $ syntask work-pool create "my-pool" --type kubernetes --paused
         \b
         Create a Docker work pool with a custom base job template:
             \b
-            $ prefect work-pool create "my-pool" --type docker --base-job-template ./base-job-template.json
+            $ syntask work-pool create "my-pool" --type docker --base-job-template ./base-job-template.json
         \b
         Update an existing work pool:
             \b
-            $ prefect work-pool create "existing-pool" --base-job-template ./base-job-template.json --overwrite
+            $ syntask work-pool create "existing-pool" --base-job-template ./base-job-template.json --overwrite
 
     """
     if not name.lower().strip("'\" "):
@@ -222,7 +222,7 @@ async def create(
             ):
                 app.console.print("To start a worker for this work pool, run:\n")
                 app.console.print(
-                    f"\t[blue]prefect worker start --pool {work_pool.name}[/]\n"
+                    f"\t[blue]syntask worker start --pool {work_pool.name}[/]\n"
                 )
             if set_as_default:
                 set_work_pool_as_default(work_pool.name)
@@ -263,7 +263,7 @@ async def ls(
 
     \b
     Examples:
-        $ prefect work-pool ls
+        $ syntask work-pool ls
     """
     table = Table(
         title="Work Pools", caption="(**) denotes a paused pool", caption_style="red"
@@ -308,7 +308,7 @@ async def inspect(
 
     \b
     Examples:
-        $ prefect work-pool inspect "my-pool"
+        $ syntask work-pool inspect "my-pool"
 
     """
     async with get_client() as client:
@@ -328,7 +328,7 @@ async def pause(
 
     \b
     Examples:
-        $ prefect work-pool pause "my-pool"
+        $ syntask work-pool pause "my-pool"
 
     """
     async with get_client() as client:
@@ -354,7 +354,7 @@ async def resume(
 
     \b
     Examples:
-        $ prefect work-pool resume "my-pool"
+        $ syntask work-pool resume "my-pool"
 
     """
     async with get_client() as client:
@@ -379,7 +379,7 @@ async def update(
         "--base-job-template",
         help=(
             "The path to a JSON file containing the base job template to use. If"
-            " unspecified, Prefect will use the default base job template for the given"
+            " unspecified, Syntask will use the default base job template for the given"
             " worker type. If None, the base job template will not be modified."
         ),
     ),
@@ -405,7 +405,7 @@ async def update(
 
     \b
     Examples:
-        $ prefect work-pool update "my-pool"
+        $ syntask work-pool update "my-pool"
 
     """
     wp = WorkPoolUpdate()
@@ -439,9 +439,9 @@ async def provision_infrastructure(
 
     \b
     Examples:
-        $ prefect work-pool provision-infrastructure "my-pool"
+        $ syntask work-pool provision-infrastructure "my-pool"
 
-        $ prefect work-pool provision-infra "my-pool"
+        $ syntask work-pool provision-infra "my-pool"
 
     """
     async with get_client() as client:
@@ -497,7 +497,7 @@ async def delete(
 
     \b
     Examples:
-        $ prefect work-pool delete "my-pool"
+        $ syntask work-pool delete "my-pool"
 
     """
     async with get_client() as client:
@@ -529,7 +529,7 @@ async def set_concurrency_limit(
 
     \b
     Examples:
-        $ prefect work-pool set-concurrency-limit "my-pool" 10
+        $ syntask work-pool set-concurrency-limit "my-pool" 10
 
     """
     async with get_client() as client:
@@ -557,7 +557,7 @@ async def clear_concurrency_limit(
 
     \b
     Examples:
-        $ prefect work-pool clear-concurrency-limit "my-pool"
+        $ syntask work-pool clear-concurrency-limit "my-pool"
 
     """
     async with get_client() as client:
@@ -591,7 +591,7 @@ async def get_default_base_job_template(
 
     \b
     Examples:
-        $ prefect work-pool get-default-base-job-template --type kubernetes
+        $ syntask work-pool get-default-base-job-template --type kubernetes
     """
     base_job_template = await get_default_base_job_template_for_infrastructure_type(
         type
@@ -625,7 +625,7 @@ async def preview(
 
     \b
     Examples:
-        $ prefect work-pool preview "my-pool" --hours 24
+        $ syntask work-pool preview "my-pool" --hours 24
 
     """
     if hours is None:

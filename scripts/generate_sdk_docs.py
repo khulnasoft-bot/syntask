@@ -1,7 +1,7 @@
 # Creates integration SDK documentation files for MkDocs
-# Run from top level of Prefect repository
-# Latest versions of Prefect integration libraries must be installed
-# uv pip install "prefect[aws, azure, bitbucket, dask, databricks, dbt, docker, email, gcp, github, gitlab, kubernetes, ray, slack, snowflake, sqlalchemy]" -U
+# Run from top level of Syntask repository
+# Latest versions of Syntask integration libraries must be installed
+# uv pip install "syntask[aws, azure, bitbucket, dask, databricks, dbt, docker, email, gcp, github, gitlab, kubernetes, ray, slack, snowflake, sqlalchemy]" -U
 # Run mkdocs build to generate the documentation or mkdocs serve to preview
 # Upload the site directory to Netlify to publish the documentation after building
 
@@ -14,8 +14,8 @@ def docs_path() -> Path:
 
 
 SKIPPED = [
-    "prefect._internal",
-    "prefect.server.database.migrations",
+    "syntask._internal",
+    "syntask.server.database.migrations",
 ]
 
 
@@ -49,7 +49,7 @@ def main():
 
 
 def packages() -> Generator[tuple[str, Path], None, None]:
-    yield "prefect", Path("./src")
+    yield "syntask", Path("./src")
 
     for path in sorted(Path("./src/integrations").iterdir()):
         yield path.name, path

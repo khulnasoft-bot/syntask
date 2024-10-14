@@ -7,10 +7,10 @@ from unittest.mock import MagicMock
 import anyio
 from fastapi import FastAPI
 
-import prefect
-import prefect.context
-import prefect.exceptions
-from prefect.client.orchestration import PrefectClient
+import syntask
+import syntask.context
+import syntask.exceptions
+from syntask.client.orchestration import SyntaskClient
 
 
 def make_lifespan(startup, shutdown) -> callable:
@@ -33,13 +33,13 @@ def client_context_lifespan_is_robust_to_threaded_concurrency():
         with context:
             # Use random sleeps to interleave clients
             await anyio.sleep(random.random())
-            async with PrefectClient(app):
+            async with SyntaskClient(app):
                 await anyio.sleep(random.random())
 
     threads = [
         threading.Thread(
             target=anyio.run,
-            args=(enter_client, prefect.context.SettingsContext.get().model_copy()),
+            args=(enter_client, syntask.context.SettingsContext.get().model_copy()),
         )
         for _ in range(100)
     ]
@@ -60,7 +60,7 @@ async def client_context_lifespan_is_robust_to_high_async_concurrency():
     async def enter_client():
         # Use random sleeps to interleave clients
         await anyio.sleep(random.random())
-        async with PrefectClient(app):
+        async with SyntaskClient(app):
             await anyio.sleep(random.random())
 
     with anyio.fail_after(15):
@@ -79,7 +79,7 @@ async def client_context_lifespan_is_robust_to_mixed_concurrency():
     async def enter_client():
         # Use random sleeps to interleave clients
         await anyio.sleep(random.random())
-        async with PrefectClient(app):
+        async with SyntaskClient(app):
             await anyio.sleep(random.random())
 
     async def enter_client_many_times(context):
@@ -94,7 +94,7 @@ async def client_context_lifespan_is_robust_to_mixed_concurrency():
             target=anyio.run,
             args=(
                 enter_client_many_times,
-                prefect.context.SettingsContext.get().model_copy(),
+                syntask.context.SettingsContext.get().model_copy(),
             ),
         )
         for _ in range(100)

@@ -19,20 +19,20 @@ import pendulum
 import yaml
 from pydantic_extra_types.pendulum_dt import DateTime
 
-from prefect.exceptions import InvalidRepositoryURLError
-from prefect.utilities.collections import isiterable
-from prefect.utilities.dockerutils import get_prefect_image_name
-from prefect.utilities.filesystem import relative_path_to_current_platform
-from prefect.utilities.importtools import from_qualified_name
-from prefect.utilities.names import generate_slug
-from prefect.utilities.pydantic import JsonPatch
+from syntask.exceptions import InvalidRepositoryURLError
+from syntask.utilities.collections import isiterable
+from syntask.utilities.dockerutils import get_syntask_image_name
+from syntask.utilities.filesystem import relative_path_to_current_platform
+from syntask.utilities.importtools import from_qualified_name
+from syntask.utilities.names import generate_slug
+from syntask.utilities.pydantic import JsonPatch
 
 LOWERCASE_LETTERS_NUMBERS_AND_DASHES_ONLY_REGEX = "^[a-z0-9-]*$"
 LOWERCASE_LETTERS_NUMBERS_AND_UNDERSCORES_REGEX = "^[a-z0-9_]*$"
 
 if TYPE_CHECKING:
-    from prefect.blocks.core import Block
-    from prefect.utilities.callables import ParameterSchema
+    from syntask.blocks.core import Block
+    from syntask.utilities.callables import ParameterSchema
 
 
 def raise_on_name_alphanumeric_dashes_only(
@@ -85,7 +85,7 @@ def validate_values_conform_to_schema(
     Validate that the provided values conform to the provided json schema.
 
     TODO: This schema validation is outdated. The latest version is
-    prefect.utilities.schema_tools.validate, which handles fixes to Pydantic v1
+    syntask.utilities.schema_tools.validate, which handles fixes to Pydantic v1
     schemas for null values and tuples.
 
     Args:
@@ -98,7 +98,7 @@ def validate_values_conform_to_schema(
         ValueError: If the parameters do not conform to the schema.
 
     """
-    from prefect.utilities.collections import remove_nested_keys
+    from syntask.utilities.collections import remove_nested_keys
 
     if ignore_required:
         schema = remove_nested_keys(["required"], schema)
@@ -132,7 +132,7 @@ def infrastructure_must_have_capabilities(
     Ensure that the provided value is an infrastructure block with the required capabilities.
     """
 
-    from prefect.blocks.core import Block
+    from syntask.blocks.core import Block
 
     if isinstance(value, dict):
         if "_block_type_slug" in value:
@@ -157,7 +157,7 @@ def storage_must_have_capabilities(
     """
     Ensure that the provided value is a storage block with the required capabilities.
     """
-    from prefect.blocks.core import Block
+    from syntask.blocks.core import Block
 
     if isinstance(value, dict):
         block_type = Block.get_block_class_from_key(value.pop("_block_type_slug"))
@@ -177,7 +177,7 @@ def handle_openapi_schema(value: Optional["ParameterSchema"]) -> "ParameterSchem
     """
     This method ensures setting a value of `None` is handled gracefully.
     """
-    from prefect.utilities.callables import ParameterSchema
+    from syntask.utilities.callables import ParameterSchema
 
     if value is None:
         return ParameterSchema()
@@ -201,7 +201,7 @@ def validate_parameter_openapi_schema(value: dict, values: dict) -> dict:
 
 
 def return_none_schedule(v: Optional[Union[str, dict]]) -> Optional[Union[str, dict]]:
-    from prefect.client.schemas.schedules import NoSchedule
+    from syntask.client.schemas.schedules import NoSchedule
 
     if isinstance(v, NoSchedule):
         return None
@@ -218,7 +218,7 @@ def convert_to_strings(value: Union[Any, List[Any]]) -> Union[str, List[str]]:
 
 
 def reconcile_schedules_runner(values: dict) -> dict:
-    from prefect.deployments.schedules import (
+    from syntask.deployments.schedules import (
         normalize_to_deployment_schedule_create,
     )
 
@@ -283,7 +283,7 @@ def default_anchor_date(v: DateTime) -> DateTime:
 
 def get_valid_timezones(v: Optional[str]) -> Tuple[str, ...]:
     # pendulum.tz.timezones is a callable in 3.0 and above
-    # https://github.com/synopkg/synopkg/issues/11619
+    # https://github.com/synopkg/syntask/issues/11619
     if callable(pendulum.tz.timezones):
         return pendulum.tz.timezones()
     else:
@@ -365,7 +365,7 @@ def validate_k8s_job_required_components(cls, value: Dict[str, Any]):
     """
     Validate that a Kubernetes job manifest has all required components.
     """
-    from prefect.utilities.pydantic import JsonPatch
+    from syntask.utilities.pydantic import JsonPatch
 
     patch = JsonPatch.from_diff(value, cls.base_job_manifest())
     missing_paths = sorted([op["path"] for op in patch if op["op"] == "add"])
@@ -381,7 +381,7 @@ def validate_k8s_job_compatible_values(cls, value: Dict[str, Any]):
     """
     Validate that the provided job values are compatible with the job type.
     """
-    from prefect.utilities.pydantic import JsonPatch
+    from syntask.utilities.pydantic import JsonPatch
 
     patch = JsonPatch.from_diff(value, cls.base_job_manifest())
     incompatible = sorted(
@@ -442,7 +442,7 @@ def set_default_image(values: dict) -> dict:
     )
 
     if not image and not job_image:
-        values["image"] = get_prefect_image_name()
+        values["image"] = get_syntask_image_name()
 
     return values
 
@@ -596,7 +596,7 @@ def validate_load_kwargs(value: dict) -> dict:
 
 
 def cast_type_names_to_serializers(value):
-    from prefect.serializers import Serializer
+    from syntask.serializers import Serializer
 
     if isinstance(value, str):
         return Serializer(type=value)
@@ -643,7 +643,7 @@ def validate_not_negative(v: Optional[float]) -> Optional[float]:
 
 
 def validate_message_template_variables(v: Optional[str]) -> Optional[str]:
-    from prefect.client.schemas.objects import FLOW_RUN_NOTIFICATION_TEMPLATE_KWARGS
+    from syntask.client.schemas.objects import FLOW_RUN_NOTIFICATION_TEMPLATE_KWARGS
 
     if v is not None:
         try:
@@ -721,7 +721,7 @@ def base_image_xor_dockerfile(values: Mapping[str, Any]):
 
 
 def validate_settings(value: dict) -> dict:
-    from prefect.settings import SETTING_VARIABLES, Setting
+    from syntask.settings import SETTING_VARIABLES, Setting
 
     if value is None:
         return value
@@ -749,14 +749,14 @@ def validate_yaml(value: Union[str, dict]) -> dict:
 
 
 def validate_cache_key_length(cache_key: Optional[str]) -> Optional[str]:
-    from prefect.settings import (
-        PREFECT_API_TASK_CACHE_KEY_MAX_LENGTH,
+    from syntask.settings import (
+        SYNTASK_API_TASK_CACHE_KEY_MAX_LENGTH,
     )
 
-    if cache_key and len(cache_key) > PREFECT_API_TASK_CACHE_KEY_MAX_LENGTH.value():
+    if cache_key and len(cache_key) > SYNTASK_API_TASK_CACHE_KEY_MAX_LENGTH.value():
         raise ValueError(
             "Cache key exceeded maximum allowed length of"
-            f" {PREFECT_API_TASK_CACHE_KEY_MAX_LENGTH.value()} characters."
+            f" {SYNTASK_API_TASK_CACHE_KEY_MAX_LENGTH.value()} characters."
         )
     return cache_key
 

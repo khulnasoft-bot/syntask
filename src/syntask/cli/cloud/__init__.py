@@ -1,5 +1,5 @@
 """
-Command line interface for interacting with Prefect Cloud
+Command line interface for interacting with Syntask Cloud
 """
 
 import os
@@ -24,34 +24,34 @@ from rich.live import Live
 from rich.table import Table
 from typing_extensions import Literal
 
-import prefect.context
-import prefect.settings
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.cloud import CloudUnauthorizedError, get_cloud_client
-from prefect.client.schemas import Workspace
-from prefect.context import get_settings_context
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_UI_URL,
+import syntask.context
+import syntask.settings
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.cloud import CloudUnauthorizedError, get_cloud_client
+from syntask.client.schemas import Workspace
+from syntask.context import get_settings_context
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_UI_URL,
     load_profiles,
     save_profiles,
     update_current_profile,
 )
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
-from prefect.utilities.collections import listrepr
-from prefect.utilities.compat import raise_signal
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.utilities.collections import listrepr
+from syntask.utilities.compat import raise_signal
 
 from pydantic import BaseModel
 
-# Set up the `prefect cloud` and `prefect cloud workspaces` CLI applications
-cloud_app = PrefectTyper(
-    name="cloud", help="Authenticate and interact with Prefect Cloud"
+# Set up the `syntask cloud` and `syntask cloud workspaces` CLI applications
+cloud_app = SyntaskTyper(
+    name="cloud", help="Authenticate and interact with Syntask Cloud"
 )
-workspace_app = PrefectTyper(
-    name="workspace", help="View and set Prefect Cloud Workspaces"
+workspace_app = SyntaskTyper(
+    name="workspace", help="View and set Syntask Cloud Workspaces"
 )
 cloud_app.add_typer(workspace_app, aliases=["workspaces"])
 app.add_typer(cloud_app)
@@ -135,16 +135,16 @@ async def serve_login_api(cancel_scope, task_status):
 
 
 def confirm_logged_in():
-    if not PREFECT_API_KEY:
-        profile = prefect.context.get_settings_context().profile
+    if not SYNTASK_API_KEY:
+        profile = syntask.context.get_settings_context().profile
         exit_with_error(
             f"Currently not authenticated in profile {profile.name!r}. "
-            "Please log in with `prefect cloud login`."
+            "Please log in with `syntask cloud login`."
         )
 
 
 def get_current_workspace(workspaces: Iterable[Workspace]) -> Optional[Workspace]:
-    current_api_url = PREFECT_API_URL.value()
+    current_api_url = SYNTASK_API_URL.value()
 
     if not current_api_url:
         return None
@@ -256,7 +256,7 @@ async def login_with_browser() -> str:
         server_port = server.servers[0].sockets[0].getsockname()[1]
         callback = urllib.parse.quote(f"http://localhost:{server_port}")
         ui_login_url = (
-            PREFECT_CLOUD_UI_URL.value() + f"/auth/client?callback={callback}"
+            SYNTASK_CLOUD_UI_URL.value() + f"/auth/client?callback={callback}"
         )
 
         # Then open the authorization page in a new browser tab
@@ -342,7 +342,7 @@ async def _prompt_for_account_and_workspace(
 @cloud_app.command()
 async def login(
     key: Optional[str] = typer.Option(
-        None, "--key", "-k", help="API Key to authenticate with Prefect"
+        None, "--key", "-k", help="API Key to authenticate with Syntask"
     ),
     workspace_handle: Optional[str] = typer.Option(
         None,
@@ -354,8 +354,8 @@ async def login(
     ),
 ):
     """
-    Log in to Prefect Cloud.
-    Creates a new profile configured to use the specified PREFECT_API_KEY.
+    Log in to Syntask Cloud.
+    Creates a new profile configured to use the specified SYNTASK_API_KEY.
     Uses a previously configured profile if it exists.
     """
     if not is_interactive() and (not key or not workspace_handle):
@@ -366,12 +366,12 @@ async def login(
 
     profiles = load_profiles()
     current_profile = get_settings_context().profile
-    env_var_api_key = os.getenv("PREFECT_API_KEY")
+    env_var_api_key = os.getenv("SYNTASK_API_KEY")
     selected_workspace = None
 
     if env_var_api_key and key and env_var_api_key != key:
         exit_with_error(
-            "Cannot log in with a key when a different PREFECT_API_KEY is present as an"
+            "Cannot log in with a key when a different SYNTASK_API_KEY is present as an"
             " environment variable that will override it."
         )
 
@@ -383,12 +383,12 @@ async def login(
             if not is_correct_key_format:
                 help_message = "Your key is not in our expected format."
             exit_with_error(
-                f"Unable to authenticate with Prefect Cloud. {help_message}"
+                f"Unable to authenticate with Syntask Cloud. {help_message}"
             )
 
     already_logged_in_profiles = []
     for name, profile in profiles.items():
-        profile_key = profile.settings.get(PREFECT_API_KEY)
+        profile_key = profile.settings.get(SYNTASK_API_KEY)
         if (
             # If a key is provided, only show profiles with the same key
             (key and profile_key == key)
@@ -412,7 +412,7 @@ async def login(
 
         if not should_reauth:
             app.console.print("Using the existing authentication on this profile.")
-            key = PREFECT_API_KEY.value()
+            key = SYNTASK_API_KEY.value()
 
     elif already_logged_in_profiles:
         app.console.print(
@@ -457,7 +457,7 @@ async def login(
                 help_message = (
                     "It looks like you're using API key from Cloud 1"
                     " (https://cloud.syntask.khulnasoft.com). Make sure that you generate API key"
-                    " using Cloud 2 (https://app.prefect.cloud)"
+                    " using Cloud 2 (https://app.syntask.cloud)"
                 )
             elif not key.startswith("pnu_") and not key.startswith("pnb_"):
                 help_message = (
@@ -468,10 +468,10 @@ async def login(
                     "Please ensure your credentials are correct and unexpired."
                 )
             exit_with_error(
-                f"Unable to authenticate with Prefect Cloud. {help_message}"
+                f"Unable to authenticate with Syntask Cloud. {help_message}"
             )
         except httpx.HTTPStatusError as exc:
-            exit_with_error(f"Error connecting to Prefect Cloud: {exc!r}")
+            exit_with_error(f"Error connecting to Syntask Cloud: {exc!r}")
 
     if workspace_handle:
         # Search for the given workspace
@@ -520,18 +520,18 @@ async def login(
         else:
             exit_with_error(
                 "No workspaces found! Create a workspace at"
-                f" {PREFECT_CLOUD_UI_URL.value()} and try again."
+                f" {SYNTASK_CLOUD_UI_URL.value()} and try again."
             )
 
     update_current_profile(
         {
-            PREFECT_API_KEY: key,
-            PREFECT_API_URL: selected_workspace.api_url(),
+            SYNTASK_API_KEY: key,
+            SYNTASK_API_URL: selected_workspace.api_url(),
         }
     )
 
     exit_with_success(
-        f"Authenticated with Prefect Cloud! Using workspace {selected_workspace.handle!r}."
+        f"Authenticated with Syntask Cloud! Using workspace {selected_workspace.handle!r}."
     )
 
 
@@ -539,49 +539,49 @@ async def login(
 async def logout():
     """
     Logout the current workspace.
-    Reset PREFECT_API_KEY and PREFECT_API_URL to default.
+    Reset SYNTASK_API_KEY and SYNTASK_API_URL to default.
     """
-    current_profile = prefect.context.get_settings_context().profile
+    current_profile = syntask.context.get_settings_context().profile
     if current_profile is None:
         exit_with_error("There is no current profile set.")
 
-    if current_profile.settings.get(PREFECT_API_KEY) is None:
-        exit_with_error("Current profile is not logged into Prefect Cloud.")
+    if current_profile.settings.get(SYNTASK_API_KEY) is None:
+        exit_with_error("Current profile is not logged into Syntask Cloud.")
 
     update_current_profile(
         {
-            PREFECT_API_URL: None,
-            PREFECT_API_KEY: None,
+            SYNTASK_API_URL: None,
+            SYNTASK_API_KEY: None,
         },
     )
 
-    exit_with_success("Logged out from Prefect Cloud.")
+    exit_with_success("Logged out from Syntask Cloud.")
 
 
 @cloud_app.command(
     deprecated=True,
-    deprecated_name="prefect cloud open",
+    deprecated_name="syntask cloud open",
     deprecated_start_date="Oct 2024",
-    deprecated_help="Use `prefect dashboard open` to open the Prefect UI.",
+    deprecated_help="Use `syntask dashboard open` to open the Syntask UI.",
 )
 async def open():
     """
-    Open the Prefect Cloud UI in the browser.
+    Open the Syntask Cloud UI in the browser.
     """
     confirm_logged_in()
 
-    current_profile = prefect.context.get_settings_context().profile
+    current_profile = syntask.context.get_settings_context().profile
     if current_profile is None:
         exit_with_error(
-            "There is no current profile set - set one with `prefect profile create"
-            " <name>` and `prefect profile use <name>`."
+            "There is no current profile set - set one with `syntask profile create"
+            " <name>` and `syntask profile use <name>`."
         )
     async with get_cloud_client() as client:
         current_workspace = await client.read_current_workspace()
 
     if current_workspace is None:
         exit_with_error(
-            "There is no current workspace set - set one with `prefect cloud workspace"
+            "There is no current workspace set - set one with `syntask cloud workspace"
             " set --workspace <workspace>`."
         )
 
@@ -660,7 +660,7 @@ async def set(
             if workspace is None:
                 exit_with_error("No workspace selected.")
 
-        profile = update_current_profile({PREFECT_API_URL: workspace.api_url()})
+        profile = update_current_profile({SYNTASK_API_URL: workspace.api_url()})
         exit_with_success(
             f"Successfully set workspace to {workspace.handle!r} in profile"
             f" {profile.name!r}."

@@ -14,14 +14,14 @@ from rich.pretty import Pretty
 from rich.table import Table
 from rich.text import Text
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.events.schemas.automations import Automation
-from prefect.exceptions import PrefectHTTPStatusError
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.events.schemas.automations import Automation
+from syntask.exceptions import SyntaskHTTPStatusError
 
-automations_app = PrefectTyper(
+automations_app = SyntaskTyper(
     name="automation",
     help="Manage automations.",
 )
@@ -123,13 +123,13 @@ async def inspect(
 
     Examples:
 
-        $ prefect automation inspect "my-automation"
+        $ syntask automation inspect "my-automation"
 
-        $ prefect automation inspect --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        $ syntask automation inspect --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
-        $ prefect automation inspect "my-automation" --yaml
+        $ syntask automation inspect "my-automation" --yaml
 
-        $ prefect automation inspect "my-automation" --json
+        $ syntask automation inspect "my-automation" --json
     """
     if not id and not name:
         exit_with_error("Please provide either a name or an id.")
@@ -145,7 +145,7 @@ async def inspect(
             try:
                 uuid_id = UUID(id)
                 automation = await client.read_automation(uuid_id)
-            except (PrefectHTTPStatusError, ValueError):
+            except (SyntaskHTTPStatusError, ValueError):
                 exit_with_error(f"Automation with id {id!r} not found.")
 
     if yaml or json:
@@ -192,9 +192,9 @@ async def resume(
 
     Examples:
 
-            $ prefect automation resume "my-automation"
+            $ syntask automation resume "my-automation"
 
-            $ prefect automation resume --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+            $ syntask automation resume --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     """
     if not id and not name:
         exit_with_error("Please provide either a name or an id.")
@@ -224,7 +224,7 @@ async def resume(
             try:
                 uuid_id = UUID(id)
                 automation = await client.read_automation(uuid_id)
-            except (PrefectHTTPStatusError, ValueError):
+            except (SyntaskHTTPStatusError, ValueError):
                 exit_with_error(f"Automation with id {id!r} not found.")
             await client.resume_automation(automation.id)
             exit_with_success(f"Resumed automation with id {str(automation.id)!r}.")
@@ -247,9 +247,9 @@ async def pause(
 
     Examples:
 
-        $ prefect automation pause "my-automation"
+        $ syntask automation pause "my-automation"
 
-        $ prefect automation pause --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        $ syntask automation pause --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     """
     if not id and not name:
         exit_with_error("Please provide either a name or an id.")
@@ -279,7 +279,7 @@ async def pause(
             try:
                 uuid_id = UUID(id)
                 automation = await client.read_automation(uuid_id)
-            except (PrefectHTTPStatusError, ValueError):
+            except (SyntaskHTTPStatusError, ValueError):
                 exit_with_error(f"Automation with id {id!r} not found.")
             await client.pause_automation(automation.id)
             exit_with_success(f"Paused automation with id {str(automation.id)!r}.")
@@ -298,8 +298,8 @@ async def delete(
         id: the id of the automation to delete
 
     Examples:
-        $ prefect automation delete "my-automation"
-        $ prefect automation delete --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        $ syntask automation delete "my-automation"
+        $ syntask automation delete --id "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     """
 
     async with get_client() as client:

@@ -5,10 +5,10 @@ from unittest.mock import MagicMock
 import pytest
 from pendulum.datetime import DateTime
 
-import prefect.settings
-from prefect import flow, task
-from prefect.client.orchestration import PrefectClient
-from prefect.context import (
+import syntask.settings
+from syntask import flow, task
+from syntask.client.orchestration import SyntaskClient
+from syntask.context import (
     GLOBAL_SETTINGS_CONTEXT,
     ContextModel,
     FlowRunContext,
@@ -23,20 +23,20 @@ from prefect.context import (
     tags,
     use_profile,
 )
-from prefect.exceptions import MissingContextError
-from prefect.results import ResultStore, get_result_store
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_HOME,
-    PREFECT_PROFILES_PATH,
+from syntask.exceptions import MissingContextError
+from syntask.results import ResultStore, get_result_store
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_HOME,
+    SYNTASK_PROFILES_PATH,
     Profile,
     ProfilesCollection,
     save_profiles,
     temporary_settings,
 )
-from prefect.states import Running
-from prefect.task_runners import ThreadPoolTaskRunner
+from syntask.states import Running
+from syntask.task_runners import ThreadPoolTaskRunner
 
 
 class ExampleContext(ContextModel):
@@ -87,19 +87,19 @@ def test_context_exit_restores_previous_context():
     assert ExampleContext.get() is None
 
 
-async def test_flow_run_context(prefect_client):
+async def test_flow_run_context(syntask_client):
     @flow
     def foo():
         pass
 
     test_task_runner = ThreadPoolTaskRunner()
-    flow_run = await prefect_client.create_flow_run(foo)
+    flow_run = await syntask_client.create_flow_run(foo)
     result_store = await ResultStore().update_for_flow(foo)
 
     with FlowRunContext(
         flow=foo,
         flow_run=flow_run,
-        client=prefect_client,
+        client=syntask_client,
         task_runner=test_task_runner,
         result_store=result_store,
         parameters={"x": "y"},
@@ -107,25 +107,25 @@ async def test_flow_run_context(prefect_client):
         ctx = FlowRunContext.get()
         assert ctx.flow is foo
         assert ctx.flow_run == flow_run
-        assert ctx.client is prefect_client
+        assert ctx.client is syntask_client
         assert ctx.task_runner is test_task_runner
         assert ctx.result_store == result_store
         assert isinstance(ctx.start_time, DateTime)
         assert ctx.parameters == {"x": "y"}
 
 
-async def test_task_run_context(prefect_client, flow_run):
+async def test_task_run_context(syntask_client, flow_run):
     @task
     def foo():
         pass
 
-    task_run = await prefect_client.create_task_run(foo, flow_run.id, dynamic_key="")
+    task_run = await syntask_client.create_task_run(foo, flow_run.id, dynamic_key="")
     result_store = ResultStore()
 
     with TaskRunContext(
         task=foo,
         task_run=task_run,
-        client=prefect_client,
+        client=syntask_client,
         result_store=result_store,
         parameters={"foo": "bar"},
     ):
@@ -146,7 +146,7 @@ def remove_existing_settings_context():
         SettingsContext.__var__.reset(token)
 
 
-async def test_get_run_context(prefect_client, local_filesystem):
+async def test_get_run_context(syntask_client, local_filesystem):
     @flow
     def foo():
         pass
@@ -156,8 +156,8 @@ async def test_get_run_context(prefect_client, local_filesystem):
         pass
 
     test_task_runner = ThreadPoolTaskRunner()
-    flow_run = await prefect_client.create_flow_run(foo)
-    task_run = await prefect_client.create_task_run(bar, flow_run.id, dynamic_key="")
+    flow_run = await syntask_client.create_flow_run(foo)
+    task_run = await syntask_client.create_task_run(bar, flow_run.id, dynamic_key="")
 
     with pytest.raises(RuntimeError):
         get_run_context()
@@ -168,7 +168,7 @@ async def test_get_run_context(prefect_client, local_filesystem):
     with FlowRunContext(
         flow=foo,
         flow_run=flow_run,
-        client=prefect_client,
+        client=syntask_client,
         task_runner=test_task_runner,
         result_store=await ResultStore().update_for_flow(foo),
         parameters={"x": "y"},
@@ -178,7 +178,7 @@ async def test_get_run_context(prefect_client, local_filesystem):
         with TaskRunContext(
             task=bar,
             task_run=task_run,
-            client=prefect_client,
+            client=syntask_client,
             result_store=await get_result_store().update_for_task(bar, _sync=False),
             parameters={"foo": "bar"},
         ) as task_ctx:
@@ -192,23 +192,23 @@ class TestSettingsContext:
     def temporary_profiles_path(self, tmp_path):
         path = tmp_path / "profiles.toml"
         with temporary_settings(
-            updates={PREFECT_HOME: tmp_path, PREFECT_PROFILES_PATH: path}
+            updates={SYNTASK_HOME: tmp_path, SYNTASK_PROFILES_PATH: path}
         ):
             yield path
 
     def test_settings_context_variable(self):
         with SettingsContext(
             profile=Profile(name="test", settings={}),
-            settings=prefect.settings.get_current_settings(),
+            settings=syntask.settings.get_current_settings(),
         ) as context:
             assert get_settings_context() is context
             assert context.profile == Profile(name="test", settings={})
-            assert context.settings == prefect.settings.get_current_settings()
+            assert context.settings == syntask.settings.get_current_settings()
 
     def test_get_settings_context_missing(self, monkeypatch):
         # It's kind of hard to actually exit the default profile, so we patch `get`
         monkeypatch.setattr(
-            "prefect.context.SettingsContext.get", MagicMock(return_value=None)
+            "syntask.context.SettingsContext.get", MagicMock(return_value=None)
         )
         with pytest.raises(MissingContextError, match="No settings context found"):
             get_settings_context()
@@ -216,7 +216,7 @@ class TestSettingsContext:
     def test_creates_home(self, tmp_path):
         home = tmp_path / "home"
         assert not home.exists()
-        with temporary_settings(updates={PREFECT_HOME: home}):
+        with temporary_settings(updates={SYNTASK_HOME: home}):
             pass
 
         assert home.exists()
@@ -226,23 +226,23 @@ class TestSettingsContext:
             textwrap.dedent(
                 """
                 [profiles.foo]
-                PREFECT_API_URL="test"
+                SYNTASK_API_URL="test"
                 """
             )
         )
         with use_profile("foo") as ctx:
-            assert prefect.settings.PREFECT_API_URL.value() == "test"
-            assert ctx.settings == prefect.settings.get_current_settings()
+            assert syntask.settings.SYNTASK_API_URL.value() == "test"
+            assert ctx.settings == syntask.settings.get_current_settings()
             assert ctx.profile == Profile(
                 name="foo",
-                settings={PREFECT_API_URL: "test"},
+                settings={SYNTASK_API_URL: "test"},
                 source=temporary_profiles_path,
             )
 
     def test_settings_context_does_not_setup_logging(self, monkeypatch):
         setup_logging = MagicMock()
         monkeypatch.setattr(
-            "prefect.logging.configuration.setup_logging", setup_logging
+            "syntask.logging.configuration.setup_logging", setup_logging
         )
         with use_profile("ephemeral"):
             setup_logging.assert_not_called()
@@ -252,33 +252,33 @@ class TestSettingsContext:
             textwrap.dedent(
                 """
                 [profiles.foo]
-                PREFECT_API_URL="foo"
+                SYNTASK_API_URL="foo"
 
                 [profiles.bar]
-                PREFECT_API_URL="bar"
+                SYNTASK_API_URL="bar"
                 """
             )
         )
         with use_profile("foo") as foo_context:
             with use_profile("bar") as bar_context:
-                assert bar_context.settings == prefect.settings.get_current_settings()
+                assert bar_context.settings == syntask.settings.get_current_settings()
                 assert (
-                    prefect.settings.PREFECT_API_URL.value_from(bar_context.settings)
+                    syntask.settings.SYNTASK_API_URL.value_from(bar_context.settings)
                     == "bar"
                 )
                 assert bar_context.profile == Profile(
                     name="bar",
-                    settings={PREFECT_API_URL: "bar"},
+                    settings={SYNTASK_API_URL: "bar"},
                     source=temporary_profiles_path,
                 )
-            assert foo_context.settings == prefect.settings.get_current_settings()
+            assert foo_context.settings == syntask.settings.get_current_settings()
             assert (
-                prefect.settings.PREFECT_API_URL.value_from(foo_context.settings)
+                syntask.settings.SYNTASK_API_URL.value_from(foo_context.settings)
                 == "foo"
             )
             assert foo_context.profile == Profile(
                 name="foo",
-                settings={PREFECT_API_URL: "foo"},
+                settings={SYNTASK_API_URL: "foo"},
                 source=temporary_profiles_path,
             )
 
@@ -286,7 +286,7 @@ class TestSettingsContext:
     def foo_profile(self, temporary_profiles_path):
         profile = Profile(
             name="foo",
-            settings={PREFECT_API_KEY: "xxx"},
+            settings={SYNTASK_API_KEY: "xxx"},
             source=temporary_profiles_path,
         )
         save_profiles(ProfilesCollection(profiles=[profile]))
@@ -301,8 +301,8 @@ class TestSettingsContext:
         "cli_command",
         [
             # No profile name provided
-            ["prefect", "--profile"],
-            # Not called via `prefect` CLI
+            ["syntask", "--profile"],
+            # Not called via `syntask` CLI
             ["foobar", "--profile", "test"],
         ],
     )
@@ -315,8 +315,8 @@ class TestSettingsContext:
 
     def test_root_settings_context_respects_cli(self, monkeypatch, foo_profile):
         use_profile = MagicMock()
-        monkeypatch.setattr("prefect.context.use_profile", use_profile)
-        monkeypatch.setattr("sys.argv", ["/prefect", "--profile", "foo"])
+        monkeypatch.setattr("syntask.context.use_profile", use_profile)
+        monkeypatch.setattr("sys.argv", ["/syntask", "--profile", "foo"])
         result = root_settings_context()
         assert result is not None
 
@@ -327,11 +327,11 @@ class TestSettingsContext:
             textwrap.dedent(
                 """
                 [profiles.foo]
-                PREFECT_API_URL="foo"
+                SYNTASK_API_URL="foo"
                 """
             )
         )
-        monkeypatch.setenv("PREFECT_PROFILE", "foo")
+        monkeypatch.setenv("SYNTASK_PROFILE", "foo")
         settings_context = root_settings_context()
         assert settings_context.profile.name == "foo"
 
@@ -339,8 +339,8 @@ class TestSettingsContext:
         self, monkeypatch, capsys
     ):
         use_profile = MagicMock()
-        monkeypatch.setattr("prefect.context.use_profile", use_profile)
-        monkeypatch.setenv("PREFECT_PROFILE", "bar")
+        monkeypatch.setattr("syntask.context.use_profile", use_profile)
+        monkeypatch.setenv("SYNTASK_PROFILE", "bar")
         root_settings_context()
         _, err = capsys.readouterr()
         assert (
@@ -377,19 +377,19 @@ class TestSerializeContext:
             "settings_context": SettingsContext.get().serialize(),
         }
 
-    async def test_with_flow_run_context(self, prefect_client):
+    async def test_with_flow_run_context(self, syntask_client):
         @flow
         def foo():
             pass
 
         test_task_runner = ThreadPoolTaskRunner()
-        flow_run = await prefect_client.create_flow_run(foo)
+        flow_run = await syntask_client.create_flow_run(foo)
         result_store = await ResultStore().update_for_flow(foo)
 
         with FlowRunContext(
             flow=foo,
             flow_run=flow_run,
-            client=prefect_client,
+            client=syntask_client,
             task_runner=test_task_runner,
             result_store=result_store,
             parameters={"x": "y"},
@@ -402,19 +402,19 @@ class TestSerializeContext:
                 "settings_context": SettingsContext.get().serialize(),
             }
 
-    async def test_with_task_run_context(self, prefect_client, flow_run):
+    async def test_with_task_run_context(self, syntask_client, flow_run):
         @task
         def bar():
             pass
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             bar, flow_run.id, dynamic_key=""
         )
 
         with TaskRunContext(
             task=bar,
             task_run=task_run,
-            client=prefect_client,
+            client=syntask_client,
             result_store=await get_result_store().update_for_task(bar),
             parameters={"foo": "bar"},
         ) as task_ctx:
@@ -439,7 +439,7 @@ class TestSerializeContext:
     def test_with_multiple_contexts(self):
         with tags("a", "b") as current_tags:
             with temporary_settings(
-                updates={PREFECT_API_KEY: "test", PREFECT_API_URL: "test"}
+                updates={SYNTASK_API_KEY: "test", SYNTASK_API_URL: "test"}
             ):
                 serialized = serialize_context()
                 assert serialized == {
@@ -461,18 +461,18 @@ class TestHydratedContext:
             assert TagsContext.get().current_tags == set()
             assert SettingsContext.get() == initial_settings_context
 
-    async def test_with_flow_run_context(self, prefect_client):
+    async def test_with_flow_run_context(self, syntask_client):
         @flow
         def foo():
             pass
 
         test_task_runner = ThreadPoolTaskRunner()
-        flow_run = await prefect_client.create_flow_run(foo)
+        flow_run = await syntask_client.create_flow_run(foo)
         result_store = await ResultStore().update_for_flow(foo)
         flow_run_context = FlowRunContext(
             flow=foo,
             flow_run=flow_run,
-            client=prefect_client,
+            client=syntask_client,
             task_runner=test_task_runner,
             result_store=result_store,
             parameters={"x": "y"},
@@ -499,14 +499,14 @@ class TestHydratedContext:
             assert hydrated_flow_run_context.parameters == {"x": "y"}
 
     async def test_task_runner_started_when_hydrating_context(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         """
         This test ensures the task runner for a flow run context is started when
         the context is hydrated. This enables calling .submit and .map on tasks
         running in remote environments like Dask and Ray.
 
-        Regression test for https://github.com/synopkg/synopkg/issues/14788
+        Regression test for https://github.com/synopkg/syntask/issues/14788
         """
 
         @flow
@@ -518,12 +518,12 @@ class TestHydratedContext:
             return 42
 
         test_task_runner = ThreadPoolTaskRunner()
-        flow_run = await prefect_client.create_flow_run(foo, state=Running())
+        flow_run = await syntask_client.create_flow_run(foo, state=Running())
         result_store = await ResultStore().update_for_flow(foo)
         flow_run_context = FlowRunContext(
             flow=foo,
             flow_run=flow_run,
-            client=prefect_client,
+            client=syntask_client,
             task_runner=test_task_runner,
             result_store=result_store,
             parameters={"x": "y"},
@@ -540,18 +540,18 @@ class TestHydratedContext:
             future = hydrated_flow_run_context.task_runner.submit(bar, parameters={})
             assert future.result() == 42
 
-    async def test_with_task_run_context(self, prefect_client, flow_run):
+    async def test_with_task_run_context(self, syntask_client, flow_run):
         @task
         def bar():
             pass
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             bar, flow_run.id, dynamic_key=""
         )
         task_ctx = TaskRunContext(
             task=bar,
             task_run=task_run,
-            client=prefect_client,
+            client=syntask_client,
             result_store=await get_result_store().update_for_task(bar),
             parameters={"foo": "bar"},
         )

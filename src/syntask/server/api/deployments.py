@@ -12,33 +12,33 @@ from fastapi import Body, Depends, HTTPException, Path, Response, status
 from pydantic_extra_types.pendulum_dt import DateTime
 from starlette.background import BackgroundTasks
 
-import prefect.server.api.dependencies as dependencies
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.api.validation import (
+import syntask.server.api.dependencies as dependencies
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.api.validation import (
     validate_job_variables_for_deployment,
     validate_job_variables_for_deployment_flow_run,
 )
-from prefect.server.api.workers import WorkerLookups
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import MissingVariableError, ObjectNotFoundError
-from prefect.server.models.deployments import mark_deployments_ready
-from prefect.server.models.workers import DEFAULT_AGENT_WORK_POOL_NAME
-from prefect.server.schemas.responses import DeploymentPaginationResponse
-from prefect.server.utilities.server import PrefectRouter
-from prefect.utilities.schema_tools.hydration import (
+from syntask.server.api.workers import WorkerLookups
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import MissingVariableError, ObjectNotFoundError
+from syntask.server.models.deployments import mark_deployments_ready
+from syntask.server.models.workers import DEFAULT_AGENT_WORK_POOL_NAME
+from syntask.server.schemas.responses import DeploymentPaginationResponse
+from syntask.server.utilities.server import SyntaskRouter
+from syntask.utilities.schema_tools.hydration import (
     HydrationContext,
     HydrationError,
     hydrate,
 )
-from prefect.utilities.schema_tools.validation import (
+from syntask.utilities.schema_tools.validation import (
     CircularSchemaRefError,
     ValidationError,
     validate,
 )
 
-router = PrefectRouter(prefix="/deployments", tags=["Deployments"])
+router = SyntaskRouter(prefix="/deployments", tags=["Deployments"])
 
 
 def _multiple_schedules_error(deployment_id) -> HTTPException:
@@ -60,7 +60,7 @@ async def create_deployment(
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
     created_by: Optional[schemas.core.CreatedBy] = Depends(dependencies.get_created_by),
     updated_by: Optional[schemas.core.UpdatedBy] = Depends(dependencies.get_updated_by),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.responses.DeploymentResponse:
     """
     Gracefully creates a new deployment from the provided schema. If a deployment with
@@ -144,7 +144,7 @@ async def create_deployment(
                         "Error creating deployment. Could not find infrastructure"
                         f" block with id: {deployment.infrastructure_document_id}. This"
                         " usually occurs when applying a deployment specification that"
-                        " was built against a different Prefect database / workspace."
+                        " was built against a different Syntask database / workspace."
                     ),
                 )
 
@@ -160,7 +160,7 @@ async def create_deployment(
                         "Error creating deployment. Could not find storage block with"
                         f" id: {deployment.storage_document_id}. This usually occurs"
                         " when applying a deployment specification that was built"
-                        " against a different Prefect database / workspace."
+                        " against a different Syntask database / workspace."
                     ),
                 )
 
@@ -181,7 +181,7 @@ async def create_deployment(
 async def update_deployment(
     deployment: schemas.actions.DeploymentUpdate,
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         existing_deployment = await models.deployments.read_deployment(
@@ -269,7 +269,7 @@ async def update_deployment(
 async def read_deployment_by_name(
     flow_name: str = Path(..., description="The name of the flow"),
     deployment_name: str = Path(..., description="The name of the deployment"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.responses.DeploymentResponse:
     """
     Get a deployment using the name of the flow and the deployment.
@@ -290,7 +290,7 @@ async def read_deployment_by_name(
 @router.get("/{id}")
 async def read_deployment(
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.responses.DeploymentResponse:
     """
     Get a deployment by id.
@@ -321,7 +321,7 @@ async def read_deployments(
     sort: schemas.sorting.DeploymentSort = Body(
         schemas.sorting.DeploymentSort.NAME_ASC
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.DeploymentResponse]:
     """
     Query for deployments.
@@ -360,7 +360,7 @@ async def paginate_deployments(
     sort: schemas.sorting.DeploymentSort = Body(
         schemas.sorting.DeploymentSort.NAME_ASC
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> DeploymentPaginationResponse:
     """
     Pagination query for flow runs.
@@ -417,7 +417,7 @@ async def get_scheduled_flow_runs_for_deployments(
         None, description="The maximum time to look for scheduled flow runs"
     ),
     limit: int = dependencies.LimitBody(),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.FlowRunResponse]:
     """
     Get scheduled runs for a set of deployments. Used by a runner to poll for work.
@@ -465,7 +465,7 @@ async def count_deployments(
     deployments: schemas.filters.DeploymentFilter = None,
     work_pools: schemas.filters.WorkPoolFilter = None,
     work_pool_queues: schemas.filters.WorkQueueFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     """
     Count deployments.
@@ -485,7 +485,7 @@ async def count_deployments(
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_deployment(
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete a deployment by id.
@@ -516,7 +516,7 @@ async def schedule_deployment(
     ),
     min_runs: int = Body(None, description="The minimum number of runs to schedule"),
     max_runs: int = Body(None, description="The maximum number of runs to schedule"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> None:
     """
     Schedule runs for a deployment. For backfills, provide start/end times in the past.
@@ -549,7 +549,7 @@ async def schedule_deployment(
 @router.post("/{id:uuid}/resume_deployment")
 async def resume_deployment(
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> None:
     """
     Set a deployment schedule to active. Runs will be scheduled immediately.
@@ -568,7 +568,7 @@ async def resume_deployment(
 @router.post("/{id:uuid}/pause_deployment")
 async def pause_deployment(
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> None:
     """
     Set a deployment schedule to inactive. Any auto-scheduled runs still in a Scheduled
@@ -602,7 +602,7 @@ async def create_flow_run_from_deployment(
     flow_run: schemas.actions.DeploymentFlowRunCreate,
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
     created_by: Optional[schemas.core.CreatedBy] = Depends(dependencies.get_created_by),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
     response: Response = None,
 ) -> schemas.responses.FlowRunResponse:
@@ -733,7 +733,7 @@ async def create_flow_run_from_deployment(
 @router.get("/{id}/work_queue_check", deprecated=True)
 async def work_queue_check_for_deployment(
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.core.WorkQueue]:
     """
     Get list of work-queues that are able to pick up the specified deployment.
@@ -759,7 +759,7 @@ async def work_queue_check_for_deployment(
 @router.get("/{id}/schedules")
 async def read_deployment_schedules(
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.core.DeploymentSchedule]:
     async with db.session_context() as session:
         deployment = await models.deployments.read_deployment(
@@ -783,7 +783,7 @@ async def create_deployment_schedules(
     schedules: List[schemas.actions.DeploymentScheduleCreate] = Body(
         default=..., description="The schedules to create"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.core.DeploymentSchedule]:
     async with db.session_context(begin_transaction=True) as session:
         deployment = await models.deployments.read_deployment(
@@ -811,7 +811,7 @@ async def update_deployment_schedule(
     schedule: schemas.actions.DeploymentScheduleUpdate = Body(
         default=..., description="The updated schedule"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         deployment = await models.deployments.read_deployment(
@@ -844,7 +844,7 @@ async def update_deployment_schedule(
 async def delete_deployment_schedule(
     deployment_id: UUID = Path(..., description="The deployment id", alias="id"),
     schedule_id: UUID = Path(..., description="The schedule id", alias="schedule_id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         deployment = await models.deployments.read_deployment(

@@ -6,14 +6,14 @@ from fastapi import (
 )
 from fastapi.testclient import TestClient
 
-from prefect.server.utilities.server import PrefectRouter
+from syntask.server.utilities.server import SyntaskRouter
 
 
 class TestParsing:
     @pytest.fixture
     def client(self):
         app = FastAPI()
-        router = PrefectRouter()
+        router = SyntaskRouter()
 
         @router.get("/{x}")
         def echo(x: str):

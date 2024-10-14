@@ -5,16 +5,16 @@ install_requires = open("requirements-client.txt").read().strip().split("\n")
 
 setup(
     # Package metadata
-    name="prefect-client",
+    name="syntask-client",
     description="Workflow orchestration and management.",
-    author="Prefect Technologies, Inc.",
-    author_email="help@syntask.khulnasoft.com",
+    author="Syntask Technologies, Inc.",
+    author_email="help@khulnasoft.com",
     url="https://www.syntask.khulnasoft.com",
     project_urls={
-        "Changelog": "https://github.com/synopkg/synopkg/releases",
+        "Changelog": "https://github.com/synopkg/syntask/releases",
         "Documentation": "https://docs.syntask.khulnasoft.com",
-        "Source": "https://github.com/synopkg/synopkg",
-        "Tracker": "https://github.com/synopkg/synopkg/issues",
+        "Source": "https://github.com/synopkg/syntask",
+        "Tracker": "https://github.com/synopkg/syntask/issues",
     },
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

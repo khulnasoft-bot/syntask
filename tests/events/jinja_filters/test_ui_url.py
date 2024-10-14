@@ -5,10 +5,10 @@ import jinja2
 import pytest
 from pendulum import DateTime
 
-from prefect.events.schemas.events import ReceivedEvent, Resource
-from prefect.server.events.jinja_filters import ui_url
-from prefect.server.events.schemas.automations import Automation, EventTrigger, Posture
-from prefect.server.schemas.core import (
+from syntask.events.schemas.events import ReceivedEvent, Resource
+from syntask.server.events.jinja_filters import ui_url
+from syntask.server.events.schemas.automations import Automation, EventTrigger, Posture
+from syntask.server.schemas.core import (
     Deployment,
     Flow,
     FlowRun,
@@ -16,17 +16,17 @@ from prefect.server.schemas.core import (
     WorkPool,
     WorkQueue,
 )
-from prefect.settings import PREFECT_UI_URL, temporary_settings
+from syntask.settings import SYNTASK_UI_URL, temporary_settings
 
 template_environment = jinja2.Environment()
 template_environment.filters["ui_url"] = ui_url
 
-MOCK_PREFECT_UI_URL = "http://localhost:3000"
+MOCK_SYNTASK_UI_URL = "http://localhost:3000"
 
 
 @pytest.fixture(autouse=True)
-def mock_prefect_ui_url():
-    with temporary_settings({PREFECT_UI_URL: MOCK_PREFECT_UI_URL}):
+def mock_syntask_ui_url():
+    with temporary_settings({SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL}):
         yield
 
 
@@ -39,7 +39,7 @@ async def chonk_party() -> Automation:
         trigger=EventTrigger(
             expect={"animal.ingested"},
             match_related={
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "genus": "Hemerocallis",
                 "species": "fulva",
             },
@@ -65,7 +65,7 @@ def woodchonk_walked(start_of_test: DateTime) -> ReceivedEvent:
             "family": "Sciuridae",
             "genus": "Marmota",
             "species": "monax",
-            "prefect.resource.id": "woodchonk",
+            "syntask.resource.id": "woodchonk",
         },
         id=uuid4(),
     )
@@ -88,7 +88,7 @@ def test_deployment_resource_url(chonk_party: Automation):
         {
             "automation": chonk_party,
             "deployment_resource": Resource.model_validate(
-                {"prefect.resource.id": f"prefect.deployment.{deployment_id}"}
+                {"syntask.resource.id": f"syntask.deployment.{deployment_id}"}
             ),
         }
     )
@@ -104,7 +104,7 @@ def test_flow_resource_url(chonk_party: Automation):
         {
             "automation": chonk_party,
             "flow_resource": Resource.model_validate(
-                {"prefect.resource.id": f"prefect.flow.{flow_id}"}
+                {"syntask.resource.id": f"syntask.flow.{flow_id}"}
             ),
         }
     )
@@ -120,7 +120,7 @@ def test_flow_run_resource_url(chonk_party: Automation):
         {
             "automation": chonk_party,
             "flow_run_resource": Resource.model_validate(
-                {"prefect.resource.id": f"prefect.flow-run.{flow_run_id}"}
+                {"syntask.resource.id": f"syntask.flow-run.{flow_run_id}"}
             ),
         }
     )
@@ -136,7 +136,7 @@ def test_task_run_resource_url(chonk_party: Automation):
         {
             "automation": chonk_party,
             "task_run_resource": Resource.model_validate(
-                {"prefect.resource.id": f"prefect.task-run.{task_run_id}"}
+                {"syntask.resource.id": f"syntask.task-run.{task_run_id}"}
             ),
         }
     )
@@ -152,7 +152,7 @@ def test_work_queue_resource_url(chonk_party: Automation):
         {
             "automation": chonk_party,
             "work_queue_resource": Resource.model_validate(
-                {"prefect.resource.id": f"prefect.work-queue.{work_queue_id}"}
+                {"syntask.resource.id": f"syntask.work-queue.{work_queue_id}"}
             ),
         }
     )
@@ -167,8 +167,8 @@ def test_work_pool_resource_url(chonk_party: Automation):
             "automation": chonk_party,
             "work_pool_resource": Resource.model_validate(
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{uuid4()}",
-                    "prefect.resource.name": "hi-there",
+                    "syntask.resource.id": f"syntask.work-pool.{uuid4()}",
+                    "syntask.resource.name": "hi-there",
                 }
             ),
         }

@@ -5,16 +5,16 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.blocks.core import Block
-from prefect.blocks.system import JSON, DateTime, Secret
-from prefect.blocks.webhook import Webhook
-from prefect.filesystems import LocalFileSystem
-from prefect.logging import get_logger
-from prefect.server import models, schemas
+from syntask.blocks.core import Block
+from syntask.blocks.system import JSON, DateTime, Secret
+from syntask.blocks.webhook import Webhook
+from syntask.filesystems import LocalFileSystem
+from syntask.logging import get_logger
+from syntask.server import models, schemas
 
 if TYPE_CHECKING:
-    from prefect.client.schemas import BlockSchema as ClientBlockSchema
-    from prefect.client.schemas import BlockType as ClientBlockType
+    from syntask.client.schemas import BlockSchema as ClientBlockSchema
+    from syntask.client.schemas import BlockType as ClientBlockType
 
 logger = get_logger("server")
 
@@ -58,7 +58,7 @@ async def register_block_schema(
     block_schema: Union[schemas.core.BlockSchema, "ClientBlockSchema"],
 ) -> UUID:
     """
-    Stores the provided block schema in the Prefect REST API database.
+    Stores the provided block schema in the Syntask REST API database.
 
     If a block schema with a matching checksum and version is already saved,
     then the ID of the existing block schema will be returned.
@@ -71,7 +71,7 @@ async def register_block_schema(
         The ID of the registered block schema.
     """
 
-    from prefect.server.models.block_schemas import (
+    from syntask.server.models.block_schemas import (
         create_block_schema,
         read_block_schema_by_checksum,
     )
@@ -94,7 +94,7 @@ async def register_block_type(
     block_type: Union[schemas.core.BlockType, "ClientBlockType"],
 ) -> UUID:
     """
-    Stores the provided block type in the Prefect REST API database.
+    Stores the provided block type in the Syntask REST API database.
 
     If a block type with a matching slug is already saved, then the block type
     will be updated to match the passed in block type.
@@ -106,7 +106,7 @@ async def register_block_type(
     Returns:
         The ID of the registered block type.
     """
-    from prefect.server.models.block_types import (
+    from syntask.server.models.block_types import (
         create_block_type,
         read_block_type_by_slug,
         update_block_type,
@@ -142,8 +142,8 @@ async def _load_collection_blocks_data() -> Dict[str, Any]:
 
 async def _register_registry_blocks(session: AsyncSession) -> None:
     """Registers block from the client block registry."""
-    from prefect.blocks.core import Block
-    from prefect.utilities.dispatch import get_registry_for_type
+    from syntask.blocks.core import Block
+    from syntask.utilities.dispatch import get_registry_for_type
 
     block_registry = get_registry_for_type(Block) or {}
 
@@ -203,7 +203,7 @@ async def _register_collection_blocks(session: AsyncSession) -> None:
 
 async def run_block_auto_registration(session: AsyncSession) -> None:
     """
-    Registers all blocks in the client block registry and any blocks from Prefect
+    Registers all blocks in the client block registry and any blocks from Syntask
     Collections that are configured for auto-registration.
 
     Args:

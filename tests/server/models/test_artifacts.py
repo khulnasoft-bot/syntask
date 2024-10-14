@@ -2,8 +2,8 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.server import models, schemas
-from prefect.server.schemas import actions
+from syntask.server import models, schemas
+from syntask.server.schemas import actions
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ Create Date: 2023-01-08 17:53:27.444733
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "bb38729c471a"
@@ -49,7 +49,7 @@ def upgrade():
         "work_pool",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -62,13 +62,13 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
@@ -77,14 +77,14 @@ def upgrade():
         sa.Column("type", sa.String(), nullable=True),
         sa.Column(
             "base_job_template",
-            prefect.server.utilities.database.JSON(),
+            syntask.server.utilities.database.JSON(),
             nullable=False,
             server_default="{}",
         ),
         sa.Column("is_paused", sa.Boolean(), server_default="0", nullable=False),
         sa.Column("concurrency_limit", sa.Integer(), nullable=True),
         sa.Column(
-            "default_queue_id", prefect.server.utilities.database.UUID(), nullable=True
+            "default_queue_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_work_pool")),
         sa.UniqueConstraint("name", name=op.f("uq_work_pool__name")),
@@ -99,7 +99,7 @@ def upgrade():
         "worker",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -112,25 +112,25 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column(
             "last_heartbeat_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
-            "work_pool_id", prefect.server.utilities.database.UUID(), nullable=False
+            "work_pool_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["work_pool_id"],
@@ -164,7 +164,7 @@ def upgrade():
         "work_pool_queue",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -177,13 +177,13 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
@@ -193,7 +193,7 @@ def upgrade():
         sa.Column("concurrency_limit", sa.Integer(), nullable=True),
         sa.Column("priority", sa.Integer(), nullable=False),
         sa.Column(
-            "work_pool_id", prefect.server.utilities.database.UUID(), nullable=False
+            "work_pool_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["work_pool_id"],
@@ -236,7 +236,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "work_pool_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )
@@ -257,7 +257,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "work_pool_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )
@@ -299,7 +299,7 @@ def downgrade():
         "worker_pool",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -312,13 +312,13 @@ def downgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
@@ -327,14 +327,14 @@ def downgrade():
         sa.Column("type", sa.String(), nullable=True),
         sa.Column(
             "base_job_template",
-            prefect.server.utilities.database.JSON(),
+            syntask.server.utilities.database.JSON(),
             nullable=False,
             server_default="{}",
         ),
         sa.Column("is_paused", sa.Boolean(), server_default="0", nullable=False),
         sa.Column("concurrency_limit", sa.Integer(), nullable=True),
         sa.Column(
-            "default_queue_id", prefect.server.utilities.database.UUID(), nullable=True
+            "default_queue_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_worker_pool")),
         sa.UniqueConstraint("name", name=op.f("uq_worker_pool__name")),
@@ -351,7 +351,7 @@ def downgrade():
         "worker",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -364,25 +364,25 @@ def downgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column(
             "last_heartbeat_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
-            "worker_pool_id", prefect.server.utilities.database.UUID(), nullable=False
+            "worker_pool_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["worker_pool_id"],
@@ -416,7 +416,7 @@ def downgrade():
         "worker_pool_queue",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -429,13 +429,13 @@ def downgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
@@ -445,7 +445,7 @@ def downgrade():
         sa.Column("concurrency_limit", sa.Integer(), nullable=True),
         sa.Column("priority", sa.Integer(), nullable=False),
         sa.Column(
-            "worker_pool_id", prefect.server.utilities.database.UUID(), nullable=False
+            "worker_pool_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["worker_pool_id"],
@@ -488,7 +488,7 @@ def downgrade():
         batch_op.add_column(
             sa.Column(
                 "worker_pool_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )
@@ -509,7 +509,7 @@ def downgrade():
         batch_op.add_column(
             sa.Column(
                 "worker_pool_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )

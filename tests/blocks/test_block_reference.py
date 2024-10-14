@@ -6,9 +6,9 @@ from uuid import UUID, uuid4
 import pydantic
 import pytest
 
-from prefect.blocks.core import Block
-from prefect.exceptions import ParameterTypeError
-from prefect.flows import flow
+from syntask.blocks.core import Block
+from syntask.exceptions import ParameterTypeError
+from syntask.flows import flow
 
 
 class TestBlockReference:
@@ -25,9 +25,9 @@ class TestBlockReference:
         d: str
 
     @pytest.fixture
-    def block_document_id(self, prefect_client) -> UUID:
+    def block_document_id(self, syntask_client) -> UUID:
         block = self.ReferencedBlock(a=1, b="foo")
-        block.save("block-reference", client=prefect_client)
+        block.save("block-reference", client=syntask_client)
         return block._block_document_id
 
     def test_block_load_from_reference(

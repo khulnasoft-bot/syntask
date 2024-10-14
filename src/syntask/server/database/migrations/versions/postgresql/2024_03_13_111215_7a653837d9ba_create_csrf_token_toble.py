@@ -9,7 +9,7 @@ Create Date: 2024-03-13 11:12:15.491121
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "7a653837d9ba"
@@ -25,24 +25,24 @@ def upgrade():
         sa.Column("client", sa.String(), nullable=False),
         sa.Column(
             "expiration",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),

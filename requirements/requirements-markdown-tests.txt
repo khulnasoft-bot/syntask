@@ -1,4 +1,4 @@
-pytest-markdown-docs @ git+https://github.com/PrefectHQ/pytest-markdown-docs@mdx-comment-support
+pytest-markdown-docs @ git+https://github.com/SynoPKG/pytest-markdown-docs@mdx-comment-support
 
 pandas
 prefect-aws

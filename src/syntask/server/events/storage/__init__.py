@@ -1,12 +1,12 @@
 from base64 import b64decode, b64encode
 import json
 from typing import TYPE_CHECKING, List, Optional, Tuple
-from prefect.server.events.counting import TimeUnit
-from prefect.server.events.schemas.events import EventCount
+from syntask.server.events.counting import TimeUnit
+from syntask.server.events.schemas.events import EventCount
 
 
 if TYPE_CHECKING:  # pragma: no cover
-    from prefect.server.events.filters import EventFilter
+    from syntask.server.events.filters import EventFilter
 
 
 INTERACTIVE_PAGE_SIZE: int = 50
@@ -35,7 +35,7 @@ def to_page_token(
 
 
 def from_page_token(page_token: str) -> Tuple["EventFilter", int, int, int]:
-    from prefect.server.events.filters import EventFilter
+    from syntask.server.events.filters import EventFilter
 
     try:
         parameters = json.loads(b64decode(page_token))

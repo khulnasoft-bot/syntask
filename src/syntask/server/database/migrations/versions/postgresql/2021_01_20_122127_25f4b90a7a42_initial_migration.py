@@ -12,11 +12,11 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import Text
 
-import prefect
-from prefect.server.utilities.schemas import PrefectBaseModel
+import syntask
+from syntask.server.utilities.schemas import SyntaskBaseModel
 
 
-class DataDocument(PrefectBaseModel):
+class DataDocument(SyntaskBaseModel):
     """
     DataDocuments were deprecated in September 2022 and this stub is included here
     to simplify removal from the library.
@@ -39,26 +39,26 @@ def upgrade():
         "flow",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column(
             "tags",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
@@ -70,34 +70,34 @@ def upgrade():
         "log",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("level", sa.SmallInteger(), nullable=False),
         sa.Column(
-            "flow_run_id", prefect.server.utilities.database.UUID(), nullable=False
+            "flow_run_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.Column(
-            "task_run_id", prefect.server.utilities.database.UUID(), nullable=True
+            "task_run_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.Column("message", sa.Text(), nullable=False),
         sa.Column(
             "timestamp",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_log")),
@@ -111,19 +111,19 @@ def upgrade():
         "concurrency_limit",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -131,7 +131,7 @@ def upgrade():
         sa.Column("concurrency_limit", sa.Integer(), nullable=False),
         sa.Column(
             "active_slots",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
@@ -150,26 +150,26 @@ def upgrade():
         "saved_search",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column(
             "filters",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
@@ -183,31 +183,31 @@ def upgrade():
         "task_run_state_cache",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column("cache_key", sa.String(), nullable=False),
         sa.Column(
             "cache_expiration",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "task_run_state_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_task_run_state_cache")),
@@ -222,27 +222,27 @@ def upgrade():
         "deployment",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column(
             "schedule",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.schedules.SCHEDULE_TYPES
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.schedules.SCHEDULE_TYPES
             ),
             nullable=True,
         ),
@@ -251,28 +251,28 @@ def upgrade():
         ),
         sa.Column(
             "tags",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
         sa.Column(
             "parameters",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="{}",
             nullable=False,
         ),
         sa.Column(
             "flow_data",
-            prefect.server.utilities.database.Pydantic(DataDocument),
+            syntask.server.utilities.database.Pydantic(DataDocument),
             nullable=True,
         ),
         sa.Column("flow_runner_type", sa.String(), nullable=True),
         sa.Column(
             "flow_runner_config",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             nullable=True,
         ),
-        sa.Column("flow_id", prefect.server.utilities.database.UUID(), nullable=False),
+        sa.Column("flow_id", syntask.server.utilities.database.UUID(), nullable=False),
         sa.ForeignKeyConstraint(
             ["flow_id"],
             ["flow.id"],
@@ -294,19 +294,19 @@ def upgrade():
         "flow_run",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -327,74 +327,74 @@ def upgrade():
         sa.Column("run_count", sa.Integer(), server_default="0", nullable=False),
         sa.Column(
             "expected_start_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "next_scheduled_start_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "start_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "end_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column("total_run_time", sa.Interval(), server_default="0", nullable=False),
         sa.Column("flow_version", sa.String(), nullable=True),
         sa.Column(
             "parameters",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="{}",
             nullable=False,
         ),
         sa.Column("idempotency_key", sa.String(), nullable=True),
         sa.Column(
             "context",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="{}",
             nullable=False,
         ),
         sa.Column(
             "empirical_policy",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="{}",
             nullable=False,
         ),
         sa.Column(
             "tags",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
         sa.Column("flow_runner_type", sa.String(), nullable=True),
         sa.Column(
             "flow_runner_config",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             nullable=True,
         ),
         sa.Column(
             "empirical_config",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="{}",
             nullable=False,
         ),
         sa.Column("auto_scheduled", sa.Boolean(), server_default="0", nullable=False),
-        sa.Column("flow_id", prefect.server.utilities.database.UUID(), nullable=False),
+        sa.Column("flow_id", syntask.server.utilities.database.UUID(), nullable=False),
         sa.Column(
-            "deployment_id", prefect.server.utilities.database.UUID(), nullable=True
+            "deployment_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.Column(
             "parent_task_run_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=True,
         ),
-        sa.Column("state_id", prefect.server.utilities.database.UUID(), nullable=True),
+        sa.Column("state_id", syntask.server.utilities.database.UUID(), nullable=True),
         sa.ForeignKeyConstraint(
             ["deployment_id"],
             ["deployment.id"],
@@ -453,19 +453,19 @@ def upgrade():
         "flow_run_state",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -484,7 +484,7 @@ def upgrade():
         ),
         sa.Column(
             "timestamp",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -492,19 +492,19 @@ def upgrade():
         sa.Column("message", sa.String(), nullable=True),
         sa.Column(
             "state_details",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.states.StateDetails
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.states.StateDetails
             ),
             server_default="{}",
             nullable=False,
         ),
         sa.Column(
             "data",
-            prefect.server.utilities.database.Pydantic(DataDocument),
+            syntask.server.utilities.database.Pydantic(DataDocument),
             nullable=True,
         ),
         sa.Column(
-            "flow_run_id", prefect.server.utilities.database.UUID(), nullable=False
+            "flow_run_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["flow_run_id"],
@@ -527,19 +527,19 @@ def upgrade():
         "task_run",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -560,22 +560,22 @@ def upgrade():
         sa.Column("run_count", sa.Integer(), server_default="0", nullable=False),
         sa.Column(
             "expected_start_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "next_scheduled_start_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "start_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "end_time",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column("total_run_time", sa.Interval(), server_default="0", nullable=False),
@@ -584,28 +584,28 @@ def upgrade():
         sa.Column("cache_key", sa.String(), nullable=True),
         sa.Column(
             "cache_expiration",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column("task_version", sa.String(), nullable=True),
         sa.Column(
             "empirical_policy",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.core.TaskRunPolicy
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.core.TaskRunPolicy
             ),
             server_default="{}",
             nullable=False,
         ),
         sa.Column(
             "task_inputs",
-            prefect.server.utilities.database.Pydantic(
+            syntask.server.utilities.database.Pydantic(
                 Dict[
                     str,
                     List[
                         Union[
-                            prefect.server.schemas.core.TaskRunResult,
-                            prefect.server.schemas.core.Parameter,
-                            prefect.server.schemas.core.Constant,
+                            syntask.server.schemas.core.TaskRunResult,
+                            syntask.server.schemas.core.Parameter,
+                            syntask.server.schemas.core.Constant,
                         ]
                     ],
                 ]
@@ -615,14 +615,14 @@ def upgrade():
         ),
         sa.Column(
             "tags",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
         sa.Column(
-            "flow_run_id", prefect.server.utilities.database.UUID(), nullable=False
+            "flow_run_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
-        sa.Column("state_id", prefect.server.utilities.database.UUID(), nullable=True),
+        sa.Column("state_id", syntask.server.utilities.database.UUID(), nullable=True),
         sa.ForeignKeyConstraint(
             ["flow_run_id"],
             ["flow_run.id"],
@@ -658,19 +658,19 @@ def upgrade():
         "task_run_state",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -689,7 +689,7 @@ def upgrade():
         ),
         sa.Column(
             "timestamp",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -697,19 +697,19 @@ def upgrade():
         sa.Column("message", sa.String(), nullable=True),
         sa.Column(
             "state_details",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.states.StateDetails
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.states.StateDetails
             ),
             server_default="{}",
             nullable=False,
         ),
         sa.Column(
             "data",
-            prefect.server.utilities.database.Pydantic(DataDocument),
+            syntask.server.utilities.database.Pydantic(DataDocument),
             nullable=True,
         ),
         sa.Column(
-            "task_run_id", prefect.server.utilities.database.UUID(), nullable=False
+            "task_run_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["task_run_id"],

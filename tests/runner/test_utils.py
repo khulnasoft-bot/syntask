@@ -4,8 +4,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 
-from prefect import __version__ as PREFECT_VERSION
-from prefect.runner.utils import (
+from syntask import __version__ as SYNTASK_VERSION
+from syntask.runner.utils import (
     inject_schemas_into_openapi,
     merge_definitions,
     update_refs_to_components,
@@ -55,7 +55,7 @@ def deployment_schemas():
 def openapi_schema():
     return {
         "openapi": "3.1.0",
-        "info": {"title": "FastAPI Prefect Runner", "version": PREFECT_VERSION},
+        "info": {"title": "FastAPI Syntask Runner", "version": SYNTASK_VERSION},
         "components": {"schemas": {}},
         "paths": {},
     }
@@ -109,7 +109,7 @@ def nested_schema_with_refs():
 def augmented_openapi_schema():
     return {
         "openapi": "3.1.0",
-        "info": {"title": "FastAPI Prefect Runner", "version": PREFECT_VERSION},
+        "info": {"title": "FastAPI Syntask Runner", "version": SYNTASK_VERSION},
         "paths": {
             "/dummy": {
                 "get": {

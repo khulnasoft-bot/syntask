@@ -53,7 +53,7 @@ def concurrency(
     Example:
     A simple example of using the sync `concurrency` context manager:
     ```python
-    from prefect.concurrency.v1.sync import concurrency
+    from syntask.concurrency.v1.sync import concurrency
 
     def resource_heavy():
         with concurrency("test"):

@@ -1,9 +1,9 @@
 import threading
 from typing import Dict, Optional, TypedDict
 
-from prefect._internal.compatibility import deprecated
-from prefect.results import BaseResult
-from prefect.transactions import IsolationLevel
+from syntask._internal.compatibility import deprecated
+from syntask.results import BaseResult
+from syntask.transactions import IsolationLevel
 
 from .base import RecordStore, TransactionRecord
 

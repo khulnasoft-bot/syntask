@@ -7,11 +7,11 @@ from fastapi import FastAPI, status
 from httpx import ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.api.middleware import CsrfMiddleware
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.settings import (
-    PREFECT_SERVER_CSRF_PROTECTION_ENABLED,
+from syntask.server import models, schemas
+from syntask.server.api.middleware import CsrfMiddleware
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.settings import (
+    SYNTASK_SERVER_CSRF_PROTECTION_ENABLED,
     temporary_settings,
 )
 
@@ -43,7 +43,7 @@ async def client():
 
 @pytest.fixture(autouse=True)
 def enable_csrf_protection():
-    with temporary_settings({PREFECT_SERVER_CSRF_PROTECTION_ENABLED: True}):
+    with temporary_settings({SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: True}):
         yield
 
 
@@ -58,7 +58,7 @@ async def csrf_token(session: AsyncSession) -> schemas.core.CsrfToken:
 
 @pytest.mark.parametrize("enabled", [True, False])
 async def test_csrf_get_pass_through(enabled: bool, client: httpx.AsyncClient):
-    with temporary_settings({PREFECT_SERVER_CSRF_PROTECTION_ENABLED: enabled}):
+    with temporary_settings({SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: enabled}):
         response = await client.get("/")
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == {"message": "Hello World"}
@@ -68,7 +68,7 @@ async def test_csrf_get_pass_through(enabled: bool, client: httpx.AsyncClient):
 async def test_csrf_change_request_pass_through_disabled(
     method: str, client: httpx.AsyncClient
 ):
-    with temporary_settings({PREFECT_SERVER_CSRF_PROTECTION_ENABLED: False}):
+    with temporary_settings({SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: False}):
         response = await getattr(client, method)("/")
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == {"message": "Hello World"}
@@ -83,7 +83,7 @@ async def test_csrf_403_no_token_or_client(client: httpx.AsyncClient):
 async def test_csrf_403_no_client(
     client: httpx.AsyncClient, csrf_token: schemas.core.CsrfToken
 ):
-    response = await client.post("/", headers={"Prefect-Csrf-Token": csrf_token.token})
+    response = await client.post("/", headers={"Syntask-Csrf-Token": csrf_token.token})
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": "Missing client identifier."}
 
@@ -92,7 +92,7 @@ async def test_csrf_403_no_token(
     client: httpx.AsyncClient, csrf_token: schemas.core.CsrfToken
 ):
     response = await client.post(
-        "/", headers={"Prefect-Csrf-Client": csrf_token.client}
+        "/", headers={"Syntask-Csrf-Client": csrf_token.client}
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json() == {"detail": "Missing CSRF token."}
@@ -104,8 +104,8 @@ async def test_csrf_403_incorrect_token(
     response = await client.post(
         "/",
         headers={
-            "Prefect-Csrf-Token": "incorrect-token",
-            "Prefect-Csrf-Client": csrf_token.client,
+            "Syntask-Csrf-Token": "incorrect-token",
+            "Syntask-Csrf-Client": csrf_token.client,
         },
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -113,7 +113,7 @@ async def test_csrf_403_incorrect_token(
 
 
 async def test_csrf_403_expired_token(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     client: httpx.AsyncClient,
     csrf_token: schemas.core.CsrfToken,
@@ -129,8 +129,8 @@ async def test_csrf_403_expired_token(
     response = await client.post(
         "/",
         headers={
-            "Prefect-Csrf-Token": csrf_token.token,
-            "Prefect-Csrf-Client": csrf_token.client,
+            "Syntask-Csrf-Token": csrf_token.token,
+            "Syntask-Csrf-Client": csrf_token.client,
         },
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -144,8 +144,8 @@ async def test_csrf_pass_through_enabled_valid_headers(
     response = await getattr(client, method)(
         "/",
         headers={
-            "Prefect-Csrf-Token": csrf_token.token,
-            "Prefect-Csrf-Client": csrf_token.client,
+            "Syntask-Csrf-Token": csrf_token.token,
+            "Syntask-Csrf-Client": csrf_token.client,
         },
     )
     assert response.status_code == status.HTTP_200_OK

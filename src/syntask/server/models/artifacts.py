@@ -7,18 +7,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas import actions, filters, sorting
-from prefect.server.schemas.core import Artifact
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas import actions, filters, sorting
+from syntask.server.schemas.core import Artifact
 
 T = TypeVar("T", bound=tuple)
 
 
 @db_injector
 async def _insert_into_artifact_collection(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     artifact: Artifact,
     now: Optional[pendulum.DateTime] = None,
@@ -75,7 +75,7 @@ async def _insert_into_artifact_collection(
 
 @db_injector
 async def _insert_into_artifact(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     artifact: Artifact,
     now: Optional[pendulum.DateTime] = None,

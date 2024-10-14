@@ -12,24 +12,24 @@ import typer
 import yaml
 from rich.table import Table
 
-from prefect.blocks.core import Block, InvalidBlockRegistration
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.exceptions import (
+from syntask.blocks.core import Block, InvalidBlockRegistration
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.exceptions import (
     ObjectNotFound,
-    PrefectHTTPStatusError,
     ProtectedBlockError,
     ScriptError,
+    SyntaskHTTPStatusError,
     exception_traceback,
 )
-from prefect.settings import PREFECT_UI_URL
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
-from prefect.utilities.importtools import load_script_as_module
+from syntask.settings import SYNTASK_UI_URL
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.utilities.importtools import load_script_as_module
 
-blocks_app = PrefectTyper(name="block", help="Manage blocks.")
-blocktypes_app = PrefectTyper(name="type", help="Inspect and delete block types.")
+blocks_app = SyntaskTyper(name="block", help="Manage blocks.")
+blocktypes_app = SyntaskTyper(name="type", help="Inspect and delete block types.")
 app.add_typer(blocks_app, aliases=["blocks"])
 blocks_app.add_typer(blocktypes_app, aliases=["types"])
 
@@ -166,10 +166,10 @@ async def register(
     Examples:
         \b
         Register block types in a Python module:
-        $ prefect block register -m prefect_aws.credentials
+        $ syntask block register -m prefect_aws.credentials
         \b
         Register block types in a .py file:
-        $ prefect block register -f my_blocks.py
+        $ syntask block register -f my_blocks.py
     """
     # Handles if both options are specified or if neither are specified
     if not (bool(file_path) ^ bool(module_name)):
@@ -222,10 +222,10 @@ async def register(
     app.console.print(_build_registered_blocks_table(registered_blocks))
     msg = (
         "\n To configure the newly registered blocks, "
-        "go to the Blocks page in the Prefect UI.\n"
+        "go to the Blocks page in the Syntask UI.\n"
     )
 
-    if ui_url := PREFECT_UI_URL:
+    if ui_url := SYNTASK_UI_URL:
         block_catalog_url = f"{ui_url}/blocks/catalog"
         msg = f"{msg.rstrip().rstrip('.')}: {block_catalog_url}\n"
 
@@ -241,7 +241,7 @@ async def block_ls():
         blocks = await client.read_block_documents()
 
     table = Table(
-        title="Blocks", caption="List Block Types using `prefect block type ls`"
+        title="Blocks", caption="List Block Types using `syntask block type ls`"
     )
     table.add_column("ID", style="cyan", no_wrap=True)
     table.add_column("Type", style="blue", no_wrap=True)
@@ -308,12 +308,12 @@ async def block_delete(
 async def block_create(
     block_type_slug: str = typer.Argument(
         ...,
-        help="A block type slug. View available types with: prefect block type ls",
+        help="A block type slug. View available types with: syntask block type ls",
         show_default=False,
     ),
 ):
     """
-    Generate a link to the Prefect UI to create a block.
+    Generate a link to the Syntask UI to create a block.
     """
     async with get_client() as client:
         try:
@@ -325,13 +325,13 @@ async def block_create(
             app.console.print(f"Available block types: {', '.join(slugs)}")
             raise typer.Exit(1)
 
-        if not PREFECT_UI_URL:
+        if not SYNTASK_UI_URL:
             exit_with_error(
-                "Prefect must be configured to use a hosted Prefect server or "
-                "Prefect Cloud to display the Prefect UI"
+                "Syntask must be configured to use a hosted Syntask server or "
+                "Syntask Cloud to display the Syntask UI"
             )
 
-        block_link = f"{PREFECT_UI_URL.value()}/blocks/catalog/{block_type.slug}/create"
+        block_link = f"{SYNTASK_UI_URL.value()}/blocks/catalog/{block_type.slug}/create"
         app.console.print(
             f"Create a {block_type_slug} block: {block_link}",
         )
@@ -401,7 +401,7 @@ async def list_types():
                 if blocktype.description is not None
                 else ""
             ),
-            f"prefect block create {blocktype.slug}",
+            f"syntask block create {blocktype.slug}",
         )
 
     app.console.print(table)
@@ -459,5 +459,5 @@ async def blocktype_delete(
             exit_with_error(f"Block Type {slug!r} not found!")
         except ProtectedBlockError:
             exit_with_error(f"Block Type {slug!r} is a protected block!")
-        except PrefectHTTPStatusError:
+        except SyntaskHTTPStatusError:
             exit_with_error(f"Cannot delete Block Type {slug!r}!")

@@ -7,7 +7,7 @@ class TestReadCollectionViews:
     def collection_view_url(self, view):
         return (
             "https://raw.githubusercontent.com/"
-            "PrefectHQ/prefect-collection-registry/main/"
+            "SynoPKG/syntask-collection-registry/main/"
             f"views/aggregate-{view}-metadata.json"
         )
 
@@ -44,8 +44,8 @@ class TestReadCollectionViews:
     @pytest.fixture
     def mock_worker_response(self):
         return {
-            "prefect": {
-                "prefect-agent": {},
+            "syntask": {
+                "syntask-agent": {},
                 "process": {},
             }
         }
@@ -139,12 +139,12 @@ class TestReadCollectionViews:
 
         assert res.status_code == 200
         # check for expected key to ensure it isn't an error
-        assert isinstance(res.json()["prefect"], dict)
+        assert isinstance(res.json()["syntask"], dict)
 
-    async def test_prefect_agent_excluded_from_worker_metadata(
+    async def test_syntask_agent_excluded_from_worker_metadata(
         self, client, mock_get_view
     ):
         res = await client.get("/collections/views/aggregate-worker-metadata")
 
         assert res.status_code == 200
-        assert "prefect-agent" not in res.json()["prefect"]
+        assert "syntask-agent" not in res.json()["syntask"]

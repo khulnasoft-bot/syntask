@@ -6,14 +6,14 @@ from anyio import Path
 from cachetools import TTLCache
 from fastapi import HTTPException, status
 
-from prefect.server.utilities.server import PrefectRouter
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="/collections", tags=["Collections"])
+router = SyntaskRouter(prefix="/collections", tags=["Collections"])
 
 GLOBAL_COLLECTIONS_VIEW_CACHE: TTLCache = TTLCache(maxsize=200, ttl=60 * 10)
 
 REGISTRY_VIEWS = (
-    "https://raw.githubusercontent.com/PrefectHQ/prefect-collection-registry/main/views"
+    "https://raw.githubusercontent.com/SynoPKG/syntask-collection-registry/main/views"
 )
 KNOWN_VIEWS = {
     "aggregate-block-metadata": f"{REGISTRY_VIEWS}/aggregate-block-metadata.json",
@@ -25,7 +25,7 @@ KNOWN_VIEWS = {
 
 @router.get("/views/{view}")
 async def read_view_content(view: str) -> Dict[str, Any]:
-    """Reads the content of a view from the prefect-collection-registry."""
+    """Reads the content of a view from the syntask-collection-registry."""
     try:
         return await get_collection_view(view)
     except KeyError:
@@ -56,7 +56,7 @@ async def get_collection_view(view: str):
 
             data = resp.json()
             if view == "aggregate-worker-metadata":
-                data.get("prefect", {}).pop("prefect-agent", None)
+                data.get("syntask", {}).pop("syntask-agent", None)
 
             GLOBAL_COLLECTIONS_VIEW_CACHE[view] = data
             return data

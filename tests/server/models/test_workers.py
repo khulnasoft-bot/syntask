@@ -5,7 +5,7 @@ import pydantic
 import pytest
 import sqlalchemy as sa
 
-from prefect.server import models, schemas
+from syntask.server import models, schemas
 
 
 class TestCreateWorkPool:

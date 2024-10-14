@@ -1,6 +1,0 @@
-integrationName: prefect-gitlab
-author: Prefect
-authorUrl: https://syntask.khulnasoft.com
-documentation: prefect-gitlab
-iconUrl: /images/integrations/gitlab.png
-tag: GitLab

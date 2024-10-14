@@ -9,14 +9,14 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 
-from prefect.client.schemas.actions import BlockDocumentCreate
-from prefect.client.schemas.objects import BlockDocument
-from prefect.client.utilities import inject_client
-from prefect.exceptions import ObjectNotFound
-from prefect.utilities.importtools import lazy_import
+from syntask.client.schemas.actions import BlockDocumentCreate
+from syntask.client.schemas.objects import BlockDocument
+from syntask.client.utilities import inject_client
+from syntask.exceptions import ObjectNotFound
+from syntask.utilities.importtools import lazy_import
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 modal = lazy_import("modal")
@@ -27,7 +27,7 @@ class ModalPushProvisioner:
     A infrastructure provisioner for Modal push work pools.
     """
 
-    def __init__(self, client: Optional["PrefectClient"] = None):
+    def __init__(self, client: Optional["SyntaskClient"] = None):
         self._console = Console()
 
     @property
@@ -94,7 +94,7 @@ class ModalPushProvisioner:
         block_document_name: str,
         modal_token_id: str,
         modal_token_secret: str,
-        client: "PrefectClient",
+        client: "SyntaskClient",
     ) -> BlockDocument:
         """
         Creates a ModalCredentials block containing the provided token ID and secret.
@@ -116,7 +116,7 @@ class ModalPushProvisioner:
             # Shouldn't happen, but just in case
             raise RuntimeError(
                 "Unable to find ModalCredentials block type. Please ensure you are"
-                " using Prefect Cloud."
+                " using Syntask Cloud."
             )
         credentials_block_schema = (
             await client.get_most_recent_block_schema_for_block_type(
@@ -145,7 +145,7 @@ class ModalPushProvisioner:
         self,
         work_pool_name: str,
         base_job_template: Dict[str, Any],
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ) -> Dict[str, Any]:
         """
         Provisions resources necessary for a Modal push work pool.
@@ -175,7 +175,7 @@ class ModalPushProvisioner:
             if self._console.is_interactive and not Confirm.ask(
                 (
                     "To configure your Modal push work pool we'll need to store a Modal"
-                    " token with Prefect Cloud as a block. We'll pull the token from"
+                    " token with Syntask Cloud as a block. We'll pull the token from"
                     " your local Modal configuration or create a new token if we"
                     " can't find one. Would you like to continue?"
                 ),
@@ -183,7 +183,7 @@ class ModalPushProvisioner:
             ):
                 self.console.print(
                     "No problem! You can always configure your Modal push work pool"
-                    " later via the Prefect UI."
+                    " later via the Syntask UI."
                 )
                 return base_job_template
 

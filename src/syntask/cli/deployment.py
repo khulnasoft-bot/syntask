@@ -16,31 +16,31 @@ import yaml
 from rich.pretty import Pretty
 from rich.table import Table
 
-from prefect.blocks.core import Block
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.filters import FlowFilter
-from prefect.client.schemas.schedules import (
+from syntask.blocks.core import Block
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.filters import FlowFilter
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,
 )
-from prefect.client.utilities import inject_client
-from prefect.exceptions import (
+from syntask.client.utilities import inject_client
+from syntask.exceptions import (
     ObjectAlreadyExists,
     ObjectNotFound,
-    PrefectHTTPStatusError,
+    SyntaskHTTPStatusError,
 )
-from prefect.flow_runs import wait_for_flow_run
-from prefect.states import Scheduled
-from prefect.utilities import urls
-from prefect.utilities.collections import listrepr
+from syntask.flow_runs import wait_for_flow_run
+from syntask.states import Scheduled
+from syntask.utilities import urls
+from syntask.utilities.collections import listrepr
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 def str_presenter(dumper, data):
@@ -56,8 +56,8 @@ def str_presenter(dumper, data):
 yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
-deployment_app = PrefectTyper(name="deployment", help="Manage deployments.")
-schedule_app = PrefectTyper(name="schedule", help="Manage deployment schedules.")
+deployment_app = SyntaskTyper(name="deployment", help="Manage deployments.")
+schedule_app = SyntaskTyper(name="schedule", help="Manage deployment schedules.")
 
 deployment_app.add_typer(schedule_app, aliases=["schedule"])
 app.add_typer(deployment_app, aliases=["deployments"])
@@ -70,11 +70,11 @@ def assert_deployment_name_format(name: str) -> None:
         )
 
 
-async def get_deployment(client: "PrefectClient", name, deployment_id):
+async def get_deployment(client: "SyntaskClient", name, deployment_id):
     if name is None and deployment_id is not None:
         try:
             deployment = await client.read_deployment(deployment_id)
-        except PrefectHTTPStatusError:
+        except SyntaskHTTPStatusError:
             exit_with_error(f"Deployment {deployment_id!r} not found!")
     elif name is not None and deployment_id is None:
         try:
@@ -158,7 +158,7 @@ async def create_work_queue_and_set_concurrency_limit(
 
 @inject_client
 async def check_work_pool_exists(
-    work_pool_name: Optional[str], client: "PrefectClient" = None
+    work_pool_name: Optional[str], client: "SyntaskClient" = None
 ):
     if work_pool_name is not None:
         try:
@@ -173,7 +173,7 @@ async def check_work_pool_exists(
             )
             app.console.print("To create a work pool via the CLI:\n")
             app.console.print(
-                f"$ prefect work-pool create {work_pool_name!r}\n", style="blue"
+                f"$ syntask work-pool create {work_pool_name!r}\n", style="blue"
             )
             exit_with_error("Work pool not found!")
 
@@ -197,7 +197,7 @@ async def inspect(name: str):
     \b
     Example:
         \b
-        $ prefect deployment inspect "hello-world/my-deployment"
+        $ syntask deployment inspect "hello-world/my-deployment"
         {
             'id': '610df9c3-0fb4-4856-b330-67f588d20201',
             'created': '2022-08-01T18:36:25.192102+00:00',
@@ -226,7 +226,7 @@ async def inspect(name: str):
                 'env': {},
                 'labels': {},
                 'name': None,
-                'command': ['python', '-m', 'prefect.engine'],
+                'command': ['python', '-m', 'syntask.engine'],
                 'stream_output': True
             }
         }
@@ -252,7 +252,7 @@ async def inspect(name: str):
         deployment_json["automations"] = [
             a.model_dump()
             for a in await client.read_resource_related_automations(
-                f"prefect.deployment.{deployment.id}"
+                f"syntask.deployment.{deployment.id}"
             )
         ]
 
@@ -810,7 +810,7 @@ async def run(
                 tags=tags,
                 job_variables=job_vars,
             )
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             detail = exc.response.json().get("detail")
             if detail:
                 exit_with_error(
@@ -876,8 +876,8 @@ async def delete(
     \b
     Examples:
         \b
-        $ prefect deployment delete test_flow/test_deployment
-        $ prefect deployment delete --id dfd3e220-a130-4149-9af6-8d487e02fea6
+        $ syntask deployment delete test_flow/test_deployment
+        $ syntask deployment delete --id dfd3e220-a130-4149-9af6-8d487e02fea6
     """
     async with get_client() as client:
         if name is None and deployment_id is not None:

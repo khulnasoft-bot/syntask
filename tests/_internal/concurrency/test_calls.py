@@ -3,8 +3,8 @@ import time
 
 import pytest
 
-from prefect._internal.concurrency.calls import Call
-from prefect._internal.concurrency.cancellation import CancelledError
+from syntask._internal.concurrency.calls import Call
+from syntask._internal.concurrency.cancellation import CancelledError
 
 
 def identity(x):

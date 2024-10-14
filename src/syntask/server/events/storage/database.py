@@ -5,30 +5,30 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from prefect.logging.loggers import get_logger
-from prefect.server.database.dependencies import db_injector, provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.counting import Countable, TimeUnit
-from prefect.server.events.filters import EventFilter, EventOrder
-from prefect.server.events.schemas.events import EventCount, ReceivedEvent
-from prefect.server.events.storage import (
+from syntask.logging.loggers import get_logger
+from syntask.server.database.dependencies import db_injector, provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.counting import Countable, TimeUnit
+from syntask.server.events.filters import EventFilter, EventOrder
+from syntask.server.events.schemas.events import EventCount, ReceivedEvent
+from syntask.server.events.storage import (
     INTERACTIVE_PAGE_SIZE,
     from_page_token,
     process_time_based_counts,
     to_page_token,
 )
-from prefect.server.utilities.database import get_dialect
-from prefect.settings import PREFECT_API_DATABASE_CONNECTION_URL
+from syntask.server.utilities.database import get_dialect
+from syntask.settings import SYNTASK_API_DATABASE_CONNECTION_URL
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMEvent
+    from syntask.server.database.orm_models import ORMEvent
 
 logger = get_logger(__name__)
 
 
 @db_injector
 def build_distinct_queries(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     events_filter: EventFilter,
 ) -> List[sa.Column["ORMEvent"]]:
     distinct_fields: List[str] = []
@@ -90,7 +90,7 @@ async def count_events(
 
 @db_injector
 async def raw_count_events(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     events_filter: EventFilter,
 ) -> int:
@@ -123,7 +123,7 @@ async def raw_count_events(
 
 @db_injector
 async def read_events(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     events_filter: EventFilter,
     limit: Optional[int] = None,
@@ -201,7 +201,7 @@ async def write_events(session: AsyncSession, events: List[ReceivedEvent]) -> No
         events: the events to insert
     """
     if events:
-        dialect = get_dialect(PREFECT_API_DATABASE_CONNECTION_URL.value())
+        dialect = get_dialect(SYNTASK_API_DATABASE_CONNECTION_URL.value())
         if dialect.name == "postgresql":
             await _write_postgres_events(session, events)
         else:
@@ -210,7 +210,7 @@ async def write_events(session: AsyncSession, events: List[ReceivedEvent]) -> No
 
 @db_injector
 async def _write_sqlite_events(
-    db: PrefectDBInterface, session: AsyncSession, events: List[ReceivedEvent]
+    db: SyntaskDBInterface, session: AsyncSession, events: List[ReceivedEvent]
 ) -> None:
     """
     Write events to the SQLite database.
@@ -246,7 +246,7 @@ async def _write_sqlite_events(
 
 @db_injector
 async def _write_postgres_events(
-    db: PrefectDBInterface, session: AsyncSession, events: List[ReceivedEvent]
+    db: SyntaskDBInterface, session: AsyncSession, events: List[ReceivedEvent]
 ) -> None:
     """
     Write events to the Postgres database.
@@ -281,7 +281,7 @@ async def _write_postgres_events(
 
 
 def get_max_query_parameters() -> int:
-    dialect = get_dialect(PREFECT_API_DATABASE_CONNECTION_URL.value())
+    dialect = get_dialect(SYNTASK_API_DATABASE_CONNECTION_URL.value())
     if dialect.name == "postgresql":
         return 32_767
     else:

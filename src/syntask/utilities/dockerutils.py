@@ -25,12 +25,12 @@ import pendulum
 from packaging.version import Version
 from typing_extensions import Self
 
-import prefect
-from prefect.utilities.importtools import lazy_import
-from prefect.utilities.slugify import slugify
+import syntask
+from syntask.utilities.importtools import lazy_import
+from syntask.utilities.slugify import slugify
 
 CONTAINER_LABELS = {
-    "io.prefect.version": prefect.__version__,
+    "io.syntask.version": syntask.__version__,
 }
 
 
@@ -42,40 +42,40 @@ def python_version_micro() -> str:
     return f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
 
-def get_prefect_image_name(
-    prefect_version: Optional[str] = None,
+def get_syntask_image_name(
+    syntask_version: Optional[str] = None,
     python_version: Optional[str] = None,
     flavor: Optional[str] = None,
 ) -> str:
     """
-    Get the Prefect image name matching the current Prefect and Python versions.
+    Get the Syntask image name matching the current Syntask and Python versions.
 
     Args:
-        prefect_version: An optional override for the Prefect version.
+        syntask_version: An optional override for the Syntask version.
         python_version: An optional override for the Python version; must be at the
             minor level e.g. '3.9'.
         flavor: An optional alternative image flavor to build, like 'conda'
     """
-    parsed_version = Version(prefect_version or prefect.__version__)
+    parsed_version = Version(syntask_version or syntask.__version__)
     is_prod_build = parsed_version.post is None
-    prefect_version = (
+    syntask_version = (
         parsed_version.base_version
         if is_prod_build
-        else "sha-" + prefect.__version_info__["full-revisionid"][:7]
+        else "sha-" + syntask.__version_info__["full-revisionid"][:7]
     )
 
     python_version = python_version or python_version_minor()
 
     tag = slugify(
-        f"{prefect_version}-python{python_version}" + (f"-{flavor}" if flavor else ""),
+        f"{syntask_version}-python{python_version}" + (f"-{flavor}" if flavor else ""),
         lowercase=False,
         max_length=128,
         # Docker allows these characters for tag names
         regex_pattern=r"[^a-zA-Z0-9_.-]+",
     )
 
-    image = "prefect" if is_prod_build else "prefect-dev"
-    return f"prefecthq/{image}:{tag}"
+    image = "syntask" if is_prod_build else "syntask-dev"
+    return f"synopkg/{image}:{tag}"
 
 
 @contextmanager
@@ -130,9 +130,9 @@ class BuildError(Exception):
     """Raised when a Docker build fails"""
 
 
-# Labels to apply to all images built with Prefect
+# Labels to apply to all images built with Syntask
 IMAGE_LABELS = {
-    "io.prefect.version": prefect.__version__,
+    "io.syntask.version": syntask.__version__,
 }
 
 
@@ -487,7 +487,7 @@ def parse_image_tag(name: str) -> Tuple[str, Optional[str]]:
 
     - If a tag exists, this function parses and returns the image registry and tag,
       separately as a tuple.
-      - Example 1: 'prefecthq/prefect:latest' -> ('prefecthq/prefect', 'latest')
+      - Example 1: 'synopkg/syntask:latest' -> ('synopkg/syntask', 'latest')
       - Example 2: 'hostname.io:5050/folder/subfolder:latest' -> ('hostname.io:5050/folder/subfolder', 'latest')
     - Supports parsing Docker Image strings that follow Docker Image Specification v1.1.0
       - Image building tools typically enforce this standard
@@ -508,7 +508,7 @@ def parse_image_tag(name: str) -> Tuple[str, Optional[str]]:
         else:
             image_name = name_parts[0]
     else:
-        # 1. Separates index (hostname.io or prefecthq) from path:tag (folder/subfolder:latest or prefect:latest)
+        # 1. Separates index (hostname.io or synopkg) from path:tag (folder/subfolder:latest or syntask:latest)
         # 2. Separates path and tag (if tag exists)
         # 3. Reunites index and path (without tag) as image name
         index_name = name_parts[0]
@@ -581,18 +581,20 @@ def generate_default_dockerfile(context: Optional[Path] = None):
     if not context:
         context = Path.cwd()
     lines = []
-    base_image = get_prefect_image_name()
+    base_image = get_syntask_image_name()
     lines.append(f"FROM {base_image}")
     dir_name = context.name
 
     if (context / "requirements.txt").exists():
-        lines.append(f"COPY requirements.txt /opt/prefect/{dir_name}/requirements.txt")
         lines.append(
-            f"RUN python -m pip install -r /opt/prefect/{dir_name}/requirements.txt"
+            f"COPY requirements/requirements.txt /opt/syntask/{dir_name}/requirements.txt"
+        )
+        lines.append(
+            f"RUN python -m pip install -r /opt/syntask/{dir_name}/requirements.txt"
         )
 
-    lines.append(f"COPY . /opt/prefect/{dir_name}/")
-    lines.append(f"WORKDIR /opt/prefect/{dir_name}/")
+    lines.append(f"COPY . /opt/syntask/{dir_name}/")
+    lines.append(f"WORKDIR /opt/syntask/{dir_name}/")
 
     temp_dockerfile = context / "Dockerfile"
     if Path(temp_dockerfile).exists():

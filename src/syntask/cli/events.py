@@ -6,16 +6,16 @@ import typer
 import websockets
 from anyio import open_file
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error
-from prefect.cli.root import app
-from prefect.events import Event
-from prefect.events.clients import (
-    PrefectCloudAccountEventSubscriber,
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error
+from syntask.cli.root import app
+from syntask.events import Event
+from syntask.events.clients import (
+    SyntaskCloudAccountEventSubscriber,
     get_events_subscriber,
 )
 
-events_app = PrefectTyper(name="events", help="Stream events.")
+events_app = SyntaskTyper(name="events", help="Stream events.")
 app.add_typer(events_app, aliases=["event"])
 
 
@@ -46,7 +46,7 @@ async def stream(
 
     try:
         if account:
-            events_subscriber = PrefectCloudAccountEventSubscriber()
+            events_subscriber = SyntaskCloudAccountEventSubscriber()
         else:
             events_subscriber = get_events_subscriber()
 

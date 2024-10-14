@@ -1,6 +1,6 @@
 ---
 title: Apply global concurrency and rate limits
-description: Learn how to control concurrency and apply rate limits using Prefect's provided utilities.
+description: Learn how to control concurrency and apply rate limits using Syntask's provided utilities.
 ---
 
 **Global concurrency limits** allow you to manage execution efficiently, controlling how many tasks, flows, or other operations can run simultaneously. 
@@ -9,8 +9,8 @@ They are ideal for optimizing resource usage, preventing bottlenecks, and custom
 <Tip>
 **Clarification on use of the term 'tasks'**
 
-In the context of global concurrency and rate limits, "tasks" doesn't specifically refer to Prefect tasks, but to concurrent units of work in 
-general—such as those managed by an event loop or `TaskGroup` in asynchronous programming. These general "tasks" could include Prefect 
+In the context of global concurrency and rate limits, "tasks" doesn't specifically refer to Syntask tasks, but to concurrent units of work in 
+general—such as those managed by an event loop or `TaskGroup` in asynchronous programming. These general "tasks" could include Syntask 
 tasks when they are part of an asynchronous execution environment.
 </Tip>
 
@@ -28,7 +28,7 @@ controlled rate determined by `slot_decay_per_second`. With a concurrency limit,
 
 ## Manage global concurrency and rate limits
 
-You can create, read, edit, and delete concurrency limits through the Prefect UI, CLI, or Python SDK.
+You can create, read, edit, and delete concurrency limits through the Syntask UI, CLI, or Python SDK.
 
 When creating a concurrency limit, you can specify the following parameters:
 
@@ -69,48 +69,48 @@ Choose a decay rate that balances your required frequency of task execution with
 
 ### Through the UI
 
-You can manage global concurrency limits in the **Concurrency** section of the Prefect UI.
+You can manage global concurrency limits in the **Concurrency** section of the Syntask UI.
 
 ![Concurrency limits in the UI](/images/gcl-1.png)
 
 
 ### Through the CLI
 
-You can manage global concurrency limits through the Prefect CLI.
+You can manage global concurrency limits through the Syntask CLI.
 
-To create a new concurrency limit, use the `prefect gcl create` command. You must specify a `--limit` argument, and can optionally specify a 
+To create a new concurrency limit, use the `syntask gcl create` command. You must specify a `--limit` argument, and can optionally specify a 
 `--slot-decay-per-second` and `--disable` argument.
 
 ```bash
-prefect gcl create my-concurrency-limit --limit 5 --slot-decay-per-second 1.0
+syntask gcl create my-concurrency-limit --limit 5 --slot-decay-per-second 1.0
 ```
 
-Inspect the details of a concurrency limit using the `prefect gcl inspect` command:
+Inspect the details of a concurrency limit using the `syntask gcl inspect` command:
 
 ```bash
-prefect gcl inspect my-concurrency-limit
+syntask gcl inspect my-concurrency-limit
 ```
 
-To update a concurrency limit, use the `prefect gcl update` command. You can update the `--limit`, `--slot-decay-per-second`, `--enable`, 
+To update a concurrency limit, use the `syntask gcl update` command. You can update the `--limit`, `--slot-decay-per-second`, `--enable`, 
 and `--disable` arguments:
 
 ```bash
-prefect gcl update my-concurrency-limit --limit 10
+syntask gcl update my-concurrency-limit --limit 10
 ```
 
 ```bash
-prefect gcl update my-concurrency-limit --disable
+syntask gcl update my-concurrency-limit --disable
 ```
 
-To delete a concurrency limit, use the `prefect gcl delete` command:
+To delete a concurrency limit, use the `syntask gcl delete` command:
 
 ```bash
-prefect gcl delete my-concurrency-limit
+syntask gcl delete my-concurrency-limit
 Are you sure you want to delete global concurrency limit 'my-concurrency-limit'? [y/N]: y
 Deleted global concurrency limit with name 'my-concurrency-limit'.
 ```
 
-See all available commands and options by running `prefect gcl --help`.
+See all available commands and options by running `syntask gcl --help`.
 
 ## Using the `concurrency` context manager
 
@@ -127,8 +127,8 @@ For stricter control, use `strict=True` to instead raise an error if no matching
 **Sync**
 
 ```python
-from prefect import flow, task
-from prefect.concurrency.sync import concurrency
+from syntask import flow, task
+from syntask.concurrency.sync import concurrency
 
 
 @task
@@ -151,8 +151,8 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from prefect import flow, task
-from prefect.concurrency.asyncio import concurrency
+from syntask import flow, task
+from syntask.concurrency.asyncio import concurrency
 
 
 @task
@@ -171,8 +171,8 @@ if __name__ == "__main__":
     asyncio.run(my_flow())
 ```
 
-1. The code imports the necessary modules and the concurrency context manager. Use the `prefect.concurrency.sync` module for sync usage 
-and the `prefect.concurrency.asyncio` module for async usage.
+1. The code imports the necessary modules and the concurrency context manager. Use the `syntask.concurrency.sync` module for sync usage 
+and the `syntask.concurrency.asyncio` module for async usage.
 2. It defines a `process_data` task, taking `x` and `y` as input arguments. Inside this task, the concurrency context manager controls 
 concurrency, using the `database` concurrency limit and occupying one slot. If another task attempts to run with the same limit and no 
 slots are available, that task is blocked until a slot becomes available.
@@ -193,8 +193,8 @@ When using the `rate_limit` function, the concurrency limit must have a slot dec
 **Sync**
 
 ```python
-from prefect import flow, task
-from prefect.concurrency.sync import rate_limit
+from syntask import flow, task
+from syntask.concurrency.sync import rate_limit
 
 
 @task
@@ -218,8 +218,8 @@ if __name__ == "__main__":
 ```python
 import asyncio
 
-from prefect import flow, task
-from prefect.concurrency.asyncio import rate_limit
+from syntask import flow, task
+from syntask.concurrency.asyncio import rate_limit
 
 
 @task
@@ -238,8 +238,8 @@ if __name__ == "__main__":
     asyncio.run(my_flow())
 ```
 
-1. The code imports the necessary modules and the `rate_limit` function. Use the `prefect.concurrency.sync` module for sync usage and the 
-`prefect.concurrency.asyncio` module for async usage.
+1. The code imports the necessary modules and the `rate_limit` function. Use the `syntask.concurrency.sync` module for sync usage and the 
+`syntask.concurrency.asyncio` module for async usage.
 2. It defines a `make_http_request` task. Inside this task, the `rate_limit` function ensures that the requests are made at a controlled pace.
 3. A flow named `my_flow` is defined. Within this flow the `make_http_request` task is submitted 10 times.
 
@@ -250,7 +250,7 @@ Use`concurrency` and `rate_limit` outside of a flow to control concurrency and r
 ```python
 import asyncio
 
-from prefect.concurrency.asyncio import rate_limit
+from syntask.concurrency.asyncio import rate_limit
 
 
 async def main():
@@ -274,8 +274,8 @@ In this scenario the `rate_limit` function throttles the submission of tasks. Th
 that tasks are submitted at a controlled rate, governed by the `slot_decay_per_second` setting on the associated concurrency limit.
 
 ```python
-from prefect import flow, task
-from prefect.concurrency.sync import rate_limit
+from syntask import flow, task
+from syntask.concurrency.sync import rate_limit
 
 
 @task
@@ -303,7 +303,7 @@ of database connections. The `concurrency` context manager controls the number o
 allowed at any one time.
 
 ```python
-from prefect import flow, task, concurrency
+from syntask import flow, task, concurrency
 from myproject import db
 
 @task
@@ -336,7 +336,7 @@ submits five more tasks, ensuring that the maximum number of parallel processing
 
 ```python
 import asyncio
-from prefect.concurrency.sync import concurrency
+from syntask.concurrency.sync import concurrency
 
 
 async def process_data(data):
@@ -365,9 +365,9 @@ if __name__ == "__main__":
 
 ## Other ways to limit concurrency
 
-In addition to global concurrency limits, Prefect provides several other ways to limit concurrency for fine-grained control. 
+In addition to global concurrency limits, Syntask provides several other ways to limit concurrency for fine-grained control. 
 
-Unlike global concurrency limits, which are a more general way to control concurrency for any Python-based operation, the following concurrency limit options are specific to Prefect objects:
+Unlike global concurrency limits, which are a more general way to control concurrency for any Python-based operation, the following concurrency limit options are specific to Syntask objects:
 
 - [Work pool flow run concurrency limits](/3.0/deploy/infrastructure-concepts/work-pools#manage-concurrency)
 - [Work queue flow run concurrency limits](/3.0/deploy/infrastructure-concepts/work-pools#queue-concurrency-limits)

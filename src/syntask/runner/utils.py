@@ -4,7 +4,7 @@ from typing import Any, Dict
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from prefect import __version__ as PREFECT_VERSION
+from syntask import __version__ as SYNTASK_VERSION
 
 
 def inject_schemas_into_openapi(
@@ -21,7 +21,7 @@ def inject_schemas_into_openapi(
         The augmented OpenAPI schema dictionary.
     """
     openapi_schema = get_openapi(
-        title="FastAPI Prefect Runner", version=PREFECT_VERSION, routes=webserver.routes
+        title="FastAPI Syntask Runner", version=SYNTASK_VERSION, routes=webserver.routes
     )
 
     augmented_schema = merge_definitions(schemas_to_inject, openapi_schema)

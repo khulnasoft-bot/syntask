@@ -7,21 +7,21 @@ from uuid import UUID
 
 import pytest
 
-from prefect._internal.concurrency.api import create_call, from_async
-from prefect.context import TagsContext, tags
-from prefect.filesystems import LocalFileSystem
-from prefect.flows import flow
-from prefect.futures import PrefectFuture, PrefectWrappedFuture
-from prefect.results import _default_storages
-from prefect.settings import (
-    PREFECT_DEFAULT_RESULT_STORAGE_BLOCK,
-    PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
+from syntask._internal.concurrency.api import create_call, from_async
+from syntask.context import TagsContext, tags
+from syntask.filesystems import LocalFileSystem
+from syntask.flows import flow
+from syntask.futures import SyntaskFuture, SyntaskWrappedFuture
+from syntask.results import _default_storages
+from syntask.settings import (
+    SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK,
+    SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
     temporary_settings,
 )
-from prefect.states import Completed, Running
-from prefect.task_runners import PrefectTaskRunner, ThreadPoolTaskRunner
-from prefect.task_worker import serve
-from prefect.tasks import task
+from syntask.states import Completed, Running
+from syntask.task_runners import SyntaskTaskRunner, ThreadPoolTaskRunner
+from syntask.task_worker import serve
+from syntask.tasks import task
 
 
 @task
@@ -44,7 +44,7 @@ async def context_matters_async(param1=None, param2=None):
     return TagsContext.get().current_tags
 
 
-class MockFuture(PrefectWrappedFuture):
+class MockFuture(SyntaskWrappedFuture):
     def __init__(self, data: Any = 42):
         super().__init__(uuid.uuid4(), Future())
         self._data = data
@@ -73,8 +73,8 @@ class TestThreadPoolTaskRunner:
         LocalFileSystem(basepath=tmp_path).save(name)
         with temporary_settings(
             {
-                PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
-                PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
             }
         ):
             yield
@@ -99,7 +99,7 @@ class TestThreadPoolTaskRunner:
         with ThreadPoolTaskRunner() as runner:
             parameters = {"param1": 1, "param2": 2}
             future = runner.submit(my_test_task, parameters)
-            assert isinstance(future, PrefectFuture)
+            assert isinstance(future, SyntaskFuture)
             assert isinstance(future.task_run_id, UUID)
             assert isinstance(future.wrapped_future, Future)
 
@@ -109,7 +109,7 @@ class TestThreadPoolTaskRunner:
         with ThreadPoolTaskRunner() as runner:
             parameters = {"param1": 1, "param2": 2}
             future = runner.submit(my_test_async_task, parameters)
-            assert isinstance(future, PrefectFuture)
+            assert isinstance(future, SyntaskFuture)
             assert isinstance(future.task_run_id, UUID)
             assert isinstance(future.wrapped_future, Future)
 
@@ -119,7 +119,7 @@ class TestThreadPoolTaskRunner:
         with tags("tag1", "tag2"):
             with ThreadPoolTaskRunner() as runner:
                 future = runner.submit(context_matters, {})
-                assert isinstance(future, PrefectFuture)
+                assert isinstance(future, SyntaskFuture)
                 assert isinstance(future.task_run_id, UUID)
                 assert isinstance(future.wrapped_future, Future)
 
@@ -129,7 +129,7 @@ class TestThreadPoolTaskRunner:
         with tags("tag1", "tag2"):
             with ThreadPoolTaskRunner() as runner:
                 future = runner.submit(context_matters_async, {})
-                assert isinstance(future, PrefectFuture)
+                assert isinstance(future, SyntaskFuture)
                 assert isinstance(future.task_run_id, UUID)
                 assert isinstance(future.wrapped_future, Future)
 
@@ -140,7 +140,7 @@ class TestThreadPoolTaskRunner:
             parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
             futures = runner.map(my_test_task, parameters)
             assert isinstance(futures, Iterable)
-            assert all(isinstance(future, PrefectFuture) for future in futures)
+            assert all(isinstance(future, SyntaskFuture) for future in futures)
             assert all(isinstance(future.task_run_id, UUID) for future in futures)
             assert all(isinstance(future.wrapped_future, Future) for future in futures)
 
@@ -152,7 +152,7 @@ class TestThreadPoolTaskRunner:
             parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
             futures = runner.map(my_test_async_task, parameters)
             assert isinstance(futures, Iterable)
-            assert all(isinstance(future, PrefectFuture) for future in futures)
+            assert all(isinstance(future, SyntaskFuture) for future in futures)
             assert all(isinstance(future.task_run_id, UUID) for future in futures)
             assert all(isinstance(future.wrapped_future, Future) for future in futures)
 
@@ -165,7 +165,7 @@ class TestThreadPoolTaskRunner:
                 parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
                 futures = runner.map(context_matters, parameters)
                 assert isinstance(futures, Iterable)
-                assert all(isinstance(future, PrefectFuture) for future in futures)
+                assert all(isinstance(future, SyntaskFuture) for future in futures)
                 assert all(isinstance(future.task_run_id, UUID) for future in futures)
                 assert all(
                     isinstance(future.wrapped_future, Future) for future in futures
@@ -180,7 +180,7 @@ class TestThreadPoolTaskRunner:
                 parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
                 futures = runner.map(context_matters_async, parameters)
                 assert isinstance(futures, Iterable)
-                assert all(isinstance(future, PrefectFuture) for future in futures)
+                assert all(isinstance(future, SyntaskFuture) for future in futures)
                 assert all(isinstance(future.task_run_id, UUID) for future in futures)
                 assert all(
                     isinstance(future.wrapped_future, Future) for future in futures
@@ -195,7 +195,7 @@ class TestThreadPoolTaskRunner:
             parameters = {"param1": future, "param2": future}
             futures = runner.map(my_test_task, parameters)
             assert isinstance(futures, Iterable)
-            assert all(isinstance(future, PrefectFuture) for future in futures)
+            assert all(isinstance(future, SyntaskFuture) for future in futures)
             assert all(isinstance(future.task_run_id, UUID) for future in futures)
             assert all(isinstance(future.wrapped_future, Future) for future in futures)
 
@@ -204,7 +204,7 @@ class TestThreadPoolTaskRunner:
 
     def test_handles_recursively_submitted_tasks(self):
         """
-        Regression test for https://github.com/synopkg/synopkg/issues/14194.
+        Regression test for https://github.com/synopkg/syntask/issues/14194.
 
         This test ensures that the ThreadPoolTaskRunner doesn't place an upper limit on the
         number of submitted tasks active at once. The highest default max workers on a
@@ -227,7 +227,7 @@ class TestThreadPoolTaskRunner:
         assert test_flow().result() == 0
 
 
-class TestPrefectTaskRunner:
+class TestSyntaskTaskRunner:
     @pytest.fixture(autouse=True)
     def clear_cache(self):
         _default_storages.clear()
@@ -249,22 +249,22 @@ class TestPrefectTaskRunner:
         call.cancel()
 
     def test_duplicate(self):
-        runner = PrefectTaskRunner()
+        runner = SyntaskTaskRunner()
         duplicate_runner = runner.duplicate()
-        assert isinstance(duplicate_runner, PrefectTaskRunner)
+        assert isinstance(duplicate_runner, SyntaskTaskRunner)
         assert duplicate_runner is not runner
 
     def test_runner_must_be_started(self):
-        runner = PrefectTaskRunner()
+        runner = SyntaskTaskRunner()
         with pytest.raises(RuntimeError, match="Task runner is not started"):
             runner.submit(my_test_task, {})
 
     @pytest.mark.usefixtures("task_worker")
     def test_submit_sync_task(self, events_pipeline):
-        with PrefectTaskRunner() as runner:
+        with SyntaskTaskRunner() as runner:
             parameters = {"param1": 1, "param2": 2}
             future = runner.submit(my_test_task, parameters)
-            assert isinstance(future, PrefectFuture)
+            assert isinstance(future, SyntaskFuture)
             assert isinstance(future.task_run_id, UUID)
 
             events_pipeline.process_events(min_events=4)
@@ -273,10 +273,10 @@ class TestPrefectTaskRunner:
 
     @pytest.mark.usefixtures("task_worker")
     def test_submit_async_task(self, events_pipeline):
-        with PrefectTaskRunner() as runner:
+        with SyntaskTaskRunner() as runner:
             parameters = {"param1": 1, "param2": 2}
             future = runner.submit(my_test_async_task, parameters)
-            assert isinstance(future, PrefectFuture)
+            assert isinstance(future, SyntaskFuture)
             assert isinstance(future.task_run_id, UUID)
 
             events_pipeline.process_events(min_events=4)
@@ -286,9 +286,9 @@ class TestPrefectTaskRunner:
     @pytest.mark.usefixtures("task_worker")
     def test_submit_sync_task_receives_context(self, events_pipeline):
         with tags("tag1", "tag2"):
-            with PrefectTaskRunner() as runner:
+            with SyntaskTaskRunner() as runner:
                 future = runner.submit(context_matters, {})
-                assert isinstance(future, PrefectFuture)
+                assert isinstance(future, SyntaskFuture)
                 assert isinstance(future.task_run_id, UUID)
 
                 events_pipeline.process_events(min_events=4)
@@ -298,9 +298,9 @@ class TestPrefectTaskRunner:
     @pytest.mark.usefixtures("task_worker")
     def test_submit_async_task_receives_context(self, events_pipeline):
         with tags("tag1", "tag2"):
-            with PrefectTaskRunner() as runner:
+            with SyntaskTaskRunner() as runner:
                 future = runner.submit(context_matters_async, {})
-                assert isinstance(future, PrefectFuture)
+                assert isinstance(future, SyntaskFuture)
                 assert isinstance(future.task_run_id, UUID)
 
                 events_pipeline.process_events(min_events=4)
@@ -309,11 +309,11 @@ class TestPrefectTaskRunner:
 
     @pytest.mark.usefixtures("task_worker")
     def test_map_sync_task(self, events_pipeline):
-        with PrefectTaskRunner() as runner:
+        with SyntaskTaskRunner() as runner:
             parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
             futures = runner.map(my_test_task, parameters)
             assert isinstance(futures, Iterable)
-            assert all(isinstance(future, PrefectFuture) for future in futures)
+            assert all(isinstance(future, SyntaskFuture) for future in futures)
             assert all(isinstance(future.task_run_id, UUID) for future in futures)
 
             # 3 task runs * 4 events each = 12 events
@@ -324,11 +324,11 @@ class TestPrefectTaskRunner:
 
     @pytest.mark.usefixtures("task_worker")
     def test_map_async_task(self, events_pipeline):
-        with PrefectTaskRunner() as runner:
+        with SyntaskTaskRunner() as runner:
             parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
             futures = runner.map(my_test_async_task, parameters)
             assert isinstance(futures, Iterable)
-            assert all(isinstance(future, PrefectFuture) for future in futures)
+            assert all(isinstance(future, SyntaskFuture) for future in futures)
             assert all(isinstance(future.task_run_id, UUID) for future in futures)
 
             # 3 task runs * 4 events each = 12 events
@@ -340,11 +340,11 @@ class TestPrefectTaskRunner:
     @pytest.mark.usefixtures("task_worker")
     def test_map_sync_task_with_context(self, events_pipeline):
         with tags("tag1", "tag2"):
-            with PrefectTaskRunner() as runner:
+            with SyntaskTaskRunner() as runner:
                 parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
                 futures = runner.map(context_matters, parameters)
                 assert isinstance(futures, Iterable)
-                assert all(isinstance(future, PrefectFuture) for future in futures)
+                assert all(isinstance(future, SyntaskFuture) for future in futures)
                 assert all(isinstance(future.task_run_id, UUID) for future in futures)
 
                 # 3 task runs * 4 events each = 12 events
@@ -356,11 +356,11 @@ class TestPrefectTaskRunner:
     @pytest.mark.usefixtures("task_worker")
     def test_map_async_task_with_context(self, events_pipeline):
         with tags("tag1", "tag2"):
-            with PrefectTaskRunner() as runner:
+            with SyntaskTaskRunner() as runner:
                 parameters = {"param1": [1, 2, 3], "param2": [4, 5, 6]}
                 futures = runner.map(context_matters_async, parameters)
                 assert isinstance(futures, Iterable)
-                assert all(isinstance(future, PrefectFuture) for future in futures)
+                assert all(isinstance(future, SyntaskFuture) for future in futures)
                 assert all(isinstance(future.task_run_id, UUID) for future in futures)
 
                 # 3 task runs * 4 events each = 12 events
@@ -371,12 +371,12 @@ class TestPrefectTaskRunner:
 
     @pytest.mark.usefixtures("task_worker")
     def test_map_with_future_resolved_to_list(self, events_pipeline):
-        with PrefectTaskRunner() as runner:
+        with SyntaskTaskRunner() as runner:
             future = MockFuture(data=[1, 2, 3])
             parameters = {"param1": future, "param2": future}
             futures = runner.map(my_test_task, parameters)
             assert isinstance(futures, Iterable)
-            assert all(isinstance(future, PrefectFuture) for future in futures)
+            assert all(isinstance(future, SyntaskFuture) for future in futures)
             assert all(isinstance(future.task_run_id, UUID) for future in futures)
 
             # 3 task runs * 4 events each = 12 events

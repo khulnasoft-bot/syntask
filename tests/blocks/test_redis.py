@@ -5,7 +5,7 @@ from typing import Union
 import pytest
 from pydantic.types import SecretStr
 
-from prefect.blocks.redis import RedisStorageContainer
+from syntask.blocks.redis import RedisStorageContainer
 
 
 @pytest.fixture

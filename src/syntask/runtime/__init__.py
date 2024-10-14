@@ -3,12 +3,12 @@ Module for easily accessing dynamic attributes for a given run, especially those
 
 Example usage:
     ```python
-    from prefect.runtime import deployment
+    from syntask.runtime import deployment
 
     print(f"This script is running from deployment {deployment.id} with parameters {deployment.parameters}")
     ```
 """
 
-import prefect.runtime.deployment
-import prefect.runtime.flow_run
-import prefect.runtime.task_run
+import syntask.runtime.deployment
+import syntask.runtime.flow_run
+import syntask.runtime.task_run

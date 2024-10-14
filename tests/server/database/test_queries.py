@@ -2,8 +2,8 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 
-from prefect.server import models, schemas
-from prefect.server.database.interface import PrefectDBInterface
+from syntask.server import models, schemas
+from syntask.server.database.interface import SyntaskDBInterface
 
 
 class TestGetRunsInQueueQuery:
@@ -127,7 +127,7 @@ class TestGetRunsInQueueQuery:
         Tests that the query sorts by scheduled time correctly; the unit tests with a small number of runs
         can return the correct order even though no sort is applied.
 
-        https://github.com/synopkg/synopkg/pull/7457
+        https://github.com/synopkg/syntask/pull/7457
         """
 
         # clear all runs
@@ -354,7 +354,7 @@ class TestGetRunsFromWorkQueueQuery:
         return setup["work_queues"]
 
     async def test_get_all_runs(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(session=session)
         assert len(runs) == 45
@@ -364,7 +364,7 @@ class TestGetRunsFromWorkQueueQuery:
 
     @pytest.mark.parametrize("limit", [100, 10, 0])
     async def test_get_all_runs_with_limit(
-        self, session, db: PrefectDBInterface, work_pools, work_queues, limit
+        self, session, db: SyntaskDBInterface, work_pools, work_queues, limit
     ):
         all_runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session
@@ -380,7 +380,7 @@ class TestGetRunsFromWorkQueueQuery:
         ]
 
     async def test_get_wc_a_runs(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session, work_pool_ids=[work_pools["wp_a"].id]
@@ -388,7 +388,7 @@ class TestGetRunsFromWorkQueueQuery:
         assert len(runs) == 15
 
     async def test_get_wc_a_b_and_c_runs(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session,
@@ -401,7 +401,7 @@ class TestGetRunsFromWorkQueueQuery:
         assert len(runs) == 45
 
     async def test_get_wq_aa_runs(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session,
@@ -411,7 +411,7 @@ class TestGetRunsFromWorkQueueQuery:
         assert all(r.work_queue_id == work_queues["wq_aa"].id for r in runs)
 
     async def test_get_wq_aa_runs_with_all_wc_also_provided(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session,
@@ -426,7 +426,7 @@ class TestGetRunsFromWorkQueueQuery:
         assert all(r.work_queue_id == work_queues["wq_aa"].id for r in runs)
 
     async def test_get_wq_aa_runs_when_queue_is_paused(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         assert await models.workers.update_work_queue(
             session=session,
@@ -440,7 +440,7 @@ class TestGetRunsFromWorkQueueQuery:
         assert len(runs) == 0
 
     async def test_get_wq_aa_runs_when_worker_is_paused(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         assert await models.workers.update_work_pool(
             session=session,
@@ -458,7 +458,7 @@ class TestGetRunsFromWorkQueueQuery:
     async def test_get_wq_aa_runs_when_queue_has_concurrency(
         self,
         session,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         work_pools,
         work_queues,
         concurrency_limit,
@@ -484,7 +484,7 @@ class TestGetRunsFromWorkQueueQuery:
     async def test_get_wq_aa_runs_when_worker_has_concurrency(
         self,
         session,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         work_pools,
         work_queues,
         concurrency_limit,
@@ -510,7 +510,7 @@ class TestGetRunsFromWorkQueueQuery:
     async def test_get_wc_a_runs_when_worker_has_concurrency(
         self,
         session,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         work_pools,
         work_queues,
         concurrency_limit,
@@ -532,7 +532,7 @@ class TestGetRunsFromWorkQueueQuery:
 
     @pytest.mark.parametrize("limit", [100, 7, 0])
     async def test_worker_limit(
-        self, session, db: PrefectDBInterface, work_pools, work_queues, limit
+        self, session, db: SyntaskDBInterface, work_pools, work_queues, limit
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session, worker_limit=limit
@@ -542,7 +542,7 @@ class TestGetRunsFromWorkQueueQuery:
             assert sum(1 for r in runs if r.work_pool_id == wc.id) == min(15, limit)
 
     async def test_worker_limit_with_pause(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         assert await models.workers.update_work_pool(
             session=session,
@@ -562,7 +562,7 @@ class TestGetRunsFromWorkQueueQuery:
 
     @pytest.mark.parametrize("limit", [100, 3, 0])
     async def test_queue_limit(
-        self, session, db: PrefectDBInterface, work_pools, work_queues, limit
+        self, session, db: SyntaskDBInterface, work_pools, work_queues, limit
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session, queue_limit=limit
@@ -572,7 +572,7 @@ class TestGetRunsFromWorkQueueQuery:
             assert sum(1 for r in runs if r.work_queue_id == wq.id) == min(5, limit)
 
     async def test_queue_limit_with_pause(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         assert await models.workers.update_work_queue(
             session=session,
@@ -590,7 +590,7 @@ class TestGetRunsFromWorkQueueQuery:
     async def test_runs_are_returned_from_queues_ignoring_priority(
         self,
         session,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         work_pools,
         work_queues,
         respect_priorities,
@@ -617,7 +617,7 @@ class TestGetRunsFromWorkQueueQuery:
         assert sorted(runs, key=lambda r: r.flow_run.next_scheduled_start_time) == runs
 
     async def test_runs_are_returned_from_queues_according_to_priority(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         wq_aa, wq_ab, wq_ac = (
             work_queues["wq_aa"],
@@ -644,7 +644,7 @@ class TestGetRunsFromWorkQueueQuery:
         assert sorted(runs, key=lambda r: r.flow_run.next_scheduled_start_time) != runs
 
     async def test_runs_are_returned_from_queues_according_to_priority_across_multiple_pools(
-        self, session, db: PrefectDBInterface, work_pools, work_queues
+        self, session, db: SyntaskDBInterface, work_pools, work_queues
     ):
         wq_aa, wq_ab, wq_ac, wq_ba, wq_bb, wq_bc = (
             work_queues["wq_aa"],
@@ -673,7 +673,7 @@ class TestGetRunsFromWorkQueueQuery:
         # runs are not in time order
         assert sorted(runs, key=lambda r: r.flow_run.next_scheduled_start_time) != runs
 
-    async def test_concurrent_reads(self, db: PrefectDBInterface):
+    async def test_concurrent_reads(self, db: SyntaskDBInterface):
         """
         Concurrent queries should not both receive runs. In this case one query
         receives some runs and the other receives none because the lock is taken
@@ -723,7 +723,7 @@ class TestGetRunsFromWorkQueueQuery:
         "hours,expected", [(100, 45), (3, 45), (1, 27), (-1, 9), (-10, 0)]
     )
     async def test_scheduled_before(
-        self, session, db: PrefectDBInterface, hours, expected
+        self, session, db: SyntaskDBInterface, hours, expected
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session,
@@ -735,7 +735,7 @@ class TestGetRunsFromWorkQueueQuery:
         "hours,expected", [(-100, 45), (-3, 45), (0, 27), (2, 9), (10, 0)]
     )
     async def test_scheduled_after(
-        self, session, db: PrefectDBInterface, hours, expected
+        self, session, db: SyntaskDBInterface, hours, expected
     ):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session,
@@ -743,7 +743,7 @@ class TestGetRunsFromWorkQueueQuery:
         )
         assert len(runs) == expected
 
-    async def test_scheduled_before_and_after(self, session, db: PrefectDBInterface):
+    async def test_scheduled_before_and_after(self, session, db: SyntaskDBInterface):
         runs = await db.queries.get_scheduled_flow_runs_from_work_pool(
             session=session,
             # criteria should match no runs

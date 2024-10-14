@@ -3,9 +3,9 @@ import uuid
 
 import pytest
 
-from prefect import task
-from prefect.task_engine import run_task_async
-from prefect.task_runs import TaskRunWaiter
+from syntask import task
+from syntask.task_engine import run_task_async
+from syntask.task_runs import TaskRunWaiter
 
 
 class TestTaskRunWaiter:
@@ -25,7 +25,7 @@ class TestTaskRunWaiter:
 
     @pytest.mark.timeout(20)
     @pytest.mark.usefixtures("use_hosted_api_server")
-    async def test_wait_for_task_run(self, prefect_client, emitting_events_pipeline):
+    async def test_wait_for_task_run(self, syntask_client, emitting_events_pipeline):
         """This test will fail with a timeout error if waiting is not working correctly."""
 
         @task
@@ -39,7 +39,7 @@ class TestTaskRunWaiter:
 
         await emitting_events_pipeline.process_events()
 
-        task_run = await prefect_client.read_task_run(task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_id)
         assert task_run.state.is_completed()
 
     @pytest.mark.usefixtures("use_hosted_api_server")
@@ -61,7 +61,7 @@ class TestTaskRunWaiter:
 
     @pytest.mark.timeout(20)
     @pytest.mark.usefixtures("use_hosted_api_server")
-    async def test_non_singleton_mode(self, prefect_client, emitting_events_pipeline):
+    async def test_non_singleton_mode(self, syntask_client, emitting_events_pipeline):
         waiter = TaskRunWaiter()
         assert waiter is not TaskRunWaiter.instance()
 
@@ -76,7 +76,7 @@ class TestTaskRunWaiter:
 
         await emitting_events_pipeline.process_events()
 
-        task_run = await prefect_client.read_task_run(task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_id)
         assert task_run.state.is_completed()
 
         waiter.stop()
@@ -84,7 +84,7 @@ class TestTaskRunWaiter:
     @pytest.mark.timeout(20)
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_handles_concurrent_task_runs(
-        self, prefect_client, emitting_events_pipeline
+        self, syntask_client, emitting_events_pipeline
     ):
         @task
         async def fast_task():
@@ -104,8 +104,8 @@ class TestTaskRunWaiter:
 
         await emitting_events_pipeline.process_events()
 
-        task_run_1 = await prefect_client.read_task_run(task_run_id_1)
-        task_run_2 = await prefect_client.read_task_run(task_run_id_2)
+        task_run_1 = await syntask_client.read_task_run(task_run_id_1)
+        task_run_2 = await syntask_client.read_task_run(task_run_id_2)
 
         assert task_run_1.state.is_completed()
         assert not task_run_2.state.is_completed()
@@ -114,8 +114,8 @@ class TestTaskRunWaiter:
 
         await emitting_events_pipeline.process_events()
 
-        task_run_1 = await prefect_client.read_task_run(task_run_id_1)
-        task_run_2 = await prefect_client.read_task_run(task_run_id_2)
+        task_run_1 = await syntask_client.read_task_run(task_run_id_1)
+        task_run_2 = await syntask_client.read_task_run(task_run_id_2)
 
         assert task_run_1.state.is_completed()
         assert task_run_2.state.is_completed()

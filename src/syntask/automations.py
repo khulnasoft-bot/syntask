@@ -4,8 +4,8 @@ from uuid import UUID
 from pydantic import Field
 from typing_extensions import Self
 
-from prefect.client.utilities import get_or_create_client
-from prefect.events.actions import (
+from syntask.client.utilities import get_or_create_client
+from syntask.events.actions import (
     CallWebhook,
     CancelFlowRun,
     ChangeFlowRunState,
@@ -23,7 +23,7 @@ from prefect.events.actions import (
     SendNotification,
     SuspendFlowRun,
 )
-from prefect.events.schemas.automations import (
+from syntask.events.schemas.automations import (
     AutomationCore,
     CompositeTrigger,
     CompoundTrigger,
@@ -32,14 +32,14 @@ from prefect.events.schemas.automations import (
     MetricTriggerOperator,
     MetricTriggerQuery,
     Posture,
-    PrefectMetric,
     ResourceSpecification,
     ResourceTrigger,
     SequenceTrigger,
+    SyntaskMetric,
     Trigger,
 )
-from prefect.exceptions import PrefectHTTPStatusError
-from prefect.utilities.asyncutils import sync_compatible
+from syntask.exceptions import SyntaskHTTPStatusError
+from syntask.utilities.asyncutils import sync_compatible
 
 __all__ = [
     "AutomationCore",
@@ -50,7 +50,7 @@ __all__ = [
     "ResourceSpecification",
     "MetricTriggerOperator",
     "MetricTrigger",
-    "PrefectMetric",
+    "SyntaskMetric",
     "CompositeTrigger",
     "SequenceTrigger",
     "CompoundTrigger",
@@ -138,7 +138,7 @@ class Automation(AutomationCore):
         if id:
             try:
                 automation = await client.read_automation(automation_id=id)
-            except PrefectHTTPStatusError as exc:
+            except SyntaskHTTPStatusError as exc:
                 if exc.response.status_code == 404:
                     raise ValueError(f"Automation with ID {id!r} not found")
             return Automation(**automation.model_dump())
@@ -159,7 +159,7 @@ class Automation(AutomationCore):
             client, _ = get_or_create_client()
             await client.delete_automation(self.id)
             return True
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             if exc.response.status_code == 404:
                 return False
             raise
@@ -175,7 +175,7 @@ class Automation(AutomationCore):
             client, _ = get_or_create_client()
             await client.pause_automation(self.id)
             return True
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             if exc.response.status_code == 404:
                 return False
             raise
@@ -191,7 +191,7 @@ class Automation(AutomationCore):
             client, _ = get_or_create_client()
             await client.resume_automation("asd")
             return True
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             if exc.response.status_code == 404:
                 return False
             raise

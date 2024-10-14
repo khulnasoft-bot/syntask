@@ -18,9 +18,9 @@ Sender flow:
 ```python
 import random
 from uuid import UUID
-from prefect import flow
-from prefect.logging import get_run_logger
-from prefect.input import RunInput
+from syntask import flow
+from syntask.logging import get_run_logger
+from syntask.input import RunInput
 
 class NumberData(RunInput):
     number: int
@@ -44,9 +44,9 @@ Receiver flow:
 ```python
 import random
 from uuid import UUID
-from prefect import flow
-from prefect.logging import get_run_logger
-from prefect.input import RunInput
+from syntask import flow
+from syntask.logging import get_run_logger
+from syntask.input import RunInput
 
 class NumberData(RunInput):
     number: int
@@ -81,20 +81,20 @@ import anyio
 import pydantic
 from pydantic import ConfigDict
 
-from prefect.input.actions import (
+from syntask.input.actions import (
     create_flow_run_input,
     create_flow_run_input_from_model,
     ensure_flow_run_id,
     filter_flow_run_input,
     read_flow_run_input,
 )
-from prefect.utilities.asyncutils import sync_compatible
+from syntask.utilities.asyncutils import sync_compatible
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.objects import FlowRunInput
-    from prefect.states import State
+    from syntask.client.schemas.objects import FlowRunInput
+    from syntask.states import State
 
-from prefect._internal.pydantic.v2_schema import create_v2_schema, is_v2_model
+from syntask._internal.pydantic.v2_schema import create_v2_schema, is_v2_model
 
 R = TypeVar("R", bound="RunInput")
 T = TypeVar("T", bound="object")
@@ -253,7 +253,7 @@ class RunInput(pydantic.BaseModel):
         key_prefix: Optional[str] = None,
     ):
         flow_run_id = None
-        if self.metadata.sender and self.metadata.sender.startswith("prefect.flow-run"):
+        if self.metadata.sender and self.metadata.sender.startswith("syntask.flow-run"):
             _, _, id = self.metadata.sender.rpartition(".")
             flow_run_id = UUID(id)
 
@@ -549,8 +549,7 @@ def receive_input(  # type: ignore[overload-overlap]
     key_prefix: Optional[str] = None,
     flow_run_id: Optional[UUID] = None,
     with_metadata: bool = False,
-) -> GetInputHandler[R]:
-    ...
+) -> GetInputHandler[R]: ...
 
 
 @overload
@@ -563,8 +562,7 @@ def receive_input(
     key_prefix: Optional[str] = None,
     flow_run_id: Optional[UUID] = None,
     with_metadata: bool = False,
-) -> GetAutomaticInputHandler[T]:
-    ...
+) -> GetAutomaticInputHandler[T]: ...
 
 
 def receive_input(
@@ -582,9 +580,9 @@ def receive_input(
     # the signature is the same as here:
     #   Union[Type[R], Type[T], pydantic.BaseModel],
     # Seems like a possible mypy bug, so we'll ignore the type check here.
-    input_cls: Union[
-        Type[AutomaticRunInput[T]], Type[R]
-    ] = run_input_subclass_from_type(input_type)  # type: ignore[arg-type]
+    input_cls: Union[Type[AutomaticRunInput[T]], Type[R]] = (
+        run_input_subclass_from_type(input_type)
+    )  # type: ignore[arg-type]
 
     if issubclass(input_cls, AutomaticRunInput):
         return input_cls.receive(

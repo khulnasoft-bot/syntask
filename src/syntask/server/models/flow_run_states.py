@@ -1,6 +1,6 @@
 """
 Functions for interacting with flow run state ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 from typing import Sequence, Union
@@ -9,7 +9,7 @@ from uuid import UUID
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database import orm_models
+from syntask.server.database import orm_models
 
 
 async def read_flow_run_state(

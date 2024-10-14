@@ -1,9 +1,9 @@
 from typing import List
 
-from prefect.server.events.schemas.events import Event, ReceivedEvent
-from prefect.server.events.services import event_persister
-from prefect.server.services import task_run_recorder
-from prefect.server.utilities.messaging.memory import MemoryMessage
+from syntask.server.events.schemas.events import Event, ReceivedEvent
+from syntask.server.events.services import event_persister
+from syntask.server.services import task_run_recorder
+from syntask.server.utilities.messaging.memory import MemoryMessage
 
 
 class EventsPipeline:

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
-from prefect.server.api.server import create_app
+from syntask.server.api.server import create_app
 
 Message = Dict[str, Any]
 Receive = Callable[[], Awaitable[Message]]
@@ -49,7 +49,7 @@ async def client_with_unprotected_block_api(
     Yield a test client for testing the api
     """
     api_version = "0.8.0"
-    version_header = {"X-PREFECT-API-VERSION": api_version}
+    version_header = {"X-SYNTASK-API-VERSION": api_version}
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with httpx.AsyncClient(
         transport=transport, base_url="https://test/api", headers=version_header

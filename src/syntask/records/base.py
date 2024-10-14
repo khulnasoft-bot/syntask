@@ -6,11 +6,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from prefect._internal.compatibility import deprecated
+from syntask._internal.compatibility import deprecated
 
 if TYPE_CHECKING:
-    from prefect.results import BaseResult
-    from prefect.transactions import IsolationLevel
+    from syntask.results import BaseResult
+    from syntask.transactions import IsolationLevel
 
 
 @deprecated.deprecated_class(

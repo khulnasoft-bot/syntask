@@ -17,13 +17,13 @@ from rich.panel import Panel
 from rich.pretty import Pretty
 from rich.table import Table
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.exceptions import ObjectNotFound
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.exceptions import ObjectNotFound
 
-concurrency_limit_app = PrefectTyper(
+concurrency_limit_app = SyntaskTyper(
     name="concurrency-limit",
     help="Manage task-level concurrency limits.",
 )
@@ -53,10 +53,10 @@ async def create(tag: str, concurrency_limit: int):
                 concurrency_limit - {concurrency_limit}
 
             Delete the concurrency limit:
-                prefect concurrency-limit delete {tag!r}
+                syntask concurrency-limit delete {tag!r}
             
             Inspect the concurrency limit:
-                prefect concurrency-limit inspect {tag!r}
+                syntask concurrency-limit inspect {tag!r}
         """
         )
     )

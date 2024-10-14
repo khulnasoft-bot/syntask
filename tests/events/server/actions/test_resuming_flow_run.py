@@ -5,9 +5,9 @@ import pendulum
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -15,10 +15,10 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
-from prefect.server.models import deployments, flow_runs, flows
-from prefect.server.schemas.core import Deployment, Flow, FlowRun
-from prefect.server.schemas.states import Paused, Running, StateType
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.models import deployments, flow_runs, flows
+from syntask.server.schemas.core import Deployment, Flow, FlowRun
+from syntask.server.schemas.states import Paused, Running, StateType
 
 
 @pytest.fixture
@@ -53,11 +53,11 @@ def resume_paused_flow_run(paused_flow_run: FlowRun) -> Automation:
         name="Resume paused flow run",
         trigger=EventTrigger(
             match_related={
-                "prefect.resource.role": "flow-run",
-                "prefect.resource.id": f"prefect.flow-run.{paused_flow_run.id}",
+                "syntask.resource.role": "flow-run",
+                "syntask.resource.id": f"syntask.flow-run.{paused_flow_run.id}",
             },
-            after={"prefect.flow-run.Paused"},
-            expect={"prefect.flow-run.Running"},
+            after={"syntask.flow-run.Paused"},
+            expect={"syntask.flow-run.Running"},
             posture=Posture.Proactive,
             threshold=0,
             within=timedelta(minutes=1),
@@ -78,8 +78,8 @@ def resume_that_paused_flow_run(
         triggering_labels={},
         triggering_event=ReceivedEvent(
             occurred=pendulum.now("UTC"),
-            event="prefect.flow-run.Paused",
-            resource={"prefect.resource.id": f"prefect.flow-run.{paused_flow_run.id}"},
+            event="syntask.flow-run.Paused",
+            resource={"syntask.resource.id": f"syntask.flow-run.{paused_flow_run.id}"},
             id=uuid.uuid4(),
         ),
     )
@@ -132,12 +132,12 @@ async def test_resume_flow_run_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow-run.{paused_flow_run.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.flow-run.{paused_flow_run.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -147,12 +147,12 @@ async def test_resume_flow_run_success_event(
         "invocation": str(resume_that_paused_flow_run.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow-run.{paused_flow_run.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.flow-run.{paused_flow_run.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]

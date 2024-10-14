@@ -5,14 +5,14 @@ from typing import Dict, List, Optional
 from pydantic import AnyHttpUrl, Field, SecretStr
 from typing_extensions import Literal
 
-from prefect.blocks.abstract import NotificationBlock, NotificationError
-from prefect.logging import LogEavesdropper
-from prefect.types import SecretDict
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.templating import apply_values, find_placeholders
-from prefect.utilities.urls import validate_restricted_url
+from syntask.blocks.abstract import NotificationBlock, NotificationError
+from syntask.logging import LogEavesdropper
+from syntask.types import SecretDict
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.templating import apply_values, find_placeholders
+from syntask.utilities.urls import validate_restricted_url
 
-PREFECT_NOTIFY_TYPE_DEFAULT = "prefect_default"
+SYNTASK_NOTIFY_TYPE_DEFAULT = "syntask_default"
 
 
 class AbstractAppriseNotificationBlock(NotificationBlock, ABC):
@@ -20,36 +20,36 @@ class AbstractAppriseNotificationBlock(NotificationBlock, ABC):
     An abstract class for sending notifications using Apprise.
     """
 
-    notify_type: Literal[
-        "prefect_default", "info", "success", "warning", "failure"
-    ] = Field(
-        default=PREFECT_NOTIFY_TYPE_DEFAULT,
-        description=(
-            "The type of notification being performed; the prefect_default "
-            "is a plain notification that does not attach an image."
-        ),
+    notify_type: Literal["syntask_default", "info", "success", "warning", "failure"] = (
+        Field(
+            default=SYNTASK_NOTIFY_TYPE_DEFAULT,
+            description=(
+                "The type of notification being performed; the syntask_default "
+                "is a plain notification that does not attach an image."
+            ),
+        )
     )
 
     def __init__(self, *args, **kwargs):
         import apprise
 
-        if PREFECT_NOTIFY_TYPE_DEFAULT not in apprise.NOTIFY_TYPES:
-            apprise.NOTIFY_TYPES += (PREFECT_NOTIFY_TYPE_DEFAULT,)
+        if SYNTASK_NOTIFY_TYPE_DEFAULT not in apprise.NOTIFY_TYPES:
+            apprise.NOTIFY_TYPES += (SYNTASK_NOTIFY_TYPE_DEFAULT,)
 
         super().__init__(*args, **kwargs)
 
     def _start_apprise_client(self, url: SecretStr):
         from apprise import Apprise, AppriseAsset
 
-        # A custom `AppriseAsset` that ensures Prefect Notifications
+        # A custom `AppriseAsset` that ensures Syntask Notifications
         # appear correctly across multiple messaging platforms
-        prefect_app_data = AppriseAsset(
-            app_id="Prefect Notifications",
-            app_desc="Prefect Notifications",
+        syntask_app_data = AppriseAsset(
+            app_id="Syntask Notifications",
+            app_desc="Syntask Notifications",
             app_url="https://syntask.khulnasoft.com",
         )
 
-        self._apprise_client = Apprise(asset=prefect_app_data)
+        self._apprise_client = Apprise(asset=syntask_app_data)
         self._apprise_client.add(url.get_secret_value())
 
     def block_initialization(self) -> None:
@@ -103,7 +103,7 @@ class AppriseNotificationBlock(AbstractAppriseNotificationBlock, ABC):
         await super().notify(body, subject)
 
 
-# TODO: Move to prefect-slack once collection block auto-registration is
+# TODO: Move to syntask-slack once collection block auto-registration is
 # available
 class SlackWebhook(AppriseNotificationBlock):
     """
@@ -112,10 +112,10 @@ class SlackWebhook(AppriseNotificationBlock):
     Examples:
         Load a saved Slack webhook and send a message:
         ```python
-        from prefect.blocks.notifications import SlackWebhook
+        from syntask.blocks.notifications import SlackWebhook
 
         slack_webhook_block = SlackWebhook.load("BLOCK_NAME")
-        slack_webhook_block.notify("Hello from Prefect!")
+        slack_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -138,9 +138,9 @@ class MicrosoftTeamsWebhook(AppriseNotificationBlock):
     Examples:
         Load a saved Teams webhook and send a message:
         ```python
-        from prefect.blocks.notifications import MicrosoftTeamsWebhook
+        from syntask.blocks.notifications import MicrosoftTeamsWebhook
         teams_webhook_block = MicrosoftTeamsWebhook.load("BLOCK_NAME")
-        teams_webhook_block.notify("Hello from Prefect!")
+        teams_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -191,9 +191,9 @@ class PagerDutyWebHook(AbstractAppriseNotificationBlock):
     Examples:
         Load a saved PagerDuty webhook and send a message:
         ```python
-        from prefect.blocks.notifications import PagerDutyWebHook
+        from syntask.blocks.notifications import PagerDutyWebHook
         pagerduty_webhook_block = PagerDutyWebHook.load("BLOCK_NAME")
-        pagerduty_webhook_block.notify("Hello from Prefect!")
+        pagerduty_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -204,7 +204,7 @@ class PagerDutyWebHook(AbstractAppriseNotificationBlock):
     _logo_url = "https://cdn.sanity.io/images/3ugk85nk/production/8dbf37d17089c1ce531708eac2e510801f7b3aee-250x250.png"
     _documentation_url = "https://docs.syntask.khulnasoft.com/latest/automate/events/automations-triggers#sending-notifications-with-automations"
 
-    # The default cannot be prefect_default because NotifyPagerDuty's
+    # The default cannot be syntask_default because NotifyPagerDuty's
     # PAGERDUTY_SEVERITY_MAP only has these notify types defined as keys
     notify_type: Literal["info", "success", "warning", "failure"] = Field(
         default="info", description="The severity of the notification."
@@ -231,7 +231,7 @@ class PagerDutyWebHook(AbstractAppriseNotificationBlock):
     )
 
     source: Optional[str] = Field(
-        default="Prefect", description="The source string as part of the payload."
+        default="Syntask", description="The source string as part of the payload."
     )
 
     component: str = Field(
@@ -308,7 +308,7 @@ class PagerDutyWebHook(AbstractAppriseNotificationBlock):
         if subject:
             self.custom_details = self.custom_details or {}
             self.custom_details.update(
-                {"Prefect Notification Body": body.replace(" ", "%20")}
+                {"Syntask Notification Body": body.replace(" ", "%20")}
             )
             body = " "
             self.block_initialization()
@@ -323,9 +323,9 @@ class TwilioSMS(AbstractAppriseNotificationBlock):
     Examples:
         Load a saved `TwilioSMS` block and send a message:
         ```python
-        from prefect.blocks.notifications import TwilioSMS
+        from syntask.blocks.notifications import TwilioSMS
         twilio_webhook_block = TwilioSMS.load("BLOCK_NAME")
-        twilio_webhook_block.notify("Hello from Prefect!")
+        twilio_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -391,9 +391,9 @@ class OpsgenieWebhook(AbstractAppriseNotificationBlock):
     Examples:
         Load a saved Opsgenie webhook and send a message:
         ```python
-        from prefect.blocks.notifications import OpsgenieWebhook
+        from syntask.blocks.notifications import OpsgenieWebhook
         opsgenie_webhook_block = OpsgenieWebhook.load("BLOCK_NAME")
-        opsgenie_webhook_block.notify("Hello from Prefect!")
+        opsgenie_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -508,11 +508,11 @@ class MattermostWebhook(AbstractAppriseNotificationBlock):
     Examples:
         Load a saved Mattermost webhook and send a message:
         ```python
-        from prefect.blocks.notifications import MattermostWebhook
+        from syntask.blocks.notifications import MattermostWebhook
 
         mattermost_webhook_block = MattermostWebhook.load("BLOCK_NAME")
 
-        mattermost_webhook_block.notify("Hello from Prefect!")
+        mattermost_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -589,11 +589,11 @@ class DiscordWebhook(AbstractAppriseNotificationBlock):
     Examples:
         Load a saved Discord webhook and send a message:
         ```python
-        from prefect.blocks.notifications import DiscordWebhook
+        from syntask.blocks.notifications import DiscordWebhook
 
         discord_webhook_block = DiscordWebhook.load("BLOCK_NAME")
 
-        discord_webhook_block.notify("Hello from Prefect!")
+        discord_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -690,11 +690,11 @@ class CustomWebhookNotificationBlock(NotificationBlock):
     Examples:
         Load a saved custom webhook and send a message:
         ```python
-        from prefect.blocks.notifications import CustomWebhookNotificationBlock
+        from syntask.blocks.notifications import CustomWebhookNotificationBlock
 
         custom_webhook_block = CustomWebhookNotificationBlock.load("BLOCK_NAME")
 
-        custom_webhook_block.notify("Hello from Prefect!")
+        custom_webhook_block.notify("Hello from Syntask!")
         ```
     """
 
@@ -805,7 +805,7 @@ class CustomWebhookNotificationBlock(NotificationBlock):
         cookies = request_args.pop("cookies", None)
         # make request with httpx
         client = httpx.AsyncClient(
-            headers={"user-agent": "Prefect Notifications"}, cookies=cookies
+            headers={"user-agent": "Syntask Notifications"}, cookies=cookies
         )
         async with client:
             resp = await client.request(**request_args)
@@ -820,11 +820,11 @@ class SendgridEmail(AbstractAppriseNotificationBlock):
     Examples:
         Load a saved Sendgrid and send a email message:
         ```python
-        from prefect.blocks.notifications import SendgridEmail
+        from syntask.blocks.notifications import SendgridEmail
 
         sendgrid_block = SendgridEmail.load("BLOCK_NAME")
 
-        sendgrid_block.notify("Hello from Prefect!")
+        sendgrid_block.notify("Hello from Syntask!")
     """
 
     _description = "Enables sending notifications via Sendgrid email service."

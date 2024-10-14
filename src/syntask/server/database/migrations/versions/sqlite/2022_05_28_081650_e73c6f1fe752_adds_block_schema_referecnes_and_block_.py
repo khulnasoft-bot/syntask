@@ -9,8 +9,8 @@ Create Date: 2022-05-28 08:16:50.141505
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
-from prefect.blocks.core import Block
+import syntask
+from syntask.blocks.core import Block
 
 # revision identifiers, used by Alembic.
 revision = "e73c6f1fe752"
@@ -37,7 +37,7 @@ def upgrade():
         "block_schema_reference",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4))) \n        || '-' \n       "
                 " || lower(hex(randomblob(2))) \n        || '-4' \n        ||"
@@ -50,25 +50,25 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column(
             "parent_block_schema_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.Column(
             "reference_block_schema_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(
@@ -99,7 +99,7 @@ def upgrade():
         "block_document_reference",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4))) \n        || '-' \n       "
                 " || lower(hex(randomblob(2))) \n        || '-4' \n        ||"
@@ -112,25 +112,25 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column(
             "parent_block_document_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.Column(
             "reference_block_document_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(

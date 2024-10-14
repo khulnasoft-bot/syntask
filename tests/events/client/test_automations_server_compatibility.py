@@ -6,9 +6,9 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.client.orchestration import get_client
-from prefect.events import Trigger, TriggerTypes
-from prefect.events.actions import (
+from syntask.client.orchestration import get_client
+from syntask.events import Trigger, TriggerTypes
+from syntask.events.actions import (
     Action,
     ActionTypes,
     CallWebhook,
@@ -28,7 +28,7 @@ from prefect.events.actions import (
     SendNotification,
     SuspendFlowRun,
 )
-from prefect.events.schemas.automations import (
+from syntask.events.schemas.automations import (
     AutomationCore,
     CompoundTrigger,
     EventTrigger,
@@ -36,19 +36,19 @@ from prefect.events.schemas.automations import (
     Posture,
     SequenceTrigger,
 )
-from prefect.events.schemas.deployment_triggers import (
+from syntask.events.schemas.deployment_triggers import (
     DeploymentCompoundTrigger,
     DeploymentEventTrigger,
     DeploymentMetricTrigger,
     DeploymentSequenceTrigger,
     DeploymentTriggerTypes,
 )
-from prefect.settings import PREFECT_API_SERVICES_TRIGGERS_ENABLED, temporary_settings
+from syntask.settings import SYNTASK_API_SERVICES_TRIGGERS_ENABLED, temporary_settings
 
 
 @pytest.fixture(autouse=True)
 def enable_triggers():
-    with temporary_settings({PREFECT_API_SERVICES_TRIGGERS_ENABLED: True}):
+    with temporary_settings({SYNTASK_API_SERVICES_TRIGGERS_ENABLED: True}):
         yield
 
 
@@ -139,21 +139,21 @@ def test_all_triggers_represented():
 
 
 @pytest.mark.parametrize("trigger", EXAMPLE_TRIGGERS)
-async def test_trigger_round_tripping(trigger: TriggerTypes, in_memory_prefect_client):
+async def test_trigger_round_tripping(trigger: TriggerTypes, in_memory_syntask_client):
     """Tests that any of the example client triggers can be round-tripped to the
-    Prefect server"""
+    Syntask server"""
     # Using an in-memory client because the Pydantic model marshalling doesn't work
     # with the hosted API server. It appears to chose the client-side model for EventTrigger
     # instead of the server-side model.
     # TODO: Fix the model resolution to work with the hosted API server
-    automation_id = await in_memory_prefect_client.create_automation(
+    automation_id = await in_memory_syntask_client.create_automation(
         AutomationCore(
             name="test",
             trigger=trigger,
             actions=[DoNothing()],
         )
     )
-    automation = await in_memory_prefect_client.read_automation(automation_id)
+    automation = await in_memory_syntask_client.read_automation(automation_id)
 
     sent = trigger.model_dump()
     returned = automation.trigger.model_dump()
@@ -313,7 +313,7 @@ def test_all_actions_represented():
 @pytest.mark.parametrize("action", EXAMPLE_ACTIONS)
 async def test_action_round_tripping(action: ActionTypes):
     """Tests that any of the example client triggers can be round-tripped to the
-    Prefect server"""
+    Syntask server"""
     async with get_client() as client:
         automation_id = await client.create_automation(
             AutomationCore(

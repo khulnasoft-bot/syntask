@@ -3,7 +3,7 @@ Async and thread safe models for passing runtime context data.
 
 These contexts should never be directly mutated by the user.
 
-For more user-accessible information about the current run, see [`prefect.runtime`](../runtime/flow_run).
+For more user-accessible information about the current run, see [`syntask.runtime`](../runtime/flow_run).
 """
 
 import os
@@ -30,25 +30,25 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import Self
 
-import prefect.logging
-import prefect.logging.configuration
-import prefect.settings
-from prefect._internal.compatibility.migration import getattr_migration
-from prefect.client.orchestration import PrefectClient, SyncPrefectClient, get_client
-from prefect.client.schemas import FlowRun, TaskRun
-from prefect.events.worker import EventsWorker
-from prefect.exceptions import MissingContextError
-from prefect.results import ResultStore, get_default_persist_setting
-from prefect.settings import Profile, Settings
-from prefect.states import State
-from prefect.task_runners import TaskRunner
-from prefect.utilities.services import start_client_metrics_server
+import syntask.logging
+import syntask.logging.configuration
+import syntask.settings
+from syntask._internal.compatibility.migration import getattr_migration
+from syntask.client.orchestration import SyncSyntaskClient, SyntaskClient, get_client
+from syntask.client.schemas import FlowRun, TaskRun
+from syntask.events.worker import EventsWorker
+from syntask.exceptions import MissingContextError
+from syntask.results import ResultStore, get_default_persist_setting
+from syntask.settings import Profile, Settings
+from syntask.states import State
+from syntask.task_runners import TaskRunner
+from syntask.utilities.services import start_client_metrics_server
 
 T = TypeVar("T")
 
 if TYPE_CHECKING:
-    from prefect.flows import Flow
-    from prefect.tasks import Task
+    from syntask.flows import Flow
+    from syntask.tasks import Task
 
 # Define the global settings context variable
 # This will be populated downstream but must be null here to facilitate loading the
@@ -77,7 +77,7 @@ def serialize_context() -> Dict[str, Any]:
 @contextmanager
 def hydrated_context(
     serialized_context: Optional[Dict[str, Any]] = None,
-    client: Union[PrefectClient, SyncPrefectClient, None] = None,
+    client: Union[SyntaskClient, SyncSyntaskClient, None] = None,
 ):
     with ExitStack() as stack:
         if serialized_context:
@@ -176,7 +176,7 @@ class ContextModel(BaseModel):
 
 class SyncClientContext(ContextModel):
     """
-    A context for managing the sync Prefect client instances.
+    A context for managing the sync Syntask client instances.
 
     Clients were formerly tracked on the TaskRunContext and FlowRunContext, but
     having two separate places and the addition of both sync and async clients
@@ -185,7 +185,7 @@ class SyncClientContext(ContextModel):
 
     The client creates a sync client, which can either be read directly from
     the context object OR loaded with get_client, inject_client, or other
-    Prefect utilities.
+    Syntask utilities.
 
     with SyncClientContext.get_or_create() as ctx:
         c1 = get_client(sync_client=True)
@@ -195,7 +195,7 @@ class SyncClientContext(ContextModel):
     """
 
     __var__ = ContextVar("sync-client-context")
-    client: SyncPrefectClient
+    client: SyncSyntaskClient
     _httpx_settings: Optional[dict[str, Any]] = PrivateAttr(None)
     _context_stack: int = PrivateAttr(0)
 
@@ -234,7 +234,7 @@ class SyncClientContext(ContextModel):
 
 class AsyncClientContext(ContextModel):
     """
-    A context for managing the async Prefect client instances.
+    A context for managing the async Syntask client instances.
 
     Clients were formerly tracked on the TaskRunContext and FlowRunContext, but
     having two separate places and the addition of both sync and async clients
@@ -243,7 +243,7 @@ class AsyncClientContext(ContextModel):
 
     The client creates an async client, which can either be read directly from
     the context object OR loaded with get_client, inject_client, or other
-    Prefect utilities.
+    Syntask utilities.
 
     with AsyncClientContext.get_or_create() as ctx:
         c1 = get_client(sync_client=False)
@@ -253,7 +253,7 @@ class AsyncClientContext(ContextModel):
     """
 
     __var__ = ContextVar("async-client-context")
-    client: PrefectClient
+    client: SyntaskClient
     _httpx_settings: Optional[dict[str, Any]] = PrivateAttr(None)
     _context_stack: int = PrivateAttr(0)
 
@@ -297,7 +297,7 @@ class RunContext(ContextModel):
 
     Attributes:
         start_time: The time the run context was entered
-        client: The Prefect client instance being used for API communication
+        client: The Syntask client instance being used for API communication
     """
 
     def __init__(self, *args, **kwargs):
@@ -307,7 +307,7 @@ class RunContext(ContextModel):
 
     start_time: DateTime = Field(default_factory=lambda: pendulum.now("UTC"))
     input_keyset: Optional[Dict[str, Dict[str, str]]] = None
-    client: Union[PrefectClient, SyncPrefectClient]
+    client: Union[SyntaskClient, SyncSyntaskClient]
 
     def serialize(self):
         return self.model_dump(
@@ -418,7 +418,7 @@ class TaskRunContext(RunContext):
 
 class TagsContext(ContextModel):
     """
-    The context for `prefect.tags` management.
+    The context for `syntask.tags` management.
 
     Attributes:
         current_tags: A set of current tags in the context
@@ -436,7 +436,7 @@ class TagsContext(ContextModel):
 
 class SettingsContext(ContextModel):
     """
-    The context for a Prefect settings.
+    The context for a Syntask settings.
 
     This allows for safe concurrent access and modification of settings.
 
@@ -460,11 +460,11 @@ class SettingsContext(ContextModel):
         return_value = super().__enter__()
 
         try:
-            prefect_home = self.settings.home
-            prefect_home.mkdir(mode=0o0700, exist_ok=True)
+            syntask_home = self.settings.home
+            syntask_home.mkdir(mode=0o0700, exist_ok=True)
         except OSError:
             warnings.warn(
-                (f"Failed to create the Prefect home directory at {prefect_home}"),
+                (f"Failed to create the Syntask home directory at {syntask_home}"),
                 stacklevel=2,
             )
 
@@ -505,7 +505,7 @@ def get_settings_context() -> SettingsContext:
     settings that are being used.
 
     Generally, the settings that are being used are a combination of values from the
-    profile and environment. See `prefect.context.use_profile` for more details.
+    profile and environment. See `syntask.context.use_profile` for more details.
     """
     settings_ctx = SettingsContext.get()
 
@@ -526,7 +526,7 @@ def tags(*new_tags: str) -> Generator[Set[str], None, None]:
         The current set of tags
 
     Examples:
-        >>> from prefect import tags, task, flow
+        >>> from syntask import tags, task, flow
         >>> @task
         >>> def my_task():
         >>>     pass
@@ -596,7 +596,7 @@ def use_profile(
         The created `SettingsContext` object
     """
     if isinstance(profile, str):
-        profiles = prefect.settings.load_profiles()
+        profiles = syntask.settings.load_profiles()
         profile = profiles[profile]
 
     if not isinstance(profile, Profile):
@@ -615,8 +615,8 @@ def use_profile(
 
     if not override_environment_variables:
         for key in os.environ:
-            if key in prefect.settings.SETTING_VARIABLES:
-                profile_settings.pop(prefect.settings.SETTING_VARIABLES[key], None)
+            if key in syntask.settings.SETTING_VARIABLES:
+                profile_settings.pop(syntask.settings.SETTING_VARIABLES[key], None)
 
     new_settings = settings.copy_with_update(updates=profile_settings)
 
@@ -629,20 +629,20 @@ def root_settings_context():
     Return the settings context that will exist as the root context for the module.
 
     The profile to use is determined with the following precedence
-    - Command line via 'prefect --profile <name>'
-    - Environment variable via 'PREFECT_PROFILE'
+    - Command line via 'syntask --profile <name>'
+    - Environment variable via 'SYNTASK_PROFILE'
     - Profiles file via the 'active' key
     """
-    profiles = prefect.settings.load_profiles()
+    profiles = syntask.settings.load_profiles()
     active_name = profiles.active_name
     profile_source = "in the profiles file"
 
-    if "PREFECT_PROFILE" in os.environ:
-        active_name = os.environ["PREFECT_PROFILE"]
+    if "SYNTASK_PROFILE" in os.environ:
+        active_name = os.environ["SYNTASK_PROFILE"]
         profile_source = "by environment variable"
 
     if (
-        sys.argv[0].endswith("/prefect")
+        sys.argv[0].endswith("/syntask")
         and len(sys.argv) >= 3
         and sys.argv[1] == "--profile"
     ):
@@ -669,5 +669,5 @@ GLOBAL_SETTINGS_CONTEXT: SettingsContext = root_settings_context()
 
 
 # 2024-07-02: This surfaces an actionable error message for removed objects
-# in Prefect 3.0 upgrade.
+# in Syntask 3.0 upgrade.
 __getattr__ = getattr_migration(__name__)

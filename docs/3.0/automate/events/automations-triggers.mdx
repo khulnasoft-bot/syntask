@@ -7,7 +7,7 @@ Automations enable you to configure [actions](#actions) that execute automatical
 
 Potential triggers include the occurrence of events from changes in a flow run's state—or the absence of such events.
 You can define your own custom trigger to fire based on a custom [event](/3.0/automate/events/custom-triggers/) defined in Python code.
-With Prefect Cloud you can even create [webhooks](/3.0/automate/events/webhook-triggers/) that can receive data for use in actions.
+With Syntask Cloud you can even create [webhooks](/3.0/automate/events/webhook-triggers/) that can receive data for use in actions.
 
 Actions include starting flow runs, pausing schedules, and sending custom notifications.
 
@@ -23,7 +23,7 @@ On the **Automations** page, select the **+** icon to create a new automation. Y
 
 The **Automations** page provides an overview of all configured automations for your workspace.
 
-![Viewing automations for a workspace in Prefect Cloud.](/3.0/img/ui/automations.png)
+![Viewing automations for a workspace in Syntask Cloud.](/3.0/img/ui/automations.png)
 
 Select the toggle next to an automation to pause execution of the automation.
 
@@ -33,7 +33,7 @@ Select the name of an automation to view **Details** about it and relevant **Eve
 
 ### Triggers
 
-Triggers specify the conditions under which your action should be performed. The Prefect UI includes templates for many
+Triggers specify the conditions under which your action should be performed. The Syntask UI includes templates for many
 common conditions, such as:
 
 - Flow run state change (Flow Run Tags are only evaluated with `OR` criteria)
@@ -47,14 +47,14 @@ common conditions, such as:
 <Note>
 **Automations API**
 
-The [automations API](https://app.prefect.cloud/api/docs#tag/Automations) enables further programmatic customization of
-trigger and action policies based on arbitrary [events](https://app.prefect.cloud/api/docs#tag/Events).
+The [automations API](https://app.syntask.cloud/api/docs#tag/Automations) enables further programmatic customization of
+trigger and action policies based on arbitrary [events](https://app.syntask.cloud/api/docs#tag/Events).
 </Note>
 
 Importantly, you can configure the triggers not only in reaction to events, but also proactively: in the absence of
 an expected event.
 
-![Configuring a trigger for an automation in Prefect Cloud.](/3.0/img/ui/automations-trigger.png)
+![Configuring a trigger for an automation in Syntask Cloud.](/3.0/img/ui/automations-trigger.png)
 
 For example, in the case of flow run state change triggers, you might expect production flows to finish in no longer
 than thirty minutes. But transient infrastructure or network issues could cause your flow to get “stuck” in a running state.
@@ -80,16 +80,16 @@ Actions specify what your automation does when its trigger criteria are met. Cur
 - Declare an incident (available on Pro and Enterprise plans)
 - Change the state of a flow run
 
-![Configuring an action for an automation in Prefect Cloud.](/3.0/img/ui/automations-action.png)
+![Configuring an action for an automation in Syntask Cloud.](/3.0/img/ui/automations-action.png)
 
 ### Create automations In Python code
 
 You can create and access any automation with the Python SDK's `Automation` class and its methods.
 
 ```python
-from prefect.automations import Automation
-from prefect.events.schemas.automations import EventTrigger
-from prefect.events.actions import CancelFlowRun
+from syntask.automations import Automation
+from syntask.events.schemas.automations import EventTrigger
+from syntask.events.actions import CancelFlowRun
 
 # creating an automation
 automation = Automation(
@@ -132,23 +132,23 @@ flow run—the flow run that caused the trigger to fire.
 Similarly, if a trigger fires on a work queue event and the corresponding action is to pause an inferred work queue, the
 inferred work queue is the one that emitted the event.
 
-Prefect infers the relevant event whenever possible, but sometimes one does not exist.
+Syntask infers the relevant event whenever possible, but sometimes one does not exist.
 
 Specify a name and, optionally, a description for the automation.
 
 ## Create an automation with deployment triggers
 
-To enable the simple configuration of event-driven deployments, Prefect provides deployment triggers—a shorthand for
+To enable the simple configuration of event-driven deployments, Syntask provides deployment triggers—a shorthand for
 creating automations that are linked to specific deployments to run them based on the presence or absence of events.
 
-Trigger definitions for deployments are supported in `prefect.yaml`, `.serve`, and `.deploy`. At deployment time,
+Trigger definitions for deployments are supported in `syntask.yaml`, `.serve`, and `.deploy`. At deployment time,
 specified trigger definitions create linked automations triggered by events matching your chosen
 [grammar](/3.0/automate/events/events/#event-grammar). Each trigger definition may include a [jinja template](https://en.wikipedia.org/wiki/Jinja_(template_engine))
 to render the triggering `event` as the `parameters` of your  deployment's flow run.
 
-### Define triggers in `prefect.yaml`
+### Define triggers in `syntask.yaml`
 
-You can include a list of triggers on any deployment in a `prefect.yaml` file:
+You can include a list of triggers on any deployment in a `syntask.yaml` file:
 
 ```yaml
 deployments:
@@ -160,7 +160,7 @@ deployments:
       - type: event
         enabled: true
         match:
-          prefect.resource.id: my.external.resource
+          syntask.resource.id: my.external.resource
         expect:
           - external.resource.pinged
         parameters:
@@ -184,12 +184,12 @@ deployments:
         triggers:
           - type: event
             match:
-              prefect.resource.id: my.external.resource
+              syntask.resource.id: my.external.resource
             expect:
               - external.resource.pinged
           - type: event
             match:
-              prefect.resource.id: my.external.resource
+              syntask.resource.id: my.external.resource
             expect:
               - external.resource.replied
 ```
@@ -198,11 +198,11 @@ deployments:
 
 To create deployments with triggers in Python, the trigger types `DeploymentEventTrigger`,
 `DeploymentMetricTrigger`, `DeploymentCompoundTrigger`, and `DeploymentSequenceTrigger` can be imported
-from `prefect.events`:
+from `syntask.events`:
 
 ```python
-from prefect import flow
-from prefect.events import DeploymentEventTrigger
+from syntask import flow
+from syntask.events import DeploymentEventTrigger
 
 
 @flow(log_prints=True)
@@ -216,7 +216,7 @@ if __name__=="__main__":
         triggers=[
             DeploymentEventTrigger(
                 enabled=True,
-                match={"prefect.resource.id": "my.external.resource"},
+                match={"syntask.resource.id": "my.external.resource"},
                 expect=["external.resource.pinged"],
                 parameters={
                     "param_1": "{{ event }}",
@@ -229,8 +229,8 @@ if __name__=="__main__":
 As with prior examples, you must supply composite triggers with a list of underlying triggers:
 
 ```python
-from prefect import flow
-from prefect.events import DeploymentCompoundTrigger
+from syntask import flow
+from syntask.events import DeploymentCompoundTrigger
 
 
 @flow(log_prints=True)
@@ -250,12 +250,12 @@ if __name__=="__main__":
                 triggers=[
                     {
                       "type": "event",
-                      "match": {"prefect.resource.id": "my.external.resource"},
+                      "match": {"syntask.resource.id": "my.external.resource"},
                       "expect": ["external.resource.pinged"],
                     },
                     {
                       "type": "event",
-                      "match": {"prefect.resource.id": "my.external.resource"},
+                      "match": {"syntask.resource.id": "my.external.resource"},
                       "expect": ["external.resource.replied"],
                     },
                 ],
@@ -269,25 +269,25 @@ if __name__=="__main__":
 ```
 
 
-### Pass triggers to `prefect deploy`
+### Pass triggers to `syntask deploy`
 
-You can pass one or more `--trigger` arguments to `prefect deploy` as either a JSON string or a
+You can pass one or more `--trigger` arguments to `syntask deploy` as either a JSON string or a
 path to a `.yaml` or `.json` file.
 
 ```bash
 # Pass a trigger as a JSON string
-prefect deploy -n test-deployment \
+syntask deploy -n test-deployment \
   --trigger '{
     "enabled": true,
     "match": {
-      "prefect.resource.id": "prefect.flow-run.*"
+      "syntask.resource.id": "syntask.flow-run.*"
     },
-    "expect": ["prefect.flow-run.Completed"]
+    "expect": ["syntask.flow-run.Completed"]
   }'
 
 # Pass a trigger using a JSON/YAML file
-prefect deploy -n test-deployment --trigger triggers.yaml
-prefect deploy -n test-deployment --trigger my_stuff/triggers.json
+syntask deploy -n test-deployment --trigger triggers.yaml
+syntask deploy -n test-deployment --trigger my_stuff/triggers.json
 ```
 
 For example, a `triggers.yaml` file could have many triggers defined:
@@ -296,27 +296,27 @@ For example, a `triggers.yaml` file could have many triggers defined:
 triggers:
   - enabled: true
     match:
-      prefect.resource.id: my.external.resource
+      syntask.resource.id: my.external.resource
     expect:
       - external.resource.pinged
     parameters:
       param_1: "{{ event }}"
   - enabled: true
     match:
-      prefect.resource.id: my.other.external.resource
+      syntask.resource.id: my.other.external.resource
     expect:
       - some.other.event
     parameters:
       param_1: "{{ event }}"
 ```
 
-Both of the above triggers would be attached to `test-deployment` after running `prefect deploy`.
+Both of the above triggers would be attached to `test-deployment` after running `syntask deploy`.
 
 <Warning>
-**Triggers passed to `prefect deploy` will override any triggers defined in `prefect.yaml`**
+**Triggers passed to `syntask deploy` will override any triggers defined in `syntask.yaml`**
 
-While you can define triggers in `prefect.yaml` for a given deployment, triggers passed to `prefect deploy`
-take precedence over those defined in `prefect.yaml`.
+While you can define triggers in `syntask.yaml` for a given deployment, triggers passed to `syntask deploy`
+take precedence over those defined in `syntask.yaml`.
 </Warning>
 
 Note that deployment triggers contribute to the total number of automations in your workspace.
@@ -331,7 +331,7 @@ to send a message, including:
 - Microsoft Teams message to a channel
 - Email to an email address
 
-![Configuring notifications for an automation in Prefect Cloud.](/3.0/img/ui/automations-notifications.png)
+![Configuring notifications for an automation in Syntask Cloud.](/3.0/img/ui/automations-notifications.png)
 
 ## Templating with Jinja
 
@@ -342,11 +342,11 @@ Jinja templated variable syntax wraps the variable name in double curly brackets
 
 You can access properties of the underlying flow run objects including:
 
-- [flow_run](https://prefect-python-sdk-docs.netlify.app/prefect/server/schemas/core/#prefect.server.schemas.core.FlowRun)
-- [flow](https://prefect-python-sdk-docs.netlify.app/prefect/server/schemas/core/#prefect.server.schemas.core.Flow)
-- [deployment](https://prefect-python-sdk-docs.netlify.app/prefect/server/schemas/core/#prefect.server.schemas.core.Deployment)
-- [work_queue](https://prefect-python-sdk-docs.netlify.app/prefect/server/schemas/core/#prefect.server.schemas.core.WorkQueue)
-- [work_pool](https://prefect-python-sdk-docs.netlify.app/prefect/server/schemas/core/#prefect.server.schemas.core.WorkPool)
+- [flow_run](https://syntask-python-sdk-docs.netlify.app/syntask/server/schemas/core/#syntask.server.schemas.core.FlowRun)
+- [flow](https://syntask-python-sdk-docs.netlify.app/syntask/server/schemas/core/#syntask.server.schemas.core.Flow)
+- [deployment](https://syntask-python-sdk-docs.netlify.app/syntask/server/schemas/core/#syntask.server.schemas.core.Deployment)
+- [work_queue](https://syntask-python-sdk-docs.netlify.app/syntask/server/schemas/core/#syntask.server.schemas.core.WorkQueue)
+- [work_pool](https://syntask-python-sdk-docs.netlify.app/syntask/server/schemas/core/#syntask.server.schemas.core.WorkPool)
 
 In addition to its native properties, each object includes an `id` along with `created` and `updated` timestamps.
 
@@ -365,7 +365,7 @@ Flow run {{ flow_run.name }} entered state {{ flow_run.state.name }}.
 
 The resulting Slack webhook notification looks something like this:
 
-![Configuring notifications for an automation in Prefect Cloud.](/3.0/img/ui/templated-notification.png)
+![Configuring notifications for an automation in Syntask Cloud.](/3.0/img/ui/templated-notification.png)
 
 You could include `flow` and `deployment` properties:
 
@@ -390,7 +390,7 @@ Last polled: {{ work_pool.last_polled }}
 ```
 
 In addition to those shortcuts for flows, deployments, and work pools, you have access to the automation and the
-event that triggered the automation. See the [Automations API](https://app.prefect.cloud/api/docs#tag/Automations)
+event that triggered the automation. See the [Automations API](https://app.syntask.cloud/api/docs#tag/Automations)
 for additional details.
 
 ```
@@ -426,7 +426,7 @@ Start by pulling hypothetical user data from an endpoint and then performing dat
 First create a simple extract method that pulls the data from a random user data generator endpoint:
 
 ```python
-from prefect import flow, task, get_run_logger
+from syntask import flow, task, get_run_logger
 import requests
 import json
 
@@ -501,27 +501,27 @@ run in response to an event.
 
 ### Event-based deployment automation
 Create an automation to kick off a deployment instead of a notification. Explore how to programmatically create this
-automation with Prefect's REST API.
+automation with Syntask's REST API.
 
 See the [REST API documentation](https://docs.syntask.khulnasoft.com/latest/api-ref/rest-api/#interacting-with-the-rest-api) as a reference for interacting with the automation endpoints.
 
 Create a deployment to kick off some work based on how long a flow is running. For example, if the `build_names` flow
 takes too long to execute, you can kick off a deployment with the same `build_names` flow, but replace the `count` value
 with a lower number to speed up completion.
-Create a deployment with a `prefect.yaml` file or a Python file that uses `flow.deploy`.
+Create a deployment with a `syntask.yaml` file or a Python file that uses `flow.deploy`.
 <Tabs>
-<Tab title="prefect.yaml">
+<Tab title="syntask.yaml">
 
-    Create a `prefect.yaml` file like this one for our flow `build_names`:
+    Create a `syntask.yaml` file like this one for our flow `build_names`:
 
     ```yaml
-      # Welcome to your prefect.yaml file! You can use this file for storing and managing
+      # Welcome to your syntask.yaml file! You can use this file for storing and managing
       # configuration for deploying your flows. We recommend committing this file to source
       # control along with your flow code.
 
       # Generic metadata about this project
       name: automations-guide
-      prefect-version: 3.0.0
+      syntask-version: 3.0.0
 
       # build section allows you to manage and build docker images
       build: null
@@ -531,8 +531,8 @@ Create a deployment with a `prefect.yaml` file or a Python file that uses `flow.
 
       # pull section allows you to provide instructions for cloning this project in remote locations
       pull:
-      - prefect.deployments.steps.set_working_directory:
-          directory: /Users/src/prefect/Playground/automations-guide
+      - syntask.deployments.steps.set_working_directory:
+          directory: /Users/src/syntask/Playground/automations-guide
 
       # the deployments section allows you to provide configuration for deploying flows
       deployments:
@@ -573,11 +573,11 @@ Grab your `deployment_id` from this deployment with the CLI and embed it in your
 <Tip>
 **Find deployment_id from the CLI**
 
-Run `prefect deployment ls` in an authenticated command prompt.
+Run `syntask deployment ls` in an authenticated command prompt.
 </Tip>
 
 ```bash
-prefect deployment ls
+syntask deployment ls
                                           Deployments
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Name                                                  ┃ ID                                   ┃
@@ -591,7 +591,7 @@ Create an automation with a POST call to programmatically create the automation.
 
 ```python
 def create_event_driven_automation():
-    api_url = f"https://api.prefect.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/automations/"
+    api_url = f"https://api.syntask.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/automations/"
     data = {
         "name": "Event Driven Redeploy",
         "description": "Programmatically created an automation to redeploy a flow based on an event",
@@ -601,10 +601,10 @@ def create_event_driven_automation():
                 "string"
             ],
             "expect": [
-                "prefect.flow-run.Running"
+                "syntask.flow-run.Running"
             ],
             "for_each": [
-                "prefect.resource.id"
+                "syntask.resource.id"
             ],
             "posture": "Proactive",
             "threshold": 30,
@@ -621,7 +621,7 @@ def create_event_driven_automation():
         "owner_resource": "string"
     }
 
-    headers = {"Authorization": f"Bearer {PREFECT_API_KEY}"}
+    headers = {"Authorization": f"Bearer {SYNTASK_API_KEY}"}
     response = requests.post(api_url, headers=headers, json=data)
 
     print(response.json())
@@ -649,14 +649,14 @@ name: Cancel long running flows
 description: Cancel any flow run after an hour of execution
 trigger:
   match:
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   match_related: {}
   after:
-    - "prefect.flow-run.Failed"
+    - "syntask.flow-run.Failed"
   expect:
-    - "prefect.flow-run.*"
+    - "syntask.flow-run.*"
   for_each:
-    - "prefect.resource.id"
+    - "syntask.resource.id"
   posture: "Proactive"
   threshold: 1
   within: 30
@@ -694,7 +694,7 @@ if __name__ == "__main__":
     create_or_update_automation()
 ```
 
-Find a complete repo with these APIs examples in this [GitHub repository](https://github.com/EmilRex/prefect-api-examples/tree/main).
+Find a complete repo with these APIs examples in this [GitHub repository](https://github.com/EmilRex/syntask-api-examples/tree/main).
 
 In this example, you created the automation by registering the .yaml file with a helper function.
 
@@ -720,8 +720,8 @@ Create this webhook in the UI to create these dynamic events.
 {
     "event": "model-update",
     "resource": {
-        "prefect.resource.id": "product.models.{{ body.model_id}}",
-        "prefect.resource.name": "{{ body.friendly_name }}",
+        "syntask.resource.id": "product.models.{{ body.model_id}}",
+        "syntask.resource.name": "{{ body.friendly_name }}",
         "run_count": "{{body.run_count}}"
     }
 }
@@ -735,7 +735,7 @@ automation.
 
 For example, you can create a curl request that sends the endpoint information such as a run count for your deployment:
 ```console
-curl -X POST https://api.prefect.cloud/hooks/34iV2SFke3mVa6y5Y-YUoA -d "model_id=adhoc" -d "run_count=10" -d "friendly_name=test-user-input"
+curl -X POST https://api.syntask.cloud/hooks/34iV2SFke3mVa6y5Y-YUoA -d "model_id=adhoc" -d "run_count=10" -d "friendly_name=test-user-input"
 ```
 From here, you can make a webhook that is connected to pulling in parameters on the curl command. It kicks off a
 deployment that uses these pulled parameters:
@@ -745,7 +745,7 @@ Go into the event feed to automate straight from this event:
 ![Webhook automate](/3.0/img/guides/webhook-automate.png)
 
 This allows you to create automations that respond to these webhook events. From a few clicks in the UI, you can
-associate an external process with the Prefect events API that can trigger downstream deployments.
+associate an external process with the Syntask events API that can trigger downstream deployments.
 ![Automation custom](/3.0/img/guides/automation-custom.png)
 
 ## Examples
@@ -756,8 +756,8 @@ associate an external process with the Prefect events API that can trigger downs
 This example shows how to use a trigger to schedule a downstream deployment when an upstream deployment completes.
 
 ```python event_driven_deployments.py
-from prefect import flow, serve
-from prefect.events import DeploymentEventTrigger
+from syntask import flow, serve
+from syntask.events import DeploymentEventTrigger
 
 
 @flow(log_prints=True)
@@ -776,8 +776,8 @@ if __name__ == "__main__":
         name="downstream_deployment",
         triggers=[
             DeploymentEventTrigger(
-                expect={"prefect.flow-run.Completed"},
-                match_related={"prefect.resource.name": "upstream_deployment"},
+                expect={"syntask.flow-run.Completed"},
+                match_related={"syntask.resource.name": "upstream_deployment"},
             )
         ],
     )
@@ -794,7 +794,7 @@ python event_driven_deployments.py
 Now, run the upstream deployment and see the downstream deployment kick off after it completes:
 
 ```bash
-prefect deployment run upstream-flow/upstream_deployment
+syntask deployment run upstream-flow/upstream_deployment
 ```
 
 <Tip>
@@ -802,24 +802,24 @@ prefect deployment run upstream-flow/upstream_deployment
 
 You can inspect raw events in the event feed in the UI to see what related resources are available to match against.
 
-For example, the following `prefect.flow-run.Completed` event's related resources include:
+For example, the following `syntask.flow-run.Completed` event's related resources include:
 ```json
 {
    "related": [
     {
-      "prefect.resource.id": "prefect.flow.10e099ec-8358-4146-b188-be68027ee58f",
-      "prefect.resource.role": "flow",
-      "prefect.resource.name": "upstream-flow"
+      "syntask.resource.id": "syntask.flow.10e099ec-8358-4146-b188-be68027ee58f",
+      "syntask.resource.role": "flow",
+      "syntask.resource.name": "upstream-flow"
     },
     {
-      "prefect.resource.id": "prefect.deployment.be777bbd-4b15-49f3-bc1f-4d109374cee2",
-      "prefect.resource.role": "deployment",
-      "prefect.resource.name": "upstream_deployment"
+      "syntask.resource.id": "syntask.deployment.be777bbd-4b15-49f3-bc1f-4d109374cee2",
+      "syntask.resource.role": "deployment",
+      "syntask.resource.name": "upstream_deployment"
     },
     {
-      "prefect.resource.id": "prefect-cloud.user.80546602-9f31-4396-ab4b-e873a5377feb",
-      "prefect.resource.role": "creator",
-      "prefect.resource.name": "stoat"
+      "syntask.resource.id": "syntask-cloud.user.80546602-9f31-4396-ab4b-e873a5377feb",
+      "syntask.resource.role": "creator",
+      "syntask.resource.name": "stoat"
     }
   ]
 }
@@ -840,7 +840,7 @@ There might be a number of events that occur during an order on your platform, f
 <Tip>
 **Event grammar**
 
-The above choices of event names are arbitrary. With Prefect events, you're free to select any event grammar that best
+The above choices of event names are arbitrary. With Syntask events, you're free to select any event grammar that best
 represents your use case.
 </Tip>
 
@@ -854,13 +854,13 @@ In this case, we want to trigger a deployment when a user completes an order, so
 Finally, it should pass the `user_id` as a parameter to the deployment. Here's how this looks in code:
 
 ```python post_order_deployment.py
-from prefect import flow
-from prefect.events.schemas.deployment_triggers import DeploymentEventTrigger
+from syntask import flow
+from syntask.events.schemas.deployment_triggers import DeploymentEventTrigger
 
 order_complete = DeploymentEventTrigger(
     expect={"order.complete"},
     after={"order.created"},
-    for_each={"prefect.resource.id"},
+    for_each={"syntask.resource.id"},
     parameters={"user_id": "{{ event.resource.id }}"},
 )
 
@@ -886,7 +886,7 @@ To simulate users causing order status events, run the following in a Python she
 
 ```python simulate_events.py
 import time
-from prefect.events import emit_event
+from syntask.events import emit_event
 
 user_id_1, user_id_2 = "123", "456"
 for event_name, user_id in [
@@ -896,7 +896,7 @@ for event_name, user_id in [
 ]:
     event = emit_event(
         event=event_name,
-        resource={"prefect.resource.id": user_id},
+        resource={"syntask.resource.id": user_id},
     )
     time.sleep(1)
     print(f"{user_id} emitted {event_name}")
@@ -909,6 +909,6 @@ In the above example:
 
 ## See also
 
-- To learn more about Prefect events, which can trigger automations, see the [events docs](/3.0/automate/events/events/).
+- To learn more about Syntask events, which can trigger automations, see the [events docs](/3.0/automate/events/events/).
 - See the [webhooks guide](/3.0/automate/events/webhook-triggers/)
 to learn how to create webhooks and receive external events.

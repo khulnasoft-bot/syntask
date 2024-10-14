@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from prefect import flow, task
-from prefect.utilities.visualization import (
+from syntask import flow, task
+from syntask.utilities.visualization import (
     TaskVizTracker,
     VisualizationUnsupportedError,
     VizTask,
@@ -70,7 +70,7 @@ class TestTrackTaskRun:
     async def test_track_task_run_outside_ctx(self, monkeypatch):
         mock = Mock()
         monkeypatch.setattr(
-            "prefect.utilities.visualization.TaskVizTracker.add_task", mock
+            "syntask.utilities.visualization.TaskVizTracker.add_task", mock
         )
         _track_viz_task(
             "my_task",
@@ -81,7 +81,7 @@ class TestTrackTaskRun:
     async def test_track_task_run_in_ctx(self, monkeypatch):
         mock = Mock()
         monkeypatch.setattr(
-            "prefect.utilities.visualization.TaskVizTracker.add_task", mock
+            "syntask.utilities.visualization.TaskVizTracker.add_task", mock
         )
         with TaskVizTracker():
             _track_viz_task(
@@ -259,7 +259,7 @@ class TestFlowVisualise:
     )
     def test_visualize_does_not_raise(self, test_flow, monkeypatch):
         monkeypatch.setattr(
-            "prefect.utilities.visualization.visualize_task_dependencies",
+            "syntask.utilities.visualization.visualize_task_dependencies",
             MagicMock(return_value=None),
         )
 
@@ -338,7 +338,7 @@ class TestFlowVisualise:
     ):
         mock_visualize = MagicMock(return_value=None)
         monkeypatch.setattr(
-            "prefect.utilities.visualization.visualize_task_dependencies",
+            "syntask.utilities.visualization.visualize_task_dependencies",
             mock_visualize,
         )
 

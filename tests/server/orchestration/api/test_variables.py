@@ -5,17 +5,17 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.models.variables import create_variable
-from prefect.server.schemas import core, sorting
-from prefect.server.schemas.actions import VariableCreate, VariableUpdate
-from prefect.server.schemas.filters import (
+from syntask.server.models.variables import create_variable
+from syntask.server.schemas import core, sorting
+from syntask.server.schemas.actions import VariableCreate, VariableUpdate
+from syntask.server.schemas.filters import (
     VariableFilter,
     VariableFilterId,
     VariableFilterName,
     VariableFilterTags,
 )
-from prefect.types import MAX_VARIABLE_NAME_LENGTH, MAX_VARIABLE_VALUE_LENGTH
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.types import MAX_VARIABLE_NAME_LENGTH, MAX_VARIABLE_VALUE_LENGTH
+from syntask.utilities.pydantic import parse_obj_as
 
 
 @pytest.fixture

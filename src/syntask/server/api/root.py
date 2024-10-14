@@ -5,11 +5,11 @@ Contains the `hello` route for testing and healthcheck purposes.
 from fastapi import Depends, status
 from fastapi.responses import JSONResponse
 
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.server import PrefectRouter
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="", tags=["Root"])
+router = SyntaskRouter(prefix="", tags=["Root"])
 
 
 @router.get("/hello")
@@ -20,7 +20,7 @@ async def hello():
 
 @router.get("/ready")
 async def perform_readiness_check(
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     is_db_connectable = await db.is_db_connectable()
 

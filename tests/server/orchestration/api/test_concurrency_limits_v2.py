@@ -4,14 +4,14 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.client import schemas as client_schemas
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models.concurrency_limits_v2 import (
+from syntask.client import schemas as client_schemas
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models.concurrency_limits_v2 import (
     bulk_update_denied_slots,
     create_concurrency_limit,
     read_concurrency_limit,
 )
-from prefect.server.schemas.core import ConcurrencyLimitV2
+from syntask.server.schemas.core import ConcurrencyLimitV2
 
 
 @pytest.fixture
@@ -261,7 +261,7 @@ async def test_increment_concurrency_limit_simple(
 async def test_increment_concurrency_limit_multi(
     concurrency_limit: ConcurrencyLimitV2,
     client: AsyncClient,
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
 ):
     async with db.session_context() as session:
         other_model = await create_concurrency_limit(
@@ -458,7 +458,7 @@ async def test_increment_concurrency_limit_rate_limit_mode(
 async def test_increment_concurrency_limit_rate_limit_mode_implicitly_created_limit(
     client: AsyncClient,
     session: AsyncSession,
-    ignore_prefect_deprecation_warnings,
+    ignore_syntask_deprecation_warnings,
 ):
     # DEPRECATED BEHAVIOR
     response = await client.post(
@@ -547,7 +547,7 @@ async def test_decrement_concurrency_limit(
     concurrency_limit: ConcurrencyLimitV2,
     client: AsyncClient,
     session: AsyncSession,
-    ignore_prefect_deprecation_warnings,
+    ignore_syntask_deprecation_warnings,
 ):
     assert concurrency_limit.active_slots == 0
     response = await client.post(

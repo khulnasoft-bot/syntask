@@ -6,12 +6,12 @@ import pytest
 import sqlalchemy as sa
 from pydantic import SecretBytes, SecretStr
 
-from prefect.blocks.core import Block
-from prefect.server import models, schemas
-from prefect.server.database import orm_models
-from prefect.server.schemas.actions import BlockDocumentCreate
-from prefect.types import SecretDict
-from prefect.utilities.names import obfuscate, obfuscate_string
+from syntask.blocks.core import Block
+from syntask.server import models, schemas
+from syntask.server.database import orm_models
+from syntask.server.schemas.actions import BlockDocumentCreate
+from syntask.types import SecretDict
+from syntask.utilities.names import obfuscate, obfuscate_string
 
 
 def long_string(s: str):
@@ -1754,16 +1754,16 @@ class TestSecretBlockDocuments:
         # x was NOT overwritten
         assert block2.data["x"] != obfuscate_string(X)
 
-    async def test_block_with_list_of_secrets(self, session, prefect_client):
+    async def test_block_with_list_of_secrets(self, session, syntask_client):
         class ListSecretBlock(Block):
             x: List[SecretStr]
 
         # save the block
         orig_block = ListSecretBlock(x=["a", "b"])
-        await orig_block.save(name="list-secret", client=prefect_client)
+        await orig_block.save(name="list-secret", client=syntask_client)
 
         # load the block
-        block = await ListSecretBlock.load("list-secret", client=prefect_client)
+        block = await ListSecretBlock.load("list-secret", client=syntask_client)
 
         assert block.x[0].get_secret_value() == "a"
         assert block.x[1].get_secret_value() == "b"

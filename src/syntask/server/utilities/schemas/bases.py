@@ -45,15 +45,15 @@ def get_class_fields_only(model: Type[BaseModel]) -> set:
     )
 
 
-class PrefectBaseModel(BaseModel):
-    """A base pydantic.BaseModel for all Prefect schemas and pydantic models.
+class SyntaskBaseModel(BaseModel):
+    """A base pydantic.BaseModel for all Syntask schemas and pydantic models.
 
-    As the basis for most Prefect schemas, this base model usually ignores extra
+    As the basis for most Syntask schemas, this base model usually ignores extra
     fields that are passed to it at instantiation. Because adding new fields to
     API payloads is not considered a breaking change, this ensures that any
-    Prefect client loading data from a server running a possibly-newer version
-    of Prefect will be able to process those new fields gracefully. However,
-    when PREFECT_TEST_MODE is on, extra fields are forbidden in order to catch
+    Syntask client loading data from a server running a possibly-newer version
+    of Syntask will be able to process those new fields gracefully. However,
+    when SYNTASK_TEST_MODE is on, extra fields are forbidden in order to catch
     subtle unintentional testing errors.
     """
 
@@ -63,19 +63,19 @@ class PrefectBaseModel(BaseModel):
         ser_json_timedelta="float",
         extra=(
             "ignore"
-            if os.getenv("PREFECT_TEST_MODE", "0").lower() not in ["true", "1"]
+            if os.getenv("SYNTASK_TEST_MODE", "0").lower() not in ["true", "1"]
             else "forbid"
         ),
     )
 
     def __eq__(self, other: Any) -> bool:
-        """Equaltiy operator that ignores the resettable fields of the PrefectBaseModel.
+        """Equaltiy operator that ignores the resettable fields of the SyntaskBaseModel.
 
-        NOTE: this equality operator will only be applied if the PrefectBaseModel is
+        NOTE: this equality operator will only be applied if the SyntaskBaseModel is
         the left-hand operand. This is a limitation of Python.
         """
         copy_dict = self.model_dump(exclude=self._reset_fields)
-        if isinstance(other, PrefectBaseModel):
+        if isinstance(other, SyntaskBaseModel):
             return copy_dict == other.model_dump(exclude=other._reset_fields)
         if isinstance(other, BaseModel):
             return copy_dict == other.model_dump()
@@ -106,7 +106,7 @@ class PrefectBaseModel(BaseModel):
         Reset the fields of the model that are in the `_reset_fields` set.
 
         Returns:
-            PrefectBaseModel: A new instance of the model with the reset fields.
+            SyntaskBaseModel: A new instance of the model with the reset fields.
         """
         return self.model_copy(
             update={
@@ -126,7 +126,7 @@ class PrefectBaseModel(BaseModel):
         exclude_none: bool = False,
     ) -> Dict[str, Any]:
         """
-        Prefect extension to `BaseModel.model_dump`.  Generate a Python dictionary
+        Syntask extension to `BaseModel.model_dump`.  Generate a Python dictionary
         representation of the model suitable for passing to SQLAlchemy model
         constructors, `INSERT` statements, etc.  The critical difference here is that
         this method will return any nested BaseModel objects as `BaseModel` instances,
@@ -170,9 +170,9 @@ class PrefectBaseModel(BaseModel):
         return deep
 
 
-class IDBaseModel(PrefectBaseModel):
+class IDBaseModel(SyntaskBaseModel):
     """
-    A PrefectBaseModel with an auto-generated UUID ID value.
+    A SyntaskBaseModel with an auto-generated UUID ID value.
 
     The ID is reset on copy() and not included in equality comparisons.
     """
@@ -183,7 +183,7 @@ class IDBaseModel(PrefectBaseModel):
 
 class ORMBaseModel(IDBaseModel):
     """
-    A PrefectBaseModel with an auto-generated UUID ID value and created /
+    A SyntaskBaseModel with an auto-generated UUID ID value and created /
     updated timestamps, intended for compatibility with our standard ORM models.
 
     The ID, created, and updated fields are reset on copy() and not included in
@@ -198,5 +198,5 @@ class ORMBaseModel(IDBaseModel):
     updated: Optional[DateTime] = Field(default=None, repr=False)
 
 
-class ActionBaseModel(PrefectBaseModel):
+class ActionBaseModel(SyntaskBaseModel):
     model_config: ConfigDict = ConfigDict(extra="forbid")

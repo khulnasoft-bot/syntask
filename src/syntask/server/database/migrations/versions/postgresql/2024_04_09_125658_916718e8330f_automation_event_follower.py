@@ -9,9 +9,9 @@ Create Date: 2024-04-09 12:56:58.865815
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
-import prefect.server.utilities.database
-from prefect.server.events.schemas.events import ReceivedEvent
+import syntask
+import syntask.server.utilities.database
+from syntask.server.events.schemas.events import ReceivedEvent
 
 # revision identifiers, used by Alembic.
 revision = "916718e8330f"
@@ -25,38 +25,38 @@ def upgrade():
     op.create_table(
         "automation_event_follower",
         sa.Column(
-            "leader_event_id", prefect.server.utilities.database.UUID(), nullable=False
+            "leader_event_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.Column(
             "follower_event_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.Column(
             "received",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column(
             "follower",
-            prefect.server.utilities.database.Pydantic(ReceivedEvent),
+            syntask.server.utilities.database.Pydantic(ReceivedEvent),
             nullable=False,
         ),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),

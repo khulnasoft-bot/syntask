@@ -1,6 +1,6 @@
 from typing import Optional
 
-from prefect import flow
+from syntask import flow
 
 
 @flow(name="An important name")

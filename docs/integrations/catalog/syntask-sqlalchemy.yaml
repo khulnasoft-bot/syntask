@@ -1,0 +1,6 @@
+integrationName: syntask-sqlalchemy
+author: Syntask
+authorUrl: https://syntask.khulnasoft.com
+documentation: syntask-sqlalchemy
+iconUrl: /images/integrations/sqlalchemy.png
+tag: SQLAlchemy

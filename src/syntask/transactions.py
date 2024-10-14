@@ -17,24 +17,24 @@ from typing import (
 from pydantic import Field, PrivateAttr
 from typing_extensions import Self
 
-from prefect.context import ContextModel
-from prefect.exceptions import (
+from syntask.context import ContextModel
+from syntask.exceptions import (
     ConfigurationError,
     MissingContextError,
     SerializationError,
 )
-from prefect.logging.loggers import get_logger, get_run_logger
-from prefect.records import RecordStore
-from prefect.records.base import TransactionRecord
-from prefect.results import (
+from syntask.logging.loggers import get_logger, get_run_logger
+from syntask.records import RecordStore
+from syntask.records.base import TransactionRecord
+from syntask.results import (
     BaseResult,
     ResultRecord,
     ResultStore,
     get_result_store,
 )
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.collections import AutoEnum
-from prefect.utilities.engine import _get_hook_name
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.collections import AutoEnum
+from syntask.utilities.engine import _get_hook_name
 
 
 class IsolationLevel(AutoEnum):
@@ -455,7 +455,7 @@ def transaction(
         - overwrite: Whether to overwrite an existing transaction record in the store
         - write_on_commit: Whether to write the result to the store on commit. If not provided,
             will default will be determined by the current run context. If no run context is
-            available, the value of `PREFECT_RESULTS_PERSIST_BY_DEFAULT` will be used.
+            available, the value of `SYNTASK_RESULTS_PERSIST_BY_DEFAULT` will be used.
 
     Yields:
         - Transaction: An object representing the transaction state

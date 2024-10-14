@@ -7,11 +7,11 @@ from types import ModuleType
 
 import pytest
 
-import prefect
-from prefect import __development_base_path__
-from prefect.exceptions import ScriptError
-from prefect.utilities.filesystem import tmpchdir
-from prefect.utilities.importtools import (
+import syntask
+from syntask import __development_base_path__
+from syntask.exceptions import ScriptError
+from syntask.utilities.filesystem import tmpchdir
+from syntask.utilities.importtools import (
     from_qualified_name,
     import_object,
     lazy_import,
@@ -37,9 +37,9 @@ pytest.mark.usefixtures("hosted_orion")
 @pytest.mark.parametrize(
     "obj,expected",
     [
-        (to_qualified_name, "prefect.utilities.importtools.to_qualified_name"),
-        (prefect.tasks.Task, "prefect.tasks.Task"),
-        (prefect.tasks.Task.__call__, "prefect.tasks.Task.__call__"),
+        (to_qualified_name, "syntask.utilities.importtools.to_qualified_name"),
+        (syntask.tasks.Task, "syntask.tasks.Task"),
+        (syntask.tasks.Task.__call__, "syntask.tasks.Task.__call__"),
         (lambda x: x + 1, "tests.utilities.test_importtools.<lambda>"),
         (my_fn, "tests.utilities.test_importtools.my_fn"),
     ],
@@ -48,7 +48,7 @@ def test_to_qualified_name(obj, expected):
     assert to_qualified_name(obj) == expected
 
 
-@pytest.mark.parametrize("obj", [to_qualified_name, prefect.tasks.Task, my_fn, Foo])
+@pytest.mark.parametrize("obj", [to_qualified_name, syntask.tasks.Task, my_fn, Foo])
 def test_to_and_from_qualified_name_roundtrip(obj):
     assert from_qualified_name(to_qualified_name(obj)) == obj
 
@@ -311,7 +311,7 @@ def test_safe_load_namespace_ignores_code_in_if_name_equals_main_block():
 
 def test_safe_load_namespace_does_not_execute_function_body():
     """
-    Regression test for https://github.com/synopkg/synopkg/issues/14402
+    Regression test for https://github.com/synopkg/syntask/issues/14402
     """
     source_code = dedent(
         """
@@ -334,7 +334,7 @@ def test_safe_load_namespace_does_not_execute_function_body():
 
 def test_safe_load_namespace_implicit_relative_imports():
     """
-    Regression test for https://github.com/synopkg/synopkg/issues/15352
+    Regression test for https://github.com/synopkg/syntask/issues/15352
     """
     path = TEST_PROJECTS_DIR / "flat-project" / "implicit_relative.py"
     source_code = path.read_text()

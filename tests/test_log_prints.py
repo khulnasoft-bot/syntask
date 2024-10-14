@@ -2,10 +2,10 @@ import builtins
 
 import pytest
 
-from prefect import flow, task
-from prefect.context import get_run_context
-from prefect.logging.loggers import print_as_log
-from prefect.settings import PREFECT_LOGGING_LOG_PRINTS, temporary_settings
+from syntask import flow, task
+from syntask.context import get_run_context
+from syntask.logging.loggers import print_as_log
+from syntask.settings import SYNTASK_LOGGING_LOG_PRINTS, temporary_settings
 
 # Check the scope of the monkeypatching ------------------------------------------------
 
@@ -49,7 +49,7 @@ def test_root_flow_log_prints_defaults_to_setting_value(caplog, setting_value):
     def test_flow():
         print("hello world!")
 
-    with temporary_settings({PREFECT_LOGGING_LOG_PRINTS: setting_value}):
+    with temporary_settings({SYNTASK_LOGGING_LOG_PRINTS: setting_value}):
         test_flow()
 
     assert ("hello world!" in caplog.text) is setting_value
@@ -65,7 +65,7 @@ def test_task_log_prints_defaults_to_setting_value(caplog, setting_value):
     def parent_flow():
         test_task()
 
-    with temporary_settings({PREFECT_LOGGING_LOG_PRINTS: setting_value}):
+    with temporary_settings({SYNTASK_LOGGING_LOG_PRINTS: setting_value}):
         parent_flow()
 
     assert ("hello world!" in caplog.text) is setting_value
@@ -81,7 +81,7 @@ def test_subflow_log_prints_defaults_to_setting_value(caplog, setting_value):
     def parent_flow():
         test_flow()
 
-    with temporary_settings({PREFECT_LOGGING_LOG_PRINTS: setting_value}):
+    with temporary_settings({SYNTASK_LOGGING_LOG_PRINTS: setting_value}):
         parent_flow()
 
     assert ("hello world!" in caplog.text) is setting_value
@@ -102,7 +102,7 @@ def test_task_log_prints_inherits_parent_value(caplog, setting_value, parent_val
         test_task()
 
     # Note: The setting should have no affect here
-    with temporary_settings({PREFECT_LOGGING_LOG_PRINTS: setting_value}):
+    with temporary_settings({SYNTASK_LOGGING_LOG_PRINTS: setting_value}):
         parent_flow()
 
     assert ("hello world!" in caplog.text) is parent_value
@@ -120,7 +120,7 @@ def test_subflow_log_prints_inherits_parent_value(caplog, setting_value, parent_
         return test_subflow()
 
     # Note: The setting should have no affect here
-    with temporary_settings({PREFECT_LOGGING_LOG_PRINTS: setting_value}):
+    with temporary_settings({SYNTASK_LOGGING_LOG_PRINTS: setting_value}):
         parent_flow()
 
     assert ("hello world!" in caplog.text) is parent_value

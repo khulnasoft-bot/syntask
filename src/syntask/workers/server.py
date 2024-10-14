@@ -5,12 +5,12 @@ import uvicorn.server
 from fastapi import APIRouter, FastAPI, status
 from fastapi.responses import JSONResponse
 
-from prefect.settings import (
-    PREFECT_WORKER_WEBSERVER_HOST,
-    PREFECT_WORKER_WEBSERVER_PORT,
+from syntask.settings import (
+    SYNTASK_WORKER_WEBSERVER_HOST,
+    SYNTASK_WORKER_WEBSERVER_PORT,
 )
-from prefect.workers.base import BaseWorker
-from prefect.workers.process import ProcessWorker
+from syntask.workers.base import BaseWorker
+from syntask.workers.process import ProcessWorker
 
 
 def build_healthcheck_server(
@@ -46,8 +46,8 @@ def build_healthcheck_server(
 
     config = uvicorn.Config(
         app=app,
-        host=PREFECT_WORKER_WEBSERVER_HOST.value(),
-        port=PREFECT_WORKER_WEBSERVER_PORT.value(),
+        host=SYNTASK_WORKER_WEBSERVER_HOST.value(),
+        port=SYNTASK_WORKER_WEBSERVER_PORT.value(),
         log_level=log_level,
     )
     return uvicorn.Server(config=config)

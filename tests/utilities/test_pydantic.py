@@ -4,8 +4,8 @@ import cloudpickle
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from prefect.utilities.dispatch import register_type
-from prefect.utilities.pydantic import (
+from syntask.utilities.dispatch import register_type
+from syntask.utilities.pydantic import (
     JsonPatch,
     PartialModel,
     add_cloudpickle_reduction,

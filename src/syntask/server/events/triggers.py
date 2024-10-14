@@ -23,28 +23,28 @@ from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import Literal, TypeAlias
 
-from prefect._internal.retries import retry_async_fn
-from prefect.logging import get_logger
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import messaging
-from prefect.server.events.actions import ServerActionTypes
-from prefect.server.events.models.automations import (
+from syntask._internal.retries import retry_async_fn
+from syntask.logging import get_logger
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import messaging
+from syntask.server.events.actions import ServerActionTypes
+from syntask.server.events.models.automations import (
     automations_session,
     read_automation,
 )
-from prefect.server.events.models.composite_trigger_child_firing import (
+from syntask.server.events.models.composite_trigger_child_firing import (
     clear_child_firings,
     clear_old_child_firings,
     get_child_firings,
     upsert_child_firing,
 )
-from prefect.server.events.ordering import (
+from syntask.server.events.ordering import (
     PRECEDING_EVENT_LOOKBACK,
     CausalOrdering,
     EventArrivedEarly,
 )
-from prefect.server.events.schemas.automations import (
+from syntask.server.events.schemas.automations import (
     Automation,
     CompositeTrigger,
     EventTrigger,
@@ -54,12 +54,12 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.utilities.messaging import Message, MessageHandler
-from prefect.settings import PREFECT_EVENTS_EXPIRED_BUCKET_BUFFER
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.utilities.messaging import Message, MessageHandler
+from syntask.settings import SYNTASK_EVENTS_EXPIRED_BUCKET_BUFFER
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMAutomationBucket
+    from syntask.server.database.orm_models import ORMAutomationBucket
 
 
 logger = get_logger(__name__)
@@ -524,7 +524,7 @@ async def reactive_evaluation(event: ReceivedEvent, depth: int = 0):
                         # in test_triggers_regressions.py for examples of how we expect
                         # this to behave.
                         #
-                        # https://github.com/PrefectHQ/nebula/issues/4201
+                        # https://github.com/SynoPKG/nebula/issues/4201
                         initial_count = -1 if trigger.expects(event.event) else 0
                         bucket = await ensure_bucket(
                             session,
@@ -549,7 +549,7 @@ async def reactive_evaluation(event: ReceivedEvent, depth: int = 0):
                         # preceding event lookback variable as the horizon that we'll
                         # accept these older events.
                         #
-                        # https://github.com/PrefectHQ/nebula/issues/7230
+                        # https://github.com/SynoPKG/nebula/issues/7230
                         start = event.occurred - PRECEDING_EVENT_LOOKBACK
 
                         bucket = await ensure_bucket(
@@ -603,7 +603,7 @@ async def periodic_evaluation(now: DateTime):
     async with automations_session() as session:
         await sweep_closed_buckets(
             session,
-            as_of - PREFECT_EVENTS_EXPIRED_BUCKET_BUFFER.value(),
+            as_of - SYNTASK_EVENTS_EXPIRED_BUCKET_BUFFER.value(),
         )
         await session.commit()
 
@@ -688,7 +688,7 @@ async def automation_changed(
 
 
 @db_injector
-async def load_automations(db: PrefectDBInterface, session: AsyncSession):
+async def load_automations(db: SyntaskDBInterface, session: AsyncSession):
     """Loads all automations for the given set of accounts"""
     query = sa.select(db.Automation)
 
@@ -705,7 +705,7 @@ async def load_automations(db: PrefectDBInterface, session: AsyncSession):
 
 @db_injector
 async def remove_buckets_exceeding_threshold(
-    db: PrefectDBInterface, session: AsyncSession, trigger: EventTrigger
+    db: SyntaskDBInterface, session: AsyncSession, trigger: EventTrigger
 ):
     """Deletes bucket where the count has already exceeded the threshold"""
     assert isinstance(trigger, EventTrigger), repr(trigger)
@@ -720,7 +720,7 @@ async def remove_buckets_exceeding_threshold(
 
 @db_injector
 async def read_buckets_for_automation(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     trigger: Trigger,
     batch_size: int = AUTOMATION_BUCKET_BATCH_SIZE,
@@ -754,7 +754,7 @@ async def read_buckets_for_automation(
 
 @db_injector
 async def read_bucket(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     trigger: Trigger,
     bucketing_key: Tuple[str, ...],
@@ -771,7 +771,7 @@ async def read_bucket(
 
 @db_injector
 async def read_bucket_by_trigger_id(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     automation_id: UUID,
     trigger_id: UUID,
@@ -794,7 +794,7 @@ async def read_bucket_by_trigger_id(
 
 @db_injector
 async def increment_bucket(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     bucket: "ORMAutomationBucket",
     count: int,
@@ -838,7 +838,7 @@ async def increment_bucket(
 
 @db_injector
 async def start_new_bucket(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     trigger: EventTrigger,
     bucketing_key: Tuple[str, ...],
@@ -890,7 +890,7 @@ async def start_new_bucket(
 
 @db_injector
 async def ensure_bucket(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     trigger: EventTrigger,
     bucketing_key: Tuple[str, ...],
@@ -936,7 +936,7 @@ async def ensure_bucket(
 
 @db_injector
 async def remove_bucket(
-    db: PrefectDBInterface, session: AsyncSession, bucket: "ORMAutomationBucket"
+    db: SyntaskDBInterface, session: AsyncSession, bucket: "ORMAutomationBucket"
 ):
     """Removes the given bucket from the database"""
     await session.execute(
@@ -950,7 +950,7 @@ async def remove_bucket(
 
 @db_injector
 async def sweep_closed_buckets(
-    db: PrefectDBInterface, session: AsyncSession, older_than: DateTime
+    db: SyntaskDBInterface, session: AsyncSession, older_than: DateTime
 ) -> None:
     await session.execute(
         sa.delete(db.AutomationBucket).where(db.AutomationBucket.end <= older_than)
@@ -994,7 +994,7 @@ async def consumer(
 
             return
 
-        if message.attributes.get("event") == "prefect.log.write":
+        if message.attributes.get("event") == "syntask.log.write":
             return
 
         try:

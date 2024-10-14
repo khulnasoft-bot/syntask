@@ -1,4 +1,4 @@
-from prefect import flow
+from syntask import flow
 
 from .shared_libs.bar import get_bar
 from .shared_libs.foo import get_foo

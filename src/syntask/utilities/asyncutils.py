@@ -32,12 +32,12 @@ import anyio.to_thread
 import sniffio
 from typing_extensions import Literal, ParamSpec, TypeGuard
 
-from prefect._internal.concurrency.api import _cast_to_call, from_sync
-from prefect._internal.concurrency.threads import (
+from syntask._internal.concurrency.api import _cast_to_call, from_sync
+from syntask._internal.concurrency.threads import (
     get_run_sync_loop,
     in_run_sync_loop,
 )
-from prefect.logging import get_logger
+from syntask.logging import get_logger
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -50,7 +50,7 @@ A = TypeVar("A", Async, Sync, covariant=True)
 # Global references to prevent garbage collection for `add_event_loop_shutdown_callback`
 EVENT_LOOP_GC_REFS = {}
 
-PREFECT_THREAD_LIMITER: Optional[anyio.CapacityLimiter] = None
+SYNTASK_THREAD_LIMITER: Optional[anyio.CapacityLimiter] = None
 
 RUNNING_IN_RUN_SYNC_LOOP_FLAG = ContextVar("running_in_run_sync_loop", default=False)
 RUNNING_ASYNC_FLAG = ContextVar("run_async", default=False)
@@ -64,12 +64,12 @@ logger = get_logger()
 
 
 def get_thread_limiter():
-    global PREFECT_THREAD_LIMITER
+    global SYNTASK_THREAD_LIMITER
 
-    if PREFECT_THREAD_LIMITER is None:
-        PREFECT_THREAD_LIMITER = anyio.CapacityLimiter(250)
+    if SYNTASK_THREAD_LIMITER is None:
+        SYNTASK_THREAD_LIMITER = anyio.CapacityLimiter(250)
 
-    return PREFECT_THREAD_LIMITER
+    return SYNTASK_THREAD_LIMITER
 
 
 def is_async_fn(
@@ -195,7 +195,7 @@ def run_coro_as_sync(
 
     If run_sync is called from within the run_sync loop, it will run the
     coroutine in a new thread, because otherwise a deadlock would occur. Note
-    that this behavior should not appear anywhere in the Prefect codebase or in
+    that this behavior should not appear anywhere in the Syntask codebase or in
     user code.
 
     Args:
@@ -315,15 +315,13 @@ def in_async_main_thread() -> bool:
 @overload
 def sync_compatible(
     async_fn: Callable[..., Coroutine[Any, Any, R]],
-) -> Callable[..., R]:
-    ...
+) -> Callable[..., R]: ...
 
 
 @overload
 def sync_compatible(
     async_fn: Callable[..., Coroutine[Any, Any, R]],
-) -> Callable[..., Coroutine[Any, Any, R]]:
-    ...
+) -> Callable[..., Coroutine[Any, Any, R]]: ...
 
 
 def sync_compatible(
@@ -354,7 +352,7 @@ def sync_compatible(
     def coroutine_wrapper(
         *args: Any, _sync: Optional[bool] = None, **kwargs: Any
     ) -> Union[R, Coroutine[Any, Any, R]]:
-        from prefect.context import MissingContextError, get_run_context
+        from syntask.context import MissingContextError, get_run_context
 
         if _sync is False:
             return async_fn(*args, **kwargs)
@@ -458,7 +456,7 @@ async def add_event_loop_shutdown_callback(coroutine_fn: Callable[[], Awaitable]
         # It appears that EVENT_LOOP_GC_REFS is somehow being garbage collected early.
         # We hold a reference to it so as to preserve it, at least for the lifetime of
         # this coroutine. See the issue below for the initial report/discussion:
-        # https://github.com/synopkg/synopkg/issues/7709#issuecomment-1560021109
+        # https://github.com/synopkg/syntask/issues/7709#issuecomment-1560021109
         _ = EVENT_LOOP_GC_REFS
         try:
             yield

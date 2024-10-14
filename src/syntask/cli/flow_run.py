@@ -15,20 +15,20 @@ from rich.pretty import Pretty
 from rich.table import Table
 from starlette import status
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.filters import FlowFilter, FlowRunFilter, LogFilter
-from prefect.client.schemas.objects import StateType
-from prefect.client.schemas.responses import SetStateStatus
-from prefect.client.schemas.sorting import FlowRunSort, LogSort
-from prefect.exceptions import ObjectNotFound
-from prefect.logging import get_logger
-from prefect.runner import Runner
-from prefect.states import State
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.filters import FlowFilter, FlowRunFilter, LogFilter
+from syntask.client.schemas.objects import StateType
+from syntask.client.schemas.responses import SetStateStatus
+from syntask.client.schemas.sorting import FlowRunSort, LogSort
+from syntask.exceptions import ObjectNotFound
+from syntask.logging import get_logger
+from syntask.runner import Runner
+from syntask.states import State
 
-flow_run_app = PrefectTyper(name="flow-run", help="Interact with flow runs.")
+flow_run_app = SyntaskTyper(name="flow-run", help="Interact with flow runs.")
 app.add_typer(flow_run_app, aliases=["flow-runs"])
 
 LOGS_DEFAULT_PAGE_SIZE = 200
@@ -76,20 +76,20 @@ async def ls(
 
     Examples:
 
-    $ prefect flow-runs ls --state Running
+    $ syntask flow-runs ls --state Running
 
-    $ prefect flow-runs ls --state Running --state late
+    $ syntask flow-runs ls --state Running --state late
 
-    $ prefect flow-runs ls --state-type RUNNING
+    $ syntask flow-runs ls --state-type RUNNING
 
-    $ prefect flow-runs ls --state-type RUNNING --state-type FAILED
+    $ syntask flow-runs ls --state-type RUNNING --state-type FAILED
     """
 
     # Handling `state` and `state_type` argument validity in the function instead of by specifying
     # List[StateType] and List[StateName] in the type hints, allows users to provide
     # case-insensitive arguments for `state` and `state_type`.
 
-    prefect_state_names = {
+    syntask_state_names = {
         "SCHEDULED": "Scheduled",
         "PENDING": "Pending",
         "RUNNING": "Running",
@@ -111,14 +111,14 @@ async def ls(
     if state:
         for s in state:
             uppercased_state = s.upper()
-            if uppercased_state in prefect_state_names:
-                capitalized_state = prefect_state_names[uppercased_state]
+            if uppercased_state in syntask_state_names:
+                capitalized_state = syntask_state_names[uppercased_state]
                 formatted_states.append(capitalized_state)
             else:
-                # Do not change the case of the state name if it is not one of the official Prefect state names
+                # Do not change the case of the state name if it is not one of the official Syntask state names
                 formatted_states.append(s)
                 logger.warning(
-                    f"State name {repr(s)} is not one of the official Prefect state names."
+                    f"State name {repr(s)} is not one of the official Syntask state names."
                 )
 
         state_filter["name"] = {"any_": formatted_states}
@@ -343,7 +343,7 @@ async def execute(
     id: Optional[UUID] = typer.Argument(None, help="ID of the flow run to execute"),
 ):
     if id is None:
-        environ_flow_id = os.environ.get("PREFECT__FLOW_RUN_ID")
+        environ_flow_id = os.environ.get("SYNTASK__FLOW_RUN_ID")
         if environ_flow_id:
             id = UUID(environ_flow_id)
 

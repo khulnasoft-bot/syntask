@@ -16,7 +16,7 @@ __module_path__ = pathlib.Path(__file__).parent
 __development_base_path__ = __module_path__.parents[1]
 
 # The absolute path to the built UI within the Python module, used by
-# `prefect server start` to serve a dynamic build of the UI
+# `syntask server start` to serve a dynamic build of the UI
 __ui_static_subpath__ = __module_path__ / "server" / "ui_build"
 
 # The absolute path to the built UI within the Python module

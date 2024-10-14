@@ -1,6 +1,6 @@
 """
 Functions for interacting with flow run ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 import contextlib
@@ -16,24 +16,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import load_only, selectinload
 from sqlalchemy.sql import Select
 
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.orchestration.core_policy import MinimalFlowPolicy
-from prefect.server.orchestration.global_policy import GlobalFlowPolicy
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.orchestration.rules import FlowOrchestrationContext
-from prefect.server.schemas.core import TaskRunResult
-from prefect.server.schemas.graph import Graph
-from prefect.server.schemas.responses import OrchestrationResult, SetStateStatus
-from prefect.server.schemas.states import State
-from prefect.server.utilities.schemas import PrefectBaseModel
-from prefect.settings import (
-    PREFECT_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS,
-    PREFECT_API_MAX_FLOW_RUN_GRAPH_NODES,
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.orchestration.core_policy import MinimalFlowPolicy
+from syntask.server.orchestration.global_policy import GlobalFlowPolicy
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.orchestration.rules import FlowOrchestrationContext
+from syntask.server.schemas.core import TaskRunResult
+from syntask.server.schemas.graph import Graph
+from syntask.server.schemas.responses import OrchestrationResult, SetStateStatus
+from syntask.server.schemas.states import State
+from syntask.server.utilities.schemas import SyntaskBaseModel
+from syntask.settings import (
+    SYNTASK_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS,
+    SYNTASK_API_MAX_FLOW_RUN_GRAPH_NODES,
 )
 
 T = TypeVar("T", bound=tuple)
@@ -41,7 +41,7 @@ T = TypeVar("T", bound=tuple)
 
 @db_injector
 async def create_flow_run(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run: schemas.core.FlowRun,
     orchestration_parameters: Optional[dict] = None,
@@ -345,7 +345,7 @@ async def cleanup_flow_run_concurrency_slots(
             )
 
 
-class DependencyResult(PrefectBaseModel):
+class DependencyResult(SyntaskBaseModel):
     id: UUID
     name: str
     upstream_dependencies: List[TaskRunResult]
@@ -484,7 +484,7 @@ async def set_flow_run_state(
     Creates a new orchestrated flow run state.
 
     Setting a new state on a run is the one of the principal actions that is governed by
-    Prefect's orchestration logic. Setting a new run state will not guarantee creation,
+    Syntask's orchestration logic. Setting a new run state will not guarantee creation,
     but instead trigger orchestration rules to govern the proposed `state` input. If
     the state is considered valid, it will be written to the database. Otherwise, a
     it's possible a different state, or no state, will be created. A `force` flag is
@@ -568,7 +568,7 @@ async def set_flow_run_state(
 
 @db_injector
 async def read_flow_run_graph(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run_id: UUID,
     since: datetime.datetime = datetime.datetime.min,
@@ -579,6 +579,6 @@ async def read_flow_run_graph(
         session=session,
         flow_run_id=flow_run_id,
         since=since,
-        max_nodes=PREFECT_API_MAX_FLOW_RUN_GRAPH_NODES.value(),
-        max_artifacts=PREFECT_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS.value(),
+        max_nodes=SYNTASK_API_MAX_FLOW_RUN_GRAPH_NODES.value(),
+        max_artifacts=SYNTASK_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS.value(),
     )

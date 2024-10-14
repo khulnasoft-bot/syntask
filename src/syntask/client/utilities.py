@@ -2,7 +2,7 @@
 Utilities for working with clients.
 """
 
-# This module must not import from `prefect.client` when it is imported to avoid
+# This module must not import from `syntask.client` when it is imported to avoid
 # circular imports for decorators such as `inject_client` which are widely used.
 
 from functools import wraps
@@ -21,28 +21,28 @@ from typing import (
 from typing_extensions import Concatenate, ParamSpec
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
 def get_or_create_client(
-    client: Optional["PrefectClient"] = None,
-) -> Tuple["PrefectClient", bool]:
+    client: Optional["SyntaskClient"] = None,
+) -> Tuple["SyntaskClient", bool]:
     """
     Returns provided client, infers a client from context if available, or creates a new client.
 
     Args:
-        - client (PrefectClient, optional): an optional client to use
+        - client (SyntaskClient, optional): an optional client to use
 
     Returns:
         - tuple: a tuple of the client and a boolean indicating if the client was inferred from context
     """
     if client is not None:
         return client, True
-    from prefect._internal.concurrency.event_loop import get_running_loop
-    from prefect.context import AsyncClientContext, FlowRunContext, TaskRunContext
+    from syntask._internal.concurrency.event_loop import get_running_loop
+    from syntask.context import AsyncClientContext, FlowRunContext, TaskRunContext
 
     async_client_context = AsyncClientContext.get()
     flow_run_context = FlowRunContext.get()
@@ -61,13 +61,13 @@ def get_or_create_client(
     ):
         return task_run_context.client, True
     else:
-        from prefect.client.orchestration import get_client as get_httpx_client
+        from syntask.client.orchestration import get_client as get_httpx_client
 
         return get_httpx_client(), False
 
 
 def client_injector(
-    func: Callable[Concatenate["PrefectClient", P], Awaitable[R]],
+    func: Callable[Concatenate["SyntaskClient", P], Awaitable[R]],
 ) -> Callable[P, Awaitable[R]]:
     @wraps(func)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -90,12 +90,12 @@ def inject_client(
 
     @wraps(fn)
     async def with_injected_client(*args: P.args, **kwargs: P.kwargs) -> R:
-        client = cast(Optional["PrefectClient"], kwargs.pop("client", None))
+        client = cast(Optional["SyntaskClient"], kwargs.pop("client", None))
         client, inferred = get_or_create_client(client)
         if not inferred:
             context = client
         else:
-            from prefect.utilities.asyncutils import asyncnullcontext
+            from syntask.utilities.asyncutils import asyncnullcontext
 
             context = asyncnullcontext()
         async with context as new_client:

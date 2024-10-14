@@ -10,14 +10,14 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-from prefect.settings import (
-    PREFECT_LOGGING_EXTRA_LOGGERS,
-    PREFECT_LOGGING_SETTINGS_PATH,
+from syntask.settings import (
+    SYNTASK_LOGGING_EXTRA_LOGGERS,
+    SYNTASK_LOGGING_SETTINGS_PATH,
     get_current_settings,
 )
-from prefect.utilities.collections import dict_to_flatdict, flatdict_to_dict
+from syntask.utilities.collections import dict_to_flatdict, flatdict_to_dict
 
-# This path will be used if `PREFECT_LOGGING_SETTINGS_PATH` is null
+# This path will be used if `SYNTASK_LOGGING_SETTINGS_PATH` is null
 DEFAULT_LOGGING_SETTINGS_PATH = Path(__file__).parent / "logging.yml"
 
 # Stores the configuration used to setup logging in this Python process
@@ -47,7 +47,7 @@ def load_logging_config(path: Path) -> dict:
     for key_tup, val in flat_config.items():
         env_val = os.environ.get(
             # Generate a valid environment variable with nesting indicated with '_'
-            to_envvar("PREFECT_LOGGING_" + "_".join(key_tup)).upper()
+            to_envvar("SYNTASK_LOGGING_" + "_".join(key_tup)).upper()
         )
         if env_val:
             val = env_val
@@ -70,8 +70,8 @@ def setup_logging(incremental: Optional[bool] = None) -> dict:
     # default entirely rather than dealing with complex merging
     config = load_logging_config(
         (
-            PREFECT_LOGGING_SETTINGS_PATH.value()
-            if PREFECT_LOGGING_SETTINGS_PATH.value().exists()
+            SYNTASK_LOGGING_SETTINGS_PATH.value()
+            if SYNTASK_LOGGING_SETTINGS_PATH.value().exists()
             else DEFAULT_LOGGING_SETTINGS_PATH
         )
     )
@@ -89,10 +89,10 @@ def setup_logging(incremental: Optional[bool] = None) -> dict:
         if incremental:
             setup_logging(incremental=False)
 
-    # Copy configuration of the 'prefect.extra' logger to the extra loggers
-    extra_config = logging.getLogger("prefect.extra")
+    # Copy configuration of the 'syntask.extra' logger to the extra loggers
+    extra_config = logging.getLogger("syntask.extra")
 
-    for logger_name in PREFECT_LOGGING_EXTRA_LOGGERS.value():
+    for logger_name in SYNTASK_LOGGING_EXTRA_LOGGERS.value():
         logger = logging.getLogger(logger_name)
         for handler in extra_config.handlers:
             if not config["incremental"]:

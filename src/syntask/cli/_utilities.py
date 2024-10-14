@@ -1,5 +1,5 @@
 """
-Utilities for Prefect CLI commands
+Utilities for Syntask CLI commands
 """
 
 import functools
@@ -9,15 +9,15 @@ from typing import NoReturn
 import typer
 from click.exceptions import ClickException
 
-from prefect.exceptions import MissingProfileError
-from prefect.settings import PREFECT_TEST_MODE
+from syntask.exceptions import MissingProfileError
+from syntask.settings import SYNTASK_TEST_MODE
 
 
 def exit_with_error(message, code=1, **kwargs) -> NoReturn:
     """
     Utility to print a stylized error message and exit with a non-zero code
     """
-    from prefect.cli.root import app
+    from syntask.cli.root import app
 
     kwargs.setdefault("style", "red")
     app.console.print(message, **kwargs)
@@ -28,7 +28,7 @@ def exit_with_success(message, **kwargs) -> NoReturn:
     """
     Utility to print a stylized success message and exit with a zero code
     """
-    from prefect.cli.root import app
+    from syntask.cli.root import app
 
     kwargs.setdefault("style", "green")
     app.console.print(message, **kwargs)
@@ -45,7 +45,7 @@ def with_cli_exception_handling(fn):
         except MissingProfileError as exc:
             exit_with_error(exc)
         except Exception:
-            if PREFECT_TEST_MODE.value():
+            if SYNTASK_TEST_MODE.value():
                 raise  # Reraise exceptions during test mode
             traceback.print_exc()
             exit_with_error("An exception occurred.")

@@ -15,34 +15,34 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm, InvalidResponse, Prompt, PromptBase
 from rich.table import Table
 
-from prefect.cli._utilities import exit_with_error
-from prefect.client.collections import get_collections_metadata_client
-from prefect.client.schemas.actions import (
+from syntask.cli._utilities import exit_with_error
+from syntask.client.collections import get_collections_metadata_client
+from syntask.client.schemas.actions import (
     BlockDocumentCreate,
     DeploymentScheduleCreate,
     WorkPoolCreate,
 )
-from prefect.client.schemas.schedules import (
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,
 )
-from prefect.client.utilities import client_injector
-from prefect.deployments.base import (
+from syntask.client.utilities import client_injector
+from syntask.deployments.base import (
     _get_git_remote_origin_url,
     _search_for_flow_functions,
 )
-from prefect.exceptions import ObjectAlreadyExists, ObjectNotFound
-from prefect.flows import load_flow_from_entrypoint
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_SCHEDULE_CONCURRENCY,
+from syntask.exceptions import ObjectAlreadyExists, ObjectNotFound
+from syntask.flows import load_flow_from_entrypoint
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_SCHEDULE_CONCURRENCY,
 )
-from prefect.utilities import urls
-from prefect.utilities.processutils import get_sys_executable, run_process
-from prefect.utilities.slugify import slugify
+from syntask.utilities import urls
+from syntask.utilities.processutils import get_sys_executable, run_process
+from syntask.utilities.slugify import slugify
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 STORAGE_PROVIDER_TO_CREDS_BLOCK = {
     "s3": "aws-credentials",
@@ -376,7 +376,7 @@ def prompt_schedules(console) -> List[DeploymentScheduleCreate]:
                 "active": is_schedule_active,
             }
 
-            if PREFECT_EXPERIMENTAL_ENABLE_SCHEDULE_CONCURRENCY:
+            if SYNTASK_EXPERIMENTAL_ENABLE_SCHEDULE_CONCURRENCY:
                 max_active_runs = prompt_for_schedule_max_active_runs(console)
                 catchup = prompt_for_schedule_catchup(console)
 
@@ -395,7 +395,7 @@ def prompt_schedules(console) -> List[DeploymentScheduleCreate]:
 
 @client_injector
 async def prompt_select_work_pool(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     console: Console,
     prompt: str = "Which work pool would you like to deploy this flow to?",
 ) -> str:
@@ -403,7 +403,7 @@ async def prompt_select_work_pool(
     work_pool_options = [
         work_pool.model_dump()
         for work_pool in work_pools
-        if work_pool.type != "prefect-agent"
+        if work_pool.type != "syntask-agent"
     ]
     if not work_pool_options:
         work_pool = await prompt_create_work_pool(console)
@@ -479,7 +479,7 @@ async def prompt_build_custom_docker_image(
         " will be built."
     )
 
-    return {"prefect_docker.deployments.steps.build_docker_image": build_step}
+    return {"syntask_docker.deployments.steps.build_docker_image": build_step}
 
 
 async def prompt_push_custom_docker_image(
@@ -503,10 +503,10 @@ async def prompt_push_custom_docker_image(
     registry_url = prompt("Registry URL", default="docker.io").rstrip("/")
 
     repo_and_image_name = build_docker_image_step[
-        "prefect_docker.deployments.steps.build_docker_image"
+        "syntask_docker.deployments.steps.build_docker_image"
     ]["image_name"]
     full_image_name = f"{registry_url}/{repo_and_image_name}"
-    build_docker_image_step["prefect_docker.deployments.steps.build_docker_image"][
+    build_docker_image_step["syntask_docker.deployments.steps.build_docker_image"][
         "image_name"
     ] = full_image_name
 
@@ -520,19 +520,19 @@ async def prompt_push_custom_docker_image(
             default=False,
         ):
             try:
-                import prefect_docker
+                import syntask_docker
             except ImportError:
                 console.print("Installing prefect-docker...")
                 await run_process(
-                    [get_sys_executable(), "-m", "pip", "install", "prefect[docker]"],
+                    [get_sys_executable(), "-m", "pip", "install", "syntask[docker]"],
                     stream_output=True,
                 )
-                import prefect_docker
+                import syntask_docker
 
-            credentials_block = prefect_docker.DockerRegistryCredentials
-            push_step[
-                "credentials"
-            ] = "{{ prefect_docker.docker-registry-credentials.docker_registry_creds_name }}"
+            credentials_block = syntask_docker.DockerRegistryCredentials
+            push_step["credentials"] = (
+                "{{ syntask_docker.docker-registry-credentials.docker_registry_creds_name }}"
+            )
             docker_registry_creds_name = f"deployment-{slugify(deployment_config['name'])}-{slugify(deployment_config['work_pool']['name'])}-registry-creds"
             create_new_block = False
             try:
@@ -575,13 +575,13 @@ async def prompt_push_custom_docker_image(
                 )
 
     return {
-        "prefect_docker.deployments.steps.push_docker_image": push_step
+        "syntask_docker.deployments.steps.push_docker_image": push_step
     }, build_docker_image_step
 
 
 @client_injector
 async def prompt_create_work_pool(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     console: Console,
 ):
     if not confirm(
@@ -594,7 +594,7 @@ async def prompt_create_work_pool(
     ):
         raise ValueError(
             "A work pool is required to deploy this flow. Please specify a work pool"
-            " name via the '--pool' flag or in your prefect.yaml file."
+            " name via the '--pool' flag or in your syntask.yaml file."
         )
     async with get_collections_metadata_client() as collections_client:
         worker_metadata = await collections_client.read_worker_metadata()
@@ -609,7 +609,7 @@ async def prompt_create_work_pool(
             worker
             for collection in worker_metadata.values()
             for worker in collection.values()
-            if worker["type"] != "prefect-agent"
+            if worker["type"] != "syntask-agent"
         ],
         table_kwargs={"show_lines": True},
     )
@@ -690,7 +690,7 @@ async def prompt_entrypoint(console: Console) -> str:
 
 @client_injector
 async def prompt_select_remote_flow_storage(
-    client: "PrefectClient", console: Console
+    client: "SyntaskClient", console: Console
 ) -> Optional[str]:
     valid_slugs_for_context = set()
 
@@ -753,7 +753,7 @@ async def prompt_select_remote_flow_storage(
 
 @client_injector
 async def prompt_select_blob_storage_credentials(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     console: Console,
     storage_provider: str,
 ) -> str:
@@ -792,7 +792,7 @@ async def prompt_select_blob_storage_credentials(
         if selected_credentials_block and (
             selected_block := selected_credentials_block.get("name")
         ):
-            return f"{{{{ prefect.blocks.{creds_block_type_slug}.{selected_block} }}}}"
+            return f"{{{{ syntask.blocks.{creds_block_type_slug}.{selected_block} }}}}"
 
     credentials_block_type = await client.read_block_type_by_slug(creds_block_type_slug)
 
@@ -843,4 +843,4 @@ async def prompt_select_blob_storage_credentials(
             "\nView/Edit your new credentials block in the UI:" f"\n[blue]{url}[/]\n",
             soft_wrap=True,
         )
-    return f"{{{{ prefect.blocks.{creds_block_type_slug}.{new_block_document.name} }}}}"
+    return f"{{{{ syntask.blocks.{creds_block_type_slug}.{new_block_document.name} }}}}"

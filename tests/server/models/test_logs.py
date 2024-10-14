@@ -5,11 +5,11 @@ import pendulum
 import pytest
 from sqlalchemy import select
 
-from prefect.server import models
-from prefect.server.schemas.actions import LogCreate
-from prefect.server.schemas.core import Log
-from prefect.server.schemas.filters import LogFilter, LogFilterTaskRunId
-from prefect.server.schemas.sorting import LogSort
+from syntask.server import models
+from syntask.server.schemas.actions import LogCreate
+from syntask.server.schemas.core import Log
+from syntask.server.schemas.filters import LogFilter, LogFilterTaskRunId
+from syntask.server.schemas.sorting import LogSort
 
 NOW = pendulum.now("UTC")
 
@@ -33,21 +33,21 @@ def other_flow_run_id():
 def log_data(client, flow_run_id, task_run_id, other_flow_run_id):
     yield [
         LogCreate(
-            name="prefect.flow_run",
+            name="syntask.flow_run",
             level=10,
             message="Ahoy, captain",
             timestamp=NOW,
             flow_run_id=flow_run_id,
         ),
         LogCreate(
-            name="prefect.flow_run",
+            name="syntask.flow_run",
             level=20,
             message="Aye-aye, captain!",
             timestamp=(NOW + timedelta(minutes=1)),
             flow_run_id=flow_run_id,
         ),
         LogCreate(
-            name="prefect.task_run",
+            name="syntask.task_run",
             level=50,
             message="Black flag ahead, captain!",
             timestamp=(NOW + timedelta(hours=1)),

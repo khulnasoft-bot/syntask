@@ -3,15 +3,15 @@ title: Write transactions
 description: Learn how transactional semantics help you minimize the cost of failure and add idempotency to your workflows.
 ---
 
-Prefect supports _transactional semantics_ in your workflows that allow you to rollback on task failure
+Syntask supports _transactional semantics_ in your workflows that allow you to rollback on task failure
 and configure groups of tasks that run as an atomic unit.
 
-A _transaction_ in Prefect corresponds to a job that needs to be done.
+A _transaction_ in Syntask corresponds to a job that needs to be done.
 A transaction runs at most one time, and produces a result record upon completion at a unique address
 specified by a dynamically computed cache key.
 These records can be shared across tasks and flows.
 
-Under the hood, every Prefect task run is governed by a transaction.
+Under the hood, every Syntask task run is governed by a transaction.
 In the default mode of task execution, all you need to understand about transactions are [the policies
 determining the task's cache key computation](/3.0/develop/task-caching).
 
@@ -32,8 +32,8 @@ Tasks can be grouped into a common transaction using the `transaction` context m
 import os
 from time import sleep
 
-from prefect import task, flow
-from prefect.transactions import transaction
+from syntask import task, flow
+from syntask.transactions import transaction
 
 
 @task
@@ -135,8 +135,8 @@ your code is executed only once.
 For example, here's a flow that downloads some data from an API and writes it to a file:
 
 ```python
-from prefect import task, flow
-from prefect.transactions import transaction
+from syntask import task, flow
+from syntask.transactions import transaction
 
 
 @task
@@ -184,8 +184,8 @@ To see this behavior in action in the following script:
 ```python
 import threading
 
-from prefect import flow, task
-from prefect.transactions import transaction
+from syntask import flow, task
+from syntask.transactions import transaction
 
 
 @task
@@ -234,11 +234,11 @@ Here's an updated example that uses `SERIALIZABLE` isolation:
 ```python
 import threading
 import uuid
-from prefect import flow, task
-from prefect.locking.filesystem import FileSystemLockManager
-from prefect.results import ResultStore
-from prefect.settings import PREFECT_HOME
-from prefect.transactions import IsolationLevel, transaction
+from syntask import flow, task
+from syntask.locking.filesystem import FileSystemLockManager
+from syntask.results import ResultStore
+from syntask.settings import SYNTASK_HOME
+from syntask.transactions import IsolationLevel, transaction
 
 
 @task
@@ -260,7 +260,7 @@ def pipeline(transaction_key: str):
         isolation_level=IsolationLevel.SERIALIZABLE,
         store=ResultStore(
             lock_manager=FileSystemLockManager(
-                lock_files_directory=PREFECT_HOME.value() / "locks"
+                lock_files_directory=SYNTASK_HOME.value() / "locks"
             )
         ),
     ) as txn:
@@ -287,13 +287,13 @@ To use a transaction with the `SERIALIZABLE` isolation level, you must also prov
 lock manager is responsible for acquiring and releasing locks on the transaction key. In the example above, we use a `FileSystemLockManager` which 
 will manage locks as files on the current instance's filesystem.
 
-Prefect offers several lock managers for different concurrency use cases:
+Syntask offers several lock managers for different concurrency use cases:
 
 | Lock Manager | Storage | Supports | Module/Package |
 |--------------|---------|----------------|--------------|
-| `MemoryLockManager` | In-memory | Single-process workflows using threads | `prefect.locking.memory` |
-| `FileLockManager` | Filesystem | Multi-process workflows on a single machine | `prefect.locking.filesystem` |
-| `RedisLockManager` | Redis database | Distributed workflows | `prefect-redis` |
+| `MemoryLockManager` | In-memory | Single-process workflows using threads | `syntask.locking.memory` |
+| `FileLockManager` | Filesystem | Multi-process workflows on a single machine | `syntask.locking.filesystem` |
+| `RedisLockManager` | Redis database | Distributed workflows | `syntask-redis` |
 
 ## Access data within transactions
 
@@ -305,8 +305,8 @@ The code below shows how to set a key-value pair within a transaction and access
 import os
 from time import sleep
 
-from prefect import task, flow
-from prefect.transactions import transaction
+from syntask import task, flow
+from syntask.transactions import transaction
 
 
 @task

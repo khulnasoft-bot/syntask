@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Type, Union
 
 import orjson
 
-from prefect.serializers import JSONSerializer
+from syntask.serializers import JSONSerializer
 
 ExceptionInfoType = Union[
     Tuple[Type[BaseException], BaseException, Optional[TracebackType]],
@@ -69,7 +69,7 @@ class JsonFormatter(logging.Formatter):
         return log_json_bytes.decode()
 
 
-class PrefectFormatter(logging.Formatter):
+class SyntaskFormatter(logging.Formatter):
     def __init__(
         self,
         format=None,
@@ -119,9 +119,9 @@ class PrefectFormatter(logging.Formatter):
             self._task_run_style.validate()
 
     def formatMessage(self, record: logging.LogRecord):
-        if record.name == "prefect.flow_runs":
+        if record.name == "syntask.flow_runs":
             style = self._flow_run_style
-        elif record.name == "prefect.task_runs":
+        elif record.name == "syntask.task_runs":
             style = self._task_run_style
         else:
             style = self._style

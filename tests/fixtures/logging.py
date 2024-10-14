@@ -1,7 +1,7 @@
 import pytest
 
-from prefect.logging.handlers import APILogHandler, APILogWorker
-from prefect.settings import PREFECT_LOGGING_TO_API_ENABLED, temporary_settings
+from syntask.logging.handlers import APILogHandler, APILogWorker
+from syntask.settings import SYNTASK_LOGGING_TO_API_ENABLED, temporary_settings
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +27,7 @@ def enable_api_log_handler_if_marked(request):
     """
     marker = request.node.get_closest_marker("enable_api_log_handler")
     if marker is not None:
-        with temporary_settings(updates={PREFECT_LOGGING_TO_API_ENABLED: True}):
+        with temporary_settings(updates={SYNTASK_LOGGING_TO_API_ENABLED: True}):
             yield True
     else:
         yield False

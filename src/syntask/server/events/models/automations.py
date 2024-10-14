@@ -6,26 +6,26 @@ import pendulum
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import filters
-from prefect.server.events.schemas.automations import (
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import filters
+from syntask.server.events.schemas.automations import (
     Automation,
     AutomationPartialUpdate,
     AutomationSort,
     AutomationUpdate,
 )
-from prefect.settings import PREFECT_API_SERVICES_TRIGGERS_ENABLED
-from prefect.utilities.asyncutils import run_coro_as_sync
+from syntask.settings import SYNTASK_API_SERVICES_TRIGGERS_ENABLED
+from syntask.utilities.asyncutils import run_coro_as_sync
 
 if TYPE_CHECKING:
-    from prefect.server.database import orm_models
+    from syntask.server.database import orm_models
 
 
 @asynccontextmanager
 @db_injector
 async def automations_session(
-    db: PrefectDBInterface, begin_transaction: bool = False
+    db: SyntaskDBInterface, begin_transaction: bool = False
 ) -> AsyncGenerator[AsyncSession, None]:
     async with db.session_context(begin_transaction=begin_transaction) as session:
         yield session
@@ -33,7 +33,7 @@ async def automations_session(
 
 @db_injector
 async def read_automations_for_workspace(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     sort: AutomationSort = AutomationSort.NAME_ASC,
     limit: Optional[int] = None,
@@ -61,7 +61,7 @@ async def read_automations_for_workspace(
 
 @db_injector
 async def count_automations_for_workspace(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
 ) -> int:
     query = sa.select(sa.func.count(sa.text("*"))).select_from(db.Automation)
@@ -73,7 +73,7 @@ async def count_automations_for_workspace(
 
 @db_injector
 async def read_automation(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     automation_id: UUID,
 ) -> Optional[Automation]:
@@ -88,7 +88,7 @@ async def read_automation(
 
 @db_injector
 async def read_automation_by_id(
-    db: PrefectDBInterface, session: AsyncSession, automation_id: UUID
+    db: SyntaskDBInterface, session: AsyncSession, automation_id: UUID
 ) -> Optional[Automation]:
     result = await session.execute(
         sa.select(db.Automation).where(
@@ -102,10 +102,10 @@ async def read_automation_by_id(
 
 
 async def _notify(session: AsyncSession, automation: Automation, event: str):
-    if not PREFECT_API_SERVICES_TRIGGERS_ENABLED:
+    if not SYNTASK_API_SERVICES_TRIGGERS_ENABLED:
         return
 
-    from prefect.server.events.triggers import automation_changed
+    from syntask.server.events.triggers import automation_changed
 
     sync_session = session.sync_session
 
@@ -121,7 +121,7 @@ async def _notify(session: AsyncSession, automation: Automation, event: str):
 
 @db_injector
 async def create_automation(
-    db: PrefectDBInterface, session: AsyncSession, automation: Automation
+    db: SyntaskDBInterface, session: AsyncSession, automation: Automation
 ) -> Automation:
     new_automation = db.Automation(**automation.model_dump())
     session.add(new_automation)
@@ -136,7 +136,7 @@ async def create_automation(
 
 @db_injector
 async def update_automation(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     automation_update: Union[AutomationUpdate, AutomationPartialUpdate],
     automation_id: UUID,
@@ -180,7 +180,7 @@ async def update_automation(
 
 @db_injector
 async def delete_automation(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     automation_id: UUID,
 ) -> bool:
@@ -201,7 +201,7 @@ async def delete_automation(
 
 @db_injector
 async def delete_automations_for_workspace(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
 ) -> bool:
     automations = await read_automations_for_workspace(
@@ -215,7 +215,7 @@ async def delete_automations_for_workspace(
 
 @db_injector
 async def disable_automations_for_workspace(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
 ) -> bool:
     automations = await read_automations_for_workspace(session)
@@ -227,7 +227,7 @@ async def disable_automations_for_workspace(
 
 @db_injector
 async def disable_automation(
-    db: PrefectDBInterface, session: AsyncSession, automation_id: UUID
+    db: SyntaskDBInterface, session: AsyncSession, automation_id: UUID
 ) -> bool:
     automation = await read_automation_by_id(
         session=session,
@@ -247,18 +247,18 @@ async def disable_automation(
 
 @db_injector
 async def _sync_automation_related_resources(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     automation_id: UUID,
     automation: Optional[Union[Automation, AutomationUpdate]],
 ):
     """Actively maintains the set of related resources for an automation"""
-    from prefect.server.events import actions
+    from syntask.server.events import actions
 
     await session.execute(
         sa.delete(db.AutomationRelatedResource).where(
             db.AutomationRelatedResource.automation_id == automation_id,
-            db.AutomationRelatedResource.resource_id.like("prefect.deployment.%"),
+            db.AutomationRelatedResource.resource_id.like("syntask.deployment.%"),
             db.AutomationRelatedResource.automation_owned_by_resource.is_(False),
         ),
         execution_options={"synchronize_session": False},
@@ -274,13 +274,13 @@ async def _sync_automation_related_resources(
     )
     for deployment_id in deployment_ids:
         await relate_automation_to_resource(
-            session, automation_id, f"prefect.deployment.{deployment_id}", False
+            session, automation_id, f"syntask.deployment.{deployment_id}", False
         )
 
 
 @db_injector
 async def relate_automation_to_resource(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     automation_id: UUID,
     resource_id: str,
@@ -311,7 +311,7 @@ async def relate_automation_to_resource(
 
 @db_injector
 async def read_automations_related_to_resource(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     resource_id: str,
     owned_by_resource: Optional[bool] = None,
@@ -342,7 +342,7 @@ async def read_automations_related_to_resource(
 
 @db_injector
 async def delete_automations_owned_by_resource(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     resource_id: str,
     automation_filter: Optional[filters.AutomationFilter] = None,

@@ -2,7 +2,7 @@ import pytest
 from fastapi import Body, FastAPI, status
 from httpx import ASGITransport, AsyncClient
 
-from prefect.server.api.dependencies import LimitBody
+from syntask.server.api.dependencies import LimitBody
 
 
 @pytest.fixture

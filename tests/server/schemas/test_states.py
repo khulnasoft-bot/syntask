@@ -4,7 +4,7 @@ import pendulum
 import pydantic
 import pytest
 
-from prefect.server.schemas.states import (
+from syntask.server.schemas.states import (
     AwaitingRetry,
     Completed,
     Failed,

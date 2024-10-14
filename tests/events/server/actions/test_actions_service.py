@@ -5,11 +5,11 @@ import pendulum
 import pytest
 from pendulum.datetime import DateTime
 
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import TriggeredAction
-from prefect.server.utilities.messaging import MessageHandler
-from prefect.server.utilities.messaging.memory import MemoryMessage
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import TriggeredAction
+from syntask.server.utilities.messaging import MessageHandler
+from syntask.server.utilities.messaging.memory import MemoryMessage
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ async def message_handler(act: mock.AsyncMock) -> AsyncGenerator[MessageHandler,
 
 @pytest.fixture
 def act() -> Generator[mock.AsyncMock, None, None]:
-    with mock.patch("prefect.server.events.actions.DoNothing.act", autospec=True) as m:
+    with mock.patch("syntask.server.events.actions.DoNothing.act", autospec=True) as m:
         yield m
 
 
@@ -99,10 +99,10 @@ async def test_successes_emit_events(
 
     assert triggered_event.occurred == email_me_when_that_dang_spider_comes.triggered
     assert triggered_event.follows is None
-    assert triggered_event.event == "prefect.automation.action.triggered"
-    assert triggered_event.resource.id == f"prefect.automation.{automation_id}"
+    assert triggered_event.event == "syntask.automation.action.triggered"
+    assert triggered_event.resource.id == f"syntask.automation.{automation_id}"
     assert (
-        triggered_event.resource["prefect.resource.name"]
+        triggered_event.resource["syntask.resource.name"]
         == "React immediately to spiders"
     )
     assert not triggered_event.related
@@ -114,10 +114,10 @@ async def test_successes_emit_events(
 
     assert start_of_test <= executed_event.occurred <= pendulum.now("UTC")
     assert executed_event.follows == triggered_event.id
-    assert executed_event.event == "prefect.automation.action.executed"
-    assert executed_event.resource.id == f"prefect.automation.{automation_id}"
+    assert executed_event.event == "syntask.automation.action.executed"
+    assert executed_event.resource.id == f"syntask.automation.{automation_id}"
     assert (
-        executed_event.resource["prefect.resource.name"]
+        executed_event.resource["syntask.resource.name"]
         == "React immediately to spiders"
     )
     assert not executed_event.related
@@ -150,10 +150,10 @@ async def test_failures_emit_events(
 
     assert triggered_event.occurred == email_me_when_that_dang_spider_comes.triggered
     assert triggered_event.follows is None
-    assert triggered_event.event == "prefect.automation.action.triggered"
-    assert triggered_event.resource.id == f"prefect.automation.{automation_id}"
+    assert triggered_event.event == "syntask.automation.action.triggered"
+    assert triggered_event.resource.id == f"syntask.automation.{automation_id}"
     assert (
-        triggered_event.resource["prefect.resource.name"]
+        triggered_event.resource["syntask.resource.name"]
         == "React immediately to spiders"
     )
     assert not triggered_event.related
@@ -165,10 +165,10 @@ async def test_failures_emit_events(
 
     assert start_of_test <= executed_event.occurred <= pendulum.now("UTC")
     assert executed_event.follows == triggered_event.id
-    assert executed_event.event == "prefect.automation.action.failed"
-    assert executed_event.resource.id == f"prefect.automation.{automation_id}"
+    assert executed_event.event == "syntask.automation.action.failed"
+    assert executed_event.resource.id == f"syntask.automation.{automation_id}"
     assert (
-        executed_event.resource["prefect.resource.name"]
+        executed_event.resource["syntask.resource.name"]
         == "React immediately to spiders"
     )
     assert not executed_event.related

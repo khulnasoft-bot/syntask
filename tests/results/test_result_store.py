@@ -1,31 +1,31 @@
 import pytest
 
-import prefect.exceptions
-import prefect.results
-from prefect import flow, task
-from prefect.context import FlowRunContext, get_run_context
-from prefect.filesystems import LocalFileSystem
-from prefect.locking.memory import MemoryLockManager
-from prefect.results import (
+import syntask.exceptions
+import syntask.results
+from syntask import flow, task
+from syntask.context import FlowRunContext, get_run_context
+from syntask.filesystems import LocalFileSystem
+from syntask.locking.memory import MemoryLockManager
+from syntask.results import (
     ResultRecord,
     ResultStore,
     should_persist_result,
 )
-from prefect.serializers import JSONSerializer, PickleSerializer
-from prefect.settings import (
-    PREFECT_LOCAL_STORAGE_PATH,
-    PREFECT_RESULTS_DEFAULT_SERIALIZER,
-    PREFECT_RESULTS_PERSIST_BY_DEFAULT,
+from syntask.serializers import JSONSerializer, PickleSerializer
+from syntask.settings import (
+    SYNTASK_LOCAL_STORAGE_PATH,
+    SYNTASK_RESULTS_DEFAULT_SERIALIZER,
+    SYNTASK_RESULTS_PERSIST_BY_DEFAULT,
     temporary_settings,
 )
-from prefect.testing.utilities import assert_blocks_equal
-from prefect.transactions import IsolationLevel
+from syntask.testing.utilities import assert_blocks_equal
+from syntask.transactions import IsolationLevel
 
 DEFAULT_SERIALIZER = PickleSerializer
 
 
 def DEFAULT_STORAGE():
-    return LocalFileSystem(basepath=PREFECT_LOCAL_STORAGE_PATH.value())
+    return LocalFileSystem(basepath=SYNTASK_LOCAL_STORAGE_PATH.value())
 
 
 @pytest.fixture
@@ -34,12 +34,12 @@ def default_persistence_off():
     Many tests return result factories, which aren't serialiable.
     When we switched the default persistence setting to True, this caused tests to fail.
     """
-    with temporary_settings({PREFECT_RESULTS_PERSIST_BY_DEFAULT: False}):
+    with temporary_settings({SYNTASK_RESULTS_PERSIST_BY_DEFAULT: False}):
         yield
 
 
 @pytest.fixture
-async def store(prefect_client):
+async def store(syntask_client):
     return ResultStore()
 
 
@@ -69,7 +69,7 @@ def test_root_flow_default_result_serializer_can_be_overriden_by_setting():
     def foo():
         return get_run_context().result_store
 
-    with temporary_settings({PREFECT_RESULTS_DEFAULT_SERIALIZER: "json"}):
+    with temporary_settings({SYNTASK_RESULTS_DEFAULT_SERIALIZER: "json"}):
         result_store = foo()
     assert result_store.serializer == JSONSerializer()
 
@@ -79,7 +79,7 @@ def test_root_flow_default_persist_result_can_be_overriden_by_setting():
     def foo():
         return should_persist_result()
 
-    with temporary_settings({PREFECT_RESULTS_PERSIST_BY_DEFAULT: True}):
+    with temporary_settings({SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True}):
         persist_result = foo()
     assert persist_result is True
 
@@ -89,7 +89,7 @@ def test_root_flow_can_opt_out_when_persist_result_default_is_overriden_by_setti
     def foo():
         return should_persist_result()
 
-    with temporary_settings({PREFECT_RESULTS_PERSIST_BY_DEFAULT: True}):
+    with temporary_settings({SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True}):
         persist_result = foo()
 
     assert persist_result is False
@@ -236,7 +236,7 @@ def test_child_flow_default_result_serializer_can_be_overriden_by_setting(
     def bar():
         return get_run_context().result_store
 
-    with temporary_settings({PREFECT_RESULTS_DEFAULT_SERIALIZER: "json"}):
+    with temporary_settings({SYNTASK_RESULTS_DEFAULT_SERIALIZER: "json"}):
         _, child_store = foo()
 
     assert child_store.serializer == JSONSerializer()
@@ -251,7 +251,7 @@ def test_child_flow_default_persist_result_can_be_overriden_by_setting():
     def bar():
         return get_run_context().result_store, should_persist_result()
 
-    with temporary_settings({PREFECT_RESULTS_PERSIST_BY_DEFAULT: True}):
+    with temporary_settings({SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True}):
         child_store, persist_result = foo()
 
     assert persist_result is True
@@ -266,7 +266,7 @@ def test_child_flow_can_opt_out_when_persist_result_default_is_overriden_by_sett
     def bar():
         return get_run_context().result_store, should_persist_result()
 
-    with temporary_settings({PREFECT_RESULTS_PERSIST_BY_DEFAULT: True}):
+    with temporary_settings({SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True}):
         child_store, persist_result = foo()
 
     assert persist_result is False
@@ -419,14 +419,14 @@ def test_task_default_result_serializer_can_be_overriden_by_setting():
     def bar():
         return get_run_context().result_store
 
-    with temporary_settings({PREFECT_RESULTS_DEFAULT_SERIALIZER: "json"}):
+    with temporary_settings({SYNTASK_RESULTS_DEFAULT_SERIALIZER: "json"}):
         task_store = bar()
 
     assert task_store.serializer == JSONSerializer()
 
 
 def test_task_default_persist_result_can_be_overriden_by_setting():
-    with temporary_settings({PREFECT_RESULTS_PERSIST_BY_DEFAULT: True}):
+    with temporary_settings({SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True}):
 
         @flow
         def foo():
@@ -509,7 +509,7 @@ def test_task_can_opt_out_when_persist_result_default_is_overriden_by_setting():
     def bar():
         return should_persist_result()
 
-    with temporary_settings({PREFECT_RESULTS_PERSIST_BY_DEFAULT: True}):
+    with temporary_settings({SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True}):
         persist_result = foo()
 
     assert persist_result is False
@@ -592,8 +592,8 @@ async def test_nested_flow_custom_storage(tmp_path):
 
 
 async def _verify_default_storage_creation_with_persistence(
-    prefect_client,
-    result_store: prefect.results.ResultStore,
+    syntask_client,
+    result_store: syntask.results.ResultStore,
 ):
     # check that the default block was created
     assert result_store.result_storage is not None
@@ -604,7 +604,7 @@ async def _verify_default_storage_creation_with_persistence(
 
 
 async def _verify_default_storage_creation_without_persistence(
-    result_store: prefect.results.ResultStore,
+    result_store: syntask.results.ResultStore,
 ):
     # check that the default block was created
     assert_blocks_equal(result_store.result_storage, DEFAULT_STORAGE())
@@ -614,7 +614,7 @@ async def _verify_default_storage_creation_without_persistence(
 
 
 async def test_default_storage_creation_for_flow_with_persistence_features(
-    prefect_client,
+    syntask_client,
 ):
     @flow(persist_result=True)
     def foo():
@@ -622,7 +622,7 @@ async def test_default_storage_creation_for_flow_with_persistence_features(
 
     result_store = foo()
     await _verify_default_storage_creation_with_persistence(
-        prefect_client, result_store
+        syntask_client, result_store
     )
 
 
@@ -636,7 +636,7 @@ async def test_default_storage_creation_for_flow_without_persistence_features():
 
 
 async def test_default_storage_creation_for_task_with_persistence_features(
-    prefect_client,
+    syntask_client,
 ):
     @task(persist_result=True)
     def my_task_1():
@@ -648,7 +648,7 @@ async def test_default_storage_creation_for_task_with_persistence_features(
 
     result_store = my_flow_1()
     await _verify_default_storage_creation_with_persistence(
-        prefect_client, result_store
+        syntask_client, result_store
     )
 
     @task(cache_key_fn=lambda *_: "always", persist_result=True)
@@ -661,7 +661,7 @@ async def test_default_storage_creation_for_task_with_persistence_features(
 
     result_store = my_flow_2()
     await _verify_default_storage_creation_with_persistence(
-        prefect_client, result_store
+        syntask_client, result_store
     )
 
 

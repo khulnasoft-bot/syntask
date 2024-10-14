@@ -1,5 +1,5 @@
 """
-Schemas that define Prefect REST API filtering operations.
+Schemas that define Syntask REST API filtering operations.
 """
 
 from typing import List, Optional
@@ -8,9 +8,9 @@ from uuid import UUID
 from pydantic import Field
 from pydantic_extra_types.pendulum_dt import DateTime
 
-from prefect._internal.schemas.bases import PrefectBaseModel
-from prefect.client.schemas.objects import StateType
-from prefect.utilities.collections import AutoEnum
+from syntask._internal.schemas.bases import SyntaskBaseModel
+from syntask.client.schemas.objects import StateType
+from syntask.utilities.collections import AutoEnum
 
 
 class Operator(AutoEnum):
@@ -21,7 +21,7 @@ class Operator(AutoEnum):
 
 
 class OperatorMixin:
-    """Base model for Prefect filters that combines criteria with a user-provided operator"""
+    """Base model for Syntask filters that combines criteria with a user-provided operator"""
 
     operator: Operator = Field(
         default=Operator.and_,
@@ -29,7 +29,7 @@ class OperatorMixin:
     )
 
 
-class FlowFilterId(PrefectBaseModel):
+class FlowFilterId(SyntaskBaseModel):
     """Filter by `Flow.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -37,7 +37,7 @@ class FlowFilterId(PrefectBaseModel):
     )
 
 
-class FlowFilterName(PrefectBaseModel):
+class FlowFilterName(SyntaskBaseModel):
     """Filter by `Flow.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -57,7 +57,7 @@ class FlowFilterName(PrefectBaseModel):
     )
 
 
-class FlowFilterTags(PrefectBaseModel, OperatorMixin):
+class FlowFilterTags(SyntaskBaseModel, OperatorMixin):
     """Filter by `Flow.tags`."""
 
     all_: Optional[List[str]] = Field(
@@ -73,7 +73,7 @@ class FlowFilterTags(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowFilter(PrefectBaseModel, OperatorMixin):
+class FlowFilter(SyntaskBaseModel, OperatorMixin):
     """Filter for flows. Only flows matching all criteria will be returned."""
 
     id: Optional[FlowFilterId] = Field(
@@ -87,7 +87,7 @@ class FlowFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunFilterId(PrefectBaseModel):
+class FlowRunFilterId(SyntaskBaseModel):
     """Filter by FlowRun.id."""
 
     any_: Optional[List[UUID]] = Field(
@@ -98,7 +98,7 @@ class FlowRunFilterId(PrefectBaseModel):
     )
 
 
-class FlowRunFilterName(PrefectBaseModel):
+class FlowRunFilterName(SyntaskBaseModel):
     """Filter by `FlowRun.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -118,7 +118,7 @@ class FlowRunFilterName(PrefectBaseModel):
     )
 
 
-class FlowRunFilterTags(PrefectBaseModel, OperatorMixin):
+class FlowRunFilterTags(SyntaskBaseModel, OperatorMixin):
     """Filter by `FlowRun.tags`."""
 
     all_: Optional[List[str]] = Field(
@@ -134,7 +134,7 @@ class FlowRunFilterTags(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunFilterDeploymentId(PrefectBaseModel, OperatorMixin):
+class FlowRunFilterDeploymentId(SyntaskBaseModel, OperatorMixin):
     """Filter by `FlowRun.deployment_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -146,7 +146,7 @@ class FlowRunFilterDeploymentId(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunFilterWorkQueueName(PrefectBaseModel, OperatorMixin):
+class FlowRunFilterWorkQueueName(SyntaskBaseModel, OperatorMixin):
     """Filter by `FlowRun.work_queue_name`."""
 
     any_: Optional[List[str]] = Field(
@@ -160,7 +160,7 @@ class FlowRunFilterWorkQueueName(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunFilterStateType(PrefectBaseModel):
+class FlowRunFilterStateType(SyntaskBaseModel):
     """Filter by `FlowRun.state_type`."""
 
     any_: Optional[List[StateType]] = Field(
@@ -171,7 +171,7 @@ class FlowRunFilterStateType(PrefectBaseModel):
     )
 
 
-class FlowRunFilterStateName(PrefectBaseModel):
+class FlowRunFilterStateName(SyntaskBaseModel):
     any_: Optional[List[str]] = Field(
         default=None, description="A list of flow run state names to include"
     )
@@ -180,7 +180,7 @@ class FlowRunFilterStateName(PrefectBaseModel):
     )
 
 
-class FlowRunFilterState(PrefectBaseModel, OperatorMixin):
+class FlowRunFilterState(SyntaskBaseModel, OperatorMixin):
     type: Optional[FlowRunFilterStateType] = Field(
         default=None, description="Filter criteria for `FlowRun` state type"
     )
@@ -189,7 +189,7 @@ class FlowRunFilterState(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunFilterFlowVersion(PrefectBaseModel):
+class FlowRunFilterFlowVersion(SyntaskBaseModel):
     """Filter by `FlowRun.flow_version`."""
 
     any_: Optional[List[str]] = Field(
@@ -197,7 +197,7 @@ class FlowRunFilterFlowVersion(PrefectBaseModel):
     )
 
 
-class FlowRunFilterStartTime(PrefectBaseModel):
+class FlowRunFilterStartTime(SyntaskBaseModel):
     """Filter by `FlowRun.start_time`."""
 
     before_: Optional[DateTime] = Field(
@@ -213,7 +213,7 @@ class FlowRunFilterStartTime(PrefectBaseModel):
     )
 
 
-class FlowRunFilterExpectedStartTime(PrefectBaseModel):
+class FlowRunFilterExpectedStartTime(SyntaskBaseModel):
     """Filter by `FlowRun.expected_start_time`."""
 
     before_: Optional[DateTime] = Field(
@@ -226,7 +226,7 @@ class FlowRunFilterExpectedStartTime(PrefectBaseModel):
     )
 
 
-class FlowRunFilterNextScheduledStartTime(PrefectBaseModel):
+class FlowRunFilterNextScheduledStartTime(SyntaskBaseModel):
     """Filter by `FlowRun.next_scheduled_start_time`."""
 
     before_: Optional[DateTime] = Field(
@@ -245,7 +245,7 @@ class FlowRunFilterNextScheduledStartTime(PrefectBaseModel):
     )
 
 
-class FlowRunFilterParentFlowRunId(PrefectBaseModel, OperatorMixin):
+class FlowRunFilterParentFlowRunId(SyntaskBaseModel, OperatorMixin):
     """Filter for subflows of the given flow runs"""
 
     any_: Optional[List[UUID]] = Field(
@@ -253,7 +253,7 @@ class FlowRunFilterParentFlowRunId(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunFilterParentTaskRunId(PrefectBaseModel, OperatorMixin):
+class FlowRunFilterParentTaskRunId(SyntaskBaseModel, OperatorMixin):
     """Filter by `FlowRun.parent_task_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -265,7 +265,7 @@ class FlowRunFilterParentTaskRunId(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunFilterIdempotencyKey(PrefectBaseModel):
+class FlowRunFilterIdempotencyKey(SyntaskBaseModel):
     """Filter by FlowRun.idempotency_key."""
 
     any_: Optional[List[str]] = Field(
@@ -276,7 +276,7 @@ class FlowRunFilterIdempotencyKey(PrefectBaseModel):
     )
 
 
-class FlowRunFilter(PrefectBaseModel, OperatorMixin):
+class FlowRunFilter(SyntaskBaseModel, OperatorMixin):
     """Filter flow runs. Only flow runs matching all criteria will be returned"""
 
     id: Optional[FlowRunFilterId] = Field(
@@ -321,7 +321,7 @@ class FlowRunFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class TaskRunFilterFlowRunId(PrefectBaseModel):
+class TaskRunFilterFlowRunId(SyntaskBaseModel):
     """Filter by `TaskRun.flow_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -334,7 +334,7 @@ class TaskRunFilterFlowRunId(PrefectBaseModel):
     )
 
 
-class TaskRunFilterId(PrefectBaseModel):
+class TaskRunFilterId(SyntaskBaseModel):
     """Filter by `TaskRun.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -342,7 +342,7 @@ class TaskRunFilterId(PrefectBaseModel):
     )
 
 
-class TaskRunFilterName(PrefectBaseModel):
+class TaskRunFilterName(SyntaskBaseModel):
     """Filter by `TaskRun.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -362,7 +362,7 @@ class TaskRunFilterName(PrefectBaseModel):
     )
 
 
-class TaskRunFilterTags(PrefectBaseModel, OperatorMixin):
+class TaskRunFilterTags(SyntaskBaseModel, OperatorMixin):
     """Filter by `TaskRun.tags`."""
 
     all_: Optional[List[str]] = Field(
@@ -378,7 +378,7 @@ class TaskRunFilterTags(PrefectBaseModel, OperatorMixin):
     )
 
 
-class TaskRunFilterStateType(PrefectBaseModel):
+class TaskRunFilterStateType(SyntaskBaseModel):
     """Filter by `TaskRun.state_type`."""
 
     any_: Optional[List[StateType]] = Field(
@@ -386,18 +386,18 @@ class TaskRunFilterStateType(PrefectBaseModel):
     )
 
 
-class TaskRunFilterStateName(PrefectBaseModel):
+class TaskRunFilterStateName(SyntaskBaseModel):
     any_: Optional[List[str]] = Field(
         default=None, description="A list of task run state names to include"
     )
 
 
-class TaskRunFilterState(PrefectBaseModel, OperatorMixin):
+class TaskRunFilterState(SyntaskBaseModel, OperatorMixin):
     type: Optional[TaskRunFilterStateType]
     name: Optional[TaskRunFilterStateName]
 
 
-class TaskRunFilterSubFlowRuns(PrefectBaseModel):
+class TaskRunFilterSubFlowRuns(SyntaskBaseModel):
     """Filter by `TaskRun.subflow_run`."""
 
     exists_: Optional[bool] = Field(
@@ -409,7 +409,7 @@ class TaskRunFilterSubFlowRuns(PrefectBaseModel):
     )
 
 
-class TaskRunFilterStartTime(PrefectBaseModel):
+class TaskRunFilterStartTime(SyntaskBaseModel):
     """Filter by `TaskRun.start_time`."""
 
     before_: Optional[DateTime] = Field(
@@ -425,7 +425,7 @@ class TaskRunFilterStartTime(PrefectBaseModel):
     )
 
 
-class TaskRunFilter(PrefectBaseModel, OperatorMixin):
+class TaskRunFilter(SyntaskBaseModel, OperatorMixin):
     """Filter task runs. Only task runs matching all criteria will be returned"""
 
     id: Optional[TaskRunFilterId] = Field(
@@ -451,7 +451,7 @@ class TaskRunFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class DeploymentFilterId(PrefectBaseModel):
+class DeploymentFilterId(SyntaskBaseModel):
     """Filter by `Deployment.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -459,7 +459,7 @@ class DeploymentFilterId(PrefectBaseModel):
     )
 
 
-class DeploymentFilterName(PrefectBaseModel):
+class DeploymentFilterName(SyntaskBaseModel):
     """Filter by `Deployment.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -479,7 +479,7 @@ class DeploymentFilterName(PrefectBaseModel):
     )
 
 
-class DeploymentFilterWorkQueueName(PrefectBaseModel):
+class DeploymentFilterWorkQueueName(SyntaskBaseModel):
     """Filter by `Deployment.work_queue_name`."""
 
     any_: Optional[List[str]] = Field(
@@ -489,7 +489,7 @@ class DeploymentFilterWorkQueueName(PrefectBaseModel):
     )
 
 
-class DeploymentFilterTags(PrefectBaseModel, OperatorMixin):
+class DeploymentFilterTags(SyntaskBaseModel, OperatorMixin):
     """Filter by `Deployment.tags`."""
 
     all_: Optional[List[str]] = Field(
@@ -505,7 +505,7 @@ class DeploymentFilterTags(PrefectBaseModel, OperatorMixin):
     )
 
 
-class DeploymentFilterConcurrencyLimit(PrefectBaseModel):
+class DeploymentFilterConcurrencyLimit(SyntaskBaseModel):
     """DEPRECATED: Prefer `Deployment.concurrency_limit_id` over `Deployment.concurrency_limit`."""
 
     ge_: Optional[int] = Field(
@@ -522,7 +522,7 @@ class DeploymentFilterConcurrencyLimit(PrefectBaseModel):
     )
 
 
-class DeploymentFilter(PrefectBaseModel, OperatorMixin):
+class DeploymentFilter(SyntaskBaseModel, OperatorMixin):
     """Filter for deployments. Only deployments matching all criteria will be returned."""
 
     id: Optional[DeploymentFilterId] = Field(
@@ -544,17 +544,17 @@ class DeploymentFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class LogFilterName(PrefectBaseModel):
+class LogFilterName(SyntaskBaseModel):
     """Filter by `Log.name`."""
 
     any_: Optional[List[str]] = Field(
         default=None,
         description="A list of log names to include",
-        examples=[["prefect.logger.flow_runs", "prefect.logger.task_runs"]],
+        examples=[["syntask.logger.flow_runs", "syntask.logger.task_runs"]],
     )
 
 
-class LogFilterLevel(PrefectBaseModel):
+class LogFilterLevel(SyntaskBaseModel):
     """Filter by `Log.level`."""
 
     ge_: Optional[int] = Field(
@@ -570,7 +570,7 @@ class LogFilterLevel(PrefectBaseModel):
     )
 
 
-class LogFilterTimestamp(PrefectBaseModel):
+class LogFilterTimestamp(SyntaskBaseModel):
     """Filter by `Log.timestamp`."""
 
     before_: Optional[DateTime] = Field(
@@ -583,7 +583,7 @@ class LogFilterTimestamp(PrefectBaseModel):
     )
 
 
-class LogFilterFlowRunId(PrefectBaseModel):
+class LogFilterFlowRunId(SyntaskBaseModel):
     """Filter by `Log.flow_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -591,7 +591,7 @@ class LogFilterFlowRunId(PrefectBaseModel):
     )
 
 
-class LogFilterTaskRunId(PrefectBaseModel):
+class LogFilterTaskRunId(SyntaskBaseModel):
     """Filter by `Log.task_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -599,7 +599,7 @@ class LogFilterTaskRunId(PrefectBaseModel):
     )
 
 
-class LogFilter(PrefectBaseModel, OperatorMixin):
+class LogFilter(SyntaskBaseModel, OperatorMixin):
     """Filter logs. Only logs matching all criteria will be returned"""
 
     level: Optional[LogFilterLevel] = Field(
@@ -616,7 +616,7 @@ class LogFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FilterSet(PrefectBaseModel):
+class FilterSet(SyntaskBaseModel):
     """A collection of filters for common objects"""
 
     flows: FlowFilter = Field(
@@ -634,7 +634,7 @@ class FilterSet(PrefectBaseModel):
     )
 
 
-class BlockTypeFilterName(PrefectBaseModel):
+class BlockTypeFilterName(SyntaskBaseModel):
     """Filter by `BlockType.name`"""
 
     like_: Optional[str] = Field(
@@ -648,7 +648,7 @@ class BlockTypeFilterName(PrefectBaseModel):
     )
 
 
-class BlockTypeFilterSlug(PrefectBaseModel):
+class BlockTypeFilterSlug(SyntaskBaseModel):
     """Filter by `BlockType.slug`"""
 
     any_: Optional[List[str]] = Field(
@@ -656,7 +656,7 @@ class BlockTypeFilterSlug(PrefectBaseModel):
     )
 
 
-class BlockTypeFilter(PrefectBaseModel):
+class BlockTypeFilter(SyntaskBaseModel):
     """Filter BlockTypes"""
 
     name: Optional[BlockTypeFilterName] = Field(
@@ -668,7 +668,7 @@ class BlockTypeFilter(PrefectBaseModel):
     )
 
 
-class BlockSchemaFilterBlockTypeId(PrefectBaseModel):
+class BlockSchemaFilterBlockTypeId(SyntaskBaseModel):
     """Filter by `BlockSchema.block_type_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -676,7 +676,7 @@ class BlockSchemaFilterBlockTypeId(PrefectBaseModel):
     )
 
 
-class BlockSchemaFilterId(PrefectBaseModel):
+class BlockSchemaFilterId(SyntaskBaseModel):
     """Filter by BlockSchema.id"""
 
     any_: Optional[List[UUID]] = Field(
@@ -684,7 +684,7 @@ class BlockSchemaFilterId(PrefectBaseModel):
     )
 
 
-class BlockSchemaFilterCapabilities(PrefectBaseModel):
+class BlockSchemaFilterCapabilities(SyntaskBaseModel):
     """Filter by `BlockSchema.capabilities`"""
 
     all_: Optional[List[str]] = Field(
@@ -697,7 +697,7 @@ class BlockSchemaFilterCapabilities(PrefectBaseModel):
     )
 
 
-class BlockSchemaFilterVersion(PrefectBaseModel):
+class BlockSchemaFilterVersion(SyntaskBaseModel):
     """Filter by `BlockSchema.capabilities`"""
 
     any_: Optional[List[str]] = Field(
@@ -707,7 +707,7 @@ class BlockSchemaFilterVersion(PrefectBaseModel):
     )
 
 
-class BlockSchemaFilter(PrefectBaseModel, OperatorMixin):
+class BlockSchemaFilter(SyntaskBaseModel, OperatorMixin):
     """Filter BlockSchemas"""
 
     block_type_id: Optional[BlockSchemaFilterBlockTypeId] = Field(
@@ -724,7 +724,7 @@ class BlockSchemaFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class BlockDocumentFilterIsAnonymous(PrefectBaseModel):
+class BlockDocumentFilterIsAnonymous(SyntaskBaseModel):
     """Filter by `BlockDocument.is_anonymous`."""
 
     eq_: Optional[bool] = Field(
@@ -735,7 +735,7 @@ class BlockDocumentFilterIsAnonymous(PrefectBaseModel):
     )
 
 
-class BlockDocumentFilterBlockTypeId(PrefectBaseModel):
+class BlockDocumentFilterBlockTypeId(SyntaskBaseModel):
     """Filter by `BlockDocument.block_type_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -743,7 +743,7 @@ class BlockDocumentFilterBlockTypeId(PrefectBaseModel):
     )
 
 
-class BlockDocumentFilterId(PrefectBaseModel):
+class BlockDocumentFilterId(SyntaskBaseModel):
     """Filter by `BlockDocument.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -751,7 +751,7 @@ class BlockDocumentFilterId(PrefectBaseModel):
     )
 
 
-class BlockDocumentFilterName(PrefectBaseModel):
+class BlockDocumentFilterName(SyntaskBaseModel):
     """Filter by `BlockDocument.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -767,7 +767,7 @@ class BlockDocumentFilterName(PrefectBaseModel):
     )
 
 
-class BlockDocumentFilter(PrefectBaseModel, OperatorMixin):
+class BlockDocumentFilter(SyntaskBaseModel, OperatorMixin):
     """Filter BlockDocuments. Only BlockDocuments matching all criteria will be returned"""
 
     id: Optional[BlockDocumentFilterId] = Field(
@@ -789,7 +789,7 @@ class BlockDocumentFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class FlowRunNotificationPolicyFilterIsActive(PrefectBaseModel):
+class FlowRunNotificationPolicyFilterIsActive(SyntaskBaseModel):
     """Filter by `FlowRunNotificationPolicy.is_active`."""
 
     eq_: Optional[bool] = Field(
@@ -800,7 +800,7 @@ class FlowRunNotificationPolicyFilterIsActive(PrefectBaseModel):
     )
 
 
-class FlowRunNotificationPolicyFilter(PrefectBaseModel):
+class FlowRunNotificationPolicyFilter(SyntaskBaseModel):
     """Filter FlowRunNotificationPolicies."""
 
     is_active: Optional[FlowRunNotificationPolicyFilterIsActive] = Field(
@@ -809,7 +809,7 @@ class FlowRunNotificationPolicyFilter(PrefectBaseModel):
     )
 
 
-class WorkQueueFilterId(PrefectBaseModel):
+class WorkQueueFilterId(SyntaskBaseModel):
     """Filter by `WorkQueue.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -818,7 +818,7 @@ class WorkQueueFilterId(PrefectBaseModel):
     )
 
 
-class WorkQueueFilterName(PrefectBaseModel):
+class WorkQueueFilterName(SyntaskBaseModel):
     """Filter by `WorkQueue.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -838,7 +838,7 @@ class WorkQueueFilterName(PrefectBaseModel):
     )
 
 
-class WorkQueueFilter(PrefectBaseModel, OperatorMixin):
+class WorkQueueFilter(SyntaskBaseModel, OperatorMixin):
     """Filter work queues. Only work queues matching all criteria will be
     returned"""
 
@@ -851,7 +851,7 @@ class WorkQueueFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class WorkPoolFilterId(PrefectBaseModel):
+class WorkPoolFilterId(SyntaskBaseModel):
     """Filter by `WorkPool.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -859,7 +859,7 @@ class WorkPoolFilterId(PrefectBaseModel):
     )
 
 
-class WorkPoolFilterName(PrefectBaseModel):
+class WorkPoolFilterName(SyntaskBaseModel):
     """Filter by `WorkPool.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -867,7 +867,7 @@ class WorkPoolFilterName(PrefectBaseModel):
     )
 
 
-class WorkPoolFilterType(PrefectBaseModel):
+class WorkPoolFilterType(SyntaskBaseModel):
     """Filter by `WorkPool.type`."""
 
     any_: Optional[List[str]] = Field(
@@ -875,7 +875,7 @@ class WorkPoolFilterType(PrefectBaseModel):
     )
 
 
-class WorkPoolFilter(PrefectBaseModel, OperatorMixin):
+class WorkPoolFilter(SyntaskBaseModel, OperatorMixin):
     id: Optional[WorkPoolFilterId] = Field(
         default=None, description="Filter criteria for `WorkPool.id`"
     )
@@ -887,7 +887,7 @@ class WorkPoolFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class WorkerFilterWorkPoolId(PrefectBaseModel):
+class WorkerFilterWorkPoolId(SyntaskBaseModel):
     """Filter by `Worker.worker_config_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -895,7 +895,7 @@ class WorkerFilterWorkPoolId(PrefectBaseModel):
     )
 
 
-class WorkerFilterLastHeartbeatTime(PrefectBaseModel):
+class WorkerFilterLastHeartbeatTime(SyntaskBaseModel):
     """Filter by `Worker.last_heartbeat_time`."""
 
     before_: Optional[DateTime] = Field(
@@ -912,7 +912,7 @@ class WorkerFilterLastHeartbeatTime(PrefectBaseModel):
     )
 
 
-class WorkerFilter(PrefectBaseModel, OperatorMixin):
+class WorkerFilter(SyntaskBaseModel, OperatorMixin):
     # worker_config_id: Optional[WorkerFilterWorkPoolId] = Field(
     #     default=None, description="Filter criteria for `Worker.worker_config_id`"
     # )
@@ -923,7 +923,7 @@ class WorkerFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class ArtifactFilterId(PrefectBaseModel):
+class ArtifactFilterId(SyntaskBaseModel):
     """Filter by `Artifact.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -931,7 +931,7 @@ class ArtifactFilterId(PrefectBaseModel):
     )
 
 
-class ArtifactFilterKey(PrefectBaseModel):
+class ArtifactFilterKey(SyntaskBaseModel):
     """Filter by `Artifact.key`."""
 
     any_: Optional[List[str]] = Field(
@@ -956,7 +956,7 @@ class ArtifactFilterKey(PrefectBaseModel):
     )
 
 
-class ArtifactFilterFlowRunId(PrefectBaseModel):
+class ArtifactFilterFlowRunId(SyntaskBaseModel):
     """Filter by `Artifact.flow_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -964,7 +964,7 @@ class ArtifactFilterFlowRunId(PrefectBaseModel):
     )
 
 
-class ArtifactFilterTaskRunId(PrefectBaseModel):
+class ArtifactFilterTaskRunId(SyntaskBaseModel):
     """Filter by `Artifact.task_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -972,7 +972,7 @@ class ArtifactFilterTaskRunId(PrefectBaseModel):
     )
 
 
-class ArtifactFilterType(PrefectBaseModel):
+class ArtifactFilterType(SyntaskBaseModel):
     """Filter by `Artifact.type`."""
 
     any_: Optional[List[str]] = Field(
@@ -983,7 +983,7 @@ class ArtifactFilterType(PrefectBaseModel):
     )
 
 
-class ArtifactFilter(PrefectBaseModel, OperatorMixin):
+class ArtifactFilter(SyntaskBaseModel, OperatorMixin):
     """Filter artifacts. Only artifacts matching all criteria will be returned"""
 
     id: Optional[ArtifactFilterId] = Field(
@@ -1003,7 +1003,7 @@ class ArtifactFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class ArtifactCollectionFilterLatestId(PrefectBaseModel):
+class ArtifactCollectionFilterLatestId(SyntaskBaseModel):
     """Filter by `ArtifactCollection.latest_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -1011,7 +1011,7 @@ class ArtifactCollectionFilterLatestId(PrefectBaseModel):
     )
 
 
-class ArtifactCollectionFilterKey(PrefectBaseModel):
+class ArtifactCollectionFilterKey(SyntaskBaseModel):
     """Filter by `ArtifactCollection.key`."""
 
     any_: Optional[List[str]] = Field(
@@ -1037,7 +1037,7 @@ class ArtifactCollectionFilterKey(PrefectBaseModel):
     )
 
 
-class ArtifactCollectionFilterFlowRunId(PrefectBaseModel):
+class ArtifactCollectionFilterFlowRunId(SyntaskBaseModel):
     """Filter by `ArtifactCollection.flow_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -1045,7 +1045,7 @@ class ArtifactCollectionFilterFlowRunId(PrefectBaseModel):
     )
 
 
-class ArtifactCollectionFilterTaskRunId(PrefectBaseModel):
+class ArtifactCollectionFilterTaskRunId(SyntaskBaseModel):
     """Filter by `ArtifactCollection.task_run_id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -1053,7 +1053,7 @@ class ArtifactCollectionFilterTaskRunId(PrefectBaseModel):
     )
 
 
-class ArtifactCollectionFilterType(PrefectBaseModel):
+class ArtifactCollectionFilterType(SyntaskBaseModel):
     """Filter by `ArtifactCollection.type`."""
 
     any_: Optional[List[str]] = Field(
@@ -1064,7 +1064,7 @@ class ArtifactCollectionFilterType(PrefectBaseModel):
     )
 
 
-class ArtifactCollectionFilter(PrefectBaseModel, OperatorMixin):
+class ArtifactCollectionFilter(SyntaskBaseModel, OperatorMixin):
     """Filter artifact collections. Only artifact collections matching all criteria will be returned"""
 
     latest_id: Optional[ArtifactCollectionFilterLatestId] = Field(
@@ -1084,7 +1084,7 @@ class ArtifactCollectionFilter(PrefectBaseModel, OperatorMixin):
     )
 
 
-class VariableFilterId(PrefectBaseModel):
+class VariableFilterId(SyntaskBaseModel):
     """Filter by `Variable.id`."""
 
     any_: Optional[List[UUID]] = Field(
@@ -1092,7 +1092,7 @@ class VariableFilterId(PrefectBaseModel):
     )
 
 
-class VariableFilterName(PrefectBaseModel):
+class VariableFilterName(SyntaskBaseModel):
     """Filter by `Variable.name`."""
 
     any_: Optional[List[str]] = Field(
@@ -1108,7 +1108,7 @@ class VariableFilterName(PrefectBaseModel):
     )
 
 
-class VariableFilterTags(PrefectBaseModel, OperatorMixin):
+class VariableFilterTags(SyntaskBaseModel, OperatorMixin):
     """Filter by `Variable.tags`."""
 
     all_: Optional[List[str]] = Field(
@@ -1124,7 +1124,7 @@ class VariableFilterTags(PrefectBaseModel, OperatorMixin):
     )
 
 
-class VariableFilter(PrefectBaseModel, OperatorMixin):
+class VariableFilter(SyntaskBaseModel, OperatorMixin):
     """Filter variables. Only variables matching all criteria will be returned"""
 
     id: Optional[VariableFilterId] = Field(

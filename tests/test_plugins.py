@@ -2,17 +2,17 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-import prefect.plugins
-from prefect.plugins import load_prefect_collections, safe_load_entrypoints
-from prefect.settings import PREFECT_DEBUG_MODE, temporary_settings
-from prefect.utilities.compat import EntryPoints
+import syntask.plugins
+from syntask.plugins import load_syntask_collections, safe_load_entrypoints
+from syntask.settings import SYNTASK_DEBUG_MODE, temporary_settings
+from syntask.utilities.compat import EntryPoints
 
 
 @pytest.fixture(autouse=True)
 def reset_collections():
-    prefect.plugins.COLLECTIONS = None
+    syntask.plugins.COLLECTIONS = None
     yield
-    prefect.plugins.COLLECTIONS = None
+    syntask.plugins.COLLECTIONS = None
 
 
 def test_safe_load_entrypoints_returns_modules_and_exceptions():
@@ -34,9 +34,9 @@ def test_safe_load_entrypoints_returns_modules_and_exceptions():
     assert isinstance(result["test2"], ImportError)
 
 
-@patch("prefect.plugins.entry_points")
-@patch("prefect.plugins.safe_load_entrypoints")
-def test_load_prefect_collections_returns_modules_and_exceptions(
+@patch("syntask.plugins.entry_points")
+@patch("syntask.plugins.safe_load_entrypoints")
+def test_load_syntask_collections_returns_modules_and_exceptions(
     mock_safe_load, mock_entry_points
 ):
     mock_entry_points.return_value = "mock_entrypoints"
@@ -46,9 +46,9 @@ def test_load_prefect_collections_returns_modules_and_exceptions(
         "collection2": ImportError("Failed to load"),
     }
 
-    result = load_prefect_collections()
+    result = load_syntask_collections()
 
-    mock_entry_points.assert_called_once_with(group="prefect.collections")
+    mock_entry_points.assert_called_once_with(group="syntask.collections")
     mock_safe_load.assert_called_once_with("mock_entrypoints")
 
     # Convert ImportError to string for comparison
@@ -61,10 +61,10 @@ def test_load_prefect_collections_returns_modules_and_exceptions(
     } == expected
 
 
-@patch("prefect.plugins.entry_points")
-@patch("prefect.plugins.safe_load_entrypoints")
+@patch("syntask.plugins.entry_points")
+@patch("syntask.plugins.safe_load_entrypoints")
 @pytest.mark.parametrize("debug_mode", [True, False])
-def test_load_prefect_collections_debug_mode_behavior(
+def test_load_syntask_collections_debug_mode_behavior(
     mock_safe_load, mock_entry_points, capsys, debug_mode
 ):
     mock_entry_points.return_value = "mock_entrypoints"
@@ -74,8 +74,8 @@ def test_load_prefect_collections_debug_mode_behavior(
         "collection2": ImportError("Failed to load"),
     }
 
-    with temporary_settings({PREFECT_DEBUG_MODE: debug_mode}):
-        load_prefect_collections()
+    with temporary_settings({SYNTASK_DEBUG_MODE: debug_mode}):
+        load_syntask_collections()
 
     assert mock_entry_points.call_count == 1
     captured = capsys.readouterr()
@@ -88,15 +88,15 @@ def test_load_prefect_collections_debug_mode_behavior(
         assert "Warning!  Failed to load collection 'collection2'" in captured.out
 
 
-@patch("prefect.plugins.entry_points")
-@patch("prefect.plugins.safe_load_entrypoints")
-def test_load_prefect_collections_caches_result(mock_safe_load, mock_entry_points):
+@patch("syntask.plugins.entry_points")
+@patch("syntask.plugins.safe_load_entrypoints")
+def test_load_syntask_collections_caches_result(mock_safe_load, mock_entry_points):
     mock_entry_points.return_value = "mock_entrypoints"
 
     mock_safe_load.return_value = {"collection1": "module1"}
 
-    result1 = load_prefect_collections()
-    result2 = load_prefect_collections()
+    result1 = load_syntask_collections()
+    result2 = load_syntask_collections()
 
     assert result1 == result2
     mock_entry_points.assert_called_once()

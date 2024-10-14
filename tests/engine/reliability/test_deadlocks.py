@@ -7,7 +7,7 @@ from tests.generic_tasks import (
     subtract_ten,
 )
 
-from prefect import flow
+from syntask import flow
 
 
 @pytest.mark.skip(reason="This test takes multiple minutes")

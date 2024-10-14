@@ -14,9 +14,9 @@ from typing import Any, Callable, Dict, Iterable, NamedTuple, Optional, Union
 
 import fsspec
 
-from prefect.exceptions import ScriptError
-from prefect.logging.loggers import get_logger
-from prefect.utilities.filesystem import filename, is_local_path, tmpchdir
+from syntask.exceptions import ScriptError
+from syntask.logging.loggers import get_logger
+from syntask.utilities.filesystem import filename, is_local_path, tmpchdir
 
 logger = get_logger(__name__)
 
@@ -131,10 +131,10 @@ def load_script_as_module(path: str) -> ModuleType:
     """
     Execute a script at the given path.
 
-    Sets the module name to `__prefect_loader__`.
+    Sets the module name to `__syntask_loader__`.
 
     If an exception occurs during execution of the script, a
-    `prefect.exceptions.ScriptError` is created to wrap the exception and raised.
+    `syntask.exceptions.ScriptError` is created to wrap the exception and raised.
 
     During the duration of this function call, `sys` is modified to support loading.
     These changes are reverted after completion, but this function is not thread safe
@@ -151,13 +151,13 @@ def load_script_as_module(path: str) -> ModuleType:
     working_directory = os.getcwd()
 
     spec = importlib.util.spec_from_file_location(
-        "__prefect_loader__",
+        "__syntask_loader__",
         path,
         # Support explicit relative imports i.e. `from .foo import bar`
         submodule_search_locations=[parent_path, working_directory],
     )
     module = importlib.util.module_from_spec(spec)
-    sys.modules["__prefect_loader__"] = module
+    sys.modules["__syntask_loader__"] = module
 
     # Support implicit relative imports i.e. `from foo import bar`
     sys.path.insert(0, working_directory)
@@ -167,7 +167,7 @@ def load_script_as_module(path: str) -> ModuleType:
     except Exception as exc:
         raise ScriptError(user_exc=exc, path=path) from exc
     finally:
-        sys.modules.pop("__prefect_loader__")
+        sys.modules.pop("__syntask_loader__")
         sys.path.remove(parent_path)
         sys.path.remove(working_directory)
 
@@ -380,7 +380,7 @@ def safe_load_namespace(
     """
     parsed_code = ast.parse(source_code)
 
-    namespace: Dict[str, Any] = {"__name__": "prefect_safe_namespace_loader"}
+    namespace: Dict[str, Any] = {"__name__": "syntask_safe_namespace_loader"}
 
     # Remove the body of the if __name__ == "__main__": block
     new_body = [node for node in parsed_code.body if not _is_main_block(node)]

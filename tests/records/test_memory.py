@@ -5,13 +5,13 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.records.memory import MemoryRecordStore
-from prefect.results import ResultStore
-from prefect.transactions import IsolationLevel
+from syntask.records.memory import MemoryRecordStore
+from syntask.results import ResultStore
+from syntask.transactions import IsolationLevel
 
 
 @pytest.fixture(autouse=True)
-def ignore_deprecations(ignore_prefect_deprecation_warnings):
+def ignore_deprecations(ignore_syntask_deprecation_warnings):
     """This file will be removed in a future release when MemoryRecordStore is removed."""
 
 

@@ -16,7 +16,7 @@ except ImportError:
     # pendulum < 3
     from pendulum.period import Period as Interval  # type: ignore
 
-from prefect.client.schemas.responses import MinimalConcurrencyLimitResponse
+from syntask.client.schemas.responses import MinimalConcurrencyLimitResponse
 
 from .asyncio import (
     _acquire_concurrency_slots,
@@ -58,7 +58,7 @@ def concurrency(
     Example:
     A simple example of using the sync `concurrency` context manager:
     ```python
-    from prefect.concurrency.sync import concurrency
+    from syntask.concurrency.sync import concurrency
 
     def resource_heavy():
         with concurrency("test", occupy=1):

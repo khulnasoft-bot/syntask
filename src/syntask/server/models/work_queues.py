@@ -1,6 +1,6 @@
 """
 Functions for interacting with work queue ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 import datetime
@@ -22,21 +22,21 @@ from pydantic import TypeAdapter
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.clients import PrefectServerEventsClient
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.models.events import work_queue_status_event
-from prefect.server.models.workers import (
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.clients import SyntaskServerEventsClient
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.models.events import work_queue_status_event
+from syntask.server.models.workers import (
     DEFAULT_AGENT_WORK_POOL_NAME,
     bulk_update_work_queue_priorities,
 )
-from prefect.server.schemas.states import StateType
-from prefect.server.schemas.statuses import WorkQueueStatus
-from prefect.server.utilities.database import UUID as PrefectUUID
+from syntask.server.schemas.states import StateType
+from syntask.server.schemas.statuses import WorkQueueStatus
+from syntask.server.utilities.database import UUID as SyntaskUUID
 
 WORK_QUEUE_LAST_POLLED_TIMEOUT = datetime.timedelta(seconds=60)
 
@@ -71,7 +71,7 @@ async def create_work_queue(
             default_agent_work_pool = await models.workers.create_work_pool(
                 session=session,
                 work_pool=schemas.actions.WorkPoolCreate(
-                    name=DEFAULT_AGENT_WORK_POOL_NAME, type="prefect-agent"
+                    name=DEFAULT_AGENT_WORK_POOL_NAME, type="syntask-agent"
                 ),
             )
             if work_queue.name == "default":
@@ -126,7 +126,7 @@ async def create_work_queue(
 
 
 async def read_work_queue(
-    session: AsyncSession, work_queue_id: Union[UUID, PrefectUUID]
+    session: AsyncSession, work_queue_id: Union[UUID, SyntaskUUID]
 ) -> Optional[orm_models.WorkQueue]:
     """
     Reads a WorkQueue by id.
@@ -296,7 +296,7 @@ async def delete_work_queue(session: AsyncSession, work_queue_id: UUID) -> bool:
 
 @db_injector
 async def get_runs_in_work_queue(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     work_queue_id: UUID,
     limit: Optional[int] = None,
@@ -522,7 +522,7 @@ async def record_work_queue_polls(
 
 @db_injector
 async def mark_work_queues_ready(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     polled_work_queue_ids: Sequence[UUID],
     ready_work_queue_ids: Sequence[UUID],
 ) -> None:
@@ -555,14 +555,14 @@ async def mark_work_queues_ready(
             for work_queue in newly_ready_work_queues.scalars().all()
         ]
 
-    async with PrefectServerEventsClient() as events_client:
+    async with SyntaskServerEventsClient() as events_client:
         for event in events:
             await events_client.emit(event)
 
 
 @db_injector
 async def mark_work_queues_not_ready(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     work_queue_ids: Iterable[UUID],
 ) -> None:
     if not work_queue_ids:
@@ -595,14 +595,14 @@ async def mark_work_queues_not_ready(
             for work_queue in newly_unready_work_queues.scalars().all()
         ]
 
-    async with PrefectServerEventsClient() as events_client:
+    async with SyntaskServerEventsClient() as events_client:
         for event in events:
             await events_client.emit(event)
 
 
 @db_injector
 async def emit_work_queue_status_event(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     work_queue: orm_models.WorkQueue,
 ) -> None:
     async with db.session_context() as session:
@@ -612,5 +612,5 @@ async def emit_work_queue_status_event(
             occurred=pendulum.now(),
         )
 
-    async with PrefectServerEventsClient() as events_client:
+    async with SyntaskServerEventsClient() as events_client:
         await events_client.emit(event)

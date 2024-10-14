@@ -9,7 +9,7 @@ import pytest
 from pendulum import Date, now
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events.filters import (
+from syntask.server.events.filters import (
     EventAnyResourceFilter,
     EventFilter,
     EventIDFilter,
@@ -19,9 +19,9 @@ from prefect.server.events.filters import (
     EventRelatedFilter,
     EventResourceFilter,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.events.storage import from_page_token
-from prefect.server.events.storage.database import (
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.storage import from_page_token
+from syntask.server.events.storage.database import (
     query_events,
     query_next_page,
     write_events,
@@ -50,17 +50,17 @@ def all_events(
 
     resource_options: List[Dict[str, str]] = [
         {
-            "prefect.resource.id": "foo.1",
+            "syntask.resource.id": "foo.1",
             "hello": "world",
             "a-label": "a-good-value",
         },
         {
-            "prefect.resource.id": "foo.1",
+            "syntask.resource.id": "foo.1",
             "hello": "world",
             "a-label": "some other value",
         },
         {
-            "prefect.resource.id": "other.3",
+            "syntask.resource.id": "other.3",
             "goodbye": "moon",
             "hello": "mars",
             "a-label": "a-good-string",
@@ -70,63 +70,63 @@ def all_events(
         [],
         [
             {
-                "prefect.resource.id": "foo.1",
-                "prefect.resource.role": "thing",
+                "syntask.resource.id": "foo.1",
+                "syntask.resource.role": "thing",
                 "a-label": "a-good-related-value",
             },
             {
-                "prefect.resource.id": "foo.2",
-                "prefect.resource.role": "another-thing",
+                "syntask.resource.id": "foo.2",
+                "syntask.resource.role": "another-thing",
             },
             {
-                "prefect.resource.id": "foo.3",
-                "prefect.resource.role": "the-other-thing",
+                "syntask.resource.id": "foo.3",
+                "syntask.resource.role": "the-other-thing",
             },
             {
-                "prefect.resource.id": "related.4",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "related.4",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
             },
         ],
         [
             {
-                "prefect.resource.id": "foo.1",
-                "prefect.resource.role": "thing",
+                "syntask.resource.id": "foo.1",
+                "syntask.resource.role": "thing",
                 "hello": "world",
                 "another": "label",
                 "a-label": "a-good-other-value",
             },
             {
-                "prefect.resource.id": "foo.2",
-                "prefect.resource.role": "another-thing",
+                "syntask.resource.id": "foo.2",
+                "syntask.resource.role": "another-thing",
                 "hello": "world",
             },
             {
-                "prefect.resource.id": "foo.3",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "foo.3",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
                 "hello": "mars",
             },
             {
-                "prefect.resource.id": "related.4",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "related.4",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
                 "hello": "mars",
             },
             {
-                "prefect.resource.id": "related.5",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "related.5",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
             },
         ],
         [
             {
-                "prefect.resource.id": "foo.1",
-                "prefect.resource.role": "actor",
+                "syntask.resource.id": "foo.1",
+                "syntask.resource.role": "actor",
             },
             {
-                "prefect.resource.id": "foo.2",
-                "prefect.resource.role": "not-the-actor",
+                "syntask.resource.id": "foo.2",
+                "syntask.resource.role": "not-the-actor",
             },
         ],
     ]
@@ -370,7 +370,7 @@ async def test_querying_by_event_names_but_excluding_others(
     events_query_session: AsyncSession,
     full_occurred_range: EventOccurredFilter,
 ) -> None:
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/6634, where
+    """Regression test for https://github.com/SynoPKG/nebula/issues/6634, where
     combining an event name search with an exclude_name search results in no
     results."""
     events, _, _ = await query_events(
@@ -379,7 +379,7 @@ async def test_querying_by_event_names_but_excluding_others(
             occurred=full_occurred_range,
             event=EventNameFilter(
                 name=["things.happened", "other.stuff"],
-                exclude_name=["prefect.log.write"],
+                exclude_name=["syntask.log.write"],
             ),
         ),
     )
@@ -514,7 +514,7 @@ async def test_querying_by_any_resource_id_label_is_equivalent_to_id(
         filter=EventFilter(
             occurred=full_occurred_range,
             any_resource=EventAnyResourceFilter(
-                labels={"prefect.resource.id": "foo.1"}
+                labels={"syntask.resource.id": "foo.1"}
             ),
         ),
     )
@@ -536,7 +536,7 @@ async def test_querying_by_any_resource_id_labels_with_other_labels_positive(
         filter=EventFilter(
             occurred=full_occurred_range,
             any_resource=EventAnyResourceFilter(
-                labels={"prefect.resource.id": "foo.1", "hello": "world"}
+                labels={"syntask.resource.id": "foo.1", "hello": "world"}
             ),
         ),
     )
@@ -558,7 +558,7 @@ async def test_querying_by_any_resource_id_labels_with_other_labels_negative(
         filter=EventFilter(
             occurred=full_occurred_range,
             any_resource=EventAnyResourceFilter(
-                labels={"prefect.resource.id": "foo.1", "not": "a thing"}
+                labels={"syntask.resource.id": "foo.1", "not": "a thing"}
             ),
         ),
     )
@@ -598,7 +598,7 @@ async def test_querying_by_any_resource_wildcards_even_for_ids(
         filter=EventFilter(
             occurred=full_occurred_range,
             any_resource=EventAnyResourceFilter(
-                labels={"prefect.resource.id": ["foo.*"]}
+                labels={"syntask.resource.id": ["foo.*"]}
             ),
         ),
     )
@@ -620,7 +620,7 @@ async def test_querying_by_any_related_labels_with_resource_ids_as_only_labels(
         filter=EventFilter(
             occurred=full_occurred_range,
             any_resource=EventAnyResourceFilter(
-                labels={"prefect.resource.id": "foo.1"}
+                labels={"syntask.resource.id": "foo.1"}
             ),
         ),
     )
@@ -643,7 +643,7 @@ async def test_querying_by_any_related_labels_with_resource_roles_as_labels(
             occurred=full_occurred_range,
             any_resource=EventAnyResourceFilter(
                 labels={
-                    "prefect.resource.role": "thing",
+                    "syntask.resource.role": "thing",
                     "hello": "world",
                 }
             ),
@@ -866,7 +866,7 @@ async def test_querying_by_resource_id_label_is_equivalent_to_id(
         session=events_query_session,
         filter=EventFilter(
             occurred=full_occurred_range,
-            resource=EventResourceFilter(labels={"prefect.resource.id": "foo.1"}),
+            resource=EventResourceFilter(labels={"syntask.resource.id": "foo.1"}),
         ),
     )
 
@@ -885,7 +885,7 @@ async def test_querying_by_resource_id_labels_with_other_labels_positive(
         filter=EventFilter(
             occurred=full_occurred_range,
             resource=EventResourceFilter(
-                labels={"prefect.resource.id": "foo.1", "hello": "world"}
+                labels={"syntask.resource.id": "foo.1", "hello": "world"}
             ),
         ),
     )
@@ -905,7 +905,7 @@ async def test_querying_by_resource_id_labels_with_other_labels_negative(
         filter=EventFilter(
             occurred=full_occurred_range,
             resource=EventResourceFilter(
-                labels={"prefect.resource.id": "foo.1", "not": "a thing"}
+                labels={"syntask.resource.id": "foo.1", "not": "a thing"}
             ),
         ),
     )
@@ -1004,7 +1004,7 @@ async def test_querying_by_resource_wildcards_even_for_ids(
         session=events_query_session,
         filter=EventFilter(
             occurred=full_occurred_range,
-            resource=EventResourceFilter(labels={"prefect.resource.id": ["foo.*"]}),
+            resource=EventResourceFilter(labels={"syntask.resource.id": ["foo.*"]}),
         ),
     )
 
@@ -1196,7 +1196,7 @@ async def test_querying_by_related_labels_with_resource_ids_as_labels(
             occurred=full_occurred_range,
             related=EventRelatedFilter(
                 labels={
-                    "prefect.resource.id": "foo.1",
+                    "syntask.resource.id": "foo.1",
                     "hello": "world",
                 }
             ),
@@ -1221,7 +1221,7 @@ async def test_querying_by_related_labels_with_resource_ids_as_only_labels(
         session=events_query_session,
         filter=EventFilter(
             occurred=full_occurred_range,
-            related=EventRelatedFilter(labels={"prefect.resource.id": "foo.1"}),
+            related=EventRelatedFilter(labels={"syntask.resource.id": "foo.1"}),
         ),
     )
 
@@ -1242,7 +1242,7 @@ async def test_querying_by_related_labels_with_resource_roles_as_labels(
             occurred=full_occurred_range,
             related=EventRelatedFilter(
                 labels={
-                    "prefect.resource.role": "thing",
+                    "syntask.resource.role": "thing",
                     "hello": "world",
                 }
             ),
@@ -1288,7 +1288,7 @@ async def test_querying_by_related_resource_wildcards_even_for_ids(
         session=events_query_session,
         filter=EventFilter(
             occurred=full_occurred_range,
-            related=EventRelatedFilter(labels={"prefect.resource.id": ["foo.*"]}),
+            related=EventRelatedFilter(labels={"syntask.resource.id": ["foo.*"]}),
         ),
     )
 
@@ -1364,7 +1364,7 @@ async def test_event_dates_always_have_timezones(
     events_query_session: AsyncSession,
     full_occurred_range: EventOccurredFilter,
 ) -> None:
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/2282, where
+    """Regression test for https://github.com/SynoPKG/nebula/issues/2282, where
     date fields were returned from the API without timezone specifiers"""
 
     page_one, _, next_page = await query_events(

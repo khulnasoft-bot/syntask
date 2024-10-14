@@ -16,11 +16,11 @@ from typing import (
 from cachetools import TTLCache
 from typing_extensions import Self
 
-from prefect.logging import get_logger
-from prefect.server.utilities.messaging import Cache as _Cache
-from prefect.server.utilities.messaging import Consumer as _Consumer
-from prefect.server.utilities.messaging import Message, MessageHandler, StopConsumer
-from prefect.server.utilities.messaging import Publisher as _Publisher
+from syntask.logging import get_logger
+from syntask.server.utilities.messaging import Cache as _Cache
+from syntask.server.utilities.messaging import Consumer as _Consumer
+from syntask.server.utilities.messaging import Message, MessageHandler, StopConsumer
+from syntask.server.utilities.messaging import Publisher as _Publisher
 
 logger = get_logger(__name__)
 
@@ -103,7 +103,7 @@ async def break_topic():
     publishing_mock = mock.AsyncMock(side_effect=ValueError("oops"))
 
     with mock.patch(
-        "prefect.server.utilities.messaging.memory.Topic.publish",
+        "syntask.server.utilities.messaging.memory.Topic.publish",
         publishing_mock,
     ):
         yield

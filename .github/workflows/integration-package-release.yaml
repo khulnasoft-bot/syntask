@@ -3,7 +3,7 @@ name: Publish integration package to PyPI
 on:
   push:
     tags:
-      - "prefect-\\w+-[0-9]+.*"
+      - "syntask-\\w+-[0-9]+.*"
 
 jobs:
   build-pypi-dists:

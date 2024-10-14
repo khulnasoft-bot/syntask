@@ -1,6 +1,6 @@
 """
 Functions for interacting with flow ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 from typing import Optional, Sequence, TypeVar, Union
@@ -11,17 +11,17 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-import prefect.server.schemas as schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
+import syntask.server.schemas as schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
 
 T = TypeVar("T", bound=tuple)
 
 
 @db_injector
 async def create_flow(
-    db: PrefectDBInterface, session: AsyncSession, flow: schemas.core.Flow
+    db: SyntaskDBInterface, session: AsyncSession, flow: schemas.core.Flow
 ) -> orm_models.Flow:
     """
     Creates a new flow.
@@ -119,7 +119,7 @@ async def read_flow_by_name(
 
 @db_injector
 async def _apply_flow_filters(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     query: Select[T],
     flow_filter: Union[schemas.filters.FlowFilter, None] = None,
     flow_run_filter: Union[schemas.filters.FlowRunFilter, None] = None,

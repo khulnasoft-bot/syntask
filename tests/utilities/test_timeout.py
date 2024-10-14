@@ -3,11 +3,10 @@ import time
 
 import pytest
 
-from prefect.utilities.timeout import timeout, timeout_async
+from syntask.utilities.timeout import timeout, timeout_async
 
 
-class CustomTimeoutError(TimeoutError):
-    ...
+class CustomTimeoutError(TimeoutError): ...
 
 
 def test_timeout_raises_custom_error_type_sync():

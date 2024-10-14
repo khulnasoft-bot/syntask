@@ -1,6 +1,6 @@
 """
-Provides a set of tools for executing shell commands as Prefect flows.
-Includes functionalities for running shell commands ad-hoc or serving them as Prefect flows,
+Provides a set of tools for executing shell commands as Syntask flows.
+Includes functionalities for running shell commands ad-hoc or serving them as Syntask flows,
 with options for logging output, scheduling, and deployment customization.
 """
 
@@ -13,20 +13,20 @@ from typing import List, Optional
 import typer
 from typing_extensions import Annotated
 
-from prefect import flow
-from prefect.cli._types import PrefectTyper
-from prefect.cli.root import app
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.schedules import CronSchedule
-from prefect.context import tags
-from prefect.exceptions import FailedRun
-from prefect.logging.loggers import get_run_logger
-from prefect.runner import Runner
-from prefect.settings import PREFECT_UI_URL
-from prefect.types.entrypoint import EntrypointType
+from syntask import flow
+from syntask.cli._types import SyntaskTyper
+from syntask.cli.root import app
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.schedules import CronSchedule
+from syntask.context import tags
+from syntask.exceptions import FailedRun
+from syntask.logging.loggers import get_run_logger
+from syntask.runner import Runner
+from syntask.settings import SYNTASK_UI_URL
+from syntask.types.entrypoint import EntrypointType
 
-shell_app = PrefectTyper(
-    name="shell", help="Serve and watch shell commands as Prefect flows."
+shell_app = SyntaskTyper(
+    name="shell", help="Serve and watch shell commands as Syntask flows."
 )
 app.add_typer(shell_app)
 
@@ -66,20 +66,20 @@ def run_shell_process(
     """
     Asynchronously executes the specified shell command and logs its output.
 
-    This function is designed to be used within Prefect flows to run shell commands as part of task execution.
+    This function is designed to be used within Syntask flows to run shell commands as part of task execution.
     It handles both the execution of the command and the collection of its output for logging purposes.
 
     Args:
         command (str): The shell command to execute.
-        log_output (bool, optional): If True, the output of the command (both stdout and stderr) is logged to Prefect.
+        log_output (bool, optional): If True, the output of the command (both stdout and stderr) is logged to Syntask.
                                      Defaults to True
-        stream_stdout (bool, optional): If True, the stdout of the command is streamed to Prefect logs. Defaults to False.
-        log_stderr (bool, optional): If True, the stderr of the command is logged to Prefect logs. Defaults to False.
+        stream_stdout (bool, optional): If True, the stdout of the command is streamed to Syntask logs. Defaults to False.
+        log_stderr (bool, optional): If True, the stderr of the command is logged to Syntask logs. Defaults to False.
 
 
     """
 
-    logger = get_run_logger() if log_output else logging.getLogger("prefect")
+    logger = get_run_logger() if log_output else logging.getLogger("syntask")
 
     # Containers for log batching
     stdout_container, stderr_container = [], []
@@ -131,7 +131,7 @@ def run_shell_process(
 async def watch(
     command: str,
     log_output: bool = typer.Option(
-        True, help="Log the output of the command to Prefect logs."
+        True, help="Log the output of the command to Syntask logs."
     ),
     flow_run_name: str = typer.Option(None, help="Name of the flow run."),
     flow_name: str = typer.Option("Shell Command", help="Name of the flow."),
@@ -141,14 +141,14 @@ async def watch(
     ] = None,
 ):
     """
-    Executes a shell command and observes it as Prefect flow.
+    Executes a shell command and observes it as Syntask flow.
 
     Args:
         command (str): The shell command to be executed.
         log_output (bool, optional): If True, logs the command's output. Defaults to True.
         flow_run_name (str, optional): An optional name for the flow run.
-        flow_name (str, optional): An optional name for the flow. Useful for identification in the Prefect UI.
-        tag (List[str], optional): An optional list of tags for categorizing and filtering flows in the Prefect UI.
+        flow_name (str, optional): An optional name for the flow. Useful for identification in the Syntask UI.
+        tag (List[str], optional): An optional list of tags for categorizing and filtering flows in the Syntask UI.
     """
     tag = (tag or []) + ["shell"]
 
@@ -188,22 +188,22 @@ async def serve(
     ),
 ):
     """
-    Creates and serves a Prefect deployment that runs a specified shell command according to a cron schedule or ad hoc.
+    Creates and serves a Syntask deployment that runs a specified shell command according to a cron schedule or ad hoc.
 
-    This function allows users to integrate shell command execution into Prefect workflows seamlessly. It provides options for
+    This function allows users to integrate shell command execution into Syntask workflows seamlessly. It provides options for
     scheduled execution via cron expressions, flow and deployment naming for better management, and the application of tags for
-    easier categorization and filtering within the Prefect UI. Additionally, it supports streaming command output to Prefect logs,
+    easier categorization and filtering within the Syntask UI. Additionally, it supports streaming command output to Syntask logs,
     setting concurrency limits to control flow execution, and optionally running the deployment once for ad-hoc tasks.
 
     Args:
         command (str): The shell command the flow will execute.
         name (str): The name assigned to the flow. This is required..
         deployment_tags (List[str], optional): Optional tags for the deployment to facilitate filtering and organization.
-        log_output (bool, optional): If True, streams the output of the shell command to the Prefect logs. Defaults to True.
+        log_output (bool, optional): If True, streams the output of the shell command to the Syntask logs. Defaults to True.
         cron_schedule (str, optional): A cron expression that defines when the flow will run. If not provided, the flow can be triggered manually.
         timezone (str, optional): The timezone for the cron schedule. This is important if the schedule should align with local time.
         concurrency_limit (int, optional): The maximum number of instances of the flow that can run simultaneously.
-        deployment_name (str, optional): The name of the deployment. This helps distinguish deployments within the Prefect platform.
+        deployment_name (str, optional): The name of the deployment. This helps distinguish deployments within the Syntask platform.
         run_once (bool, optional): When True, the flow will only run once upon deployment initiation, rather than continuously.
     """
     schedule = (
@@ -228,13 +228,13 @@ async def serve(
     help_message = (
         f"[green]Your flow {runner_deployment.flow_name!r} is being served and polling"
         " for scheduled runs!\n[/]\nTo trigger a run for this flow, use the following"
-        " command:\n[blue]\n\t$ prefect deployment run"
+        " command:\n[blue]\n\t$ syntask deployment run"
         f" '{runner_deployment.flow_name}/{deployment_name}'\n[/]"
     )
-    if PREFECT_UI_URL:
+    if SYNTASK_UI_URL:
         help_message += (
-            "\nYou can also run your flow via the Prefect UI:"
-            f" [blue]{PREFECT_UI_URL.value()}/deployments/deployment/{deployment_id}[/]\n"
+            "\nYou can also run your flow via the Syntask UI:"
+            f" [blue]{SYNTASK_UI_URL.value()}/deployments/deployment/{deployment_id}[/]\n"
         )
 
     app.console.print(help_message, soft_wrap=True)

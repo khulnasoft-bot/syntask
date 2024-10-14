@@ -1,4 +1,4 @@
-# Copied from Google's word list and modified to fit Prefect's needs
+# Copied from Google's word list and modified to fit Syntask's needs
 extends: substitution
 message: "Use '%s' instead of '%s'."
 link: "https://developers.google.com/style/word-list"
@@ -79,7 +79,7 @@ swap:
     url: URL
     vs\.: versus
     World Wide Web: web
-    # Prefect additions
+    # Syntask additions
     infra: infrastructure
-    Prefect cloud: Prefect Cloud
-    Prefect Server: Prefect server
+    Syntask cloud: Syntask Cloud
+    Syntask Server: Syntask server

@@ -1,10 +1,10 @@
 import pytest
 
-from prefect.server.utilities.messaging import create_cache
-from prefect.server.utilities.messaging.memory import Topic
-from prefect.settings import (
-    PREFECT_MESSAGING_BROKER,
-    PREFECT_MESSAGING_CACHE,
+from syntask.server.utilities.messaging import create_cache
+from syntask.server.utilities.messaging.memory import Topic
+from syntask.settings import (
+    SYNTASK_MESSAGING_BROKER,
+    SYNTASK_MESSAGING_CACHE,
     temporary_settings,
 )
 
@@ -15,8 +15,8 @@ from prefect.settings import (
 def events_configuration():
     with temporary_settings(
         {
-            PREFECT_MESSAGING_CACHE: "prefect.server.utilities.messaging.memory",
-            PREFECT_MESSAGING_BROKER: "prefect.server.utilities.messaging.memory",
+            SYNTASK_MESSAGING_CACHE: "syntask.server.utilities.messaging.memory",
+            SYNTASK_MESSAGING_BROKER: "syntask.server.utilities.messaging.memory",
         }
     ):
         yield

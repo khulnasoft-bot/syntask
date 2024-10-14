@@ -4,18 +4,18 @@ import uuid
 import pendulum
 import pytest
 
-from prefect.filesystems import LocalFileSystem
-from prefect.results import (
+from syntask.filesystems import LocalFileSystem
+from syntask.results import (
     DEFAULT_STORAGE_KEY_FN,
     PersistedResult,
     ResultRecord,
     ResultRecordMetadata,
 )
-from prefect.serializers import JSONSerializer, PickleSerializer
+from syntask.serializers import JSONSerializer, PickleSerializer
 
 
 @pytest.fixture(autouse=True)
-def ignore_deprecation(ignore_prefect_deprecation_warnings):
+def ignore_deprecation(ignore_syntask_deprecation_warnings):
     """Remove this test file when deprecation warning period is over"""
     pass
 
@@ -247,11 +247,11 @@ async def test_read_old_format_into_result_record():
             "picklelib_version": None,
         },
         "data": "gAVLCS4=\n",
-        "prefect_version": "2.20.1",
+        "syntask_version": "2.20.1",
         "expiration": None,
     }
     record = ResultRecord.deserialize(json.dumps(old_blob).encode())
     assert record.result == 9
     assert record.metadata.serializer == PickleSerializer(picklelib="cloudpickle")
-    assert record.metadata.prefect_version == "2.20.1"
+    assert record.metadata.syntask_version == "2.20.1"
     assert record.metadata.expiration is None

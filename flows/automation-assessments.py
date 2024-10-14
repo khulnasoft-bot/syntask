@@ -8,17 +8,17 @@ from uuid import uuid4
 import anyio
 import pendulum
 
-from prefect import flow
-from prefect.client.orchestration import get_client
-from prefect.events import Event
-from prefect.events.clients import get_events_client, get_events_subscriber
-from prefect.events.filters import (
+from syntask import flow
+from syntask.client.orchestration import get_client
+from syntask.events import Event
+from syntask.events.clients import get_events_client, get_events_subscriber
+from syntask.events.filters import (
     EventFilter,
     EventNameFilter,
     EventOccurredFilter,
     EventResourceFilter,
 )
-from prefect.logging import get_run_logger
+from syntask.logging import get_run_logger
 
 
 @asynccontextmanager
@@ -27,9 +27,9 @@ async def create_or_replace_automation(
 ) -> AsyncGenerator[Dict[str, Any], None]:
     logger = get_run_logger()
 
-    async with get_client() as prefect:
+    async with get_client() as syntask:
         # Clean up any older automations with the same name prefix
-        response = await prefect._client.post("/automations/filter")
+        response = await syntask._client.post("/automations/filter")
         response.raise_for_status()
         for existing in response.json():
             name = str(existing["name"])
@@ -42,11 +42,11 @@ async def create_or_replace_automation(
                         existing["name"],
                         existing["id"],
                     )
-                await prefect._client.delete(f"/automations/{existing['id']}")
+                await syntask._client.delete(f"/automations/{existing['id']}")
 
         automation["name"] = f"{automation['name']}:{uuid4()}"
 
-        response = await prefect._client.post("/automations", json=automation)
+        response = await syntask._client.post("/automations", json=automation)
         response.raise_for_status()
 
         automation = response.json()
@@ -58,7 +58,7 @@ async def create_or_replace_automation(
         try:
             yield automation
         finally:
-            response = await prefect._client.delete(f"/automations/{automation['id']}")
+            response = await syntask._client.delete(f"/automations/{automation['id']}")
             response.raise_for_status()
 
 
@@ -83,7 +83,7 @@ async def wait_for_event(
 
 @flow
 async def assess_reactive_automation():
-    expected_resource = {"prefect.resource.id": f"integration:reactive:{uuid4()}"}
+    expected_resource = {"syntask.resource.id": f"integration:reactive:{uuid4()}"}
     async with create_or_replace_automation(
         {
             "name": "reactive-automation",
@@ -101,8 +101,8 @@ async def assess_reactive_automation():
         listener = asyncio.create_task(
             wait_for_event(
                 listening,
-                "prefect.automation.triggered",
-                f"prefect.automation.{automation['id']}",
+                "syntask.automation.triggered",
+                f"syntask.automation.{automation['id']}",
             )
         )
         await listening.wait()
@@ -128,7 +128,7 @@ async def assess_reactive_automation():
 
 @flow
 async def assess_proactive_automation():
-    expected_resource = {"prefect.resource.id": f"integration:proactive:{uuid4()}"}
+    expected_resource = {"syntask.resource.id": f"integration:proactive:{uuid4()}"}
     async with create_or_replace_automation(
         {
             "name": "proactive-automation",
@@ -137,7 +137,7 @@ async def assess_proactive_automation():
                 "expect": ["integration.example.event"],
                 # Doing it for_each resource ID should prevent it from firing endlessly
                 # while the integration tests are _not_ running
-                "for_each": ["prefect.resource.id"],
+                "for_each": ["syntask.resource.id"],
                 "match": expected_resource,
                 "threshold": 5,
                 "within": 15,
@@ -149,8 +149,8 @@ async def assess_proactive_automation():
         listener = asyncio.create_task(
             wait_for_event(
                 listening,
-                "prefect.automation.triggered",
-                f"prefect.automation.{automation['id']}",
+                "syntask.automation.triggered",
+                f"syntask.automation.{automation['id']}",
             )
         )
         await listening.wait()
@@ -176,7 +176,7 @@ async def assess_proactive_automation():
 
 @flow
 async def assess_compound_automation():
-    expected_resource = {"prefect.resource.id": f"integration:compound:{uuid4()}"}
+    expected_resource = {"syntask.resource.id": f"integration:compound:{uuid4()}"}
     async with create_or_replace_automation(
         {
             "name": "compound-automation",
@@ -208,8 +208,8 @@ async def assess_compound_automation():
         listener = asyncio.create_task(
             wait_for_event(
                 listening,
-                "prefect.automation.triggered",
-                f"prefect.automation.{automation['id']}",
+                "syntask.automation.triggered",
+                f"syntask.automation.{automation['id']}",
             )
         )
         await listening.wait()
@@ -239,7 +239,7 @@ async def assess_compound_automation():
 
 @flow
 async def assess_sequence_automation():
-    expected_resource = {"prefect.resource.id": f"integration:sequence:{uuid4()}"}
+    expected_resource = {"syntask.resource.id": f"integration:sequence:{uuid4()}"}
     async with create_or_replace_automation(
         {
             "name": "sequence-automation",
@@ -270,8 +270,8 @@ async def assess_sequence_automation():
         listener = asyncio.create_task(
             wait_for_event(
                 listening,
-                "prefect.automation.triggered",
-                f"prefect.automation.{automation['id']}",
+                "syntask.automation.triggered",
+                f"syntask.automation.{automation['id']}",
             )
         )
         await listening.wait()
@@ -312,7 +312,7 @@ async def assess_sequence_automation():
 if __name__ == "__main__":
     if os.getenv("SERVER_VERSION") == "9.9.9+for.the.tests":
         raise NotImplementedError(
-            "Prefect Cloud has its own automation assessment integration test."
+            "Syntask Cloud has its own automation assessment integration test."
         )
 
     asyncio.run(assess_reactive_automation())

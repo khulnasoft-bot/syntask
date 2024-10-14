@@ -101,8 +101,8 @@ def validate_set_T_from_delim_string(
     """
     "no-info" before validator useful in scooping env vars
 
-    e.g. `PREFECT_CLIENT_RETRY_EXTRA_CODES=429,502,503` -> `{429, 502, 503}`
-    e.g. `PREFECT_CLIENT_RETRY_EXTRA_CODES=429` -> `{429}`
+    e.g. `SYNTASK_CLIENT_RETRY_EXTRA_CODES=429,502,503` -> `{429, 502, 503}`
+    e.g. `SYNTASK_CLIENT_RETRY_EXTRA_CODES=429` -> `{429}`
     """
     if not value:
         return set()

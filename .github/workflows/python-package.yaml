@@ -43,7 +43,7 @@ jobs:
 
       - name: Build UI
         run: |
-          prefect dev build-ui
+          syntask dev build-ui
 
       - name: Build a binary wheel and a source tarball
         run: |

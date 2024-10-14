@@ -7,11 +7,11 @@ from uuid import UUID
 
 import sqlalchemy as sa
 
-from prefect.server import models, schemas
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.services.loop_service import LoopService
-from prefect.utilities import urls
+from syntask.server import models, schemas
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.services.loop_service import LoopService
+from syntask.utilities import urls
 
 
 class FlowRunNotifications(LoopService):
@@ -27,7 +27,7 @@ class FlowRunNotifications(LoopService):
     loop_seconds: int = 4
 
     @inject_db
-    async def run_once(self, db: PrefectDBInterface):
+    async def run_once(self, db: SyntaskDBInterface):
         while True:
             async with db.session_context(begin_transaction=True) as session:
                 # Drain the queue one entry at a time, because if a transient
@@ -74,7 +74,7 @@ class FlowRunNotifications(LoopService):
     async def send_flow_run_notification(
         self,
         session: sa.orm.session,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         notification,
     ):
         try:
@@ -88,7 +88,7 @@ class FlowRunNotifications(LoopService):
                 )
                 return
 
-            from prefect.blocks.core import Block
+            from syntask.blocks.core import Block
 
             block = Block._from_block_document(
                 await schemas.core.BlockDocument.from_orm_model(
@@ -100,7 +100,7 @@ class FlowRunNotifications(LoopService):
 
             message = self.construct_notification_message(notification=notification)
             await block.notify(
-                subject="Prefect flow run notification",
+                subject="Syntask flow run notification",
                 body=message,
             )
 
@@ -155,7 +155,7 @@ class FlowRunNotifications(LoopService):
         return urls.url_for(
             "flow-run",
             obj_id=flow_run_id,
-            default_base_url="http://ephemeral-prefect/api",
+            default_base_url="http://ephemeral-syntask/api",
         )
 
 

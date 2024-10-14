@@ -1,11 +1,11 @@
 ---
 title: Securely store typed configuration
-description: Prefect blocks allow you to manage configuration schemas, infrastructure, and secrets for use with deployments or flow scripts.
+description: Syntask blocks allow you to manage configuration schemas, infrastructure, and secrets for use with deployments or flow scripts.
 ---
 
-Prefect blocks store typed configuration that can be used across workflows and deployments.
+Syntask blocks store typed configuration that can be used across workflows and deployments.
 The most common use case for blocks is storing credentials used to access external systems such as AWS or GCP.
-Prefect supports [a large number of common blocks](#pre-registered-blocks) and it's also easy to create your own!
+Syntask supports [a large number of common blocks](#pre-registered-blocks) and it's also easy to create your own!
 
 <Tip>
 **Blocks and parameters**
@@ -23,20 +23,20 @@ There are three layers to a block: its _type_, a _document_, and a Python _class
 
 ### Block type
 
-A block _type_ is essentially a schema registered with the Prefect API. This schema can be inspected and discovered in the UI on the **Blocks** page.
+A block _type_ is essentially a schema registered with the Syntask API. This schema can be inspected and discovered in the UI on the **Blocks** page.
 
-To see block types available for configuration, use `prefect block type ls` 
+To see block types available for configuration, use `syntask block type ls` 
 from the CLI or navigate to the **Blocks** page in the UI and click **+**.
 
 ![The block catalogue in the UI](/3.0/img/ui/block-library.png)
 
-These types separate blocks from [Prefect variables](/3.0/develop/variables/), which are unstructured JSON documents.
+These types separate blocks from [Syntask variables](/3.0/develop/variables/), which are unstructured JSON documents.
 In addition, block schemas allow for fields of `SecretStr` type which are stored with additional encryption and not displayed by default in the UI.
 
 Block types are identified by a _slug_ that is not configurable.
 
 ```python
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 
 class Cube(Block):
@@ -58,7 +58,7 @@ A block _document_ is an instantiation of the schema, or block type. A document 
 All block types allow for the creation of as many documents as you wish. Building on our example above:
 
 ```python
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 
 class Cube(Block):
@@ -83,14 +83,14 @@ This allows you to work with slowly changing configuration without having to red
 
 ### Block class
 
-A block _class_ is the primary user-facing object; it is a Python class whose attributes are loaded from a block document. Most Prefect blocks encapsulate additional functionality built on top of the block document. 
+A block _class_ is the primary user-facing object; it is a Python class whose attributes are loaded from a block document. Most Syntask blocks encapsulate additional functionality built on top of the block document. 
 
 For example, an `S3Bucket` block contains methods for downloading data from, or upload data to, an S3 bucket; a `SnowflakeConnector` block contains methods for querying Snowflake databases.
 
 Returning to our `Cube` example from above:
 
 ```python
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 class Cube(Block):
     edge_length_inches: float
@@ -113,8 +113,8 @@ For this reason, we highly recommend loading block documents by first importing 
 
 ## Using blocks
 
-Using existing or built-in Prefect blocks is as simple as importing the relevant class and calling its `save` and `load` methods.
-Note that many Prefect blocks are packaged into one of [Prefect's integration libraries](#blocks-in-prefect-integration-libraries).
+Using existing or built-in Syntask blocks is as simple as importing the relevant class and calling its `save` and `load` methods.
+Note that many Syntask blocks are packaged into one of [Syntask's integration libraries](#blocks-in-syntask-integration-libraries).
 
 To instantiate a block document that stores an S3 bucket value, use the `S3Bucket` block:
 
@@ -140,7 +140,7 @@ bucket_block.save(overwrite=True)
 You can now use the block document name to load the block:
 
 ```python
-from prefect import flow
+from syntask import flow
 from prefect_aws.s3 import S3Bucket
 
 @flow
@@ -171,7 +171,7 @@ For this reason, we highly recommend loading block documents by first importing 
 You can also delete a block document with the `.delete()` method:
 
 ```python
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 Block.delete("s3-bucket/my-data-bucket-block")
 ```
@@ -179,11 +179,11 @@ Block.delete("s3-bucket/my-data-bucket-block")
 Alternatively, use the CLI to delete specific blocks with a given slug or id:
 
 ```bash
-prefect block delete s3-bucket/my-data-bucket-block
+syntask block delete s3-bucket/my-data-bucket-block
 ```
 
 ```bash
-prefect block delete --id <my-id>
+syntask block delete --id <my-id>
 ```
 
 ### Nested blocks
@@ -232,7 +232,7 @@ on Pydantic's `BaseModel`, so you can declare custom fields just like a [Pydanti
 We've already seen an example of a `Cube` block that represents a cube and holds information about the length of each edge in inches:
 
 ```python
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 class Cube(Block):
     edge_length_inches: float
@@ -246,15 +246,15 @@ Cube.register_type_and_schema()
 In addition to the `register_type_and_schema` method shown above, you can register blocks from a Python module with a CLI command:
 
 ```bash
-prefect block register --module prefect_aws.credentials
+syntask block register --module prefect_aws.credentials
 ```
 
-This command is useful for registering all blocks found within a module in a [Prefect Integration library](/integrations/).
+This command is useful for registering all blocks found within a module in a [Syntask Integration library](/integrations/).
 
 Alternatively, if a custom block was created in a `.py` file, you can register the block with the CLI command:
 
 ```bash
-prefect block register --file my_block.py
+syntask block register --file my_block.py
 ```
 
 Block documents can now be created with the registered block schema.
@@ -271,7 +271,7 @@ Here's an example of an `AwsCredentials` block that uses `SecretStr`:
 ```python
 from typing import Optional
 
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 from pydantic import SecretStr  # if pydantic version >= 2.0, use: from pydantic.v1 import SecretStr
 
 class AwsCredentials(Block):
@@ -295,7 +295,7 @@ print(aws_credentials_block)
 # aws_access_key_id='AKIAJKLJKLJKLJKLJKLJK' aws_secret_access_key=SecretStr('**********') aws_session_token=None profile_name=None region_name=None
 ```
 
-Prefect's `SecretDict` field type allows you to add a dictionary field to your block 
+Syntask's `SecretDict` field type allows you to add a dictionary field to your block 
 that automatically obfuscates values at all levels in the UI or in logs.
 This capability is useful for blocks where typing or structure of secret fields is not known until configuration time.
 
@@ -304,8 +304,8 @@ Here's an example of a block that uses `SecretDict`:
 ```python
 from typing import Dict
 
-from prefect.blocks.core import Block
-from prefect.blocks.fields import SecretDict
+from syntask.blocks.core import Block
+from syntask.blocks.fields import SecretDict
 
 
 class SystemConfiguration(Block):
@@ -353,7 +353,7 @@ Available metadata fields include:
 ### Update custom `Block` types
 
 Here's an example of how to add a `bucket_folder` field to your custom `S3Bucket` block; it represents the default path to 
-read and write objects from (this field exists on [our implementation](https://github.com/synopkg/synopkg-aws/blob/main/prefect_aws/s3.py#L292)).
+read and write objects from (this field exists on [our implementation](https://github.com/synopkg/prefect-aws/blob/main/prefect_aws/s3.py#L292)).
 
 Add the new field to the class definition:
 
@@ -365,7 +365,7 @@ class S3Bucket(Block):
     ...
 ```
 
-Then [register the updated block type](#register-blocks) with either your Prefect Cloud account or your self-hosted Prefect server instance.
+Then [register the updated block type](#register-blocks) with either your Syntask Cloud account or your self-hosted Syntask server instance.
 
 If you have any existing blocks of this type that were created before the update and 
 you'd prefer to not re-create them, migrate them to the new version of your block type by adding the missing values:
@@ -386,7 +386,7 @@ my_s3_bucket_block.save("my-s3-bucket", overwrite=True)
 
 ### Built-in blocks
 
-Commonly used block types come built-in with Prefect. 
+Commonly used block types come built-in with Syntask. 
 You can create and use these block types through the UI without installing any additional packages.
 
 | Block                                                                                                                | Slug                                                     | Description                                                                                                                             |
@@ -409,16 +409,16 @@ You can create and use these block types through the UI without installing any a
 <Warning>
 The `S3`, `Azure`, `GCS`, and `GitHub` blocks are deprecated in favor of the corresponding `S3Bucket`, 
 `AzureBlobStorageCredentials`, `GCSBucket`, and `GitHubRepository` blocks found in the 
-[Prefect integration libraries](/integrations/).
+[Syntask integration libraries](/integrations/).
 The JSON, DateTime, and String blocks are deprecated in favor of [Variables](/3.0/develop/variables/).
 </Warning>
 
-### Blocks in Prefect integration libraries
+### Blocks in Syntask integration libraries
 
 Some block types that appear in the UI can be created immediately, with the corresponding integration library installed for use.
 For example, an AWS Secret block can be created, but not used until the [`prefect-aws` library](/integrations/prefect-aws/) is installed.
 
-Find available block types in many of the published [Prefect integrations libraries](/integrations/).
+Find available block types in many of the published [Syntask integrations libraries](/integrations/).
 If a block type is not available in the UI, you can [register it](#register-blocks) through the CLI.
 
 | Block                                                                                                                                                       | Slug                                   | Integration                                                             |
@@ -426,11 +426,11 @@ If a block type is not available in the UI, you can [register it](#register-bloc
 | ECS Task                            | `ecs-task`                             | [prefect-aws](/integrations/prefect-aws/)                 |
 | MinIO Credentials            | `minio-credentials`                    | [prefect-aws](/integrations/prefect-aws/)                 |
 | S3 Bucket                       | `s3-bucket`                            | [prefect-aws](/integrations/prefect-aws/)                 |
-| Azure Blob Storage Credentials           | `azure-blob-storage-credentials`       | [prefect-azure](/integrations/prefect-azure/)             |
-| Azure Container Instance Credentials | `azure-container-instance-credentials` | [prefect-azure](/integrations/prefect-azure/)             |
-| Azure Container Instance Job]   | `azure-container-instance-job`         | [prefect-azure](/integrations/prefect-azure/)             |
-| Azure Cosmos DB Credentials      | `azure-cosmos-db-credentials`          | [prefect-azure](/integrations/prefect-azure/)             |
-| AzureML Credentials    | `azureml-credentials`                  | [prefect-azure](/integrations/prefect-azure/)             |
+| Azure Blob Storage Credentials           | `azure-blob-storage-credentials`       | [syntask-azure](/integrations/syntask-azure/)             |
+| Azure Container Instance Credentials | `azure-container-instance-credentials` | [syntask-azure](/integrations/syntask-azure/)             |
+| Azure Container Instance Job]   | `azure-container-instance-job`         | [syntask-azure](/integrations/syntask-azure/)             |
+| Azure Cosmos DB Credentials      | `azure-cosmos-db-credentials`          | [syntask-azure](/integrations/syntask-azure/)             |
+| AzureML Credentials    | `azureml-credentials`                  | [syntask-azure](/integrations/syntask-azure/)             |
 | BitBucket Credentials         | `bitbucket-credentials`                | [prefect-bitbucket](/integrations/prefect-bitbucket/)     |
 | BitBucket Repository               | `bitbucket-repository`                 | [prefect-bitbucket](/integrations/prefect-bitbucket/)     |
 | Databricks Credentials             | `databricks-credentials`               | [prefect-databricks](/integrations/prefect-databricks/)   |
@@ -444,26 +444,26 @@ If a block type is not available in the UI, you can [register it](#register-bloc
 | Docker Container                    | `docker-container`                    | [prefect-docker](/integrations/prefect-docker/)           |
 | Docker Host                         | `docker-host`                          | [prefect-docker](/integrations/prefect-docker/)           |
 | Docker Registry Credentials          | `docker-registry-credentials`          | [prefect-docker](/integrations/prefect-docker/)           |
-| Email Server Credentials        | `email-server-credentials`             | [prefect-email](/integrations/prefect-email/)             |
-| BigQuery Warehouse     | `bigquery-warehouse`                   | [prefect-gcp](/integrations/prefect-gcp/)                 |
-| GCP Cloud Run Job              | `cloud-run-job`                        | [prefect-gcp](/integrations/prefect-gcp/)                 |
-| GCP Credentials          | `gcp-credentials`                      | [prefect-gcp](/integrations/prefect-gcp/)                 |
-| GcpSecret         | `gcpsecret`                            | [prefect-gcp](/integrations/prefect-gcp/)                 |
-| GCS Bucket      | `gcs-bucket`                           | [prefect-gcp](/integrations/prefect-gcp/)                 |
-| Vertex AI Custom Training Job   | `vertex-ai-custom-training-job`        | [prefect-gcp](/integrations/prefect-gcp/)                 |
-| GitHub Credentials                    | `github-credentials`                   | [prefect-github](/integrations/prefect-github/)           |
-| GitHub Repository          | `github-repository`                    | [prefect-github](/integrations/prefect-github/)           |
-| GitLab Credentials         | `gitlab-credentials`                   | [prefect-gitlab](/integrations/prefect-gitlab/)           |
-| GitLab Repository           | `gitlab-repository`                    | [prefect-gitlab](/integrations/prefect-gitlab/)           |
-| Kubernetes Cluster Config        | `kubernetes-cluster-config`               | [prefect-kubernetes](/integrations/prefect-kubernetes/)   |
-| Kubernetes Credentials        | `kubernetes-credentials`               | [prefect-kubernetes](/integrations/prefect-kubernetes/)   |
-| Kubernetes Job        | `kubernetes-job`               | [prefect-kubernetes](/integrations/prefect-kubernetes/)   |
-| Shell Operation                 | `shell-operation`| [prefect-shell](/integrations/prefect-shell/)             |
-| Slack Credentials   | `slack-credentials`                    | [prefect-slack](/integrations/prefect-slack/)             |
-| Slack Incoming Webhook   | `slack-incoming-webhook`               | [prefect-slack](/integrations/prefect-slack/)             |
-| Snowflake Connector    | `snowflake-connector`                  | [prefect-snowflake](/integrations/prefect-snowflake/)       |
-| Snowflake Credentials      | `snowflake-credentials`                | [prefect-snowflake](/integrations/prefect-snowflake/)       |
-| Database Credentials      | `database-credentials`                 | [prefect-sqlalchemy](/integrations/prefect-sqlalchemy/)   |
-| SQLAlchemy Connector              | `sqlalchemy-connector`                 | [prefect-sqlalchemy](/integrations/prefect-sqlalchemy/)   |
+| Email Server Credentials        | `email-server-credentials`             | [syntask-email](/integrations/syntask-email/)             |
+| BigQuery Warehouse     | `bigquery-warehouse`                   | [syntask-gcp](/integrations/syntask-gcp/)                 |
+| GCP Cloud Run Job              | `cloud-run-job`                        | [syntask-gcp](/integrations/syntask-gcp/)                 |
+| GCP Credentials          | `gcp-credentials`                      | [syntask-gcp](/integrations/syntask-gcp/)                 |
+| GcpSecret         | `gcpsecret`                            | [syntask-gcp](/integrations/syntask-gcp/)                 |
+| GCS Bucket      | `gcs-bucket`                           | [syntask-gcp](/integrations/syntask-gcp/)                 |
+| Vertex AI Custom Training Job   | `vertex-ai-custom-training-job`        | [syntask-gcp](/integrations/syntask-gcp/)                 |
+| GitHub Credentials                    | `github-credentials`                   | [syntask-github](/integrations/syntask-github/)           |
+| GitHub Repository          | `github-repository`                    | [syntask-github](/integrations/syntask-github/)           |
+| GitLab Credentials         | `gitlab-credentials`                   | [syntask-gitlab](/integrations/syntask-gitlab/)           |
+| GitLab Repository           | `gitlab-repository`                    | [syntask-gitlab](/integrations/syntask-gitlab/)           |
+| Kubernetes Cluster Config        | `kubernetes-cluster-config`               | [syntask-kubernetes](/integrations/syntask-kubernetes/)   |
+| Kubernetes Credentials        | `kubernetes-credentials`               | [syntask-kubernetes](/integrations/syntask-kubernetes/)   |
+| Kubernetes Job        | `kubernetes-job`               | [syntask-kubernetes](/integrations/syntask-kubernetes/)   |
+| Shell Operation                 | `shell-operation`| [syntask-shell](/integrations/syntask-shell/)             |
+| Slack Credentials   | `slack-credentials`                    | [syntask-slack](/integrations/syntask-slack/)             |
+| Slack Incoming Webhook   | `slack-incoming-webhook`               | [syntask-slack](/integrations/syntask-slack/)             |
+| Snowflake Connector    | `snowflake-connector`                  | [syntask-snowflake](/integrations/syntask-snowflake/)       |
+| Snowflake Credentials      | `snowflake-credentials`                | [syntask-snowflake](/integrations/syntask-snowflake/)       |
+| Database Credentials      | `database-credentials`                 | [syntask-sqlalchemy](/integrations/syntask-sqlalchemy/)   |
+| SQLAlchemy Connector              | `sqlalchemy-connector`                 | [syntask-sqlalchemy](/integrations/syntask-sqlalchemy/)   |
 
 Anyone can create a custom block type and, optionally, share it with the community.

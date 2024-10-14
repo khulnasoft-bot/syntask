@@ -4,17 +4,17 @@
     {
       "icon": "github",
       "name": "GitHub",
-      "url": "https://github.com/synopkg/synopkg"
+      "url": "https://github.com/synopkg/syntask"
     },
     {
       "icon": "slack",
       "name": "Community",
-      "url": "https://communityinviter.com/apps/prefect-community/prefect-community"
+      "url": "https://communityinviter.com/apps/syntask-community/syntask-community"
     },
     {
       "icon": "cloud",
-      "name": "Prefect Cloud",
-      "url": "https://app.prefect.cloud"
+      "name": "Syntask Cloud",
+      "url": "https://app.syntask.cloud"
     }
   ],
   "api": {
@@ -32,11 +32,11 @@
     "thumbsRating": true
   },
   "footerSocials": {
-    "github": "https://github.com/synopkg/synopkg",
-    "linkedin": "https://www.linkedin.com/company/prefect/mycompany/",
-    "slack": "https://communityinviter.com/apps/prefect-community/prefect-community",
-    "twitter": "https://x.com/prefectio",
-    "youtube": "https://www.youtube.com/c/PrefectIO"
+    "github": "https://github.com/synopkg/syntask",
+    "linkedin": "https://www.linkedin.com/company/syntask/mycompany/",
+    "slack": "https://communityinviter.com/apps/syntask-community/syntask-community",
+    "twitter": "https://x.com/syntaskio",
+    "youtube": "https://www.youtube.com/c/SyntaskIO"
   },
   "logo": {
     "dark": "/logos/logo-word-white.svg",
@@ -47,13 +47,13 @@
     "default": "light",
     "isHidden": false
   },
-  "name": "Prefect",
+  "name": "Syntask",
   "navigation": [
     {
       "group": "Get started",
       "pages": [
         "3.0/get-started/index",
-        "3.0/resources/whats-new-prefect-3",
+        "3.0/resources/whats-new-syntask-3",
         "3.0/get-started/install",
         "3.0/get-started/quickstart"
       ],
@@ -127,7 +127,7 @@
             "3.0/deploy/infrastructure-concepts/workers",
             "3.0/deploy/infrastructure-concepts/store-flow-code",
             "3.0/deploy/infrastructure-concepts/deploy-via-python",
-            "3.0/deploy/infrastructure-concepts/prefect-yaml",
+            "3.0/deploy/infrastructure-concepts/syntask-yaml",
             "3.0/deploy/infrastructure-concepts/deploy-ci-cd",
             "3.0/deploy/infrastructure-concepts/customize"
           ],
@@ -164,7 +164,7 @@
       "pages": [
         "3.0/manage/index",
         {
-          "group": "Use Prefect Cloud",
+          "group": "Use Syntask Cloud",
           "pages": [
             "3.0/manage/cloud/index",
             "3.0/manage/cloud/connect-to-cloud",
@@ -199,7 +199,7 @@
     {
       "group": "Resources",
       "pages": [
-        "3.0/resources/upgrade-to-prefect-3",
+        "3.0/resources/upgrade-to-syntask-3",
         "3.0/resources/upgrade-agents-to-workers",
         "3.0/resources/cancel",
         "3.0/resources/visualize-flow-structure",
@@ -226,9 +226,9 @@
         {
           "group": "Azure",
           "pages": [
-            "integrations/prefect-azure/index",
-            "integrations/prefect-azure/aci_worker",
-            "integrations/prefect-azure/sdk"
+            "integrations/syntask-azure/index",
+            "integrations/syntask-azure/aci_worker",
+            "integrations/syntask-azure/sdk"
           ]
         },
         {
@@ -270,79 +270,79 @@
         {
           "group": "Email",
           "pages": [
-            "integrations/prefect-email/index",
-            "integrations/prefect-email/sdk"
+            "integrations/syntask-email/index",
+            "integrations/syntask-email/sdk"
           ]
         },
         {
           "group": "GCP",
           "pages": [
-            "integrations/prefect-gcp/index",
-            "integrations/prefect-gcp/gcp-worker-guide",
-            "integrations/prefect-gcp/sdk"
+            "integrations/syntask-gcp/index",
+            "integrations/syntask-gcp/gcp-worker-guide",
+            "integrations/syntask-gcp/sdk"
           ]
         },
         {
           "group": "GitHub",
           "pages": [
-            "integrations/prefect-github/index",
-            "integrations/prefect-github/sdk"
+            "integrations/syntask-github/index",
+            "integrations/syntask-github/sdk"
           ]
         },
         {
           "group": "Gitlab",
           "pages": [
-            "integrations/prefect-gitlab/index",
-            "integrations/prefect-gitlab/sdk"
+            "integrations/syntask-gitlab/index",
+            "integrations/syntask-gitlab/sdk"
           ]
         },
         {
           "group": "Kubernetes",
           "pages": [
-            "integrations/prefect-kubernetes/index",
-            "integrations/prefect-kubernetes/sdk"
+            "integrations/syntask-kubernetes/index",
+            "integrations/syntask-kubernetes/sdk"
           ]
         },
         {
           "group": "Ray",
           "pages": [
-            "integrations/prefect-ray/index",
-            "integrations/prefect-ray/sdk"
+            "integrations/syntask-ray/index",
+            "integrations/syntask-ray/sdk"
           ]
         },
         {
           "group": "Redis",
           "pages": [
-            "integrations/prefect-redis/index",
-            "integrations/prefect-redis/sdk"
+            "integrations/syntask-redis/index",
+            "integrations/syntask-redis/sdk"
           ]
         },
         {
           "group": "Shell",
           "pages": [
-            "integrations/prefect-shell/index",
-            "integrations/prefect-shell/sdk"
+            "integrations/syntask-shell/index",
+            "integrations/syntask-shell/sdk"
           ]
         },
         {
           "group": "Slack",
           "pages": [
-            "integrations/prefect-slack/index",
-            "integrations/prefect-slack/sdk"
+            "integrations/syntask-slack/index",
+            "integrations/syntask-slack/sdk"
           ]
         },
         {
           "group": "Snowflake",
           "pages": [
-            "integrations/prefect-snowflake/index",
-            "integrations/prefect-snowflake/sdk"
+            "integrations/syntask-snowflake/index",
+            "integrations/syntask-snowflake/sdk"
           ]
         },
         {
           "group": "SQLAlchemy",
           "pages": [
-            "integrations/prefect-sqlalchemy/index",
-            "integrations/prefect-sqlalchemy/sdk"
+            "integrations/syntask-sqlalchemy/index",
+            "integrations/syntask-sqlalchemy/sdk"
           ]
         }
       ]
@@ -771,7 +771,7 @@
     },
     {
       "destination": "/latest/deploy",
-      "source": "/latest/guides/prefect-deploy"
+      "source": "/latest/guides/syntask-deploy"
     },
     {
       "destination": "/latest/develop/write-tasks",
@@ -998,15 +998,15 @@
       "source": "/latest/integrations/prefect-aws/ecs_guide"
     },
     {
-      "destination": "/integrations/prefect-kubernetes",
-      "source": "/latest/integrations/prefect-kubernetes"
+      "destination": "/integrations/syntask-kubernetes",
+      "source": "/latest/integrations/syntask-kubernetes"
     },
     {
-      "destination": "/latest/resources/whats-new-prefect-3.mdx",
+      "destination": "/latest/resources/whats-new-syntask-3.mdx",
       "source": "/latest/faq"
     },
     {
-      "destination": "/latest/resources/upgrade-prefect-3",
+      "destination": "/latest/resources/upgrade-syntask-3",
       "source": "/latest/guides/migration-guide"
     },
     {
@@ -1042,8 +1042,8 @@
       "source": "/latest/cloud/users"
     },
     {
-      "destination": "/integrations/prefect-gcp",
-      "source": "/latest/integrations/prefect-gcp"
+      "destination": "/integrations/syntask-gcp",
+      "source": "/latest/integrations/syntask-gcp"
     },
     {
       "destination": "/latest/manage/cloud/manage-users/configure-sso",
@@ -1054,24 +1054,24 @@
       "source": "/latest/integrations/prefect-dask"
     },
     {
-      "destination": "/integrations/prefect-gcp/gcp-worker-guide",
-      "source": "/latest/integrations/prefect-gcp/gcp-worker-guide"
+      "destination": "/integrations/syntask-gcp/gcp-worker-guide",
+      "source": "/latest/integrations/syntask-gcp/gcp-worker-guide"
     },
     {
       "destination": "/latest/manage/cloud/rate-limits",
       "source": "/latest/cloud/rate-limits"
     },
     {
-      "destination": "/integrations/prefect-sqlalchemy",
-      "source": "/latest/integrations/prefect-sqlalchemy"
+      "destination": "/integrations/syntask-sqlalchemy",
+      "source": "/latest/integrations/syntask-sqlalchemy"
     },
     {
-      "destination": "/integrations/prefect-slack",
-      "source": "/latest/integrations/prefect-slack"
+      "destination": "/integrations/syntask-slack",
+      "source": "/latest/integrations/syntask-slack"
     },
     {
-      "destination": "/integrations/prefect-gitlab",
-      "source": "/latest/integrations/prefect-gitlab"
+      "destination": "/integrations/syntask-gitlab",
+      "source": "/latest/integrations/syntask-gitlab"
     },
     {
       "destination": "/integrations/prefect-dbt",
@@ -1086,15 +1086,15 @@
       "source": "/latest/cloud/users/service-accounts"
     },
     {
-      "destination": "/integrations/prefect-shell",
-      "source": "/latest/integrations/prefect-shell"
+      "destination": "/integrations/syntask-shell",
+      "source": "/latest/integrations/syntask-shell"
     },
     {
-      "destination": "/integrations/prefect-azure",
-      "source": "/latest/integrations/prefect-azure"
+      "destination": "/integrations/syntask-azure",
+      "source": "/latest/integrations/syntask-azure"
     },
     {
-      "destination": "/integrations/prefect-azure/aci_worker#why-use-aci-for-flow-run-execution",
+      "destination": "/integrations/syntask-azure/aci_worker#why-use-aci-for-flow-run-execution",
       "source": "/latest/guides/deployment/aci"
     },
     {
@@ -1102,8 +1102,8 @@
       "source": "/latest/api-ref/server/api/deployments"
     },
     {
-      "destination": "/integrations/prefect-github",
-      "source": "/latest/integrations/prefect-github"
+      "destination": "/integrations/syntask-github",
+      "source": "/latest/integrations/syntask-github"
     },
     {
       "destination": "/integrations/prefect-aws",
@@ -1122,12 +1122,12 @@
       "source": "/latest/integrations/prefect-aws/ecs"
     },
     {
-      "destination": "/integrations/prefect-email",
-      "source": "/latest/integrations/prefect-email"
+      "destination": "/integrations/syntask-email",
+      "source": "/latest/integrations/syntask-email"
     },
     {
-      "destination": "/integrations/prefect-snowflake",
-      "source": "/latest/integrations/prefect-snowflake"
+      "destination": "/integrations/syntask-snowflake",
+      "source": "/latest/integrations/syntask-snowflake"
     },
     {
       "destination": "/contribute/contribute-integrations",
@@ -1154,8 +1154,8 @@
       "source": "/latest/integrations/prefect-docker/deployments/steps"
     },
     {
-      "destination": "/integrations/prefect-ray",
-      "source": "/latest/integrations/prefect-ray"
+      "destination": "/integrations/syntask-ray",
+      "source": "/latest/integrations/syntask-ray"
     },
     {
       "destination": "/latest/deploy/infrastructure-examples/kubernetes",
@@ -1166,12 +1166,12 @@
       "source": "/latest/api-ref/server/models/flow_runs"
     },
     {
-      "destination": "/integrations/prefect-gcp",
-      "source": "/latest/integrations/prefect-gcp/bigquery"
+      "destination": "/integrations/syntask-gcp",
+      "source": "/latest/integrations/syntask-gcp/bigquery"
     },
     {
-      "destination": "/integrations/prefect-sqlalchemy",
-      "source": "/latest/integrations/prefect-sqlalchemy/database"
+      "destination": "/integrations/syntask-sqlalchemy",
+      "source": "/latest/integrations/syntask-sqlalchemy/database"
     },
     {
       "destination": "/contribute/styles-practices",
@@ -1186,12 +1186,12 @@
       "source": "/latest/integrations/prefect-dask/usage_guide"
     },
     {
-      "destination": "/integrations/prefect-shell",
-      "source": "/latest/integrations/prefect-shell/commands"
+      "destination": "/integrations/syntask-shell",
+      "source": "/latest/integrations/syntask-shell/commands"
     },
     {
-      "destination": "/integrations/prefect-azure/aci_worker",
-      "source": "/latest/integrations/prefect-azure/aci_worker"
+      "destination": "/integrations/syntask-azure/aci_worker",
+      "source": "/latest/integrations/syntask-azure/aci_worker"
     },
     {
       "destination": "/integrations/prefect-aws",
@@ -1222,8 +1222,8 @@
       "source": "/latest/integrations/prefect-docker/credentials"
     },
     {
-      "destination": "/integrations/prefect-gcp",
-      "source": "/latest/integrations/prefect-gcp/cloud_storage"
+      "destination": "/integrations/syntask-gcp",
+      "source": "/latest/integrations/syntask-gcp/cloud_storage"
     },
     {
       "destination": "/latest/api-ref",
@@ -1254,44 +1254,44 @@
       "source": "/latest/integrations/prefect-databricks/models/jobs"
     },
     {
-      "destination": "/integrations/prefect-kubernetes",
-      "source": "/latest/integrations/prefect-kubernetes/worker"
+      "destination": "/integrations/syntask-kubernetes",
+      "source": "/latest/integrations/syntask-kubernetes/worker"
     },
     {
-      "destination": "/integrations/prefect-sqlalchemy",
-      "source": "/latest/integrations/prefect-sqlalchemy/credentials"
+      "destination": "/integrations/syntask-sqlalchemy",
+      "source": "/latest/integrations/syntask-sqlalchemy/credentials"
     },
     {
       "destination": "/integrations/prefect-databricks",
       "source": "/latest/integrations/prefect-databricks/flows"
     },
     {
-      "destination": "/integrations/prefect-kubernetes",
-      "source": "/latest/integrations/prefect-kubernetes/deployments"
+      "destination": "/integrations/syntask-kubernetes",
+      "source": "/latest/integrations/syntask-kubernetes/deployments"
     },
     {
-      "destination": "/integrations/prefect-snowflake",
-      "source": "/latest/integrations/prefect-snowflake/credentials"
+      "destination": "/integrations/syntask-snowflake",
+      "source": "/latest/integrations/syntask-snowflake/credentials"
     },
     {
       "destination": "/integrations/prefect-dbt",
       "source": "/latest/integrations/prefect-dbt/cli/credentials"
     },
     {
-      "destination": "/integrations/prefect-kubernetes",
-      "source": "/latest/integrations/prefect-kubernetes/jobs"
+      "destination": "/integrations/syntask-kubernetes",
+      "source": "/latest/integrations/syntask-kubernetes/jobs"
     },
     {
-      "destination": "/integrations/prefect-slack",
-      "source": "/latest/integrations/prefect-slack/messages"
-    },
-    {
-      "destination": "/latest/api-ref/python",
-      "source": "/latest/api-ref/prefect/:slug*"
+      "destination": "/integrations/syntask-slack",
+      "source": "/latest/integrations/syntask-slack/messages"
     },
     {
       "destination": "/latest/api-ref/python",
-      "source": "/api-ref/prefect/:slug*"
+      "source": "/latest/api-ref/syntask/:slug*"
+    },
+    {
+      "destination": "/latest/api-ref/python",
+      "source": "/api-ref/syntask/:slug*"
     },
     {
       "destination": "/3.0/:slug*",
@@ -1318,7 +1318,7 @@
   ],
   "topbarCtaButton": {
     "type": "github",
-    "url": "https://github.com/PrefectHQ/Prefect"
+    "url": "https://github.com/SynoPKG/Syntask"
   },
   "versions": [
     "3.0",

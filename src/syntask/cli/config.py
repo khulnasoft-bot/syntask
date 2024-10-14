@@ -9,19 +9,19 @@ import typer
 from dotenv import dotenv_values
 from typing_extensions import Literal
 
-import prefect.context
-import prefect.settings
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.exceptions import ProfileSettingsValidationError
-from prefect.utilities.collections import listrepr
+import syntask.context
+import syntask.settings
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.exceptions import ProfileSettingsValidationError
+from syntask.utilities.collections import listrepr
 
 help_message = """
-    View and set Prefect profiles.
+    View and set Syntask profiles.
 """
-VALID_SETTING_NAMES = prefect.settings.Settings.valid_setting_names()
-config_app = PrefectTyper(name="config", help=help_message)
+VALID_SETTING_NAMES = syntask.settings.Settings.valid_setting_names()
+config_app = SyntaskTyper(name="config", help=help_message)
 app.add_typer(config_app)
 
 
@@ -43,7 +43,7 @@ def set_(settings: List[str]):
             exit_with_error(f"Unknown setting name {setting!r}.")
 
         # Guard against changing settings that tweak config locations
-        if setting in {"PREFECT_HOME", "PREFECT_PROFILES_PATH"}:
+        if setting in {"SYNTASK_HOME", "SYNTASK_PROFILES_PATH"}:
             exit_with_error(
                 f"Setting {setting!r} cannot be changed with this command. "
                 "Use an environment variable instead."
@@ -52,7 +52,7 @@ def set_(settings: List[str]):
         parsed_settings[setting] = value
 
     try:
-        new_profile = prefect.settings.update_current_profile(parsed_settings)
+        new_profile = syntask.settings.update_current_profile(parsed_settings)
     except ProfileSettingsValidationError as exc:
         help_message = ""
         for setting, problem in exc.errors:
@@ -79,12 +79,12 @@ def validate():
     Deprecated settings will be automatically converted to new names unless both are
     set.
     """
-    profiles = prefect.settings.load_profiles()
-    profile = profiles[prefect.context.get_settings_context().profile.name]
+    profiles = syntask.settings.load_profiles()
+    profile = profiles[syntask.context.get_settings_context().profile.name]
 
     profile.validate_settings()
 
-    prefect.settings.save_profiles(profiles)
+    syntask.settings.save_profiles(profiles)
     exit_with_success("Configuration valid!")
 
 
@@ -95,8 +95,8 @@ def unset(setting_names: List[str], confirm: bool = typer.Option(False, "--yes",
 
     Removes the setting from the current profile.
     """
-    settings_context = prefect.context.get_settings_context()
-    profiles = prefect.settings.load_profiles()
+    settings_context = syntask.context.get_settings_context()
+    profiles = syntask.settings.load_profiles()
     profile = profiles[settings_context.profile.name]
     parsed = set()
 
@@ -104,7 +104,7 @@ def unset(setting_names: List[str], confirm: bool = typer.Option(False, "--yes",
         if setting_name not in VALID_SETTING_NAMES:
             exit_with_error(f"Unknown setting name {setting_name!r}.")
         # Cast to settings objects
-        parsed.add(prefect.settings.SETTING_VARIABLES[setting_name])
+        parsed.add(syntask.settings.SETTING_VARIABLES[setting_name])
 
     for setting in parsed:
         if setting not in profile.settings:
@@ -132,7 +132,7 @@ def unset(setting_names: List[str], confirm: bool = typer.Option(False, "--yes",
                 f"Use `unset {setting_name}` to clear it."
             )
 
-    prefect.settings.save_profiles(profiles)
+    syntask.settings.save_profiles(profiles)
     exit_with_success(f"Updated profile {profile.name!r}.")
 
 
@@ -183,22 +183,22 @@ def view(
     else:
         dump_context = {}
 
-    context = prefect.context.get_settings_context()
+    context = syntask.context.get_settings_context()
     current_profile_settings = context.profile.settings
 
-    if ui_url := prefect.settings.PREFECT_UI_URL.value():
+    if ui_url := syntask.settings.SYNTASK_UI_URL.value():
         app.console.print(
             f"🚀 you are connected to:\n[green]{ui_url}[/green]", soft_wrap=True
         )
 
     # Display the profile first
-    app.console.print(f"[bold][blue]PREFECT_PROFILE={context.profile.name!r}[/bold]")
+    app.console.print(f"[bold][blue]SYNTASK_PROFILE={context.profile.name!r}[/bold]")
 
     settings_output = []
     processed_settings = set()
 
     def _process_setting(
-        setting: prefect.settings.Setting,
+        setting: syntask.settings.Setting,
         value: str,
         source: Literal["env", "profile", "defaults", ".env file"],
     ):
@@ -217,7 +217,7 @@ def view(
         _process_setting(setting, value_and_source[0], value_and_source[1])
 
     for setting_name in VALID_SETTING_NAMES:
-        setting = prefect.settings.SETTING_VARIABLES[setting_name]
+        setting = syntask.settings.SETTING_VARIABLES[setting_name]
         if setting.name in processed_settings:
             continue
         if (env_value := os.getenv(setting.name)) is None:
@@ -226,14 +226,14 @@ def view(
 
     for key, value in dotenv_values().items():
         if key in VALID_SETTING_NAMES:
-            setting = prefect.settings.SETTING_VARIABLES[key]
+            setting = syntask.settings.SETTING_VARIABLES[key]
             if setting.name in processed_settings or value is None:
                 continue
             _process_setting(setting, value, ".env file")
     if show_defaults:
-        default_values = prefect.settings.Settings().model_dump(context=dump_context)
+        default_values = syntask.settings.Settings().model_dump(context=dump_context)
         for key, value in default_values.items():
-            setting = prefect.settings.SETTING_VARIABLES[key]
+            setting = syntask.settings.SETTING_VARIABLES[key]
             if setting.name in processed_settings:
                 continue
             _process_setting(setting, value, "defaults")

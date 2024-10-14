@@ -1,6 +1,6 @@
 from rich.highlighter import RegexHighlighter
 
-from prefect.states import StateType
+from syntask.states import StateType
 
 
 class LevelHighlighter(RegexHighlighter):
@@ -50,7 +50,7 @@ class StateHighlighter(RegexHighlighter):
     ]
 
 
-class PrefectConsoleHighlighter(RegexHighlighter):
+class SyntaskConsoleHighlighter(RegexHighlighter):
     """Applies style from multiple highlighters."""
 
     base_style = "log."

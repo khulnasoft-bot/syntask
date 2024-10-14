@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from prefect.records.filesystem import FileSystemRecordStore
-from prefect.records.memory import MemoryRecordStore
-from prefect.records.result_store import ResultRecordStore
-from prefect.results import get_result_store
+from syntask.records.filesystem import FileSystemRecordStore
+from syntask.records.memory import MemoryRecordStore
+from syntask.records.result_store import ResultRecordStore
+from syntask.results import get_result_store
 
 
 def test_all_result_stores_emit_deprecation_warning():

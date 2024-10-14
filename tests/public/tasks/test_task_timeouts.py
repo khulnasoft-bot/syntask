@@ -4,7 +4,7 @@ import time
 import anyio
 import pytest
 
-import prefect
+import syntask
 
 # GitHub Actions sets the CI environment variable — the runners are much slower there
 # so the sleep time needs to be larger to account for overhead
@@ -12,11 +12,11 @@ SLEEP_TIME = 3 if os.environ.get("CI") else 1
 
 
 async def test_sync_task_timeout_in_sync_flow():
-    @prefect.task(timeout_seconds=0.1)
+    @syntask.task(timeout_seconds=0.1)
     def sleep_task():
         time.sleep(SLEEP_TIME)
 
-    @prefect.flow
+    @syntask.flow
     def parent_flow():
         return "foo", sleep_task(return_state=True)
 
@@ -27,11 +27,11 @@ async def test_sync_task_timeout_in_sync_flow():
 
 
 async def test_sync_task_timeout_in_async_flow():
-    @prefect.task(timeout_seconds=0.1)
+    @syntask.task(timeout_seconds=0.1)
     def sleep_task():
         time.sleep(SLEEP_TIME)
 
-    @prefect.flow
+    @syntask.flow
     async def parent_flow():
         return "foo", sleep_task(return_state=True)
 
@@ -45,11 +45,11 @@ async def test_sync_task_timeout_in_async_flow():
     reason="Not supported by new engine",
 )
 def test_async_task_timeout_in_sync_flow():
-    @prefect.task(timeout_seconds=0.1)
+    @syntask.task(timeout_seconds=0.1)
     async def sleep_task():
         await anyio.sleep(SLEEP_TIME)
 
-    @prefect.flow
+    @syntask.flow
     def parent_flow():
         return "foo", sleep_task(return_state=True)
 
@@ -60,11 +60,11 @@ def test_async_task_timeout_in_sync_flow():
 
 
 async def test_async_task_timeout_in_async_flow():
-    @prefect.task(timeout_seconds=0.1)
+    @syntask.task(timeout_seconds=0.1)
     async def sleep_task():
         await anyio.sleep(SLEEP_TIME)
 
-    @prefect.flow
+    @syntask.flow
     async def parent_flow():
         return "foo", await sleep_task(return_state=True)
 
@@ -77,7 +77,7 @@ async def test_async_task_timeout_in_async_flow():
 async def test_task_timeout_deadline_is_reset_on_retry():
     run_count: int = 0
 
-    @prefect.task(timeout_seconds=0.1, retries=2)
+    @syntask.task(timeout_seconds=0.1, retries=2)
     async def sleep_task():
         nonlocal run_count
         run_count += 1
@@ -88,7 +88,7 @@ async def test_task_timeout_deadline_is_reset_on_retry():
 
         return run_count
 
-    @prefect.flow
+    @syntask.flow
     async def parent_flow():
         return await sleep_task(return_state=True)
 

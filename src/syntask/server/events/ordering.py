@@ -21,11 +21,11 @@ import sqlalchemy as sa
 from cachetools import TTLCache
 from typing_extensions import Self
 
-from prefect.logging import get_logger
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.database.orm_models import AutomationEventFollower
-from prefect.server.events.schemas.events import Event, ReceivedEvent
+from syntask.logging import get_logger
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.database.orm_models import AutomationEventFollower
+from syntask.server.events.schemas.events import Event, ReceivedEvent
 
 logger = get_logger(__name__)
 
@@ -53,8 +53,9 @@ class MaxDepthExceeded(Exception):
 
 
 class event_handler(Protocol):
-    async def __call__(self, event: ReceivedEvent, depth: int = 0):
-        ...  # pragma: no cover
+    async def __call__(
+        self, event: ReceivedEvent, depth: int = 0
+    ): ...  # pragma: no cover
 
 
 class CausalOrdering:
@@ -75,7 +76,7 @@ class CausalOrdering:
         self._seen_events[self.scope][event.id] = True
 
     @db_injector
-    async def record_follower(db: PrefectDBInterface, self: Self, event: ReceivedEvent):
+    async def record_follower(db: SyntaskDBInterface, self: Self, event: ReceivedEvent):
         """Remember that this event is waiting on another event to arrive"""
         assert event.follows
 
@@ -92,7 +93,7 @@ class CausalOrdering:
 
     @db_injector
     async def forget_follower(
-        db: PrefectDBInterface, self: Self, follower: ReceivedEvent
+        db: SyntaskDBInterface, self: Self, follower: ReceivedEvent
     ):
         """Forget that this event is waiting on another event to arrive"""
         assert follower.follows
@@ -107,7 +108,7 @@ class CausalOrdering:
 
     @db_injector
     async def get_followers(
-        db: PrefectDBInterface, self: Self, leader: ReceivedEvent
+        db: SyntaskDBInterface, self: Self, leader: ReceivedEvent
     ) -> List[ReceivedEvent]:
         """Returns events that were waiting on this leader event to arrive"""
         async with db.session_context() as session:
@@ -120,7 +121,7 @@ class CausalOrdering:
             return sorted(followers, key=lambda e: e.occurred)
 
     @db_injector
-    async def get_lost_followers(db: PrefectDBInterface, self) -> List[ReceivedEvent]:
+    async def get_lost_followers(db: SyntaskDBInterface, self) -> List[ReceivedEvent]:
         """Returns events that were waiting on a leader event that never arrived"""
         earlier = pendulum.now("UTC") - PRECEDING_EVENT_LOOKBACK
 

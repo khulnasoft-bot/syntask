@@ -3,9 +3,9 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.server import models, schemas
-from prefect.server.schemas.core import FlowRunNotificationPolicy
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.server import models, schemas
+from syntask.server.schemas.core import FlowRunNotificationPolicy
+from syntask.utilities.pydantic import parse_obj_as
 
 
 @pytest.fixture

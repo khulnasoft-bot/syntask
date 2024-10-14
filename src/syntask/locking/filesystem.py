@@ -7,7 +7,7 @@ import pendulum
 import pydantic_core
 from typing_extensions import TypedDict
 
-from prefect.logging.loggers import get_logger
+from syntask.logging.loggers import get_logger
 
 from .protocol import LockManager
 

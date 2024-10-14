@@ -4,16 +4,16 @@ from uuid import UUID
 import orjson
 import pydantic
 
-from prefect.client.utilities import client_injector
-from prefect.context import FlowRunContext
-from prefect.exceptions import PrefectHTTPStatusError
-from prefect.utilities.asyncutils import sync_compatible
+from syntask.client.utilities import client_injector
+from syntask.context import FlowRunContext
+from syntask.exceptions import SyntaskHTTPStatusError
+from syntask.utilities.asyncutils import sync_compatible
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
-from prefect._internal.pydantic.v2_schema import is_v2_model
+from syntask._internal.pydantic.v2_schema import is_v2_model
 
 
 def ensure_flow_run_id(flow_run_id: Optional[UUID] = None) -> UUID:
@@ -37,7 +37,7 @@ async def create_flow_run_input_from_model(
     if sender is None:
         context = FlowRunContext.get()
         if context is not None and context.flow_run is not None:
-            sender = f"prefect.flow-run.{context.flow_run.id}"
+            sender = f"syntask.flow-run.{context.flow_run.id}"
 
     if is_v2_model(model_instance):
         json_safe = orjson.loads(model_instance.model_dump_json())
@@ -52,7 +52,7 @@ async def create_flow_run_input_from_model(
 @sync_compatible
 @client_injector
 async def create_flow_run_input(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     key: str,
     value: Any,
     flow_run_id: Optional[UUID] = None,
@@ -81,7 +81,7 @@ async def create_flow_run_input(
 @sync_compatible
 @client_injector
 async def filter_flow_run_input(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     key_prefix: str,
     limit: int = 1,
     exclude_keys: Optional[Set[str]] = None,
@@ -103,7 +103,7 @@ async def filter_flow_run_input(
 @sync_compatible
 @client_injector
 async def read_flow_run_input(
-    client: "PrefectClient", key: str, flow_run_id: Optional[UUID] = None
+    client: "SyntaskClient", key: str, flow_run_id: Optional[UUID] = None
 ) -> Any:
     """Read a flow run input.
 
@@ -115,7 +115,7 @@ async def read_flow_run_input(
 
     try:
         value = await client.read_flow_run_input(flow_run_id=flow_run_id, key=key)
-    except PrefectHTTPStatusError as exc:
+    except SyntaskHTTPStatusError as exc:
         if exc.response.status_code == 404:
             return None
         raise
@@ -126,7 +126,7 @@ async def read_flow_run_input(
 @sync_compatible
 @client_injector
 async def delete_flow_run_input(
-    client: "PrefectClient", key: str, flow_run_id: Optional[UUID] = None
+    client: "SyntaskClient", key: str, flow_run_id: Optional[UUID] = None
 ):
     """Delete a flow run input.
 

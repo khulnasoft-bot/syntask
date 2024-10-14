@@ -9,12 +9,12 @@ import pendulum
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.models as models
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas import states
-from prefect.server.services.loop_service import LoopService
-from prefect.settings import PREFECT_API_SERVICES_PAUSE_EXPIRATIONS_LOOP_SECONDS
+import syntask.server.models as models
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas import states
+from syntask.server.services.loop_service import LoopService
+from syntask.settings import SYNTASK_API_SERVICES_PAUSE_EXPIRATIONS_LOOP_SECONDS
 
 
 class FailExpiredPauses(LoopService):
@@ -25,7 +25,7 @@ class FailExpiredPauses(LoopService):
     def __init__(self, loop_seconds: Optional[float] = None, **kwargs):
         super().__init__(
             loop_seconds=loop_seconds
-            or PREFECT_API_SERVICES_PAUSE_EXPIRATIONS_LOOP_SECONDS.value(),
+            or SYNTASK_API_SERVICES_PAUSE_EXPIRATIONS_LOOP_SECONDS.value(),
             **kwargs,
         )
 
@@ -33,7 +33,7 @@ class FailExpiredPauses(LoopService):
         self.batch_size = 200
 
     @inject_db
-    async def run_once(self, db: PrefectDBInterface):
+    async def run_once(self, db: SyntaskDBInterface):
         """
         Mark flow runs as failed by:
 
@@ -64,7 +64,7 @@ class FailExpiredPauses(LoopService):
         self.logger.info("Finished monitoring for late runs.")
 
     async def _mark_flow_run_as_failed(
-        self, session: AsyncSession, flow_run: PrefectDBInterface.FlowRun
+        self, session: AsyncSession, flow_run: SyntaskDBInterface.FlowRun
     ) -> None:
         """
         Mark a flow run as failed.

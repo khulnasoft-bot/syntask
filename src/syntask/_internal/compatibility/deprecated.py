@@ -2,7 +2,7 @@
 Utilities for deprecated items.
 
 When a deprecated item is used, a warning will be displayed. Warnings may not be
-disabled with Prefect settings. Instead, the standard Python warnings filters can be
+disabled with Syntask settings. Instead, the standard Python warnings filters can be
 used.
 
 Deprecated items require a start or end date. If a start date is given, the end date
@@ -18,8 +18,8 @@ from typing import Any, Callable, List, Optional, Type, TypeVar
 import pendulum
 from pydantic import BaseModel
 
-from prefect.utilities.callables import get_call_parameters
-from prefect.utilities.importtools import (
+from syntask.utilities.callables import get_call_parameters
+from syntask.utilities.importtools import (
     AliasedModuleDefinition,
     AliasedModuleFinder,
     to_qualified_name,
@@ -41,7 +41,7 @@ DEPRECATED_DATEFMT = "MMM YYYY"  # e.g. Feb 2023
 DEPRECATED_MODULE_ALIASES: List[AliasedModuleDefinition] = []
 
 
-class PrefectDeprecationWarning(DeprecationWarning):
+class SyntaskDeprecationWarning(DeprecationWarning):
     """
     A deprecation warning.
     """
@@ -94,7 +94,7 @@ def deprecated_callable(
 
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
-            warnings.warn(message, PrefectDeprecationWarning, stacklevel=stacklevel)
+            warnings.warn(message, SyntaskDeprecationWarning, stacklevel=stacklevel)
             return fn(*args, **kwargs)
 
         return wrapper
@@ -121,7 +121,7 @@ def deprecated_class(
 
         @functools.wraps(original_init)
         def new_init(self, *args, **kwargs):
-            warnings.warn(message, PrefectDeprecationWarning, stacklevel=stacklevel)
+            warnings.warn(message, SyntaskDeprecationWarning, stacklevel=stacklevel)
             original_init(self, *args, **kwargs)
 
         cls.__init__ = new_init
@@ -173,7 +173,7 @@ def deprecated_parameter(
                 parameters = kwargs
 
             if name in parameters and when(parameters[name]):
-                warnings.warn(message, PrefectDeprecationWarning, stacklevel=stacklevel)
+                warnings.warn(message, SyntaskDeprecationWarning, stacklevel=stacklevel)
 
             return fn(*args, **kwargs)
 
@@ -226,7 +226,7 @@ def deprecated_field(
         @functools.wraps(model_cls.__init__)
         def __init__(__pydantic_self__, **data: Any) -> None:
             if name in data.keys() and when(data[name]):
-                warnings.warn(message, PrefectDeprecationWarning, stacklevel=stacklevel)
+                warnings.warn(message, SyntaskDeprecationWarning, stacklevel=stacklevel)
 
             cls_init(__pydantic_self__, **data)
 

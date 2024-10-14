@@ -1,5 +1,5 @@
 """
-Base `prefect` command-line application
+Base `syntask` command-line application
 """
 
 import asyncio
@@ -12,26 +12,26 @@ from typing import Any, Dict
 import pendulum
 import typer
 
-import prefect
-import prefect.context
-import prefect.settings
-from prefect.cli._types import PrefectTyper, SettingsOption
-from prefect.cli._utilities import with_cli_exception_handling
-from prefect.client.base import determine_server_type
-from prefect.client.constants import SERVER_API_VERSION
-from prefect.client.orchestration import ServerType
-from prefect.logging.configuration import setup_logging
-from prefect.settings import (
-    PREFECT_CLI_WRAP_LINES,
-    PREFECT_TEST_MODE,
+import syntask
+import syntask.context
+import syntask.settings
+from syntask.cli._types import SettingsOption, SyntaskTyper
+from syntask.cli._utilities import with_cli_exception_handling
+from syntask.client.base import determine_server_type
+from syntask.client.constants import SERVER_API_VERSION
+from syntask.client.orchestration import ServerType
+from syntask.logging.configuration import setup_logging
+from syntask.settings import (
+    SYNTASK_CLI_WRAP_LINES,
+    SYNTASK_TEST_MODE,
 )
 
-app = PrefectTyper(add_completion=True, no_args_is_help=True)
+app = SyntaskTyper(add_completion=True, no_args_is_help=True)
 
 
 def version_callback(value: bool):
     if value:
-        print(prefect.__version__)
+        print(syntask.__version__)
         raise typer.Exit()
 
 
@@ -61,14 +61,14 @@ def main(
         is_eager=True,
     ),
     prompt: bool = SettingsOption(
-        prefect.settings.PREFECT_CLI_PROMPT,
+        syntask.settings.SYNTASK_CLI_PROMPT,
         help="Force toggle prompts for this CLI run.",
     ),
 ):
-    if profile and not prefect.context.get_settings_context().profile.name == profile:
+    if profile and not syntask.context.get_settings_context().profile.name == profile:
         # Generally, the profile should entered by `enter_root_settings_context`.
         # In the cases where it is not (i.e. CLI testing), we will enter it here.
-        settings_ctx = prefect.context.use_profile(
+        settings_ctx = syntask.context.use_profile(
             profile, override_environment_variables=True
         )
         try:
@@ -78,9 +78,9 @@ def main(
             exit(1)
 
     # Configure the output console after loading the profile
-    app.setup_console(soft_wrap=PREFECT_CLI_WRAP_LINES.value(), prompt=prompt)
+    app.setup_console(soft_wrap=SYNTASK_CLI_WRAP_LINES.value(), prompt=prompt)
 
-    if not PREFECT_TEST_MODE:
+    if not SYNTASK_TEST_MODE:
         # When testing, this entrypoint can be called multiple times per process which
         # can cause logging configuration conflicts. Logging is set up in conftest
         # during tests.
@@ -90,7 +90,7 @@ def main(
     # in place or we will not be able to spawn subprocesses. Sometimes this policy is
     # changed by other libraries, but here in our CLI we should have ownership of the
     # process and be able to safely force it to be the correct policy.
-    # https://github.com/synopkg/synopkg/issues/8206
+    # https://github.com/synopkg/syntask/issues/8206
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
@@ -101,22 +101,22 @@ async def version(
         False, "--omit-integrations", help="Omit integration information"
     ),
 ):
-    """Get the current Prefect version and integration information."""
+    """Get the current Syntask version and integration information."""
     import sqlite3
 
-    from prefect.server.utilities.database import get_dialect
-    from prefect.settings import PREFECT_API_DATABASE_CONNECTION_URL
+    from syntask.server.utilities.database import get_dialect
+    from syntask.settings import SYNTASK_API_DATABASE_CONNECTION_URL
 
     version_info = {
-        "Version": prefect.__version__,
+        "Version": syntask.__version__,
         "API version": SERVER_API_VERSION,
         "Python version": platform.python_version(),
-        "Git commit": prefect.__version_info__["full-revisionid"][:8],
+        "Git commit": syntask.__version_info__["full-revisionid"][:8],
         "Built": pendulum.parse(
-            prefect.__version_info__["date"]
+            syntask.__version_info__["date"]
         ).to_day_datetime_string(),
         "OS/Arch": f"{sys.platform}/{platform.machine()}",
-        "Profile": prefect.context.get_settings_context().profile.name,
+        "Profile": syntask.context.get_settings_context().profile.name,
     }
     server_type = determine_server_type()
 
@@ -130,28 +130,28 @@ async def version(
     version_info["Pydantic version"] = pydantic_version
 
     if server_type == ServerType.EPHEMERAL.value:
-        database = get_dialect(PREFECT_API_DATABASE_CONNECTION_URL.value()).name
+        database = get_dialect(SYNTASK_API_DATABASE_CONNECTION_URL.value()).name
         version_info["Server"] = {"Database": database}
         if database == "sqlite":
             version_info["Server"]["SQLite version"] = sqlite3.sqlite_version
 
     if not omit_integrations:
-        integrations = get_prefect_integrations()
+        integrations = get_syntask_integrations()
         if integrations:
             version_info["Integrations"] = integrations
 
     display(version_info)
 
 
-def get_prefect_integrations() -> Dict[str, str]:
-    """Get information about installed Prefect integrations."""
+def get_syntask_integrations() -> Dict[str, str]:
+    """Get information about installed Syntask integrations."""
     from importlib.metadata import distributions
 
     integrations = {}
     for dist in distributions():
-        if dist.metadata["Name"].startswith("prefect-"):
+        if dist.metadata["Name"].startswith("syntask-"):
             author_email = dist.metadata.get("Author-email", "").strip()
-            if author_email.endswith("@syntask.khulnasoft.com>"):
+            if author_email.endswith("@khulnasoft.com>"):
                 integrations[dist.metadata["Name"]] = dist.version
 
     return integrations

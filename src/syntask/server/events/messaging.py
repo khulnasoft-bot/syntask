@@ -1,9 +1,9 @@
 from typing import Iterable
 
-from prefect.logging import get_logger
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.utilities.messaging import Publisher, create_publisher
-from prefect.settings import PREFECT_EVENTS_MAXIMUM_SIZE_BYTES
+from syntask.logging import get_logger
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.utilities.messaging import Publisher, create_publisher
+from syntask.settings import SYNTASK_EVENTS_MAXIMUM_SIZE_BYTES
 
 logger = get_logger(__name__)
 
@@ -39,7 +39,7 @@ class EventPublisher(Publisher):
             event: the event to publish
         """
         encoded = event.model_dump_json().encode()
-        if len(encoded) > PREFECT_EVENTS_MAXIMUM_SIZE_BYTES.value():
+        if len(encoded) > SYNTASK_EVENTS_MAXIMUM_SIZE_BYTES.value():
             logger.warning(
                 "Refusing to publish event of size %s",
                 extra={
@@ -54,7 +54,7 @@ class EventPublisher(Publisher):
             "Publishing event: %s with id: %s for resource: %s",
             event.event,
             event.id,
-            event.resource.get("prefect.resource.id"),
+            event.resource.get("syntask.resource.id"),
         )
         await self.publish_data(
             encoded,

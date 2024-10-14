@@ -4,14 +4,14 @@ Module containing the Process worker used for executing flow runs as subprocesse
 To start a Process worker, run the following command:
 
 ```bash
-prefect worker start --pool 'my-work-pool' --type process
+syntask worker start --pool 'my-work-pool' --type process
 ```
 
 Replace `my-work-pool` with the name of the work pool you want the worker
 to poll for flow runs.
 
 For more information about work pools and workers,
-checkout out the [Prefect docs](/concepts/work-pools/).
+checkout out the [Syntask docs](/concepts/work-pools/).
 """
 
 import contextlib
@@ -30,9 +30,9 @@ import anyio
 import anyio.abc
 from pydantic import Field, field_validator
 
-from prefect._internal.schemas.validators import validate_command
-from prefect.client.schemas import FlowRun
-from prefect.client.schemas.filters import (
+from syntask._internal.schemas.validators import validate_command
+from syntask.client.schemas import FlowRun
+from syntask.client.schemas.filters import (
     FlowRunFilter,
     FlowRunFilterId,
     FlowRunFilterState,
@@ -43,17 +43,17 @@ from prefect.client.schemas.filters import (
     WorkQueueFilter,
     WorkQueueFilterName,
 )
-from prefect.client.schemas.objects import StateType
-from prefect.events.utilities import emit_event
-from prefect.exceptions import (
+from syntask.client.schemas.objects import StateType
+from syntask.events.utilities import emit_event
+from syntask.exceptions import (
     InfrastructureNotAvailable,
     InfrastructureNotFound,
     ObjectNotFound,
 )
-from prefect.settings import PREFECT_WORKER_QUERY_SECONDS
-from prefect.utilities.processutils import get_sys_executable, run_process
-from prefect.utilities.services import critical_service_loop
-from prefect.workers.base import (
+from syntask.settings import SYNTASK_WORKER_QUERY_SECONDS
+from syntask.utilities.processutils import get_sys_executable, run_process
+from syntask.utilities.services import critical_service_loop
+from syntask.workers.base import (
     BaseJobConfiguration,
     BaseVariables,
     BaseWorker,
@@ -61,8 +61,8 @@ from prefect.workers.base import (
 )
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.objects import Flow
-    from prefect.client.schemas.responses import DeploymentResponse
+    from syntask.client.schemas.objects import Flow
+    from syntask.client.schemas.responses import DeploymentResponse
 
 if sys.platform == "win32":
     # exit code indicating that the process was terminated by Ctrl+C or Ctrl+Break
@@ -98,7 +98,7 @@ class ProcessJobConfiguration(BaseJobConfiguration):
 
         self.env = {**os.environ, **self.env}
         self.command = (
-            f"{get_sys_executable()} -m prefect.engine"
+            f"{get_sys_executable()} -m syntask.engine"
             if self.command == self._base_flow_run_command()
             else self.command
         )
@@ -108,7 +108,7 @@ class ProcessJobConfiguration(BaseJobConfiguration):
         Override the base flow run command because enhanced cancellation doesn't
         work with the process worker.
         """
-        return "python -m prefect.engine"
+        return "python -m syntask.engine"
 
 
 class ProcessVariables(BaseVariables):
@@ -144,7 +144,9 @@ class ProcessWorker(BaseWorker):
         " when first getting started."
     )
     _display_name = "Process"
-    _documentation_url = "https://docs.syntask.khulnasoft.com/latest/get-started/quickstart"
+    _documentation_url = (
+        "https://docs.syntask.khulnasoft.com/latest/get-started/quickstart"
+    )
     _logo_url = "https://cdn.sanity.io/images/3ugk85nk/production/356e6766a91baf20e1d08bbe16e8b5aaef4d8643-48x48.png"
 
     async def start(
@@ -157,7 +159,7 @@ class ProcessWorker(BaseWorker):
         Starts the worker and runs the main worker loops.
 
         By default, the worker will run loops to poll for scheduled/cancelled flow
-        runs and sync with the Prefect API server.
+        runs and sync with the Syntask API server.
 
         If `run_once` is set, the worker will only run each loop once and then return.
 
@@ -182,7 +184,7 @@ class ProcessWorker(BaseWorker):
                         partial(
                             critical_service_loop,
                             workload=self.get_and_submit_flow_runs,
-                            interval=PREFECT_WORKER_QUERY_SECONDS.value(),
+                            interval=SYNTASK_WORKER_QUERY_SECONDS.value(),
                             run_once=run_once,
                             jitter_range=0.3,
                             backoff=4,  # Up to ~1 minute interval during backoff
@@ -203,7 +205,7 @@ class ProcessWorker(BaseWorker):
                         partial(
                             critical_service_loop,
                             workload=self.check_for_cancelled_flow_runs,
-                            interval=PREFECT_WORKER_QUERY_SECONDS.value() * 2,
+                            interval=SYNTASK_WORKER_QUERY_SECONDS.value() * 2,
                             run_once=run_once,
                             jitter_range=0.3,
                             backoff=4,
@@ -213,13 +215,13 @@ class ProcessWorker(BaseWorker):
                     self._started_event = await self._emit_worker_started_event()
 
                     if with_healthcheck:
-                        from prefect.workers.server import build_healthcheck_server
+                        from syntask.workers.server import build_healthcheck_server
 
                         # we'll start the ASGI server in a separate thread so that
                         # uvicorn does not block the main thread
                         healthcheck_server = build_healthcheck_server(
                             worker=worker,
-                            query_interval_seconds=PREFECT_WORKER_QUERY_SECONDS.value(),
+                            query_interval_seconds=SYNTASK_WORKER_QUERY_SECONDS.value(),
                         )
                         healthcheck_thread = threading.Thread(
                             name="healthcheck-server-thread",
@@ -245,7 +247,7 @@ class ProcessWorker(BaseWorker):
     ):
         command = configuration.command
         if not command:
-            command = f"{get_sys_executable()} -m prefect.engine"
+            command = f"{get_sys_executable()} -m syntask.engine"
 
         flow_run_logger = self.get_flow_run_logger(flow_run)
 
@@ -259,7 +261,7 @@ class ProcessWorker(BaseWorker):
         flow_run_logger.info("Opening process...")
 
         working_dir_ctx = (
-            tempfile.TemporaryDirectory(suffix="prefect")
+            tempfile.TemporaryDirectory(suffix="syntask")
             if not configuration.working_dir
             else contextlib.nullcontext(configuration.working_dir)
         )
@@ -510,12 +512,12 @@ class ProcessWorker(BaseWorker):
 
         for resource in related:
             if resource.role == "flow-run":
-                resource["prefect.infrastructure.identifier"] = str(
+                resource["syntask.infrastructure.identifier"] = str(
                     flow_run.infrastructure_pid
                 )
 
         emit_event(
-            event="prefect.worker.cancelled-flow-run",
+            event="syntask.worker.cancelled-flow-run",
             resource=self._event_resource(),
             related=related,
         )

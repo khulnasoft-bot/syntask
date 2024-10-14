@@ -6,8 +6,8 @@ import jsonschema
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
 from jsonschema.validators import Draft202012Validator, create
 
-from prefect.utilities.collections import remove_nested_keys
-from prefect.utilities.schema_tools.hydration import HydrationError, Placeholder
+from syntask.utilities.collections import remove_nested_keys
+from syntask.utilities.schema_tools.hydration import HydrationError, Placeholder
 
 
 class CircularSchemaRefError(Exception):
@@ -40,7 +40,7 @@ def _build_validator():
     return create(
         meta_schema=Draft202012Validator.META_SCHEMA,
         validators=validators,
-        version="prefect",
+        version="syntask",
         type_checker=Draft202012Validator.TYPE_CHECKER,
         format_checker=Draft202012Validator.FORMAT_CHECKER,
         id_of=Draft202012Validator.ID_OF,

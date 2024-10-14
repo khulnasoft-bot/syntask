@@ -8,7 +8,7 @@ Create Date: 2024-04-09 13:20:36.838767
 
 from alembic import op
 
-import prefect.server.utilities.database
+import syntask.server.utilities.database
 
 # revision identifiers, used by Alembic.
 revision = "954db7517015"
@@ -21,13 +21,13 @@ def upgrade():
     op.alter_column(
         "automation_bucket",
         "trigger_id",
-        existing_type=prefect.server.utilities.database.UUID(),
+        existing_type=syntask.server.utilities.database.UUID(),
         nullable=False,
     )
     op.alter_column(
         "automation_bucket",
         "triggered_at",
-        existing_type=prefect.server.utilities.database.Timestamp(timezone=True),
+        existing_type=syntask.server.utilities.database.Timestamp(timezone=True),
         nullable=True,
     )
     op.drop_index(
@@ -56,12 +56,12 @@ def downgrade():
     op.alter_column(
         "automation_bucket",
         "triggered_at",
-        existing_type=prefect.server.utilities.database.Timestamp(timezone=True),
+        existing_type=syntask.server.utilities.database.Timestamp(timezone=True),
         nullable=False,
     )
     op.alter_column(
         "automation_bucket",
         "trigger_id",
-        existing_type=prefect.server.utilities.database.UUID(),
+        existing_type=syntask.server.utilities.database.UUID(),
         nullable=True,
     )

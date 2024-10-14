@@ -9,24 +9,24 @@ from typing import Callable, Type, TypeVar
 
 from typing_extensions import Concatenate, ParamSpec
 
-from prefect.server.database.configurations import (
+from syntask.server.database.configurations import (
     AioSqliteConfiguration,
     AsyncPostgresConfiguration,
     BaseDatabaseConfiguration,
 )
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.database.orm_models import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.database.orm_models import (
     AioSqliteORMConfiguration,
     AsyncPostgresORMConfiguration,
     BaseORMConfiguration,
 )
-from prefect.server.database.query_components import (
+from syntask.server.database.query_components import (
     AioSqliteQueryComponents,
     AsyncPostgresQueryComponents,
     BaseQueryComponents,
 )
-from prefect.server.utilities.database import get_dialect
-from prefect.settings import PREFECT_API_DATABASE_CONNECTION_URL
+from syntask.server.utilities.database import get_dialect
+from syntask.settings import SYNTASK_API_DATABASE_CONNECTION_URL
 
 MODELS_DEPENDENCIES = {
     "database_config": None,
@@ -39,14 +39,14 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def provide_database_interface() -> PrefectDBInterface:
+def provide_database_interface() -> SyntaskDBInterface:
     """
-    Get the current Prefect REST API database interface.
+    Get the current Syntask REST API database interface.
 
     If components of the interface are not set, defaults will be inferred
     based on the dialect of the connection URL.
     """
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
 
     database_config = MODELS_DEPENDENCIES.get("database_config")
     query_components = MODELS_DEPENDENCIES.get("query_components")
@@ -94,7 +94,7 @@ def provide_database_interface() -> PrefectDBInterface:
         MODELS_DEPENDENCIES["orm"] = orm
 
     if interface_class is None:
-        interface_class = PrefectDBInterface
+        interface_class = SyntaskDBInterface
 
     return interface_class(
         database_config=database_config,
@@ -136,23 +136,23 @@ def inject_db(fn: Callable) -> Callable:
 
 
 def db_injector(
-    func: Callable[Concatenate[PrefectDBInterface, P], R],
+    func: Callable[Concatenate[SyntaskDBInterface, P], R],
 ) -> Callable[P, R]:
     """
-    Decorator to inject a PrefectDBInterface instance as the first positional
+    Decorator to inject a SyntaskDBInterface instance as the first positional
     argument to the decorated function.
 
     Unlike `inject_db`, which injects the database connection as a keyword
     argument, `db_injector` adds it explicitly as the first positional
     argument. This change enhances type hinting by making the dependency on
-    PrefectDBInterface explicit in the function signature.
+    SyntaskDBInterface explicit in the function signature.
 
     Args:
         func: The function to decorate, which can be either synchronous or
         asynchronous.
 
     Returns:
-        A wrapped function with the PrefectDBInterface instance injected as the
+        A wrapped function with the SyntaskDBInterface instance injected as the
         first argument, preserving the original function's other parameters and
         return type.
     """
@@ -176,12 +176,12 @@ def db_injector(
 @contextmanager
 def temporary_database_config(tmp_database_config: BaseDatabaseConfiguration):
     """
-    Temporarily override the Prefect REST API database configuration.
+    Temporarily override the Syntask REST API database configuration.
     When the context is closed, the existing database configuration will
     be restored.
 
     Args:
-        tmp_database_config: Prefect REST API database configuration to inject.
+        tmp_database_config: Syntask REST API database configuration to inject.
 
     """
     starting_config = MODELS_DEPENDENCIES["database_config"]
@@ -195,12 +195,12 @@ def temporary_database_config(tmp_database_config: BaseDatabaseConfiguration):
 @contextmanager
 def temporary_query_components(tmp_queries: BaseQueryComponents):
     """
-    Temporarily override the Prefect REST API database query components.
+    Temporarily override the Syntask REST API database query components.
     When the context is closed, the existing query components will
     be restored.
 
     Args:
-        tmp_queries: Prefect REST API query components to inject.
+        tmp_queries: Syntask REST API query components to inject.
 
     """
     starting_queries = MODELS_DEPENDENCIES["query_components"]
@@ -214,12 +214,12 @@ def temporary_query_components(tmp_queries: BaseQueryComponents):
 @contextmanager
 def temporary_orm_config(tmp_orm_config: BaseORMConfiguration):
     """
-    Temporarily override the Prefect REST API ORM configuration.
+    Temporarily override the Syntask REST API ORM configuration.
     When the context is closed, the existing orm configuration will
     be restored.
 
     Args:
-        tmp_orm_config: Prefect REST API ORM configuration to inject.
+        tmp_orm_config: Syntask REST API ORM configuration to inject.
 
     """
     starting_orm_config = MODELS_DEPENDENCIES["orm"]
@@ -231,13 +231,13 @@ def temporary_orm_config(tmp_orm_config: BaseORMConfiguration):
 
 
 @contextmanager
-def temporary_interface_class(tmp_interface_class: Type[PrefectDBInterface]):
+def temporary_interface_class(tmp_interface_class: Type[SyntaskDBInterface]):
     """
-    Temporarily override the Prefect REST API interface class When the context is closed,
+    Temporarily override the Syntask REST API interface class When the context is closed,
     the existing interface will be restored.
 
     Args:
-        tmp_interface_class: Prefect REST API interface class to inject.
+        tmp_interface_class: Syntask REST API interface class to inject.
 
     """
     starting_interface_class = MODELS_DEPENDENCIES["interface_class"]
@@ -253,22 +253,22 @@ def temporary_database_interface(
     tmp_database_config: BaseDatabaseConfiguration = None,
     tmp_queries: BaseQueryComponents = None,
     tmp_orm_config: BaseORMConfiguration = None,
-    tmp_interface_class: Type[PrefectDBInterface] = None,
+    tmp_interface_class: Type[SyntaskDBInterface] = None,
 ):
     """
-    Temporarily override the Prefect REST API database interface.
+    Temporarily override the Syntask REST API database interface.
 
     Any interface components that are not explicitly provided will be
-    cleared and inferred from the Prefect REST API database connection string
+    cleared and inferred from the Syntask REST API database connection string
     dialect.
 
     When the context is closed, the existing database interface will
     be restored.
 
     Args:
-        tmp_database_config: An optional Prefect REST API database configuration to inject.
-        tmp_orm_config: An optional Prefect REST API ORM configuration to inject.
-        tmp_queries: Optional Prefect REST API query components to inject.
+        tmp_database_config: An optional Syntask REST API database configuration to inject.
+        tmp_orm_config: An optional Syntask REST API ORM configuration to inject.
+        tmp_queries: Optional Syntask REST API query components to inject.
         tmp_interface_class: Optional database interface class to inject
 
     """
@@ -285,20 +285,20 @@ def temporary_database_interface(
 
 
 def set_database_config(database_config: BaseDatabaseConfiguration):
-    """Set Prefect REST API database configuration."""
+    """Set Syntask REST API database configuration."""
     MODELS_DEPENDENCIES["database_config"] = database_config
 
 
 def set_query_components(query_components: BaseQueryComponents):
-    """Set Prefect REST API query components."""
+    """Set Syntask REST API query components."""
     MODELS_DEPENDENCIES["query_components"] = query_components
 
 
 def set_orm_config(orm_config: BaseORMConfiguration):
-    """Set Prefect REST API orm configuration."""
+    """Set Syntask REST API orm configuration."""
     MODELS_DEPENDENCIES["orm"] = orm_config
 
 
-def set_interface_class(interface_class: Type[PrefectDBInterface]):
-    """Set Prefect REST API interface class."""
+def set_interface_class(interface_class: Type[SyntaskDBInterface]):
+    """Set Syntask REST API interface class."""
     MODELS_DEPENDENCIES["interface_class"] = interface_class

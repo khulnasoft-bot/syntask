@@ -14,20 +14,20 @@ from websockets.exceptions import ConnectionClosed
 NORMAL_DISCONNECT_EXCEPTIONS = (IOError, ConnectionClosed, WebSocketDisconnect)
 
 
-async def accept_prefect_socket(websocket: WebSocket) -> Optional[WebSocket]:
+async def accept_syntask_socket(websocket: WebSocket) -> Optional[WebSocket]:
     subprotocols = websocket.headers.get("Sec-WebSocket-Protocol", "").split(",")
-    if "prefect" not in subprotocols:
+    if "syntask" not in subprotocols:
         return await websocket.close(WS_1002_PROTOCOL_ERROR)
 
-    await websocket.accept(subprotocol="prefect")
+    await websocket.accept(subprotocol="syntask")
 
     try:
         # Websocket connections are authenticated via messages. The first
         # message is expected to be an auth message, and if any other type of
         # message is received then the connection will be closed.
         #
-        # There is no authentication in Prefect Server, but the protocol requires
-        # that we receive and return the auth message for compatibility with Prefect
+        # There is no authentication in Syntask Server, but the protocol requires
+        # that we receive and return the auth message for compatibility with Syntask
         # Cloud.
         message = await websocket.receive_json()
         if message["type"] != "auth":

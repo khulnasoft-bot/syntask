@@ -3,16 +3,16 @@ from pathlib import Path
 
 import pytest
 
-from prefect import flow
-from prefect.exceptions import CancelledRun, CrashedRun, FailedRun
-from prefect.results import (
+from syntask import flow
+from syntask.exceptions import CancelledRun, CrashedRun, FailedRun
+from syntask.results import (
     PersistedResult,
     ResultRecord,
     ResultRecordMetadata,
     ResultStore,
 )
-from prefect.serializers import JSONSerializer
-from prefect.states import (
+from syntask.serializers import JSONSerializer
+from syntask.states import (
     Cancelled,
     Completed,
     Crashed,
@@ -26,7 +26,7 @@ from prefect.states import (
     raise_state_exception,
     return_value_to_state,
 )
-from prefect.utilities.annotations import quote
+from syntask.utilities.annotations import quote
 
 
 @pytest.mark.parametrize("iterable_type", [set, list, tuple])
@@ -162,7 +162,7 @@ class TestReturnValueToState:
         assert await result_state.result() == 1
 
     async def test_returns_persisted_results_unaltered(
-        self, ignore_prefect_deprecation_warnings
+        self, ignore_syntask_deprecation_warnings
     ):
         # TODO: This test will be removed in a future release when PersistedResult is removed
         store = ResultStore(persist_result=True)
@@ -239,7 +239,7 @@ class TestReturnValueToState:
         assert result_state.is_completed()
         assert result_state.message == "All states completed."
 
-    async def test_non_prefect_types_return_completed_state(self, store):
+    async def test_non_syntask_types_return_completed_state(self, store):
         result_state = await return_value_to_state("foo", store)
         assert result_state.is_completed()
         assert await result_state.result() == "foo"
@@ -382,9 +382,9 @@ class TestStateGroup:
         assert "'RUNNING'=2" in counts_message
 
 
-def test_state_returns_expected_result(ignore_prefect_deprecation_warnings):
+def test_state_returns_expected_result(ignore_syntask_deprecation_warnings):
     """
-    Regression test for https://github.com/synopkg/synopkg/issues/14927
+    Regression test for https://github.com/synopkg/syntask/issues/14927
     """
     state = Completed(data="test")
     assert state.result() == "test"

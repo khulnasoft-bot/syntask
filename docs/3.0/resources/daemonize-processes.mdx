@@ -1,24 +1,24 @@
 ---
 title: Daemonize worker processes
-description: Learn how Prefect flow deployments enable configuring flows for scheduled and remote execution with workers.
+description: Learn how Syntask flow deployments enable configuring flows for scheduled and remote execution with workers.
 ---
 
 When running workflow applications, it's helpful to create long-running processes that
 run at startup and are resilient to failure.
 
-This guide shows you how to set up a systemd service to create long-running Prefect processes
+This guide shows you how to set up a systemd service to create long-running Syntask processes
 that poll for scheduled flow runs, including how to:
 
 * create a Linux user
-* install and configure Prefect
-* set up a systemd service for the Prefect worker or `.serve` process
+* install and configure Syntask
+* set up a systemd service for the Syntask worker or `.serve` process
 
 ## Prerequisites
 
 * An environment with a linux operating system with [systemd](https://systemd.io/) and Python 3.9
 or later.
 * A superuser account that can run `sudo` commands.
-* A Prefect Cloud account, or an instance of a Prefect server running on your network.
+* A Syntask Cloud account, or an instance of a Syntask server running on your network.
 
 If using an [AWS t2-micro EC2 instance](https://aws.amazon.com/ec2/instance-types/t2/) with an
 AWS Linux image, you can install Python and pip with `sudo yum install -y python3 python3-pip`.
@@ -27,88 +27,88 @@ AWS Linux image, you can install Python and pip with `sudo yum install -y python
 
 A systemd service is ideal for running a long-lived process on a Linux VM or physical Linux server.
 You will use systemd and learn how to automatically start a
-[Prefect worker](/3.0/deploy/infrastructure-concepts/workers/) or
+[Syntask worker](/3.0/deploy/infrastructure-concepts/workers/) or
 long-lived [`serve` process](/3.0/develop/write-flows/#serving-a-flow) when Linux starts.
 This approach provides resilience by automatically restarting the process if it crashes.
 
 ### Step 1: Add a user
 
-Create a user account on your Linux system for the Prefect process.
+Create a user account on your Linux system for the Syntask process.
 You can run a worker or serve process as root, but it's best practice to create a dedicated user.
 
 In a terminal, run:
 
 ```bash
-sudo useradd -m prefect
-sudo passwd prefect
+sudo useradd -m syntask
+sudo passwd syntask
 ```
 
-When prompted, enter a password for the `prefect` account.
+When prompted, enter a password for the `syntask` account.
 
-Next, log in to the `prefect` account by running:
+Next, log in to the `syntask` account by running:
 
 ```bash
-sudo su prefect
+sudo su syntask
 ```
 
-### Step 2: Install Prefect
+### Step 2: Install Syntask
 
 Run:
 
 ```bash
-pip3 install prefect
+pip3 install syntask
 ```
 
-This guide assumes you are installing Prefect globally, rather than a virtual environment.
+This guide assumes you are installing Syntask globally, rather than a virtual environment.
 If running a systemd service in a virtual environment, change the ExecPath.
 For example, if using [venv](https://docs.python.org/3/library/venv.html), change the ExecPath
-to target the `prefect` application in the `bin` subdirectory of your virtual environment.
+to target the `syntask` application in the `bin` subdirectory of your virtual environment.
 
-Next, set up your environment so the Prefect client knows which server to connect to.
+Next, set up your environment so the Syntask client knows which server to connect to.
 
-If connecting to Prefect Cloud, follow [the instructions](https://docs.syntask.khulnasoft.com/ui/cloud-get-started/#create-an-api-key)
+If connecting to Syntask Cloud, follow [the instructions](https://docs.syntask.khulnasoft.com/ui/cloud-get-started/#create-an-api-key)
 to obtain an API key, and then run the following:
 
 ```bash
-prefect cloud login -k YOUR_API_KEY
+syntask cloud login -k YOUR_API_KEY
 ```
 
-When prompted, choose the Prefect workspace to log in to.
+When prompted, choose the Syntask workspace to log in to.
 
-If connecting to a self-hosted Prefect server instance instead of a Prefect Cloud account, run the following command, substituting the IP address of your server:
+If connecting to a self-hosted Syntask server instance instead of a Syntask Cloud account, run the following command, substituting the IP address of your server:
 
 ```bash
-prefect config set PREFECT_API_URL=http://your-prefect-server-IP:4200
+syntask config set SYNTASK_API_URL=http://your-syntask-server-IP:4200
 ```
 
-Run the `exit` command to sign out of the `prefect` Linux account.
+Run the `exit` command to sign out of the `syntask` Linux account.
 This command switches you back to your sudo-enabled account where you can run the commands in the
 next section.
 
 ### Step 3: Set up a systemd service
 
-See the section below if you are setting up a Prefect worker.
+See the section below if you are setting up a Syntask worker.
 Skip to the [next section](#setting-up-a-systemd-service-for-serve) if you are setting up a
-Prefect `.serve` process.
+Syntask `.serve` process.
 
-#### Setting up a systemd service for a Prefect worker
+#### Setting up a systemd service for a Syntask worker
 
 Move into the `/etc/systemd/system` folder and open a file for editing.
 We use the Vim text editor below.
 
 ```bash
 cd /etc/systemd/system
-sudo vim my-prefect-service.service
+sudo vim my-syntask-service.service
 ```
 
-```txt my-prefect-service.service
+```txt my-syntask-service.service
 [Unit]
-Description=Prefect worker
+Description=Syntask worker
 
 [Service]
-User=prefect
+User=syntask
 WorkingDirectory=/home
-ExecStart=prefect worker start --pool YOUR_WORK_POOL_NAME
+ExecStart=syntask worker start --pool YOUR_WORK_POOL_NAME
 Restart=always
 
 [Install]
@@ -125,7 +125,7 @@ Copy your flow entrypoint Python file and any other files needed for your flow t
 Here's a basic example flow:
 
 ```python my_file.py
-from prefect import flow
+from syntask import flow
 
 
 @flow(log_prints=True)
@@ -157,15 +157,15 @@ This example below uses Vim.
 
 ```bash
 cd /etc/systemd/system
-sudo vim my-prefect-service.service
+sudo vim my-syntask-service.service
 ```
 
-```txt my-prefect-service.service
+```txt my-syntask-service.service
 [Unit]
-Description=Prefect serve
+Description=Syntask serve
 
 [Service]
-User=prefect
+User=syntask
 WorkingDirectory=/home
 ExecStart=python3 my_file.py
 Restart=always
@@ -187,7 +187,7 @@ sudo systemctl daemon-reload
 Then, enable the service by running:
 
 ```bash
-sudo systemctl enable my-prefect-service
+sudo systemctl enable my-syntask-service
 ```
 
 This command ensures it runs when your system boots.
@@ -195,12 +195,12 @@ This command ensures it runs when your system boots.
 Next, start the service:
 
 ```bash
-sudo systemctl start my-prefect-service
+sudo systemctl start my-syntask-service
 ```
 
 Run your deployment from the UI and check the logs on the **Flow Runs** page.
 
-You can see if your daemonized Prefect worker or serve process is running, and the
-Prefect logs with `systemctl status my-prefect-service`.
+You can see if your daemonized Syntask worker or serve process is running, and the
+Syntask logs with `systemctl status my-syntask-service`.
 
 You now have a systemd service that starts when your system boots, which will restart if it ever crashes.

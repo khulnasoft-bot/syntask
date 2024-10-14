@@ -3,17 +3,17 @@ from datetime import timedelta
 
 import pytest
 
-from prefect import flow
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.filters import DeploymentFilter, DeploymentFilterId
-from prefect.client.schemas.schedules import IntervalSchedule
-from prefect.settings import (
-    PREFECT_API_SERVICES_TRIGGERS_ENABLED,
+from syntask import flow
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.filters import DeploymentFilter, DeploymentFilterId
+from syntask.client.schemas.schedules import IntervalSchedule
+from syntask.settings import (
+    SYNTASK_API_SERVICES_TRIGGERS_ENABLED,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.testing.cli import invoke_and_assert
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 @flow
@@ -27,28 +27,28 @@ def patch_import(monkeypatch):
     def fn():
         pass
 
-    monkeypatch.setattr("prefect.utilities.importtools.import_object", lambda path: fn)
+    monkeypatch.setattr("syntask.utilities.importtools.import_object", lambda path: fn)
     return fn
 
 
 class TestDeploymentSchedules:
     @pytest.fixture(autouse=True)
     def enable_triggers(self):
-        with temporary_settings({PREFECT_API_SERVICES_TRIGGERS_ENABLED: True}):
+        with temporary_settings({SYNTASK_API_SERVICES_TRIGGERS_ENABLED: True}):
             yield
 
     @pytest.fixture
-    async def flojo(self, prefect_client):
+    async def flojo(self, syntask_client):
         @flow
         async def rence_griffith():
             pass
 
-        flow_id = await prefect_client.create_flow(rence_griffith)
+        flow_id = await syntask_client.create_flow(rence_griffith)
         schedule = DeploymentScheduleCreate(
             schedule=IntervalSchedule(interval=timedelta(seconds=10.76))
         )
 
-        deployment_id = await prefect_client.create_deployment(
+        deployment_id = await syntask_client.create_deployment(
             flow_id=flow_id,
             name="test-deployment",
             version="git-commit-hash",
@@ -60,8 +60,8 @@ class TestDeploymentSchedules:
         return deployment_id
 
     @pytest.fixture
-    async def flojo_deployment(self, flojo, prefect_client):
-        return await prefect_client.read_deployment(flojo)
+    async def flojo_deployment(self, flojo, syntask_client):
+        return await syntask_client.read_deployment(flojo)
 
     def test_list_schedules(self, flojo_deployment):
         create_commands = [
@@ -938,8 +938,8 @@ class TestDeploymentSchedules:
 
 class TestDeploymentRun:
     @pytest.fixture
-    async def deployment_name(self, deployment, prefect_client):
-        flow = await prefect_client.read_flow(deployment.flow_id)
+    async def deployment_name(self, deployment, syntask_client):
+        flow = await syntask_client.read_flow(deployment.flow_id)
         return f"{flow.name}/{deployment.name}"
 
     def test_run_wraps_parameter_stdin_parsing_exception(self, deployment_name):
@@ -1000,7 +1000,7 @@ class TestDeploymentRun:
         self,
         deployment,
         deployment_name,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         given,
         expected,
     ):
@@ -1014,7 +1014,7 @@ class TestDeploymentRun:
             ["deployment", "run", deployment_name, "--param", f"name={given}"],
         )
 
-        flow_runs = await prefect_client.read_flow_runs(
+        flow_runs = await syntask_client.read_flow_runs(
             deployment_filter=DeploymentFilter(
                 id=DeploymentFilterId(any_=[deployment.id])
             )
@@ -1028,7 +1028,7 @@ class TestDeploymentRun:
         self,
         deployment,
         deployment_name,
-        prefect_client,
+        syntask_client,
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1036,7 +1036,7 @@ class TestDeploymentRun:
             json.dumps({"name": "foo"}),  # stdin
         )
 
-        flow_runs = await prefect_client.read_flow_runs(
+        flow_runs = await syntask_client.read_flow_runs(
             deployment_filter=DeploymentFilter(
                 id=DeploymentFilterId(any_=[deployment.id])
             )
@@ -1050,7 +1050,7 @@ class TestDeploymentRun:
         self,
         deployment,
         deployment_name,
-        prefect_client,
+        syntask_client,
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1063,7 +1063,7 @@ class TestDeploymentRun:
             ],
         )
 
-        flow_runs = await prefect_client.read_flow_runs(
+        flow_runs = await syntask_client.read_flow_runs(
             deployment_filter=DeploymentFilter(
                 id=DeploymentFilterId(any_=[deployment.id])
             )

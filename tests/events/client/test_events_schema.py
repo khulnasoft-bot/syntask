@@ -6,19 +6,19 @@ import pendulum
 import pytest
 from pendulum.datetime import DateTime
 
-from prefect.events import Event, RelatedResource, Resource
+from syntask.events import Event, RelatedResource, Resource
 
 
 def test_client_events_generate_an_id_by_default():
-    event1 = Event(event="hello", resource={"prefect.resource.id": "hello"})
-    event2 = Event(event="hello", resource={"prefect.resource.id": "hello"})
+    event1 = Event(event="hello", resource={"syntask.resource.id": "hello"})
+    event2 = Event(event="hello", resource={"syntask.resource.id": "hello"})
     assert isinstance(event1.id, UUID)
     assert isinstance(event2.id, UUID)
     assert event1.id != event2.id
 
 
 def test_client_events_generate_occurred_by_default(start_of_test: DateTime):
-    event = Event(event="hello", resource={"prefect.resource.id": "hello"})
+    event = Event(event="hello", resource={"syntask.resource.id": "hello"})
     assert start_of_test <= event.occurred <= pendulum.now("UTC")
 
 
@@ -26,7 +26,7 @@ def test_client_events_may_have_empty_related_resources():
     event = Event(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "hello"},
+        resource={"syntask.resource.id": "hello"},
         id=uuid4(),
     )
     assert event.related == []
@@ -36,9 +36,9 @@ def test_client_event_resources_have_correct_types():
     event = Event(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "hello"},
+        resource={"syntask.resource.id": "hello"},
         related=[
-            {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
+            {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
         ],
         id=uuid4(),
     )
@@ -51,11 +51,11 @@ def test_client_events_may_have_multiple_related_resources():
     event = Event(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "hello"},
+        resource={"syntask.resource.id": "hello"},
         related=[
-            {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-2", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-3", "prefect.resource.role": "role-2"},
+            {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-2", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-3", "syntask.resource.role": "role-2"},
         ],
         id=uuid4(),
     )
@@ -71,11 +71,11 @@ def test_json_representation():
     event = Event(
         occurred=pendulum.DateTime(2021, 2, 3, 4, 5, 6, 7, tzinfo=timezone.utc),
         event="hello",
-        resource={"prefect.resource.id": "hello"},
+        resource={"syntask.resource.id": "hello"},
         related=[
-            {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-2", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-3", "prefect.resource.role": "role-2"},
+            {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-2", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-3", "syntask.resource.role": "role-2"},
         ],
         payload={"hello": "world"},
         id=uuid4(),
@@ -87,11 +87,11 @@ def test_json_representation():
     assert jsonified == {
         "occurred": "2021-02-03T04:05:06.000007Z",
         "event": "hello",
-        "resource": {"prefect.resource.id": "hello"},
+        "resource": {"syntask.resource.id": "hello"},
         "related": [
-            {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-2", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-3", "prefect.resource.role": "role-2"},
+            {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-2", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-3", "syntask.resource.role": "role-2"},
         ],
         "payload": {"hello": "world"},
         "id": str(event.id),
@@ -103,9 +103,9 @@ def test_client_event_involved_resources():
     event = Event(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "hello"},
+        resource={"syntask.resource.id": "hello"},
         related=[
-            {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
+            {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
         ],
         id=uuid4(),
     )
@@ -120,21 +120,21 @@ def test_client_events_may_have_a_name_label():
     event = Event(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "hello", "prefect.resource.name": "Hello!"},
+        resource={"syntask.resource.id": "hello", "syntask.resource.name": "Hello!"},
         related=[
             {
-                "prefect.resource.id": "related-1",
-                "prefect.resource.role": "role-1",
-                "prefect.resource.name": "Related 1",
+                "syntask.resource.id": "related-1",
+                "syntask.resource.role": "role-1",
+                "syntask.resource.name": "Related 1",
             },
             {
-                "prefect.resource.id": "related-2",
-                "prefect.resource.role": "role-1",
-                "prefect.resource.name": "Related 2",
+                "syntask.resource.id": "related-2",
+                "syntask.resource.role": "role-1",
+                "syntask.resource.name": "Related 2",
             },
             {
-                "prefect.resource.id": "related-3",
-                "prefect.resource.role": "role-2",
+                "syntask.resource.id": "related-3",
+                "syntask.resource.role": "role-2",
                 # deliberately lacks a name
             },
         ],
@@ -154,24 +154,24 @@ def example_event() -> Event:
         occurred=pendulum.now("UTC"),
         event="hello",
         resource={
-            "prefect.resource.id": "hello",
+            "syntask.resource.id": "hello",
             "name": "Hello!",
             "related:psychout:name": "Psych!",
         },
         related=[
             {
-                "prefect.resource.id": "related-1",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-1",
+                "syntask.resource.role": "role-1",
                 "name": "Related 1",
             },
             {
-                "prefect.resource.id": "related-2",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-2",
+                "syntask.resource.role": "role-1",
                 "name": "Related 2",
             },
             {
-                "prefect.resource.id": "related-3",
-                "prefect.resource.role": "role-2",
+                "syntask.resource.id": "related-3",
+                "syntask.resource.role": "role-2",
                 "name": "Related 3",
             },
         ],

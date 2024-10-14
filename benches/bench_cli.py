@@ -5,17 +5,17 @@ import subprocess
 # TODO: Find a way to measure these in CodSpeed
 
 
-def bench_prefect_help(benchmark):
-    benchmark(subprocess.check_call, ["prefect", "--help"])
+def bench_syntask_help(benchmark):
+    benchmark(subprocess.check_call, ["syntask", "--help"])
 
 
-def bench_prefect_version(benchmark):
-    benchmark(subprocess.check_call, ["prefect", "version"])
+def bench_syntask_version(benchmark):
+    benchmark(subprocess.check_call, ["syntask", "version"])
 
 
-def bench_prefect_short_version(benchmark):
-    benchmark(subprocess.check_call, ["prefect", "--version"])
+def bench_syntask_short_version(benchmark):
+    benchmark(subprocess.check_call, ["syntask", "--version"])
 
 
-def bench_prefect_profile_ls(benchmark):
-    benchmark(subprocess.check_call, ["prefect", "profile", "ls"])
+def bench_syntask_profile_ls(benchmark):
+    benchmark(subprocess.check_call, ["syntask", "profile", "ls"])

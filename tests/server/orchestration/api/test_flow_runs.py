@@ -10,16 +10,16 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from prefect import states as client_states
-from prefect.client.schemas import actions as client_actions
-from prefect.input import RunInput, keyset_from_paused_state
-from prefect.server import models, schemas
-from prefect.server.schemas import core, responses
-from prefect.server.schemas.actions import LogCreate
-from prefect.server.schemas.core import TaskRunResult
-from prefect.server.schemas.responses import FlowRunResponse, OrchestrationResult
-from prefect.server.schemas.states import StateType
-from prefect.utilities.pydantic import parse_obj_as
+from syntask import states as client_states
+from syntask.client.schemas import actions as client_actions
+from syntask.input import RunInput, keyset_from_paused_state
+from syntask.server import models, schemas
+from syntask.server.schemas import core, responses
+from syntask.server.schemas.actions import LogCreate
+from syntask.server.schemas.core import TaskRunResult
+from syntask.server.schemas.responses import FlowRunResponse, OrchestrationResult
+from syntask.server.schemas.states import StateType
+from syntask.utilities.pydantic import parse_obj_as
 
 
 class TestCreateFlowRun:
@@ -430,7 +430,7 @@ class TestReadFlowRun:
         assert response.json()["deployment_version"] == "Deployment Version 1.0"
 
     async def test_read_flow_run_like_the_engine_does(self, flow, flow_run, client):
-        """Regression test for the hex format of UUIDs in `PREFECT__FLOW_RUN_ID`
+        """Regression test for the hex format of UUIDs in `SYNTASK__FLOW_RUN_ID`
 
         The only route that is requested in this way is `GET /flow_runs/{id}`; other
         methods aren't affected because they are based on prior requests for flow runs
@@ -449,7 +449,7 @@ class TestReadFlowRun:
     async def test_read_flow_run_with_invalid_id_is_rejected(self, client):
         """Additional safety check with for the above regression test to confirm that
         we're not attempting query with any old string as a flow run ID."""
-        with mock.patch("prefect.server.models.flow_runs.read_flow_run") as mock_read:
+        with mock.patch("syntask.server.models.flow_runs.read_flow_run") as mock_read:
             response = await client.get("/flow_runs/THISAINTIT")
             # Ideally this would be a 404, but we're letting FastAPI take care of this
             # at the parameter parsing level, so it's a 422
@@ -1527,7 +1527,7 @@ class TestResumeFlowrun:
         response = await client.post(
             f"/flow_runs/{paused_flow_run_waiting_for_input_with_default.id}/resume",
             json={
-                "run_input": {"how_many": {"__prefect_kind": "json", "value": '"3"'}}
+                "run_input": {"how_many": {"__syntask_kind": "json", "value": '"3"'}}
             },
         )
         assert response.status_code == 201, response.text
@@ -1555,7 +1555,7 @@ class TestResumeFlowrun:
             f"/flow_runs/{paused_flow_run_waiting_for_input_with_default.id}/resume",
             json={
                 "run_input": {
-                    "how_many": {"__prefect_kind": "jinja", "template": "{{ 2 + 2 }}"}
+                    "how_many": {"__syntask_kind": "jinja", "template": "{{ 2 + 2 }}"}
                 }
             },
         )
@@ -1591,7 +1591,7 @@ class TestResumeFlowrun:
             json={
                 "run_input": {
                     "how_many": {
-                        "__prefect_kind": "workspace_variable",
+                        "__syntask_kind": "workspace_variable",
                         "variable_name": "my_variable",
                     }
                 }
@@ -1622,7 +1622,7 @@ class TestResumeFlowrun:
             json={
                 "run_input": {
                     "how_many": {
-                        "__prefect_kind": "json",
+                        "__syntask_kind": "json",
                         "value": '{"invalid": json}',
                     },
                 }
@@ -1880,16 +1880,16 @@ class TestSetFlowRunState:
         # for older (2.x) clients and 3.x clients other than the ones with
         # worker handling for deployment concurrency.
         with mock.patch(
-            "prefect.server.orchestration.core_policy.SecureFlowConcurrencySlots.before_transition"
+            "syntask.server.orchestration.core_policy.SecureFlowConcurrencySlots.before_transition"
         ) as mock_before_transition:
             post_kwargs = {
                 "json": dict(state=dict(type="PENDING", name="Pending")),
                 "headers": {},
             }
             if client_version:
-                post_kwargs["headers"][
-                    "User-Agent"
-                ] = f"prefect/{client_version} (API 2.19.3)"
+                post_kwargs["headers"]["User-Agent"] = (
+                    f"syntask/{client_version} (API 2.19.3)"
+                )
             response = await client.post(
                 f"/flow_runs/{flow_run_with_concurrency_limit.id}/set_state",
                 **post_kwargs,
@@ -2828,7 +2828,7 @@ class TestDownloadFlowRunLogs:
 
         logs = [
             LogCreate(
-                name="prefect.flow_run",
+                name="syntask.flow_run",
                 level=10,
                 message=f"Log message {i}",
                 timestamp=NOW,
@@ -2849,7 +2849,7 @@ class TestDownloadFlowRunLogs:
 
         logs = [
             LogCreate(
-                name="prefect.flow_run",
+                name="syntask.flow_run",
                 level=10,
                 message=f"Log message {i}",
                 timestamp=NOW,
@@ -2874,7 +2874,7 @@ class TestDownloadFlowRunLogs:
         monkeypatch: pytest.MonkeyPatch,
     ):
         monkeypatch.setattr(
-            "prefect.server.api.flow_runs.FLOW_RUN_LOGS_DOWNLOAD_PAGE_LIMIT", 3
+            "syntask.server.api.flow_runs.FLOW_RUN_LOGS_DOWNLOAD_PAGE_LIMIT", 3
         )
 
         async with client.stream(

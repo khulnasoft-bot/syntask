@@ -1,13 +1,20 @@
-import { RouteParam } from '@prefecthq/vue-compositions'
-import { LocationQueryValue } from 'vue-router'
+import { Schema, SchemaProperties } from '@/types/schemas'
+import { mapEntries } from '@/utilities/object'
 
-export class JSONRouteParam extends RouteParam<Record<string, unknown>> {
+function getSchemaPropertiesWithoutDefaults(
+  schemaProperties: SchemaProperties = {},
+): SchemaProperties {
+  return mapEntries(schemaProperties, (key, property) => {
+    // eslint-disable-next-line no-unused-vars
+    const { default: __, ...rest } = property
 
-  protected override parse(value: LocationQueryValue): Record<string, unknown> {
-    return JSON.parse(decodeURIComponent(value ?? ''))
-  }
+    return [key, rest]
+  })
+}
 
-  protected override format(value: Record<string, unknown>): LocationQueryValue {
-    return encodeURIComponent(JSON.stringify(value))
+export function getSchemaWithoutDefaults(schema: Schema): Schema {
+  return {
+    ...schema,
+    properties: getSchemaPropertiesWithoutDefaults(schema.properties),
   }
 }

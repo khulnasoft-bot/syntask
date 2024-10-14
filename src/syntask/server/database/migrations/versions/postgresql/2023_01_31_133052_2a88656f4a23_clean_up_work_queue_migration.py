@@ -9,7 +9,7 @@ Create Date: 2023-01-31 13:30:52.172981
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "2a88656f4a23"
@@ -42,19 +42,19 @@ def downgrade():
         "work_pool_queue",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -64,7 +64,7 @@ def downgrade():
         sa.Column("concurrency_limit", sa.Integer(), nullable=True),
         sa.Column("priority", sa.Integer(), nullable=False),
         sa.Column(
-            "work_pool_id", prefect.server.utilities.database.UUID(), nullable=False
+            "work_pool_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["work_pool_id"],

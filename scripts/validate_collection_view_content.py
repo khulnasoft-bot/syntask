@@ -131,7 +131,7 @@ def validate_view_content(view_dict: dict, variety: CollectionViewVariety) -> No
         try:
             # raise validation errors if any metadata doesn't match the schema
             list(map(validate, collection_metadata.values()))
-        except IndexError:  # to catch something like {"prefect-X": {}}
+        except IndexError:  # to catch something like {"syntask-X": {}}
             raise ValueError("There's a key with empty value in this view!")
         print(f"  Validated {collection_name} summary in {variety} view!")
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     included_paths = [
         (
             "worker",
-            "src/prefect/server/api/collections_data/views/aggregate-worker-metadata.json",
+            "src/syntask/server/api/collections_data/views/aggregate-worker-metadata.json",
         )
     ]
 

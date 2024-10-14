@@ -8,8 +8,8 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 def reset_imports():
     # Remove the module from sys.modules if it's there
-    prefect_modules = [key for key in sys.modules if key.startswith("prefect")]
-    for module in prefect_modules:
+    syntask_modules = [key for key in sys.modules if key.startswith("syntask")]
+    for module in syntask_modules:
         del sys.modules[module]
 
     # Clear importlib cache
@@ -21,21 +21,21 @@ def reset_imports():
 
 
 @pytest.mark.benchmark(group="imports")
-def bench_import_prefect(benchmark: BenchmarkFixture):
-    def import_prefect():
+def bench_import_syntask(benchmark: BenchmarkFixture):
+    def import_syntask():
         reset_imports()
 
-        import prefect  # noqa
+        import syntask  # noqa
 
-    benchmark(import_prefect)
+    benchmark(import_syntask)
 
 
 @pytest.mark.timeout(180)
 @pytest.mark.benchmark(group="imports")
-def bench_import_prefect_flow(benchmark: BenchmarkFixture):
-    def import_prefect_flow():
+def bench_import_syntask_flow(benchmark: BenchmarkFixture):
+    def import_syntask_flow():
         reset_imports()
 
-        from prefect import flow  # noqa
+        from syntask import flow  # noqa
 
-    benchmark(import_prefect_flow)
+    benchmark(import_syntask_flow)

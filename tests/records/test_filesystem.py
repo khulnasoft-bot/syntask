@@ -5,14 +5,14 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.filesystems import LocalFileSystem
-from prefect.records.filesystem import FileSystemRecordStore
-from prefect.results import ResultStore
-from prefect.settings import (
-    PREFECT_DEFAULT_RESULT_STORAGE_BLOCK,
+from syntask.filesystems import LocalFileSystem
+from syntask.records.filesystem import FileSystemRecordStore
+from syntask.results import ResultStore
+from syntask.settings import (
+    SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK,
     temporary_settings,
 )
-from prefect.transactions import IsolationLevel
+from syntask.transactions import IsolationLevel
 
 
 def read_locked_key(key, store, queue: multiprocessing.Queue):
@@ -22,7 +22,7 @@ def read_locked_key(key, store, queue: multiprocessing.Queue):
 
 
 @pytest.fixture(autouse=True)
-def ignore_deprecations(ignore_prefect_deprecation_warnings):
+def ignore_deprecations(ignore_syntask_deprecation_warnings):
     """This file will be removed in a future release when FileSystemRecordStore is removed."""
 
 
@@ -33,7 +33,7 @@ class TestFileSystemRecordStore:
         LocalFileSystem(basepath=tmp_path).save(name)
         with temporary_settings(
             {
-                PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
             }
         ):
             yield

@@ -20,8 +20,8 @@ from pendulum.datetime import DateTime
 from .schemas.events import RelatedResource
 
 if TYPE_CHECKING:
-    from prefect._internal.schemas.bases import ObjectBaseModel
-    from prefect.client.orchestration import PrefectClient
+    from syntask._internal.schemas.bases import ObjectBaseModel
+    from syntask.client.orchestration import SyntaskClient
 
 ResourceCacheEntry = Dict[str, Union[str, "ObjectBaseModel", None]]
 RelatedResourceCache = Dict[str, Tuple[ResourceCacheEntry, DateTime]]
@@ -34,8 +34,8 @@ def tags_as_related_resources(tags: Iterable[str]) -> List[RelatedResource]:
     return [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.tag.{tag}",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": f"syntask.tag.{tag}",
+                "syntask.resource.role": "tag",
             }
         )
         for tag in sorted(tags)
@@ -43,23 +43,23 @@ def tags_as_related_resources(tags: Iterable[str]) -> List[RelatedResource]:
 
 
 def object_as_related_resource(kind: str, role: str, object: Any) -> RelatedResource:
-    resource_id = f"prefect.{kind}.{object.id}"
+    resource_id = f"syntask.{kind}.{object.id}"
 
     return RelatedResource.model_validate(
         {
-            "prefect.resource.id": resource_id,
-            "prefect.resource.role": role,
-            "prefect.resource.name": object.name,
+            "syntask.resource.id": resource_id,
+            "syntask.resource.role": role,
+            "syntask.resource.name": object.name,
         }
     )
 
 
 async def related_resources_from_run_context(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     exclude: Optional[Set[str]] = None,
 ) -> List[RelatedResource]:
-    from prefect.client.schemas.objects import FlowRun
-    from prefect.context import FlowRunContext, TaskRunContext
+    from syntask.client.schemas.objects import FlowRun
+    from syntask.context import FlowRunContext, TaskRunContext
 
     if exclude is None:
         exclude = set()

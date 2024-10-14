@@ -30,43 +30,43 @@ import anyio
 import pendulum
 from typing_extensions import ParamSpec
 
-from prefect import Task
-from prefect.client.orchestration import PrefectClient, SyncPrefectClient, get_client
-from prefect.client.schemas import TaskRun
-from prefect.client.schemas.objects import State, TaskRunInput
-from prefect.concurrency.context import ConcurrencyContext
-from prefect.concurrency.v1.asyncio import concurrency as aconcurrency
-from prefect.concurrency.v1.context import ConcurrencyContext as ConcurrencyContextV1
-from prefect.concurrency.v1.sync import concurrency
-from prefect.context import (
+from syntask import Task
+from syntask.client.orchestration import SyncSyntaskClient, SyntaskClient, get_client
+from syntask.client.schemas import TaskRun
+from syntask.client.schemas.objects import State, TaskRunInput
+from syntask.concurrency.context import ConcurrencyContext
+from syntask.concurrency.v1.asyncio import concurrency as aconcurrency
+from syntask.concurrency.v1.context import ConcurrencyContext as ConcurrencyContextV1
+from syntask.concurrency.v1.sync import concurrency
+from syntask.context import (
     AsyncClientContext,
     FlowRunContext,
     SyncClientContext,
     TaskRunContext,
     hydrated_context,
 )
-from prefect.events.schemas.events import Event as PrefectEvent
-from prefect.exceptions import (
+from syntask.events.schemas.events import Event as SyntaskEvent
+from syntask.exceptions import (
     Abort,
     Pause,
-    PrefectException,
+    SyntaskException,
     TerminationSignal,
     UpstreamTaskError,
 )
-from prefect.futures import PrefectFuture
-from prefect.logging.loggers import get_logger, patch_print, task_run_logger
-from prefect.results import (
+from syntask.futures import SyntaskFuture
+from syntask.logging.loggers import get_logger, patch_print, task_run_logger
+from syntask.results import (
     BaseResult,
     ResultRecord,
     _format_user_supplied_storage_key,
     get_result_store,
     should_persist_result,
 )
-from prefect.settings import (
-    PREFECT_DEBUG_MODE,
-    PREFECT_TASKS_REFRESH_CACHE,
+from syntask.settings import (
+    SYNTASK_DEBUG_MODE,
+    SYNTASK_TASKS_REFRESH_CACHE,
 )
-from prefect.states import (
+from syntask.states import (
     AwaitingRetry,
     Completed,
     Failed,
@@ -77,19 +77,19 @@ from prefect.states import (
     exception_to_failed_state,
     return_value_to_state,
 )
-from prefect.transactions import IsolationLevel, Transaction, transaction
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.asyncutils import run_coro_as_sync
-from prefect.utilities.callables import call_with_parameters, parameters_to_args_kwargs
-from prefect.utilities.collections import visit_collection
-from prefect.utilities.engine import (
+from syntask.transactions import IsolationLevel, Transaction, transaction
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.asyncutils import run_coro_as_sync
+from syntask.utilities.callables import call_with_parameters, parameters_to_args_kwargs
+from syntask.utilities.collections import visit_collection
+from syntask.utilities.engine import (
     _get_hook_name,
     emit_task_run_state_change_event,
     link_state_to_result,
     resolve_to_final_result,
 )
-from prefect.utilities.math import clamped_poisson_interval
-from prefect.utilities.timeout import timeout, timeout_async
+from syntask.utilities.math import clamped_poisson_interval
+from syntask.utilities.timeout import timeout, timeout_async
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -108,7 +108,7 @@ class BaseTaskRunEngine(Generic[P, R]):
     parameters: Optional[Dict[str, Any]] = None
     task_run: Optional[TaskRun] = None
     retries: int = 0
-    wait_for: Optional[Iterable[PrefectFuture]] = None
+    wait_for: Optional[Iterable[SyntaskFuture]] = None
     context: Optional[Dict[str, Any]] = None
     # holds the return value from the user code
     _return_value: Union[R, Type[NotSet]] = NotSet
@@ -117,7 +117,7 @@ class BaseTaskRunEngine(Generic[P, R]):
     _initial_run_context: Optional[TaskRunContext] = None
     _is_started: bool = False
     _task_name_set: bool = False
-    _last_event: Optional[PrefectEvent] = None
+    _last_event: Optional[SyntaskEvent] = None
 
     def __post_init__(self):
         if self.parameters is None:
@@ -176,7 +176,7 @@ class BaseTaskRunEngine(Generic[P, R]):
             except UpstreamTaskError:
                 raise
             except Exception as exc:
-                raise PrefectException(
+                raise SyntaskException(
                     f"Failed to resolve inputs in parameter {parameter!r}. If your"
                     " parameter type is not supported, consider using the `quote`"
                     " annotation to skip resolution of inputs."
@@ -217,21 +217,21 @@ class BaseTaskRunEngine(Generic[P, R]):
             return
 
         # If debugging, use the more complete `repr` than the usual `str` description
-        display_state = repr(self.state) if PREFECT_DEBUG_MODE else str(self.state)
+        display_state = repr(self.state) if SYNTASK_DEBUG_MODE else str(self.state)
         level = logging.INFO if self.state.is_completed() else logging.ERROR
         msg = f"Finished in state {display_state}"
         if self.state.is_pending():
             msg += (
                 "\nPlease wait for all submitted tasks to complete"
                 " before exiting your flow by calling `.wait()` on the "
-                "`PrefectFuture` returned from your `.submit()` calls."
+                "`SyntaskFuture` returned from your `.submit()` calls."
             )
             msg += dedent(
                 """
 
                         Example:
 
-                        from prefect import flow, task
+                        from syntask import flow, task
 
                         @task
                         def say_hello(name):
@@ -268,10 +268,10 @@ class BaseTaskRunEngine(Generic[P, R]):
 
 @dataclass
 class SyncTaskRunEngine(BaseTaskRunEngine[P, R]):
-    _client: Optional[SyncPrefectClient] = None
+    _client: Optional[SyncSyntaskClient] = None
 
     @property
-    def client(self) -> SyncPrefectClient:
+    def client(self) -> SyncSyntaskClient:
         if not self._is_started or self._client is None:
             raise RuntimeError("Engine has not started.")
         return self._client
@@ -575,8 +575,8 @@ class SyncTaskRunEngine(BaseTaskRunEngine[P, R]):
         self._raised = exc
 
     @contextmanager
-    def setup_run_context(self, client: Optional[SyncPrefectClient] = None):
-        from prefect.utilities.engine import (
+    def setup_run_context(self, client: Optional[SyncSyntaskClient] = None):
+        from syntask.utilities.engine import (
             _resolve_custom_task_run_name,
             should_log_prints,
         )
@@ -724,7 +724,7 @@ class SyncTaskRunEngine(BaseTaskRunEngine[P, R]):
         overwrite = (
             self.task.refresh_cache
             if self.task.refresh_cache is not None
-            else PREFECT_TASKS_REFRESH_CACHE.value()
+            else SYNTASK_TASKS_REFRESH_CACHE.value()
         )
 
         isolation_level = (
@@ -790,10 +790,10 @@ class SyncTaskRunEngine(BaseTaskRunEngine[P, R]):
 
 @dataclass
 class AsyncTaskRunEngine(BaseTaskRunEngine[P, R]):
-    _client: Optional[PrefectClient] = None
+    _client: Optional[SyntaskClient] = None
 
     @property
-    def client(self) -> PrefectClient:
+    def client(self) -> SyntaskClient:
         if not self._is_started or self._client is None:
             raise RuntimeError("Engine has not started.")
         return self._client
@@ -1089,8 +1089,8 @@ class AsyncTaskRunEngine(BaseTaskRunEngine[P, R]):
         self._raised = exc
 
     @asynccontextmanager
-    async def setup_run_context(self, client: Optional[PrefectClient] = None):
-        from prefect.utilities.engine import (
+    async def setup_run_context(self, client: Optional[SyntaskClient] = None):
+        from syntask.utilities.engine import (
             _resolve_custom_task_run_name,
             should_log_prints,
         )
@@ -1235,7 +1235,7 @@ class AsyncTaskRunEngine(BaseTaskRunEngine[P, R]):
         overwrite = (
             self.task.refresh_cache
             if self.task.refresh_cache is not None
-            else PREFECT_TASKS_REFRESH_CACHE.value()
+            else SYNTASK_TASKS_REFRESH_CACHE.value()
         )
         isolation_level = (
             IsolationLevel(self.task.cache_policy.isolation_level)
@@ -1303,7 +1303,7 @@ def run_task_sync(
     task_run_id: Optional[UUID] = None,
     task_run: Optional[TaskRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
     dependencies: Optional[Dict[str, Set[TaskRunInput]]] = None,
     context: Optional[Dict[str, Any]] = None,
@@ -1330,7 +1330,7 @@ async def run_task_async(
     task_run_id: Optional[UUID] = None,
     task_run: Optional[TaskRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
     dependencies: Optional[Dict[str, Set[TaskRunInput]]] = None,
     context: Optional[Dict[str, Any]] = None,
@@ -1357,7 +1357,7 @@ def run_generator_task_sync(
     task_run_id: Optional[UUID] = None,
     task_run: Optional[TaskRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
     dependencies: Optional[Dict[str, Set[TaskRunInput]]] = None,
     context: Optional[Dict[str, Any]] = None,
@@ -1412,7 +1412,7 @@ async def run_generator_task_async(
     task_run_id: Optional[UUID] = None,
     task_run: Optional[TaskRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
     dependencies: Optional[Dict[str, Set[TaskRunInput]]] = None,
     context: Optional[Dict[str, Any]] = None,
@@ -1468,7 +1468,7 @@ def run_task(
     task_run_id: Optional[UUID] = None,
     task_run: Optional[TaskRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
     dependencies: Optional[Dict[str, Set[TaskRunInput]]] = None,
     context: Optional[Dict[str, Any]] = None,

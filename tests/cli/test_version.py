@@ -8,21 +8,21 @@ import pendulum
 import pydantic
 import pytest
 
-import prefect
-from prefect.client.constants import SERVER_API_VERSION
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
+import syntask
+from syntask.client.constants import SERVER_API_VERSION
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 
 def test_version_ephemeral_server_type(disable_hosted_api_server):
     with temporary_settings(
         {
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: True,
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: True,
         }
     ):
         invoke_and_assert(
@@ -46,8 +46,8 @@ def test_version_server_server_type():
 def test_version_cloud_server_type():
     with temporary_settings(
         {
-            PREFECT_API_URL: (
-                PREFECT_CLOUD_API_URL.value() + "/accounts/<test>/workspaces/<test>"
+            SYNTASK_API_URL: (
+                SYNTASK_CLOUD_API_URL.value() + "/accounts/<test>/workspaces/<test>"
             )
         }
     ):
@@ -57,24 +57,24 @@ def test_version_cloud_server_type():
 
 
 def test_correct_output_ephemeral_sqlite(monkeypatch, disable_hosted_api_server):
-    version_info = prefect.__version_info__
-    built = pendulum.parse(prefect.__version_info__["date"])
-    profile = prefect.context.get_settings_context().profile
+    version_info = syntask.__version_info__
+    built = pendulum.parse(syntask.__version_info__["date"])
+    profile = syntask.context.get_settings_context().profile
 
     dialect = Mock()
     dialect().name = "sqlite"
-    monkeypatch.setattr("prefect.server.utilities.database.get_dialect", dialect)
+    monkeypatch.setattr("syntask.server.utilities.database.get_dialect", dialect)
 
     with temporary_settings(
         {
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: True,
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: True,
         }
     ):
         invoke_and_assert(
             ["version"],
             expected_output=dedent(
                 f"""
-                Version:             {prefect.__version__}
+                Version:             {syntask.__version__}
                 API version:         {SERVER_API_VERSION}
                 Python version:      {platform.python_version()}
                 Git commit:          {version_info['full-revisionid'][:8]}
@@ -92,24 +92,24 @@ def test_correct_output_ephemeral_sqlite(monkeypatch, disable_hosted_api_server)
 
 
 def test_correct_output_ephemeral_postgres(monkeypatch, disable_hosted_api_server):
-    version_info = prefect.__version_info__
-    built = pendulum.parse(prefect.__version_info__["date"])
-    profile = prefect.context.get_settings_context().profile
+    version_info = syntask.__version_info__
+    built = pendulum.parse(syntask.__version_info__["date"])
+    profile = syntask.context.get_settings_context().profile
 
     dialect = Mock()
     dialect().name = "postgres"
-    monkeypatch.setattr("prefect.server.utilities.database.get_dialect", dialect)
+    monkeypatch.setattr("syntask.server.utilities.database.get_dialect", dialect)
 
     with temporary_settings(
         {
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: True,
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: True,
         }
     ):
         invoke_and_assert(
             ["version"],
             expected_output=dedent(
                 f"""
-                Version:             {prefect.__version__}
+                Version:             {syntask.__version__}
                 API version:         {SERVER_API_VERSION}
                 Python version:      {platform.python_version()}
                 Git commit:          {version_info['full-revisionid'][:8]}
@@ -127,13 +127,13 @@ def test_correct_output_ephemeral_postgres(monkeypatch, disable_hosted_api_serve
 
 @pytest.mark.usefixtures("use_hosted_api_server")
 def test_correct_output_non_ephemeral_server_type():
-    version_info = prefect.__version_info__
-    built = pendulum.parse(prefect.__version_info__["date"])
-    profile = prefect.context.get_settings_context().profile
+    version_info = syntask.__version_info__
+    built = pendulum.parse(syntask.__version_info__["date"])
+    profile = syntask.context.get_settings_context().profile
 
     invoke_and_assert(
         ["version"],
-        expected_output=f"""Version:             {prefect.__version__}
+        expected_output=f"""Version:             {syntask.__version__}
 API version:         {SERVER_API_VERSION}
 Python version:      {platform.python_version()}
 Git commit:          {version_info['full-revisionid'][:8]}

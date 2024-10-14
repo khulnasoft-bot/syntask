@@ -1,0 +1,37 @@
+name: Tests
+
+on: [pull_request]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        id: setup
+        uses: prefecthq/actions-setup-nodejs@main
+
+      - name: Build package
+        run: npm run build
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        id: setup
+        uses: prefecthq/actions-setup-nodejs@main
+
+      - name: Run tests
+        run: npm run test

@@ -3,9 +3,9 @@ from typing import Any, Dict, Optional
 
 import pytest
 
-from prefect.blocks.core import Block
-from prefect.server import models, schemas
-from prefect.server.models import deployments
+from syntask.blocks.core import Block
+from syntask.server import models, schemas
+from syntask.server.models import deployments
 
 
 class MockKubernetesClusterConfig(Block):

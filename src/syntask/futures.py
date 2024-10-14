@@ -10,16 +10,16 @@ from typing import Any, Callable, Generic, List, Optional, Set, Union, cast
 
 from typing_extensions import TypeVar
 
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.objects import TaskRun
-from prefect.exceptions import ObjectNotFound
-from prefect.logging.loggers import get_logger, get_run_logger
-from prefect.states import Pending, State
-from prefect.task_runs import TaskRunWaiter
-from prefect.utilities.annotations import quote
-from prefect.utilities.asyncutils import run_coro_as_sync
-from prefect.utilities.collections import StopVisiting, visit_collection
-from prefect.utilities.timeout import timeout as timeout_context
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.objects import TaskRun
+from syntask.exceptions import ObjectNotFound
+from syntask.logging.loggers import get_logger, get_run_logger
+from syntask.states import Pending, State
+from syntask.task_runs import TaskRunWaiter
+from syntask.utilities.annotations import quote
+from syntask.utilities.asyncutils import run_coro_as_sync
+from syntask.utilities.collections import StopVisiting, visit_collection
+from syntask.utilities.timeout import timeout as timeout_context
 
 F = TypeVar("F")
 R = TypeVar("R")
@@ -27,9 +27,9 @@ R = TypeVar("R")
 logger = get_logger(__name__)
 
 
-class PrefectFuture(abc.ABC, Generic[R]):
+class SyntaskFuture(abc.ABC, Generic[R]):
     """
-    Abstract base class for Prefect futures. A Prefect future is a handle to the
+    Abstract base class for Syntask futures. A Syntask future is a handle to the
     asynchronous execution of a task run. It provides methods to wait for the task
     to complete and to retrieve the result of the task run.
     """
@@ -102,9 +102,9 @@ class PrefectFuture(abc.ABC, Generic[R]):
         ...
 
 
-class PrefectWrappedFuture(PrefectFuture, abc.ABC, Generic[R, F]):
+class SyntaskWrappedFuture(SyntaskFuture, abc.ABC, Generic[R, F]):
     """
-    A Prefect future that wraps another future object.
+    A Syntask future that wraps another future object.
     """
 
     def __init__(self, task_run_id: uuid.UUID, wrapped_future: F):
@@ -113,10 +113,10 @@ class PrefectWrappedFuture(PrefectFuture, abc.ABC, Generic[R, F]):
 
     @property
     def wrapped_future(self) -> F:
-        """The underlying future object wrapped by this Prefect future"""
+        """The underlying future object wrapped by this Syntask future"""
         return self._wrapped_future
 
-    def add_done_callback(self, fn: Callable[[PrefectFuture[R]], None]):
+    def add_done_callback(self, fn: Callable[[SyntaskFuture[R]], None]):
         if not self._final_state:
 
             def call_with_self(future):
@@ -128,9 +128,9 @@ class PrefectWrappedFuture(PrefectFuture, abc.ABC, Generic[R, F]):
         fn(self)
 
 
-class PrefectConcurrentFuture(PrefectWrappedFuture[R, concurrent.futures.Future]):
+class SyntaskConcurrentFuture(SyntaskWrappedFuture[R, concurrent.futures.Future]):
     """
-    A Prefect future that wraps a concurrent.futures.Future. This future is used
+    A Syntask future that wraps a concurrent.futures.Future. This future is used
     when the task run is submitted to a ThreadPoolExecutor.
     """
 
@@ -184,16 +184,16 @@ class PrefectConcurrentFuture(PrefectWrappedFuture[R, concurrent.futures.Future]
         )
 
 
-class PrefectDistributedFuture(PrefectFuture[R]):
+class SyntaskDistributedFuture(SyntaskFuture[R]):
     """
     Represents the result of a computation happening anywhere.
 
     This class is typically used to interact with the result of a task run
-    scheduled to run in a Prefect task worker but can be used to interact with
-    any task run scheduled in Prefect's API.
+    scheduled to run in a Syntask task worker but can be used to interact with
+    any task run scheduled in Syntask's API.
     """
 
-    done_callbacks: List[Callable[[PrefectFuture[R]], None]] = []
+    done_callbacks: List[Callable[[SyntaskFuture[R]], None]] = []
     waiter = None
 
     def wait(self, timeout: Optional[float] = None) -> None:
@@ -257,7 +257,7 @@ class PrefectDistributedFuture(PrefectFuture[R]):
             raise_on_failure=raise_on_failure, fetch=True
         )
 
-    def add_done_callback(self, fn: Callable[[PrefectFuture[R]], None]):
+    def add_done_callback(self, fn: Callable[[SyntaskFuture[R]], None]):
         if self._final_state:
             fn(self)
             return
@@ -271,7 +271,7 @@ class PrefectDistributedFuture(PrefectFuture[R]):
             TaskRunWaiter.add_done_callback(self._task_run_id, partial(fn, self))
 
     def __eq__(self, other):
-        if not isinstance(other, PrefectDistributedFuture):
+        if not isinstance(other, SyntaskDistributedFuture):
             return False
         return self.task_run_id == other.task_run_id
 
@@ -279,9 +279,9 @@ class PrefectDistributedFuture(PrefectFuture[R]):
         return hash(self.task_run_id)
 
 
-class PrefectFutureList(list, Iterator, Generic[F]):
+class SyntaskFutureList(list, Iterator, Generic[F]):
     """
-    A list of Prefect futures.
+    A list of Syntask futures.
 
     This class provides methods to wait for all futures
     in the list to complete and to retrieve the results of all task runs.
@@ -331,9 +331,9 @@ class PrefectFutureList(list, Iterator, Generic[F]):
 
 
 def as_completed(
-    futures: List[PrefectFuture[R]], timeout: Optional[float] = None
-) -> Generator[PrefectFuture[R], None]:
-    unique_futures: Set[PrefectFuture[R]] = set(futures)
+    futures: List[SyntaskFuture[R]], timeout: Optional[float] = None
+) -> Generator[SyntaskFuture[R], None]:
+    unique_futures: Set[SyntaskFuture[R]] = set(futures)
     total_futures = len(unique_futures)
     try:
         with timeout_context(timeout):
@@ -373,7 +373,7 @@ def as_completed(
 DoneAndNotDoneFutures = collections.namedtuple("DoneAndNotDoneFutures", "done not_done")
 
 
-def wait(futures: List[PrefectFuture[R]], timeout=None) -> DoneAndNotDoneFutures:
+def wait(futures: List[SyntaskFuture[R]], timeout=None) -> DoneAndNotDoneFutures:
     """
     Wait for the futures in the given sequence to complete.
 
@@ -422,23 +422,23 @@ def wait(futures: List[PrefectFuture[R]], timeout=None) -> DoneAndNotDoneFutures
 
 
 def resolve_futures_to_states(
-    expr: Union[PrefectFuture[R], Any],
+    expr: Union[SyntaskFuture[R], Any],
 ) -> Union[State, Any]:
     """
-    Given a Python built-in collection, recursively find `PrefectFutures` and build a
+    Given a Python built-in collection, recursively find `SyntaskFutures` and build a
     new collection with the same structure with futures resolved to their final states.
     Resolving futures to their final states may wait for execution to complete.
 
     Unsupported object types will be returned without modification.
     """
-    futures: Set[PrefectFuture[R]] = set()
+    futures: Set[SyntaskFuture[R]] = set()
 
     def _collect_futures(futures, expr, context):
         # Expressions inside quotes should not be traversed
         if isinstance(context.get("annotation"), quote):
             raise StopVisiting()
 
-        if isinstance(expr, PrefectFuture):
+        if isinstance(expr, SyntaskFuture):
             futures.add(expr)
 
         return expr
@@ -467,7 +467,7 @@ def resolve_futures_to_states(
         if isinstance(context.get("annotation"), quote):
             raise StopVisiting()
 
-        if isinstance(expr, PrefectFuture):
+        if isinstance(expr, SyntaskFuture):
             return states_by_future[expr]
         else:
             return expr

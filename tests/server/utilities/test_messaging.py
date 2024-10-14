@@ -12,7 +12,7 @@ from typing import (
 import anyio
 import pytest
 
-from prefect.server.utilities.messaging import (
+from syntask.server.utilities.messaging import (
     BrokerModule,
     Cache,
     Consumer,
@@ -24,22 +24,22 @@ from prefect.server.utilities.messaging import (
     create_publisher,
     ephemeral_subscription,
 )
-from prefect.settings import (
-    PREFECT_MESSAGING_BROKER,
-    PREFECT_MESSAGING_CACHE,
+from syntask.settings import (
+    SYNTASK_MESSAGING_BROKER,
+    SYNTASK_MESSAGING_CACHE,
     temporary_settings,
 )
 
 
 @pytest.fixture
 def busted_cache_module():
-    with temporary_settings(updates={PREFECT_MESSAGING_CACHE: "whodis"}):
+    with temporary_settings(updates={SYNTASK_MESSAGING_CACHE: "whodis"}):
         yield
 
 
 @pytest.fixture
 def busted_broker_module():
-    with temporary_settings(updates={PREFECT_MESSAGING_BROKER: "whodis"}):
+    with temporary_settings(updates={SYNTASK_MESSAGING_BROKER: "whodis"}):
         yield
 
 
@@ -64,7 +64,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         metafunc.parametrize(
             "broker_module_name",
             [
-                "prefect.server.utilities.messaging.memory",
+                "syntask.server.utilities.messaging.memory",
             ],
         )
 
@@ -72,7 +72,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         metafunc.parametrize(
             "cache_name",
             [
-                "prefect.server.utilities.messaging.memory",
+                "syntask.server.utilities.messaging.memory",
             ],
         )
 
@@ -86,13 +86,13 @@ def test_unknown_cache_raises_for_creating_publisher(
 
 @pytest.fixture
 def broker(broker_module_name: str) -> Generator[str, None, None]:
-    with temporary_settings(updates={PREFECT_MESSAGING_BROKER: broker_module_name}):
+    with temporary_settings(updates={SYNTASK_MESSAGING_BROKER: broker_module_name}):
         yield broker_module_name
 
 
 @pytest.fixture
 def configured_cache(cache_name: str) -> Generator[str, None, None]:
-    with temporary_settings(updates={PREFECT_MESSAGING_CACHE: cache_name}):
+    with temporary_settings(updates={SYNTASK_MESSAGING_CACHE: cache_name}):
         yield cache_name
 
 

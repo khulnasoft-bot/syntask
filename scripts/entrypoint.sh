@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This is the default entrypoint for the official Prefect Docker image
+# This is the default entrypoint for the official Syntask Docker image
 
 set -e
 

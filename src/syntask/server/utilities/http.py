@@ -12,7 +12,7 @@ def should_redact_header(key: str) -> bool:
         return True
     if key.startswith("x-envoy"):
         return True
-    if key.startswith("x-prefect"):
+    if key.startswith("x-syntask"):
         return True
 
     return False

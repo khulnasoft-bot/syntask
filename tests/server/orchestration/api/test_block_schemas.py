@@ -4,11 +4,11 @@ from uuid import uuid4
 import pytest
 from starlette import status
 
-from prefect.blocks.core import Block
-from prefect.server import models, schemas
-from prefect.server.schemas.actions import BlockSchemaCreate
-from prefect.server.schemas.core import DEFAULT_BLOCK_SCHEMA_VERSION
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.blocks.core import Block
+from syntask.server import models, schemas
+from syntask.server.schemas.actions import BlockSchemaCreate
+from syntask.server.schemas.core import DEFAULT_BLOCK_SCHEMA_VERSION
+from syntask.utilities.pydantic import parse_obj_as
 
 EMPTY_OBJECT_CHECKSUM = Block._calculate_schema_checksum({})
 

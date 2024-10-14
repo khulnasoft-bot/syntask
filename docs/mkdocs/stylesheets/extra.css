@@ -1,4 +1,4 @@
-/* Prefect Overrides */
+/* Syntask Overrides */
 
 /* Code block background and highlight */
 :root>* {
@@ -72,7 +72,7 @@ img {
     filter: drop-shadow(0.2rem 0.2rem 0.3rem rgba(0, 0, 0, 0.2))
 }
 
-/* push "go to prefect cloud" */
+/* push "go to syntask cloud" */
 .cloud-link {
     margin-left: auto;
 }
@@ -217,7 +217,7 @@ to force column width */
 
 .cloud::before {
     background-color: #799AF7;
-    content: "Prefect Cloud";
+    content: "Syntask Cloud";
 }
 
 .pro::before {
@@ -292,7 +292,7 @@ to force column width */
 }
 
 /* dark mode API doc overrides */
-[data-md-color-scheme="slate"] .prefect-table th {
+[data-md-color-scheme="slate"] .syntask-table th {
     background-color: #3b3d54;
 }
 

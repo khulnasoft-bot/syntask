@@ -1,8 +1,8 @@
 import logging
 from typing import Any
 
-from prefect.utilities.collections import visit_collection
-from prefect.utilities.names import obfuscate
+from syntask.utilities.collections import visit_collection
+from syntask.utilities.names import obfuscate
 
 
 def redact_substr(obj: Any, substr: str):
@@ -33,9 +33,9 @@ class ObfuscateApiKeyFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         # Need to import here to avoid circular imports
-        from prefect.settings import PREFECT_API_KEY
+        from syntask.settings import SYNTASK_API_KEY
 
-        if PREFECT_API_KEY:
-            record.msg = redact_substr(record.msg, PREFECT_API_KEY.value())
+        if SYNTASK_API_KEY:
+            record.msg = redact_substr(record.msg, SYNTASK_API_KEY.value())
 
         return True

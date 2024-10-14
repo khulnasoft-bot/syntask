@@ -1,23 +1,36 @@
-import { applyColorModeClass, ColorMode, isColorMode } from '@prefecthq/prefect-ui-library'
-import { useLocalStorage } from '@prefecthq/vue-compositions'
-import { computed } from 'vue'
+import { Ref, readonly, ref } from 'vue'
+import { ColorMode, colorModes } from '@/types/ColorMode'
 
-const colorModeLocalStorageKey = 'prefect-color-mode'
-const nonJsonVersion = localStorage.getItem(colorModeLocalStorageKey)
-const defaultValue = isColorMode(nonJsonVersion) ? nonJsonVersion : null
+const internalValue = ref<ColorMode | null>(null)
 
-const { value: colorMode, set: setColorMode } = useLocalStorage<ColorMode | null>(colorModeLocalStorageKey, defaultValue)
+export function getColorModeClass(mode: ColorMode | null): string {
+  return `color-mode-${mode ?? 'default'}`
+}
 
-export const activeColorMode = computed({
-  get() {
-    return colorMode.value
-  },
-  set(value: ColorMode | null) {
-    setColorMode(value)
-    applyColorModeClass(value)
-  },
-})
+export function isColorMode(value: unknown): value is ColorMode {
+  if (typeof value !== 'string') {
+    return false
+  }
 
-export function initColorMode(): void {
-  applyColorModeClass(activeColorMode.value)
+  return colorModes.includes(value as ColorMode)
+}
+
+export function applyColorModeClass(value: ColorMode | null): void {
+  colorModes.forEach(mode => document.body.classList.remove(getColorModeClass(mode)))
+
+  const classes = getColorModeClass(value)
+
+  document.body.classList.add(classes)
+
+  internalValue.value = value
+}
+
+type UseColorMode = {
+  value: Readonly<Ref<ColorMode | null>>,
+}
+
+export function useColorMode(): UseColorMode {
+  return {
+    value: readonly(internalValue),
+  }
 }

@@ -1,30 +1,30 @@
 import pytest
 
-from prefect.events import Event
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
+from syntask.events import Event
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.fixtures import Puppeteer
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.fixtures import Puppeteer
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 @pytest.fixture
 def example_event_1() -> Event:
     return Event(
         event="marvelous.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
         related=[
             {
-                "prefect.resource.role": "actor",
-                "prefect.resource.id": "prefect-cloud.actor.5c83c6e4-3a6b-42db-93b1-b81d2773a0ec",
-                "prefect.resource.name": "Peter Francis Geraci",
-                "prefect-cloud.email": "george@syntask.khulnasoft.com",
-                "prefect-cloud.name": "George Coyne",
-                "prefect-cloud.handle": "georgeprefectio",
+                "syntask.resource.role": "actor",
+                "syntask.resource.id": "syntask-cloud.actor.5c83c6e4-3a6b-42db-93b1-b81d2773a0ec",
+                "syntask.resource.name": "Peter Francis Geraci",
+                "syntask-cloud.email": "george@khulnasoft.com",
+                "syntask-cloud.name": "George Coyne",
+                "syntask-cloud.handle": "georgesyntaskio",
             }
         ],
     )
@@ -34,7 +34,7 @@ def example_event_1() -> Event:
 def example_event_2() -> Event:
     return Event(
         event="wondrous.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
     )
 
 
@@ -42,9 +42,9 @@ def example_event_2() -> Event:
 def cloud_api_setup(events_cloud_api_url: str):
     with temporary_settings(
         updates={
-            PREFECT_API_URL: events_cloud_api_url,
-            PREFECT_API_KEY: "my-token",
-            PREFECT_CLOUD_API_URL: events_cloud_api_url,
+            SYNTASK_API_URL: events_cloud_api_url,
+            SYNTASK_API_KEY: "my-token",
+            SYNTASK_CLOUD_API_URL: events_cloud_api_url,
         }
     ):
         yield
@@ -121,8 +121,8 @@ async def test_stream_account(
 def oss_api_setup(events_api_url: str):
     with temporary_settings(
         updates={
-            PREFECT_API_URL: events_api_url,
-            PREFECT_API_KEY: None,
+            SYNTASK_API_URL: events_api_url,
+            SYNTASK_API_KEY: None,
         }
     ):
         yield

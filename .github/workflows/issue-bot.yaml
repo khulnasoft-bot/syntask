@@ -10,6 +10,6 @@ jobs:
     steps:
       - name: Remove status labels on close
         if: github.event.action == 'closed'
-        run: gh issue edit --repo prefecthq/prefect ${{ github.event.issue.number }} --remove-label "needs:triage" --remove-label "needs:attention"
+        run: gh issue edit --repo synopkg/syntask ${{ github.event.issue.number }} --remove-label "needs:triage" --remove-label "needs:attention"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

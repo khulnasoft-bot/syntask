@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Union
 
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.schedules import is_schedule_type
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.schedules import is_schedule_type
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.schedules import SCHEDULE_TYPES
+    from syntask.client.schemas.schedules import SCHEDULE_TYPES
 
 FlexibleScheduleList = Sequence[
     Union[DeploymentScheduleCreate, dict[str, Any], "SCHEDULE_TYPES"]
@@ -41,7 +41,7 @@ def normalize_to_deployment_schedule_create(
             elif _is_server_schema(obj):
                 raise ValueError(
                     "Server schema schedules are not supported. Please use "
-                    "the schedule objects from `prefect.client.schemas.schedules`"
+                    "the schedule objects from `syntask.client.schemas.schedules`"
                 )
             else:
                 raise ValueError(
@@ -53,4 +53,4 @@ def normalize_to_deployment_schedule_create(
 
 
 def _is_server_schema(obj: Any):
-    return obj.__class__.__module__.startswith("prefect.server.schemas")
+    return obj.__class__.__module__.startswith("syntask.server.schemas")

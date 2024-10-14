@@ -4,8 +4,8 @@ from typing import List, Optional
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.schemas as schemas
-from prefect.server.database import orm_models
+import syntask.server.schemas as schemas
+from syntask.server.database import orm_models
 
 
 async def create_flow_run_input(

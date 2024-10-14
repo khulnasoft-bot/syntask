@@ -1,6 +1,6 @@
 ---
-title: Develop on Prefect
-description: Learn how to set up Prefect for development, experimentation and code contributions.
+title: Develop on Syntask
+description: Learn how to set up Syntask for development, experimentation and code contributions.
 ---
 
 import fork from '/snippets/fork.mdx'
@@ -8,26 +8,26 @@ import fork from '/snippets/fork.mdx'
 
 ## Make a code contribution
 
-We welcome all forms of contributions to Prefect, whether it's small typo fixes in [our documentation](/contribute/docs-contribute), bug fixes or feature enhancements!
+We welcome all forms of contributions to Syntask, whether it's small typo fixes in [our documentation](/contribute/docs-contribute), bug fixes or feature enhancements!
 If this is your first time making an open source contribution we will be glad to work with you and help you get up to speed.
 
 <Note>
 For small changes such as typo fixes you can simply open a pull request - we typically review small changes like these within the day.
-For larger changes including all bug fixes, we ask that you first open [an issue](https://github.com/synopkg/synopkg/issues) or comment on the issue that you are planning to work on.
+For larger changes including all bug fixes, we ask that you first open [an issue](https://github.com/synopkg/syntask/issues) or comment on the issue that you are planning to work on.
 </Note>
 
 ## Fork the repository
 <fork />
 
-## Install Prefect for development
+## Install Syntask for development
 
 Once you have cloned your fork of the repo:
 ```bash
 # Clone the repository
-git clone https://github.com/GITHUB-USERNAME/prefect.git
-cd prefect
+git clone https://github.com/GITHUB-USERNAME/syntask.git
+cd syntask
 ```
-you can install [an editable version](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) of Prefect for quick iteration.
+you can install [an editable version](https://setuptools.pypa.io/en/latest/userguide/development_mode.html) of Syntask for quick iteration.
 We recommend using a virtual environment such as `venv`:
 
 ```bash
@@ -55,7 +55,7 @@ ruff format
 
 ## Write tests
 
-Prefect relies on unit testing to ensure proposed changes don't negatively impact any functionality.
+Syntask relies on unit testing to ensure proposed changes don't negatively impact any functionality.
 For all code changes, including bug fixes, we ask that you write at least one corresponding test.
 One rule of thumb - especially for bug fixes - is that you should write a test that fails prior to your changes and passes with your changes.
 This ensures the test will fail and prevent the bug from resurfacing if other changes are made in the future.
@@ -78,48 +78,48 @@ pytest -k 'tasks'
 
 If you plan to use the UI during development, you will need to build a development version of the UI first.
 
-Using the Prefect UI in development requires installation of [npm](https://github.com/npm/cli).
+Using the Syntask UI in development requires installation of [npm](https://github.com/npm/cli).
 We recommend using [nvm](https://github.com/nvm-sh/nvm) to manage Node.js versions.
-Once installed, run `nvm use` from the root of the Prefect repository to initialize the proper version of `npm` and `node`.
+Once installed, run `nvm use` from the root of the Syntask repository to initialize the proper version of `npm` and `node`.
 
 Start a development UI that reloads on code changes:
 
 ```bash
-prefect dev ui
+syntask dev ui
 ```
 
 This command is most useful if you are working directly on the UI codebase.
 
-Alternatively, you can build a static UI that will be served when running `prefect server start`:
+Alternatively, you can build a static UI that will be served when running `syntask server start`:
 
 ```bash
-prefect dev build-ui
+syntask dev build-ui
 ```
 
 ## Working with a development server
 
-The Prefect CLI provides several helpful commands to aid development of server-side changes.
+The Syntask CLI provides several helpful commands to aid development of server-side changes.
 
 You can start all services with hot-reloading on code changes (note that this requires installation of UI dependencies):
 
 ```bash
-prefect dev start
+syntask dev start
 ```
 
-Start a Prefect API that reloads on code changes:
+Start a Syntask API that reloads on code changes:
 
 ```bash
-prefect dev api
+syntask dev api
 ```
 
 ## Add database migrations
 
-If your code changes necessitate modifications to a database table, first update the SQLAlchemy model in `src/prefect/server/database/orm_models.py`.
+If your code changes necessitate modifications to a database table, first update the SQLAlchemy model in `src/syntask/server/database/orm_models.py`.
 
 For example, to add a new column to the `flow_run` table, add a new column to the `FlowRun` model:
 
 ```python
-# src/prefect/server/database/orm_models.py
+# src/syntask/server/database/orm_models.py
 
 class FlowRun(Run):
     """SQLAlchemy model of a flow run."""
@@ -130,13 +130,13 @@ class FlowRun(Run):
 Next, generate new migration files.
 Generate a new migration file for each database type.
 
-Migrations are generated for whichever database type `PREFECT_API_DATABASE_CONNECTION_URL` is set to.
+Migrations are generated for whichever database type `SYNTASK_API_DATABASE_CONNECTION_URL` is set to.
 See [how to set the database connection URL](/3.0/manage/self-host#database-settings) for each database type.
 
 To generate a new migration file, run:
 
 ```bash
-prefect server database revision --autogenerate -m "<migration name>"
+syntask server database revision --autogenerate -m "<migration name>"
 ```
 
 Make the migration name brief but descriptive.
@@ -155,13 +155,13 @@ The `--autogenerate` flag automatically generates a migration file based on the 
 However, it is not perfect. Check the file to ensure it only includes the desired changes.
 </Warning>
 
-The new migration is in the `src/prefect/server/database/migrations/versions/` directory. Each database type has its
-own subdirectory. For example, the SQLite migrations are stored in `src/prefect/server/database/migrations/versions/sqlite/`.
+The new migration is in the `src/syntask/server/database/migrations/versions/` directory. Each database type has its
+own subdirectory. For example, the SQLite migrations are stored in `src/syntask/server/database/migrations/versions/sqlite/`.
 
 After inspecting the migration file, apply the migration to the database by running:
 
 ```bash
-prefect server database upgrade -y
+syntask server database upgrade -y
 ```
 
 After successfully creating migrations for all database types, update `MIGRATION-NOTES.md` to

@@ -15,10 +15,10 @@ from weakref import WeakKeyDictionary
 
 import anyio
 
-from prefect._internal.concurrency import logger
-from prefect._internal.concurrency.calls import Call, Portal
-from prefect._internal.concurrency.event_loop import call_soon_in_loop
-from prefect._internal.concurrency.primitives import Event
+from syntask._internal.concurrency import logger
+from syntask._internal.concurrency.calls import Call, Portal
+from syntask._internal.concurrency.event_loop import call_soon_in_loop
+from syntask._internal.concurrency.primitives import Event
 
 T = TypeVar("T")
 

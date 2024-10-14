@@ -12,11 +12,11 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.testclient import TestClient, WebSocketTestSession
 
-from prefect.client.schemas import TaskRun
-from prefect.server import models
-from prefect.server.api import task_runs
-from prefect.server.schemas import states as server_states
-from prefect.server.schemas.core import TaskRun as ServerTaskRun
+from syntask.client.schemas import TaskRun
+from syntask.server import models
+from syntask.server.api import task_runs
+from syntask.server.schemas import states as server_states
+from syntask.server.schemas.core import TaskRun as ServerTaskRun
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ def authenticated_socket(app: FastAPI) -> Generator[WebSocketTestSession, None, 
     socket: WebSocketTestSession
     with TestClient(app).websocket_connect(
         "/api/task_runs/subscriptions/scheduled",
-        subprotocols=["prefect"],
+        subprotocols=["syntask"],
     ) as socket:
         auth_dance(socket)
         yield socket

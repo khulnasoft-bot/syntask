@@ -7,10 +7,10 @@ from typing import Dict, List, Optional, Tuple
 
 from typing_extensions import Self
 
-import prefect.server.schemas as schemas
-from prefect.settings import (
-    PREFECT_TASK_SCHEDULING_MAX_RETRY_QUEUE_SIZE,
-    PREFECT_TASK_SCHEDULING_MAX_SCHEDULED_QUEUE_SIZE,
+import syntask.server.schemas as schemas
+from syntask.settings import (
+    SYNTASK_TASK_SCHEDULING_MAX_RETRY_QUEUE_SIZE,
+    SYNTASK_TASK_SCHEDULING_MAX_SCHEDULED_QUEUE_SIZE,
 )
 
 
@@ -18,9 +18,9 @@ class TaskQueue:
     _task_queues: Dict[str, Self] = {}
 
     default_scheduled_max_size: int = (
-        PREFECT_TASK_SCHEDULING_MAX_SCHEDULED_QUEUE_SIZE.value()
+        SYNTASK_TASK_SCHEDULING_MAX_SCHEDULED_QUEUE_SIZE.value()
     )
-    default_retry_max_size: int = PREFECT_TASK_SCHEDULING_MAX_RETRY_QUEUE_SIZE.value()
+    default_retry_max_size: int = SYNTASK_TASK_SCHEDULING_MAX_RETRY_QUEUE_SIZE.value()
 
     _queue_size_configs: Dict[str, Tuple[int, int]] = {}
 

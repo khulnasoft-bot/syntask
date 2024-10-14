@@ -1,11 +1,12 @@
 """
 This test suite exists to reproduce the issue in
-https://github.com/synopkg/synopkg/issues/11820
+https://github.com/synopkg/syntask/issues/11820
 
 They shouldn't be run as part of the normal test suite, but can be run manually with:
 
 TEST_CONNECTION_LEAK=true pytest tests/server/utilities/test_connection_leak_warnings.py
 """
+
 import os
 
 import pytest

@@ -6,21 +6,21 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions, triggers
-from prefect.server.events.models import automations
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions, triggers
+from syntask.server.events.models import automations
+from syntask.server.events.schemas.automations import (
     Automation,
     AutomationCore,
     AutomationUpdate,
     EventTrigger,
     Posture,
 )
-from prefect.settings import PREFECT_API_SERVICES_TRIGGERS_ENABLED, temporary_settings
+from syntask.settings import SYNTASK_API_SERVICES_TRIGGERS_ENABLED, temporary_settings
 
 
 @pytest.fixture(autouse=True)
 def enable_triggers():
-    with temporary_settings({PREFECT_API_SERVICES_TRIGGERS_ENABLED: True}):
+    with temporary_settings({SYNTASK_API_SERVICES_TRIGGERS_ENABLED: True}):
         yield
 
 
@@ -38,7 +38,7 @@ async def starting_automations(
             enabled=True,
             trigger=EventTrigger(
                 expect={"stuff.happened"},
-                match={"prefect.resource.id": "foo"},
+                match={"syntask.resource.id": "foo"},
                 posture=Posture.Reactive,
                 threshold=0,
                 within=timedelta(seconds=10),
@@ -54,7 +54,7 @@ async def starting_automations(
             enabled=True,
             trigger=EventTrigger(
                 expect={"stuff.happened"},
-                match={"prefect.resource.id": "bar"},
+                match={"syntask.resource.id": "bar"},
                 posture=Posture.Reactive,
                 threshold=0,
                 within=timedelta(seconds=10),

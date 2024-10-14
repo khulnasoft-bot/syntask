@@ -1,4 +1,4 @@
-from prefect.server import models, schemas
+from syntask.server import models, schemas
 
 
 async def test_write_and_read_new_configuration(session):

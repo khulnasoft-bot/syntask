@@ -6,15 +6,15 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.filters import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.filters import (
     EventFilter,
     EventIDFilter,
     EventOccurredFilter,
     EventResourceFilter,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.events.storage.database import (
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.storage.database import (
     get_max_query_parameters,
     get_number_of_event_fields,
     get_number_of_resource_fields,
@@ -28,11 +28,11 @@ def event() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "my.resource.id"},
+        resource={"syntask.resource.id": "my.resource.id"},
         related=[
-            {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-2", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-3", "prefect.resource.role": "role-2"},
+            {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-2", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-3", "syntask.resource.role": "role-2"},
         ],
         payload={"hello": "world"},
         received=pendulum.datetime(2022, 2, 3, 4, 5, 6, 7, "UTC"),
@@ -46,19 +46,19 @@ def other_events() -> List[ReceivedEvent]:
         ReceivedEvent(
             occurred=pendulum.now("UTC"),
             event="hello",
-            resource={"prefect.resource.id": "my.resource.id"},
+            resource={"syntask.resource.id": "my.resource.id"},
             related=[
                 {
-                    "prefect.resource.id": "related-1",
-                    "prefect.resource.role": "role-1",
+                    "syntask.resource.id": "related-1",
+                    "syntask.resource.role": "role-1",
                 },
                 {
-                    "prefect.resource.id": "related-2",
-                    "prefect.resource.role": "role-1",
+                    "syntask.resource.id": "related-2",
+                    "syntask.resource.role": "role-1",
                 },
                 {
-                    "prefect.resource.id": "related-3",
-                    "prefect.resource.role": "role-2",
+                    "syntask.resource.id": "related-3",
+                    "syntask.resource.role": "role-2",
                 },
             ],
             payload={"hello": "world"},
@@ -93,7 +93,7 @@ class TestWriteEvents:
     async def test_write_event_ignores_duplicates(
         self,
         session: AsyncSession,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         event: ReceivedEvent,
         other_events: List[ReceivedEvent],
     ):
@@ -126,7 +126,7 @@ class TestWriteEvents:
     async def test_write_events_writes_in_chunks(
         self,
         session: AsyncSession,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         event: ReceivedEvent,
         other_events: List[ReceivedEvent],
     ):
@@ -172,11 +172,11 @@ class TestReadEvents:
         event = ReceivedEvent(
             occurred=pendulum.now("UTC"),
             event="hello",
-            resource={"prefect.resource.id": "my.resource.id"},
+            resource={"syntask.resource.id": "my.resource.id"},
             related=[
-                {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
-                {"prefect.resource.id": "related-2", "prefect.resource.role": "role-1"},
-                {"prefect.resource.id": "related-3", "prefect.resource.role": "role-2"},
+                {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
+                {"syntask.resource.id": "related-2", "syntask.resource.role": "role-1"},
+                {"syntask.resource.id": "related-3", "syntask.resource.role": "role-2"},
             ],
             payload={"hello": "world"},
             received=pendulum.datetime(2022, 2, 3, 4, 5, 6, 7, "UTC"),
@@ -192,11 +192,11 @@ class TestReadEvents:
         event = ReceivedEvent(
             occurred=pendulum.now("UTC").subtract(days=2),
             event="hello",
-            resource={"prefect.resource.id": "my.resource.id"},
+            resource={"syntask.resource.id": "my.resource.id"},
             related=[
-                {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
-                {"prefect.resource.id": "related-2", "prefect.resource.role": "role-1"},
-                {"prefect.resource.id": "related-3", "prefect.resource.role": "role-2"},
+                {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
+                {"syntask.resource.id": "related-2", "syntask.resource.role": "role-1"},
+                {"syntask.resource.id": "related-3", "syntask.resource.role": "role-2"},
             ],
             payload={"hello": "world"},
             received=pendulum.datetime(2022, 2, 3, 4, 5, 6, 7, "UTC"),
@@ -239,7 +239,7 @@ class TestReadEvents:
             events = await read_events(
                 session=session,
                 events_filter=EventFilter(
-                    resource=EventResourceFilter(id=["prefect.garbage.foo"]),
+                    resource=EventResourceFilter(id=["syntask.garbage.foo"]),
                     occurred=EventOccurredFilter(
                         since=pendulum.now("UTC").subtract(days=1)
                     ),

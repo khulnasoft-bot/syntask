@@ -8,7 +8,7 @@ from typing import Union
 
 import httpx
 
-GITHUB_REPO = "PrefectHQ/prefect"
+GITHUB_REPO = "SynoPKG/syntask"
 TOKEN_REGEX = re.compile(r"\s* Token:\s(.*)")
 ENGAGEMENT_THRESHOLD = 5  # Number of comments to consider an issue high engagement
 LABEL_REMOVAL_INTERVAL_MONTHS = (
@@ -17,7 +17,7 @@ LABEL_REMOVAL_INTERVAL_MONTHS = (
 
 PROJECT_ID = "PVT_kwDOAlc6B84AGBLE"
 FIELD_ID = "PVTSSF_lADOAlc6B84AGBLEzgDd_O0"
-ORGANIZATION = "PrefectHQ"
+ORGANIZATION = "SynoPKG"
 PROJECT_NUMBER = 35
 
 project_items_cache = None
@@ -191,7 +191,7 @@ def get_issue_id(issue_number: int, headers: dict) -> str:
       }
     }
     """
-    variables = {"owner": "PrefectHQ", "repo": "prefect", "issueNumber": issue_number}
+    variables = {"owner": "SynoPKG", "repo": "syntask", "issueNumber": issue_number}
     url = "https://api.github.com/graphql"
     response = httpx.post(
         url, headers=headers, json={"query": query, "variables": variables}
@@ -250,7 +250,7 @@ def get_all_project_items(headers) -> list:
           }
         }
         """
-        variables = {"organization": "PrefectHQ", "projectNumber": 35, "after": cursor}
+        variables = {"organization": "SynoPKG", "projectNumber": 35, "after": cursor}
         url = "https://api.github.com/graphql"
         response = httpx.post(
             url, headers=headers, json={"query": query, "variables": variables}
@@ -361,7 +361,7 @@ def add_needs_attention_label(issue_number: int, headers: dict):
 def set_needs_priority_status_on_high_engagement_issues(new_comment_interval_days: int):
     """
     Sets the "Needs Priority" status on high engagement issues with new comments.
-    This status is a field on the Prefect Backlog project board.
+    This status is a field on the Syntask Backlog project board.
 
     Args:
         new_comment_interval_days (int): Interval in days to check for new comments.

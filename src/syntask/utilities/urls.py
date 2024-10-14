@@ -8,15 +8,15 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from prefect import settings
-from prefect.logging.loggers import get_logger
+from syntask import settings
+from syntask.logging.loggers import get_logger
 
 if TYPE_CHECKING:
-    from prefect.blocks.core import Block
-    from prefect.events.schemas.automations import Automation
-    from prefect.events.schemas.events import ReceivedEvent, Resource
-    from prefect.futures import PrefectFuture
-    from prefect.variables import Variable
+    from syntask.blocks.core import Block
+    from syntask.events.schemas.automations import Automation
+    from syntask.events.schemas.events import ReceivedEvent, Resource
+    from syntask.futures import SyntaskFuture
+    from syntask.variables import Variable
 
 logger = get_logger("utilities.urls")
 
@@ -122,7 +122,7 @@ def convert_class_to_name(obj: Any) -> str:
 
 def url_for(
     obj: Union[
-        "PrefectFuture",
+        "SyntaskFuture",
         "Block",
         "Variable",
         "Automation",
@@ -136,13 +136,13 @@ def url_for(
     default_base_url: Optional[str] = None,
 ) -> Optional[str]:
     """
-    Returns the URL for a Prefect object.
+    Returns the URL for a Syntask object.
 
     Pass in a supported object directly or provide an object name and ID.
 
     Args:
-        obj (Union[PrefectFuture, Block, Variable, Automation, Resource, ReceivedEvent, BaseModel, str]):
-            A Prefect object to get the URL for, or its URL name and ID.
+        obj (Union[SyntaskFuture, Block, Variable, Automation, Resource, ReceivedEvent, BaseModel, str]):
+            A Syntask object to get the URL for, or its URL name and ID.
         obj_id (Union[str, UUID], optional):
             The UUID of the object.
         url_type (Literal["ui", "api"], optional):
@@ -158,12 +158,12 @@ def url_for(
         url_for(obj=my_flow_run)
         url_for("flow-run", obj_id="123e4567-e89b-12d3-a456-426614174000")
     """
-    from prefect.blocks.core import Block
-    from prefect.events.schemas.automations import Automation
-    from prefect.events.schemas.events import ReceivedEvent, Resource
-    from prefect.futures import PrefectFuture
+    from syntask.blocks.core import Block
+    from syntask.events.schemas.automations import Automation
+    from syntask.events.schemas.events import ReceivedEvent, Resource
+    from syntask.futures import SyntaskFuture
 
-    if isinstance(obj, PrefectFuture):
+    if isinstance(obj, SyntaskFuture):
         name = "task-run"
     elif isinstance(obj, Block):
         name = "block"
@@ -172,7 +172,7 @@ def url_for(
     elif isinstance(obj, ReceivedEvent):
         name = "received-event"
     elif isinstance(obj, Resource):
-        if obj.id.startswith("prefect."):
+        if obj.id.startswith("syntask."):
             name = obj.id.split(".")[1]
         else:
             logger.debug(f"No URL known for resource with ID: {obj.id}")
@@ -203,23 +203,23 @@ def url_for(
         )
 
     base_url = (
-        settings.PREFECT_UI_URL.value()
+        settings.SYNTASK_UI_URL.value()
         if url_type == "ui"
-        else settings.PREFECT_API_URL.value()
+        else settings.SYNTASK_API_URL.value()
     )
     base_url = base_url or default_base_url
 
     if not base_url:
         logger.debug(
-            f"No URL found for the Prefect {'UI' if url_type == 'ui' else 'API'}, "
+            f"No URL found for the Syntask {'UI' if url_type == 'ui' else 'API'}, "
             f"and no default base path provided."
         )
         return None
 
     if not obj_id:
-        # We treat PrefectFuture as if it was the underlying task run,
+        # We treat SyntaskFuture as if it was the underlying task run,
         # so we need to check the object type here instead of name.
-        if isinstance(obj, PrefectFuture):
+        if isinstance(obj, SyntaskFuture):
             obj_id = getattr(obj, "task_run_id", None)
         elif name == "block":
             # Blocks are client-side objects whose API representation is a

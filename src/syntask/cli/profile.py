@@ -12,20 +12,20 @@ import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-import prefect.context
-import prefect.settings
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.cloud import CloudUnauthorizedError, get_cloud_client
-from prefect.cli.root import app, is_interactive
-from prefect.client.base import determine_server_type
-from prefect.client.orchestration import ServerType, get_client
-from prefect.context import use_profile
-from prefect.exceptions import ObjectNotFound
-from prefect.settings import ProfilesCollection
-from prefect.utilities.collections import AutoEnum
+import syntask.context
+import syntask.settings
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.cloud import CloudUnauthorizedError, get_cloud_client
+from syntask.cli.root import app, is_interactive
+from syntask.client.base import determine_server_type
+from syntask.client.orchestration import ServerType, get_client
+from syntask.context import use_profile
+from syntask.exceptions import ObjectNotFound
+from syntask.settings import ProfilesCollection
+from syntask.utilities.collections import AutoEnum
 
-profile_app = PrefectTyper(name="profile", help="Select and manage Prefect profiles.")
+profile_app = SyntaskTyper(name="profile", help="Select and manage Syntask profiles.")
 app.add_typer(profile_app, aliases=["profiles"])
 
 _OLD_MINIMAL_DEFAULT_PROFILE_CONTENT: str = """active = "default"
@@ -38,8 +38,8 @@ def ls():
     """
     List profile names.
     """
-    profiles = prefect.settings.load_profiles(include_defaults=False)
-    current_profile = prefect.context.get_settings_context().profile
+    profiles = syntask.settings.load_profiles(include_defaults=False)
+    current_profile = syntask.context.get_settings_context().profile
     current_name = current_profile.name if current_profile is not None else None
 
     table = Table(caption="* active profile")
@@ -64,7 +64,7 @@ def create(
     Create a new profile.
     """
 
-    profiles = prefect.settings.load_profiles()
+    profiles = syntask.settings.load_profiles()
     if name in profiles:
         app.console.print(
             textwrap.dedent(
@@ -72,7 +72,7 @@ def create(
                 [red]Profile {name!r} already exists.[/red]
                 To create a new profile, remove the existing profile first:
 
-                    prefect profile delete {name!r}
+                    syntask profile delete {name!r}
                 """
             ).strip()
         )
@@ -85,9 +85,9 @@ def create(
         # Create a copy of the profile with a new name and add to the collection
         profiles.add_profile(profiles[from_name].model_copy(update={"name": name}))
     else:
-        profiles.add_profile(prefect.settings.Profile(name=name, settings={}))
+        profiles.add_profile(syntask.settings.Profile(name=name, settings={}))
 
-    prefect.settings.save_profiles(profiles)
+    syntask.settings.save_profiles(profiles)
 
     app.console.print(
         textwrap.dedent(
@@ -97,10 +97,10 @@ def create(
                 from name - {from_name or None}
 
             Use created profile for future, subsequent commands:
-                prefect profile use {name!r}
+                syntask profile use {name!r}
 
             Use created profile temporarily for a single command:
-                prefect -p {name!r} config view
+                syntask -p {name!r} config view
             """
         )
     )
@@ -114,50 +114,50 @@ async def use(name: str):
     status_messages = {
         ConnectionStatus.CLOUD_CONNECTED: (
             exit_with_success,
-            f"Connected to Prefect Cloud using profile {name!r}",
+            f"Connected to Syntask Cloud using profile {name!r}",
         ),
         ConnectionStatus.CLOUD_ERROR: (
             exit_with_error,
-            f"Error connecting to Prefect Cloud using profile {name!r}",
+            f"Error connecting to Syntask Cloud using profile {name!r}",
         ),
         ConnectionStatus.CLOUD_UNAUTHORIZED: (
             exit_with_error,
-            f"Error authenticating with Prefect Cloud using profile {name!r}",
+            f"Error authenticating with Syntask Cloud using profile {name!r}",
         ),
         ConnectionStatus.SERVER_CONNECTED: (
             exit_with_success,
-            f"Connected to Prefect server using profile {name!r}",
+            f"Connected to Syntask server using profile {name!r}",
         ),
         ConnectionStatus.SERVER_ERROR: (
             exit_with_error,
-            f"Error connecting to Prefect server using profile {name!r}",
+            f"Error connecting to Syntask server using profile {name!r}",
         ),
         ConnectionStatus.EPHEMERAL: (
             exit_with_success,
             (
-                f"No Prefect server specified using profile {name!r} - the API will run"
+                f"No Syntask server specified using profile {name!r} - the API will run"
                 " in ephemeral mode."
             ),
         ),
         ConnectionStatus.UNCONFIGURED: (
             exit_with_error,
             (
-                f"Prefect server URL not configured using profile {name!r} - please"
+                f"Syntask server URL not configured using profile {name!r} - please"
                 " configure the server URL or enable ephemeral mode."
             ),
         ),
         ConnectionStatus.INVALID_API: (
             exit_with_error,
-            "Error connecting to Prefect API URL",
+            "Error connecting to Syntask API URL",
         ),
     }
 
-    profiles = prefect.settings.load_profiles()
+    profiles = syntask.settings.load_profiles()
     if name not in profiles.names:
         exit_with_error(f"Profile {name!r} not found.")
 
     profiles.set_active(name)
-    prefect.settings.save_profiles(profiles)
+    syntask.settings.save_profiles(profiles)
 
     with Progress(
         SpinnerColumn(),
@@ -182,11 +182,11 @@ def delete(name: str):
     """
     Delete the given profile.
     """
-    profiles = prefect.settings.load_profiles()
+    profiles = syntask.settings.load_profiles()
     if name not in profiles:
         exit_with_error(f"Profile {name!r} not found.")
 
-    current_profile = prefect.context.get_settings_context().profile
+    current_profile = syntask.context.get_settings_context().profile
     if current_profile.name == name:
         exit_with_error(
             f"Profile {name!r} is the active profile. You must switch profiles before"
@@ -199,7 +199,7 @@ def delete(name: str):
         exit_with_error("Deletion aborted.")
     profiles.remove_profile(name)
 
-    prefect.settings.save_profiles(profiles)
+    syntask.settings.save_profiles(profiles)
     exit_with_success(f"Removed profile {name!r}.")
 
 
@@ -208,7 +208,7 @@ def rename(name: str, new_name: str):
     """
     Change the name of a profile.
     """
-    profiles = prefect.settings.load_profiles()
+    profiles = syntask.settings.load_profiles()
     if name not in profiles:
         exit_with_error(f"Profile {name!r} not found.")
 
@@ -219,17 +219,17 @@ def rename(name: str, new_name: str):
     profiles.remove_profile(name)
 
     # If the active profile was renamed switch the active profile to the new name.
-    prefect.context.get_settings_context().profile
+    syntask.context.get_settings_context().profile
     if profiles.active_name == name:
         profiles.set_active(new_name)
-    if os.environ.get("PREFECT_PROFILE") == name:
+    if os.environ.get("SYNTASK_PROFILE") == name:
         app.console.print(
             f"You have set your current profile to {name!r} with the "
-            "PREFECT_PROFILE environment variable. You must update this variable to "
+            "SYNTASK_PROFILE environment variable. You must update this variable to "
             f"{new_name!r} to continue using the profile."
         )
 
-    prefect.settings.save_profiles(profiles)
+    syntask.settings.save_profiles(profiles)
     exit_with_success(f"Renamed profile {name!r} to {new_name!r}.")
 
 
@@ -242,9 +242,9 @@ def inspect(
     """
     Display settings from a given profile; defaults to active.
     """
-    profiles = prefect.settings.load_profiles()
+    profiles = syntask.settings.load_profiles()
     if name is None:
-        current_profile = prefect.context.get_settings_context().profile
+        current_profile = syntask.context.get_settings_context().profile
         if not current_profile:
             exit_with_error("No active profile set - please provide a name to inspect.")
         name = current_profile.name
@@ -290,13 +290,13 @@ def show_profile_changes(
 @profile_app.command()
 def populate_defaults():
     """Populate the profiles configuration with default base profiles, preserving existing user profiles."""
-    user_path = prefect.settings.PREFECT_PROFILES_PATH.value()
-    default_profiles = prefect.settings._read_profiles_from(
-        prefect.settings.DEFAULT_PROFILES_PATH
+    user_path = syntask.settings.SYNTASK_PROFILES_PATH.value()
+    default_profiles = syntask.settings._read_profiles_from(
+        syntask.settings.DEFAULT_PROFILES_PATH
     )
 
     if user_path.exists():
-        user_profiles = prefect.settings._read_profiles_from(user_path)
+        user_profiles = syntask.settings._read_profiles_from(user_path)
 
         if not show_profile_changes(user_profiles, default_profiles):
             return
@@ -321,10 +321,10 @@ def populate_defaults():
         if name not in user_profiles:
             user_profiles.add_profile(profile)
 
-    prefect.settings._write_profiles_to(user_path, user_profiles)
+    syntask.settings._write_profiles_to(user_path, user_profiles)
     app.console.print(f"\nProfiles updated in [green]{user_path}[/green]")
     app.console.print(
-        "\nUse with [green]prefect profile use[/green] [blue][PROFILE-NAME][/blue]"
+        "\nUse with [green]syntask profile use[/green] [blue][PROFILE-NAME][/blue]"
     )
     app.console.print("\nAvailable profiles:")
     for name in user_profiles.names:
@@ -356,10 +356,10 @@ async def check_server_connection():
         # if the Cloud 2.0 API exists and fails to authenticate, notify the user
         return ConnectionStatus.CLOUD_UNAUTHORIZED
     except ObjectNotFound:
-        # if the route does not exist, attempt to connect as a hosted Prefect
+        # if the route does not exist, attempt to connect as a hosted Syntask
         # instance
         try:
-            # inform the user if Prefect API endpoints exist, but there are
+            # inform the user if Syntask API endpoints exist, but there are
             # connection issues
             server_type = determine_server_type()
             if server_type == ServerType.EPHEMERAL:
@@ -378,10 +378,10 @@ async def check_server_connection():
     except httpx.HTTPStatusError:
         return ConnectionStatus.CLOUD_ERROR
     except TypeError:
-        # if no Prefect API URL has been set, httpx will throw a TypeError
+        # if no Syntask API URL has been set, httpx will throw a TypeError
         try:
             # try to connect with the client anyway, it will likely use an
-            # ephemeral Prefect instance
+            # ephemeral Syntask instance
             server_type = determine_server_type()
             if server_type == ServerType.EPHEMERAL:
                 return ConnectionStatus.EPHEMERAL

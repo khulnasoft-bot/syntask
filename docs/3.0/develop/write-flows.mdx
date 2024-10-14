@@ -8,10 +8,10 @@ description: Learn the basics of defining and running flows.
 Flows are defined as Python functions.
 They can take inputs, perform work, and return a result.
 
-Make any Python function a Prefect flow by adding the `@flow` decorator to it:
+Make any Python function a Syntask flow by adding the `@flow` decorator to it:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 @flow
@@ -36,14 +36,14 @@ Flows are uniquely identified by name.
 You can provide a `name` parameter value for the flow:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 @flow(name="My Flow")
 def my_flow() -> str:
     return "Hello, world!"
 ```
 
-If you don't provide a name, Prefect uses the flow function name.
+If you don't provide a name, Syntask uses the flow function name.
 
 ## Run flows
 
@@ -54,26 +54,26 @@ Create a flow run by calling a flow by its function name, just as you would a no
 You can also create a flow run by:
 
 - Using external schedulers such as `cron` to invoke a flow function
-- Triggering a [deployment](/3.0/deploy/infrastructure-examples/docker/) of that flow in Prefect Cloud or self-hosted Prefect server
-- Starting a flow run for the deployment through a schedule, the Prefect UI, or the Prefect API
+- Triggering a [deployment](/3.0/deploy/infrastructure-examples/docker/) of that flow in Syntask Cloud or self-hosted Syntask server
+- Starting a flow run for the deployment through a schedule, the Syntask UI, or the Syntask API
 
-However you run your flow, Prefect monitors the flow run, capturing its state for observability.
+However you run your flow, Syntask monitors the flow run, capturing its state for observability.
 You can log a [variety of metadata](/3.0/develop/logging) about flow runs for monitoring, troubleshooting, and auditing purposes.
 
-The example below uses the HTTPX client library to fetch statistics about the [main Prefect repository](https://github.com/synopkg/synopkg).
+The example below uses the HTTPX client library to fetch statistics about the [main Syntask repository](https://github.com/synopkg/syntask).
 
 ```python repo_info.py
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow
 def get_repo_info():
-    url = "https://api.github.com/repos/PrefectHQ/prefect"
+    url = "https://api.github.com/repos/SynoPKG/syntask"
     response = httpx.get(url)
     response.raise_for_status()
     repo = response.json()
-    print("PrefectHQ/prefect repository statistics 🤓:")
+    print("SynoPKG/syntask repository statistics 🤓:")
     print(f"Stars 🌠 : {repo['stargazers_count']}")
     print(f"Forks 🍴 : {repo['forks_count']}")
 
@@ -85,8 +85,8 @@ if __name__ == "__main__":
 Running this script results in the following output:
 
 ```bash
-12:47:42.792 | INFO | prefect.engine - Created flow run 'ludicrous-warthog' for flow 'get-repo-info'
-PrefectHQ/prefect repository statistics 🤓:
+12:47:42.792 | INFO | syntask.engine - Created flow run 'ludicrous-warthog' for flow 'get-repo-info'
+SynoPKG/syntask repository statistics 🤓:
 Stars 🌠 : 12146
 Forks 🍴 : 1245
 12:47:45.008 | INFO | Flow run 'ludicrous-warthog' - Finished in state Completed()
@@ -96,11 +96,11 @@ Forks 🍴 : 1245
 
 As with any Python function, you can pass arguments to a flow, including both positional and keyword arguments.
 These arguments defined on your flow function are called [parameters](/3.0/develop/write-flows/#parameters).
-They are stored by the Prefect orchestration engine on the flow run object.
+They are stored by the Syntask orchestration engine on the flow run object.
 
-Prefect automatically performs type conversion of inputs using any provided type hints.
+Syntask automatically performs type conversion of inputs using any provided type hints.
 Type hints provide a simple way to enforce typing on your flow parameters and can be customized with [Pydantic](https://pydantic-docs.helpmanual.io/).
-Prefect supports any Pydantic model as a type hint for a flow parameter.
+Syntask supports any Pydantic model as a type hint for a flow parameter.
 
 For example, to automatically convert an argument to a datetime object:
 
@@ -111,7 +111,7 @@ from datetime import (
 )
 from typing import Optional
 
-from prefect import flow
+from syntask import flow
 
 
 @flow
@@ -135,7 +135,7 @@ It was Friday on 2021-01-01T02:00:19.180906
 
 You may pass also a `dict` representation of a `BaseModel` parameter and it will be coerced:
 ```python
-from prefect import flow
+from syntask import flow
 from pydantic import BaseModel
 
 
@@ -162,9 +162,9 @@ Note that you can provide parameter values to a flow through the API using a [de
 Flow run parameters sent to the API are coerced to the appropriate types when possible.
 
 <Warning>
-**Prefect API requires keyword arguments**
+**Syntask API requires keyword arguments**
 
-When creating flow runs from the Prefect API, you must specify parameter names when overriding defaults.
+When creating flow runs from the Syntask API, you must specify parameter names when overriding defaults.
 The values passed cannot be positional.
 </Warning>
 
@@ -177,10 +177,10 @@ Flow run parameters cannot exceed `512kb` in size.
 
 ## Compose flows
 
-Flows can call [tasks](/3.0/develop/write-tasks), the most granular units of orchestrated work in Prefect workflows:
+Flows can call [tasks](/3.0/develop/write-tasks), the most granular units of orchestrated work in Syntask workflows:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 
 @task
@@ -197,7 +197,7 @@ A single flow function can contain all of your workflow's code.
 However, if you put all of your workflow logic in a single flow function and any line of code fails, the entire flow fails and must be retried from the beginning.
 The more granular you make your workflows, the better they can recover from failures and the easier you can find and fix issues.
 
-Prefect tasks are well suited for parallel or distributed execution using distributed computation frameworks such as Dask or Ray.
+Syntask tasks are well suited for parallel or distributed execution using distributed computation frameworks such as Dask or Ray.
 
 ### Nest flows
 
@@ -229,13 +229,13 @@ Whether running locally or through a [deployment](/3.0/deploy/infrastructure-exa
 
 A nested flow run cannot be cancelled without cancelling its parent flow run.
 If you need to be able to cancel a nested flow run independent of its parent flow run, we recommend deploying it separately and starting it with
-the [run_deployment](https://prefect-python-sdk-docs.netlify.app/prefect/deployments/flow_runs/#prefect.deployments.flow_runs.run_deployment) method.
+the [run_deployment](https://syntask-python-sdk-docs.netlify.app/syntask/deployments/flow_runs/#syntask.deployments.flow_runs.run_deployment) method.
 </Warning>
 
 You can also define flows or tasks in separate modules and import them for use:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 
 @flow(name="Nestedflow")
@@ -246,7 +246,7 @@ def my_nested_flow(msg):
 Here's a parent flow that imports and uses `my_nested_flow` as a nested flow:
 
 ```python hello.py
-from prefect import flow, task
+from syntask import flow, task
 from myproject.flows import my_nested_flow
 
 
@@ -270,13 +270,13 @@ if __name__=="__main__":
 Running the `hello_world()` flow creates a flow run like this:
 
 ```bash
-08:24:06.617 | INFO    | prefect.engine - Created flow run 'sage-mongoose' for flow 'Hello Flow'
-08:24:06.620 | INFO    | prefect.engine - View at https://app.prefect.cloud/...
+08:24:06.617 | INFO    | syntask.engine - Created flow run 'sage-mongoose' for flow 'Hello Flow'
+08:24:06.620 | INFO    | syntask.engine - View at https://app.syntask.cloud/...
 08:24:07.113 | INFO    | Task run 'Print Hello-0' - Created task run 'Print Hello-0' for task 'Print Hello'
 Hello Marvin!
 08:24:07.445 | INFO    | Task run 'Print Hello-0' - Finished in state Completed()
 08:24:07.825 | INFO    | Flow run 'sage-mongoose' - Created subflow run 'powerful-capybara' for flow 'Nestedflow'
-08:24:07.826 | INFO    | prefect.engine - View at https://app.prefect.cloud/...
+08:24:07.826 | INFO    | syntask.engine - View at https://app.syntask.cloud/...
 Nestedflow says: Hello Marvin!
 08:24:08.165 | INFO    | Flow run 'powerful-capybara' - Finished in state Completed()
 08:24:08.296 | INFO    | Flow run 'sage-mongoose' - Finished in state Completed()
@@ -284,7 +284,7 @@ Nestedflow says: Hello Marvin!
 
 Here are some scenarios where you might want to define a nested flow rather than call tasks individually:
 
-- Observability: Nested flows, like any other flow run, have first-class observability within the Prefect UI and Prefect Cloud. You'll
+- Observability: Nested flows, like any other flow run, have first-class observability within the Syntask UI and Syntask Cloud. You'll
 see nested flows' status in the **Runs** dashboard rather than having to dig down into the tasks within a specific flow run.
 See [Final state determination](#final-state-determination) for examples of using task state within flows.
 - Conditional flows: If you have a group of tasks that run only under certain conditions, you can group them within a nested flow and
@@ -297,20 +297,20 @@ task runner for each nested flow.
 
 ## Supported functions
 
-Almost any standard Python function can be turned into a Prefect flow by adding the `@flow` decorator.
+Almost any standard Python function can be turned into a Syntask flow by adding the `@flow` decorator.
 Flows are executed in the main thread by default to facilitate native Python debugging and profiling.
 
 As shown in the examples above, flows run synchronously by default.
 
 ### Asynchronous functions
 
-Prefect also supports asynchronous execution.
+Syntask also supports asynchronous execution.
 The resulting flows are coroutines that can be awaited or run concurrently, following [the standard rules of async Python](https://docs.python.org/3/library/asyncio-task.html).
 For example:
 
 ```python
 import asyncio
-from prefect import task, flow
+from syntask import task, flow
 
 
 @task
@@ -338,11 +338,11 @@ if __name__ == "__main__":
 
 ### Class methods
 
-Prefect supports synchronous and asynchronous class methods as flows, including instance methods, class methods, and static methods.
+Syntask supports synchronous and asynchronous class methods as flows, including instance methods, class methods, and static methods.
 For class methods and static methods, apply the appropriate method decorator _above_ the `@flow` decorator:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 class MyClass:
@@ -371,13 +371,13 @@ MyClass.my_static_method()
 
 ### Generators
 
-Prefect supports synchronous and asynchronous generators as flows.
+Syntask supports synchronous and asynchronous generators as flows.
 The flow is considered to be `Running` as long as the generator is yielding values.
 When the generator is exhausted, the flow is considered `Completed`.
 Any values yielded by the generator can be consumed by other flows or tasks.
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 @flow
@@ -404,7 +404,7 @@ This can lead to unexpected behavior or blocking if the generator is infinite or
 Here is an example of proactive generator consumption:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 def gen():
@@ -424,7 +424,7 @@ If you need to return a generator without consuming it, you can `yield` it inste
 Values yielded from generator flows are not considered final results and do not face the same serialization constraints:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 def gen():
@@ -448,9 +448,9 @@ list(generator()) # prints 'Generator consumed!'
 A _flow run_ is a single execution of a flow.
 
 You can create a flow run by calling the flow function manually, or even by using an external scheduler such as `cron` to invoke a flow function.
-Most users run flows by creating a [deployment](/3.0/deploy/) on Prefect Cloud or Prefect server and then scheduling a flow run for the deployment through a schedule, the Prefect UI, or the Prefect API.
+Most users run flows by creating a [deployment](/3.0/deploy/) on Syntask Cloud or Syntask server and then scheduling a flow run for the deployment through a schedule, the Syntask UI, or the Syntask API.
 
-However you run a flow, the Prefect API monitors the flow run and records information for monitoring, troubleshooting, and auditing.
+However you run a flow, the Syntask API monitors the flow run and records information for monitoring, troubleshooting, and auditing.
 
 ## Flow settings
 
@@ -471,7 +471,7 @@ All flows can be configured by passing arguments to the decorator. Flows accept 
 For example, you can provide `name` and `description` arguments.
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 @flow(
@@ -492,7 +492,7 @@ The name is formatted using Python's standard string formatting syntax:
 
 ```python
 import datetime
-from prefect import flow
+from syntask import flow
 
 
 @flow(flow_run_name="{name}-on-{date:%A}")
@@ -509,7 +509,7 @@ This setting also accepts a function that returns a string for the flow run name
 
 ```python
 import datetime
-from prefect import flow
+from syntask import flow
 
 
 def generate_flow_run_name():
@@ -527,11 +527,11 @@ if __name__ == "__main__":
     my_flow(name="marvin")
 ```
 
-If you need access to information about the flow, use the `prefect.runtime` module. For example:
+If you need access to information about the flow, use the `syntask.runtime` module. For example:
 
 ```python
-from prefect import flow
-from prefect.runtime import flow_run
+from syntask import flow
+from syntask.runtime import flow_run
 
 
 def generate_flow_run_name():
@@ -573,7 +573,7 @@ import FinalFlowState from '/snippets/final-flow-state.mdx'
 If a flow returns one or more futures, the final state is determined based on the underlying states.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 
 @task
@@ -601,7 +601,7 @@ if __name__ == "__main__":
 This flow run finishes in a **Completed** final state because the flow returns the future of the task that succeeds:
 
 ```bash
-18:35:24.965 | INFO    | prefect.engine - Created flow run 'whispering-guan' for flow 'always-succeeds-flow'
+18:35:24.965 | INFO    | syntask.engine - Created flow run 'whispering-guan' for flow 'always-succeeds-flow'
 18:35:25.204 | INFO    | Flow run 'whispering-guan' - Created task run 'always_fails_task-96e4be14-0' for task 'always_fails_task'
 18:35:25.205 | INFO    | Flow run 'whispering-guan' - Submitted task run 'always_fails_task-96e4be14-0' for execution.
 18:35:25.232 | ERROR   | Task run 'always_fails_task-96e4be14-0' - Encountered exception during execution:
@@ -622,7 +622,7 @@ If a flow returns a mix of futures and states, the final state is determined by 
 then determining if any of the states are not `COMPLETED`.
 
 ```python
-from prefect import task, flow
+from syntask import task, flow
 
 
 @task
@@ -665,8 +665,8 @@ If multiple states are returned, they must be contained in a `set`, `list`, or `
 If a flow returns a manually created state, the final state is determined based upon the return value.
 
 ```python
-from prefect import task, flow
-from prefect.states import Completed, Failed
+from syntask import task, flow
+from syntask.states import Completed, Failed
 
 
 @task
@@ -715,8 +715,8 @@ You can also create custom named states to provide more granularity in your flow
 For example, we could create a `Skipped` state to indicate that a flow run was skipped.
 
 ```python
-from prefect import flow
-from prefect.states import Completed
+from syntask import flow
+from syntask.states import Completed
 
 @flow
 def my_flow(work_to_do: bool):
@@ -741,12 +741,12 @@ Running this flow produces the following result:
 Unexpected errors may occur in workflows.
 For example the GitHub API may be temporarily unavailable or rate limited.
 
-Prefect can automatically retry flow runs on failure.
+Syntask can automatically retry flow runs on failure.
 
 To enable retries, pass an integer to the flow's `retries` parameter.
-If the flow run fails, Prefect will retry it up to `retries` times.
+If the flow run fails, Syntask will retry it up to `retries` times.
 
-If the flow run fails on the final retry, Prefect records the final flow run state as _failed_.
+If the flow run fails on the final retry, Syntask records the final flow run state as _failed_.
 
 Optionally, pass an integer to `retry_delay_seconds` to specify how many seconds to wait between each retry attempt.
 

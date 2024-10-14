@@ -25,12 +25,12 @@ from pydantic import (
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import Self
 
-from prefect.logging import get_logger
-from prefect.server.events.schemas.labelling import Labelled
-from prefect.server.utilities.schemas import PrefectBaseModel
-from prefect.settings import (
-    PREFECT_EVENTS_MAXIMUM_LABELS_PER_RESOURCE,
-    PREFECT_EVENTS_MAXIMUM_RELATED_RESOURCES,
+from syntask.logging import get_logger
+from syntask.server.events.schemas.labelling import Labelled
+from syntask.server.utilities.schemas import SyntaskBaseModel
+from syntask.settings import (
+    SYNTASK_EVENTS_MAXIMUM_LABELS_PER_RESOURCE,
+    SYNTASK_EVENTS_MAXIMUM_RELATED_RESOURCES,
 )
 
 logger = get_logger(__name__)
@@ -41,34 +41,34 @@ class Resource(Labelled):
 
     @model_validator(mode="after")
     def enforce_maximum_labels(self) -> Self:
-        if len(self.root) > PREFECT_EVENTS_MAXIMUM_LABELS_PER_RESOURCE.value():
+        if len(self.root) > SYNTASK_EVENTS_MAXIMUM_LABELS_PER_RESOURCE.value():
             raise ValueError(
                 "The maximum number of labels per resource "
-                f"is {PREFECT_EVENTS_MAXIMUM_LABELS_PER_RESOURCE.value()}"
+                f"is {SYNTASK_EVENTS_MAXIMUM_LABELS_PER_RESOURCE.value()}"
             )
 
         return self
 
     @model_validator(mode="after")
     def requires_resource_id(self) -> Self:
-        if "prefect.resource.id" not in self.root:
-            raise ValueError("Resources must include the prefect.resource.id label")
-        if not self.root["prefect.resource.id"]:
-            raise ValueError("The prefect.resource.id label must be non-empty")
+        if "syntask.resource.id" not in self.root:
+            raise ValueError("Resources must include the syntask.resource.id label")
+        if not self.root["syntask.resource.id"]:
+            raise ValueError("The syntask.resource.id label must be non-empty")
 
         return self
 
     @property
     def id(self) -> str:
-        return self["prefect.resource.id"]
+        return self["syntask.resource.id"]
 
     @property
     def name(self) -> Optional[str]:
-        return self.get("prefect.resource.name")
+        return self.get("syntask.resource.name")
 
-    def prefect_object_id(self, kind: str) -> UUID:
+    def syntask_object_id(self, kind: str) -> UUID:
         """Extracts the UUID from an event's resource ID if it's the expected kind
-        of prefect resource"""
+        of syntask resource"""
         prefix = f"{kind}." if not kind.endswith(".") else kind
 
         if not self.id.startswith(prefix):
@@ -82,21 +82,21 @@ class RelatedResource(Resource):
 
     @model_validator(mode="after")
     def requires_resource_role(self) -> Self:
-        if "prefect.resource.role" not in self.root:
+        if "syntask.resource.role" not in self.root:
             raise ValueError(
-                "Related Resources must include the prefect.resource.role label"
+                "Related Resources must include the syntask.resource.role label"
             )
-        if not self.root["prefect.resource.role"]:
-            raise ValueError("The prefect.resource.role label must be non-empty")
+        if not self.root["syntask.resource.role"]:
+            raise ValueError("The syntask.resource.role label must be non-empty")
 
         return self
 
     @property
     def role(self) -> str:
-        return self["prefect.resource.role"]
+        return self["syntask.resource.role"]
 
 
-class Event(PrefectBaseModel):
+class Event(SyntaskBaseModel):
     """The client-side view of an event that has happened to a Resource"""
 
     occurred: DateTime = Field(
@@ -149,10 +149,10 @@ class Event(PrefectBaseModel):
     @field_validator("related")
     @classmethod
     def enforce_maximum_related_resources(cls, value: List[RelatedResource]):
-        if len(value) > PREFECT_EVENTS_MAXIMUM_RELATED_RESOURCES.value():
+        if len(value) > SYNTASK_EVENTS_MAXIMUM_RELATED_RESOURCES.value():
             raise ValueError(
                 "The maximum number of related resources "
-                f"is {PREFECT_EVENTS_MAXIMUM_RELATED_RESOURCES.value()}"
+                f"is {SYNTASK_EVENTS_MAXIMUM_RELATED_RESOURCES.value()}"
             )
 
         return value
@@ -184,7 +184,7 @@ class ReceivedEvent(Event):
 
     received: DateTime = Field(
         default_factory=lambda: pendulum.now("UTC"),
-        description="When the event was received by Prefect Cloud",
+        description="When the event was received by Syntask Cloud",
     )
 
     def as_database_row(self) -> Dict[str, Any]:
@@ -197,8 +197,8 @@ class ReceivedEvent(Event):
     def as_database_resource_rows(self) -> List[Dict[str, Any]]:
         def without_id_and_role(resource: Resource) -> Dict[str, str]:
             d: Dict[str, str] = resource.root.copy()
-            d.pop("prefect.resource.id", None)
-            d.pop("prefect.resource.role", None)
+            d.pop("syntask.resource.id", None)
+            d.pop("syntask.resource.role", None)
             return d
 
         return [
@@ -243,7 +243,7 @@ class ResourceSpecification(RootModel[Dict[str, Union[str, List[str]]]]):
         if self.matches_every_resource():
             return True
         if len(self.root) == 1:
-            resource_id = self.root.get("prefect.resource.id")
+            resource_id = self.root.get("syntask.resource.id")
             if resource_id:
                 values = [resource_id] if isinstance(resource_id, str) else resource_id
                 return any(value == f"{prefix}.*" for value in values)
@@ -308,7 +308,7 @@ class ResourceSpecification(RootModel[Dict[str, Union[str, List[str]]]]):
         return ResourceSpecification(root=copy.deepcopy(self.root))
 
 
-class EventPage(PrefectBaseModel):
+class EventPage(SyntaskBaseModel):
     """A single page of events returned from the API, with an optional link to the
     next page of results"""
 
@@ -321,7 +321,7 @@ class EventPage(PrefectBaseModel):
     )
 
 
-class EventCount(PrefectBaseModel):
+class EventCount(SyntaskBaseModel):
     """The count of events with the given filter value"""
 
     value: str = Field(..., description="The value to use for filtering")

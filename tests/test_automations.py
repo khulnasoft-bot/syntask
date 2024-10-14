@@ -2,16 +2,16 @@ from uuid import UUID
 
 import pytest
 
-from prefect import flow
-from prefect.automations import Automation, DoNothing
-from prefect.events import ResourceSpecification
-from prefect.events.schemas.automations import EventTrigger, Posture
-from prefect.settings import PREFECT_API_SERVICES_TRIGGERS_ENABLED, temporary_settings
+from syntask import flow
+from syntask.automations import Automation, DoNothing
+from syntask.events import ResourceSpecification
+from syntask.events.schemas.automations import EventTrigger, Posture
+from syntask.settings import SYNTASK_API_SERVICES_TRIGGERS_ENABLED, temporary_settings
 
 
 @pytest.fixture(autouse=True)
 def enable_triggers():
-    with temporary_settings({PREFECT_API_SERVICES_TRIGGERS_ENABLED: True}):
+    with temporary_settings({SYNTASK_API_SERVICES_TRIGGERS_ENABLED: True}):
         yield
 
 
@@ -22,11 +22,11 @@ async def automation_spec():
         description="world",
         enabled=True,
         trigger=EventTrigger(
-            match={"prefect.resource.name": "howdy!"},
-            match_related={"prefect.resource.role": "something-cool"},
+            match={"syntask.resource.name": "howdy!"},
+            match_related={"syntask.resource.role": "something-cool"},
             after={"this.one", "or.that.one"},
             expect={"surely.this", "but.also.this"},
-            for_each=["prefect.resource.name"],
+            for_each=["syntask.resource.name"],
             posture=Posture.Reactive,
             threshold=42,
         ),
@@ -42,11 +42,11 @@ async def automation():
         description="world",
         enabled=True,
         trigger=EventTrigger(
-            match={"prefect.resource.name": "howdy!"},
-            match_related={"prefect.resource.role": "something-cool"},
+            match={"syntask.resource.name": "howdy!"},
+            match_related={"syntask.resource.role": "something-cool"},
             after={"this.one", "or.that.one"},
             expect={"surely.this", "but.also.this"},
-            for_each=["prefect.resource.name"],
+            for_each=["syntask.resource.name"],
             posture=Posture.Reactive,
             threshold=42,
         ),
@@ -63,14 +63,14 @@ async def test_read_automation_by_uuid(automation):
     assert model.description == "world"
     assert model.enabled is True
     assert model.trigger.match == ResourceSpecification(
-        {"prefect.resource.name": "howdy!"}
+        {"syntask.resource.name": "howdy!"}
     )
     assert model.trigger.match_related == ResourceSpecification(
-        {"prefect.resource.role": "something-cool"}
+        {"syntask.resource.role": "something-cool"}
     )
     assert model.trigger.after == {"this.one", "or.that.one"}
     assert model.trigger.expect == {"surely.this", "but.also.this"}
-    assert model.trigger.for_each == {"prefect.resource.name"}
+    assert model.trigger.for_each == {"syntask.resource.name"}
     assert model.trigger.posture == Posture.Reactive
     assert model.trigger.threshold == 42
     assert model.actions[0] == DoNothing(type="do-nothing")
@@ -82,14 +82,14 @@ async def test_read_automation_by_uuid_string(automation):
     assert model.description == "world"
     assert model.enabled is True
     assert model.trigger.match == ResourceSpecification(
-        {"prefect.resource.name": "howdy!"}
+        {"syntask.resource.name": "howdy!"}
     )
     assert model.trigger.match_related == ResourceSpecification(
-        {"prefect.resource.role": "something-cool"}
+        {"syntask.resource.role": "something-cool"}
     )
     assert model.trigger.after == {"this.one", "or.that.one"}
     assert model.trigger.expect == {"surely.this", "but.also.this"}
-    assert model.trigger.for_each == {"prefect.resource.name"}
+    assert model.trigger.for_each == {"syntask.resource.name"}
     assert model.trigger.posture == Posture.Reactive
     assert model.trigger.threshold == 42
     assert model.actions[0] == DoNothing(type="do-nothing")
@@ -101,14 +101,14 @@ async def test_read_automation_by_name(automation):
     assert model.description == "world"
     assert model.enabled is True
     assert model.trigger.match == ResourceSpecification(
-        {"prefect.resource.name": "howdy!"}
+        {"syntask.resource.name": "howdy!"}
     )
     assert model.trigger.match_related == ResourceSpecification(
-        {"prefect.resource.role": "something-cool"}
+        {"syntask.resource.role": "something-cool"}
     )
     assert model.trigger.after == {"this.one", "or.that.one"}
     assert model.trigger.expect == {"surely.this", "but.also.this"}
-    assert model.trigger.for_each == {"prefect.resource.name"}
+    assert model.trigger.for_each == {"syntask.resource.name"}
     assert model.trigger.posture == Posture.Reactive
     assert model.trigger.threshold == 42
     assert model.actions[0] == DoNothing(type="do-nothing")

@@ -1,12 +1,11 @@
-import prefectDesignTailwindConfig from '@prefecthq/prefect-design/src/tailwind.config'
-import type { Config } from 'tailwindcss'
+import prefectDesignConfig from '@prefecthq/prefect-design/src/tailwind.config'
+import { Config } from 'tailwindcss/types/config'
 
-const config: Config = {
-  content: [
-    './index.html',
-    './src/**/*.vue',
-  ],
-  presets: [prefectDesignTailwindConfig],
-}
+// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
+import baseConfig from './src/tailwind.config'
 
-export default config
+// eslint-disable-next-line import/no-default-export
+export default {
+  content: ['./src/**/*.{vue,js,ts}'],
+  presets: [prefectDesignConfig, baseConfig],
+} satisfies Config

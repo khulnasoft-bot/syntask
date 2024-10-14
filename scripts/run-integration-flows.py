@@ -10,7 +10,7 @@ Usage:
 
 Example:
 
-    PREFECT_API_URL="http://localhost:4200/api" ./scripts/run-integration-flows.py
+    SYNTASK_API_URL="http://localhost:4200/api" ./scripts/run-integration-flows.py
 """
 
 import subprocess
@@ -19,11 +19,11 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Union
 
-import prefect
-from prefect import __version__
+import syntask
+from syntask import __version__
 
-# See https://github.com/synopkg/synopkg/pull/9136
-DEFAULT_PATH = prefect.__development_base_path__ / "flows"
+# See https://github.com/synopkg/syntask/pull/9136
+DEFAULT_PATH = syntask.__development_base_path__ / "flows"
 
 
 def run_script(script_path: str):

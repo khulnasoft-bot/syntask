@@ -2,18 +2,18 @@ from datetime import datetime
 from typing import Any, List, Literal, Optional, Tuple
 from uuid import UUID
 
-from prefect.server.schemas.states import StateType
-from prefect.server.utilities.schemas import PrefectBaseModel
+from syntask.server.schemas.states import StateType
+from syntask.server.utilities.schemas import SyntaskBaseModel
 
 
-class GraphState(PrefectBaseModel):
+class GraphState(SyntaskBaseModel):
     id: UUID
     timestamp: datetime
     type: StateType
     name: str
 
 
-class GraphArtifact(PrefectBaseModel):
+class GraphArtifact(SyntaskBaseModel):
     id: UUID
     created: datetime
     key: Optional[str]
@@ -22,11 +22,11 @@ class GraphArtifact(PrefectBaseModel):
     data: Optional[Any]  # we only return data for progress artifacts for now
 
 
-class Edge(PrefectBaseModel):
+class Edge(SyntaskBaseModel):
     id: UUID
 
 
-class Node(PrefectBaseModel):
+class Node(SyntaskBaseModel):
     kind: Literal["flow-run", "task-run"]
     id: UUID
     label: str
@@ -39,7 +39,7 @@ class Node(PrefectBaseModel):
     artifacts: List[GraphArtifact]
 
 
-class Graph(PrefectBaseModel):
+class Graph(SyntaskBaseModel):
     start_time: datetime
     end_time: Optional[datetime]
     root_node_ids: List[UUID]

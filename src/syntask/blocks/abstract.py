@@ -17,9 +17,9 @@ from typing import (
 
 from typing_extensions import Self
 
-from prefect.blocks.core import Block
-from prefect.exceptions import MissingContextError
-from prefect.logging.loggers import get_logger, get_run_logger
+from syntask.blocks.core import Block
+from syntask.exceptions import MissingContextError
+from syntask.logging.loggers import get_logger, get_run_logger
 
 T = TypeVar("T")
 

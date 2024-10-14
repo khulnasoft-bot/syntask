@@ -1,6 +1,6 @@
 """
 The MarkLateRuns service. Responsible for putting flow runs in a Late state if they are not started on time.
-The threshold for a late run can be configured by changing `PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS`.
+The threshold for a late run can be configured by changing `SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS`.
 """
 
 import asyncio
@@ -11,16 +11,16 @@ import pendulum
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.models as models
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.orchestration.core_policy import MarkLateRunsPolicy
-from prefect.server.schemas import states
-from prefect.server.services.loop_service import LoopService
-from prefect.settings import (
-    PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS,
-    PREFECT_API_SERVICES_LATE_RUNS_LOOP_SECONDS,
+import syntask.server.models as models
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.orchestration.core_policy import MarkLateRunsPolicy
+from syntask.server.schemas import states
+from syntask.server.services.loop_service import LoopService
+from syntask.settings import (
+    SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS,
+    SYNTASK_API_SERVICES_LATE_RUNS_LOOP_SECONDS,
 )
 
 
@@ -30,26 +30,26 @@ class MarkLateRuns(LoopService):
 
     A flow run is defined as "late" if has not scheduled within a certain amount
     of time after its scheduled start time. The exact amount is configurable in
-    Prefect REST API Settings.
+    Syntask REST API Settings.
     """
 
     def __init__(self, loop_seconds: Optional[float] = None, **kwargs):
         super().__init__(
             loop_seconds=loop_seconds
-            or PREFECT_API_SERVICES_LATE_RUNS_LOOP_SECONDS.value(),
+            or SYNTASK_API_SERVICES_LATE_RUNS_LOOP_SECONDS.value(),
             **kwargs,
         )
 
         # mark runs late if they are this far past their expected start time
         self.mark_late_after: datetime.timedelta = (
-            PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS.value()
+            SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS.value()
         )
 
         # query for this many runs to mark as late at once
         self.batch_size = 400
 
     @inject_db
-    async def run_once(self, db: PrefectDBInterface):
+    async def run_once(self, db: SyntaskDBInterface):
         """
         Mark flow runs as late by:
 
@@ -81,7 +81,7 @@ class MarkLateRuns(LoopService):
 
     @inject_db
     def _get_select_late_flow_runs_query(
-        self, scheduled_to_start_before: datetime.datetime, db: PrefectDBInterface
+        self, scheduled_to_start_before: datetime.datetime, db: SyntaskDBInterface
     ):
         """
         Returns a sqlalchemy query for late flow runs.
@@ -107,7 +107,7 @@ class MarkLateRuns(LoopService):
         return query
 
     async def _mark_flow_run_as_late(
-        self, session: AsyncSession, flow_run: PrefectDBInterface.FlowRun
+        self, session: AsyncSession, flow_run: SyntaskDBInterface.FlowRun
     ) -> None:
         """
         Mark a flow run as late.

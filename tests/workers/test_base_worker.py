@@ -7,31 +7,31 @@ import pytest
 from packaging import version
 from pydantic import Field
 
-import prefect
-import prefect.client.schemas as schemas
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.client.schemas import FlowRun
-from prefect.exceptions import (
+import syntask
+import syntask.client.schemas as schemas
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.client.schemas import FlowRun
+from syntask.exceptions import (
     CrashedRun,
     ObjectNotFound,
 )
-from prefect.flows import flow
-from prefect.server import models
-from prefect.server.schemas.actions import WorkPoolUpdate as ServerWorkPoolUpdate
-from prefect.server.schemas.core import Deployment, Flow, WorkPool
-from prefect.server.schemas.responses import DeploymentResponse
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_TEST_MODE,
-    PREFECT_WORKER_PREFETCH_SECONDS,
+from syntask.flows import flow
+from syntask.server import models
+from syntask.server.schemas.actions import WorkPoolUpdate as ServerWorkPoolUpdate
+from syntask.server.schemas.core import Deployment, Flow, WorkPool
+from syntask.server.schemas.responses import DeploymentResponse
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_TEST_MODE,
+    SYNTASK_WORKER_PREFETCH_SECONDS,
     get_current_settings,
     temporary_settings,
 )
-from prefect.states import Completed, Pending, Running, Scheduled
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.pydantic import parse_obj_as
-from prefect.workers.base import (
+from syntask.states import Completed, Pending, Running, Scheduled
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.pydantic import parse_obj_as
+from syntask.workers.base import (
     BaseJobConfiguration,
     BaseVariables,
     BaseWorker,
@@ -58,30 +58,30 @@ async def ensure_default_agent_pool_exists(session):
         await models.workers.create_work_pool(
             session=session,
             work_pool=WorkPool(
-                name=models.workers.DEFAULT_AGENT_WORK_POOL_NAME, type="prefect-agent"
+                name=models.workers.DEFAULT_AGENT_WORK_POOL_NAME, type="syntask-agent"
             ),
         )
         await session.commit()
 
 
 @pytest.fixture
-async def variables(prefect_client: PrefectClient):
-    await prefect_client._client.post(
+async def variables(syntask_client: SyntaskClient):
+    await syntask_client._client.post(
         "/variables/", json={"name": "test_variable_1", "value": "test_value_1"}
     )
-    await prefect_client._client.post(
+    await syntask_client._client.post(
         "/variables/", json={"name": "test_variable_2", "value": "test_value_2"}
     )
 
 
 @pytest.fixture
 def no_api_url():
-    with temporary_settings(updates={PREFECT_TEST_MODE: False, PREFECT_API_URL: None}):
+    with temporary_settings(updates={SYNTASK_TEST_MODE: False, SYNTASK_API_URL: None}):
         yield
 
 
 async def test_worker_requires_api_url_when_not_in_test_mode(no_api_url):
-    with pytest.raises(ValueError, match="PREFECT_API_URL"):
+    with pytest.raises(ValueError, match="SYNTASK_API_URL"):
         async with WorkerTestImpl(
             name="test",
             work_pool_name="test-work-pool",
@@ -90,10 +90,10 @@ async def test_worker_requires_api_url_when_not_in_test_mode(no_api_url):
 
 
 async def test_worker_creates_work_pool_by_default_during_sync(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
 ):
     with pytest.raises(ObjectNotFound):
-        await prefect_client.read_work_pool("test-work-pool")
+        await syntask_client.read_work_pool("test-work-pool")
 
     async with WorkerTestImpl(
         name="test",
@@ -103,15 +103,15 @@ async def test_worker_creates_work_pool_by_default_during_sync(
         worker_status = worker.get_status()
         assert worker_status["work_pool"]["name"] == "test-work-pool"
 
-        work_pool = await prefect_client.read_work_pool("test-work-pool")
+        work_pool = await syntask_client.read_work_pool("test-work-pool")
         assert str(work_pool.id) == worker_status["work_pool"]["id"]
 
 
 async def test_worker_does_not_creates_work_pool_when_create_pool_is_false(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
 ):
     with pytest.raises(ObjectNotFound):
-        await prefect_client.read_work_pool("test-work-pool")
+        await syntask_client.read_work_pool("test-work-pool")
 
     async with WorkerTestImpl(
         name="test", work_pool_name="test-work-pool", create_pool_if_not_found=False
@@ -121,13 +121,13 @@ async def test_worker_does_not_creates_work_pool_when_create_pool_is_false(
         assert worker_status["work_pool"] is None
 
     with pytest.raises(ObjectNotFound):
-        await prefect_client.read_work_pool("test-work-pool")
+        await syntask_client.read_work_pool("test-work-pool")
 
 
 @pytest.mark.parametrize(
     "setting,attr",
     [
-        (PREFECT_WORKER_PREFETCH_SECONDS, "prefetch_seconds"),
+        (SYNTASK_WORKER_PREFETCH_SECONDS, "prefetch_seconds"),
     ],
 )
 async def test_worker_respects_settings(setting, attr):
@@ -140,12 +140,12 @@ async def test_worker_respects_settings(setting, attr):
 
 
 async def test_worker_sends_heartbeat_messages(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
 ):
     async with WorkerTestImpl(name="test", work_pool_name="test-work-pool") as worker:
         await worker.sync_with_backend()
 
-        workers = await prefect_client.read_workers_for_work_pool(
+        workers = await syntask_client.read_workers_for_work_pool(
             work_pool_name="test-work-pool"
         )
         assert len(workers) == 1
@@ -154,7 +154,7 @@ async def test_worker_sends_heartbeat_messages(
 
         await worker.sync_with_backend()
 
-        workers = await prefect_client.read_workers_for_work_pool(
+        workers = await syntask_client.read_workers_for_work_pool(
             work_pool_name="test-work-pool"
         )
         second_heartbeat = workers[0].last_heartbeat_time
@@ -162,14 +162,14 @@ async def test_worker_sends_heartbeat_messages(
 
 
 async def test_worker_with_work_pool(
-    prefect_client: PrefectClient, worker_deployment_wq1, work_pool
+    syntask_client: SyntaskClient, worker_deployment_wq1, work_pool
 ):
     @flow
     def test_flow():
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq1.id, state=state
         )
 
@@ -189,7 +189,7 @@ async def test_worker_with_work_pool(
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(test_flow, state=Scheduled()),
+        await syntask_client.create_flow_run(test_flow, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
@@ -202,7 +202,7 @@ async def test_worker_with_work_pool(
 
 
 async def test_worker_with_work_pool_and_work_queue(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     worker_deployment_wq1,
     worker_deployment_wq_2,
     work_queue_1,
@@ -213,12 +213,12 @@ async def test_worker_with_work_pool_and_work_queue(
         pass
 
     def create_run_with_deployment_1(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq1.id, state=state
         )
 
     def create_run_with_deployment_2(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq_2.id, state=state
         )
 
@@ -238,7 +238,7 @@ async def test_worker_with_work_pool_and_work_queue(
         ),
         await create_run_with_deployment_1(Running()),
         await create_run_with_deployment_1(Completed()),
-        await prefect_client.create_flow_run(test_flow, state=Scheduled()),
+        await syntask_client.create_flow_run(test_flow, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
@@ -251,7 +251,7 @@ async def test_worker_with_work_pool_and_work_queue(
 
 
 async def test_priority_trumps_lateness(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     worker_deployment_wq1,
     worker_deployment_wq_2,
     work_queue_1,
@@ -262,12 +262,12 @@ async def test_priority_trumps_lateness(
         pass
 
     def create_run_with_deployment_1(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq1.id, state=state
         )
 
     def create_run_with_deployment_2(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq_2.id, state=state
         )
 
@@ -289,14 +289,14 @@ async def test_priority_trumps_lateness(
 
 
 async def test_worker_with_work_pool_and_limit(
-    prefect_client: PrefectClient, worker_deployment_wq1, work_pool
+    syntask_client: SyntaskClient, worker_deployment_wq1, work_pool
 ):
     @flow
     def test_flow():
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq1.id, state=state
         )
 
@@ -316,7 +316,7 @@ async def test_worker_with_work_pool_and_limit(
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(test_flow, state=Scheduled()),
+        await syntask_client.create_flow_run(test_flow, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
@@ -342,7 +342,7 @@ async def test_worker_with_work_pool_and_limit(
 
 
 async def test_worker_calls_run_with_expected_arguments(
-    prefect_client: PrefectClient, worker_deployment_wq1, work_pool, monkeypatch
+    syntask_client: SyntaskClient, worker_deployment_wq1, work_pool, monkeypatch
 ):
     run_mock = AsyncMock()
 
@@ -351,7 +351,7 @@ async def test_worker_calls_run_with_expected_arguments(
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq1.id, state=state
         )
 
@@ -371,7 +371,7 @@ async def test_worker_calls_run_with_expected_arguments(
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(test_flow, state=Scheduled()),
+        await syntask_client.create_flow_run(test_flow, state=Scheduled()),
     ]
 
     async with WorkerTestImpl(work_pool_name=work_pool.name) as worker:
@@ -386,14 +386,14 @@ async def test_worker_calls_run_with_expected_arguments(
 
 
 async def test_worker_warns_when_running_a_flow_run_with_a_storage_block(
-    prefect_client: PrefectClient, deployment, work_pool, caplog
+    syntask_client: SyntaskClient, deployment, work_pool, caplog
 ):
     @flow
     def test_flow():
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment.id, state=state
         )
 
@@ -412,12 +412,12 @@ async def test_worker_warns_when_running_a_flow_run_with_a_storage_block(
         in caplog.text
     )
 
-    flow_run = await prefect_client.read_flow_run(flow_run.id)
+    flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert flow_run.state_name == "Scheduled"
 
 
 async def test_worker_creates_only_one_client_context(
-    prefect_client, worker_deployment_wq1, work_pool, monkeypatch, caplog
+    syntask_client, worker_deployment_wq1, work_pool, monkeypatch, caplog
 ):
     tracking_mock = MagicMock()
     orig_get_client = get_client
@@ -426,7 +426,7 @@ async def test_worker_creates_only_one_client_context(
         tracking_mock(*args, **kwargs)
         return orig_get_client(*args, **kwargs)
 
-    monkeypatch.setattr("prefect.workers.base.get_client", get_client_spy)
+    monkeypatch.setattr("syntask.workers.base.get_client", get_client_spy)
 
     run_mock = AsyncMock()
 
@@ -435,7 +435,7 @@ async def test_worker_creates_only_one_client_context(
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq1.id, state=state
         )
 
@@ -978,7 +978,7 @@ async def test_job_configuration_from_template_overrides_with_block():
         base_job_template=template,
         values={
             "var1": "woof!",
-            "arbitrary_block": "{{ prefect.blocks.arbitraryblock.arbitrary-block }}",
+            "arbitrary_block": "{{ syntask.blocks.arbitraryblock.arbitrary-block }}",
         },
     )
 
@@ -1055,8 +1055,8 @@ async def test_job_configuration_from_template_overrides_with_remote_variables()
     config = await ArbitraryJobConfiguration.from_template_and_values(
         base_job_template=template,
         values={
-            "var1": "{{  prefect.variables.test_variable_1 }}",
-            "env": {"MY_ENV_VAR": "{{  prefect.variables.test_variable_2 }}"},
+            "var1": "{{  syntask.variables.test_variable_1 }}",
+            "env": {"MY_ENV_VAR": "{{  syntask.variables.test_variable_2 }}"},
         },
     )
 
@@ -1073,8 +1073,8 @@ async def test_job_configuration_from_template_overrides_with_remote_variables()
 async def test_job_configuration_from_template_overrides_with_remote_variables_hardcodes():
     template = {
         "job_configuration": {
-            "var1": "{{ prefect.variables.test_variable_1 }}",
-            "env": {"MY_ENV_VAR": "{{ prefect.variables.test_variable_2 }}"},
+            "var1": "{{ syntask.variables.test_variable_1 }}",
+            "env": {"MY_ENV_VAR": "{{ syntask.variables.test_variable_2 }}"},
         },
         "variables": {"properties": {}},
     }
@@ -1435,16 +1435,16 @@ class TestPrepareForFlowRun:
         assert job_config.env == {
             **get_current_settings().to_environment_variables(exclude_unset=True),
             "MY_VAR": "foo",
-            "PREFECT__FLOW_RUN_ID": str(flow_run.id),
+            "SYNTASK__FLOW_RUN_ID": str(flow_run.id),
         }
         assert job_config.labels == {
             "my-label": "foo",
             "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
             "syntask.khulnasoft.com/flow-run-name": flow_run.name,
-            "syntask.khulnasoft.com/version": prefect.__version__,
+            "syntask.khulnasoft.com/version": syntask.__version__,
         }
         assert job_config.name == "my-job-name"
-        assert job_config.command == "prefect flow-run execute"
+        assert job_config.command == "syntask flow-run execute"
 
     def test_prepare_for_flow_run(self, job_config, flow_run):
         job_config.prepare_for_flow_run(flow_run)
@@ -1452,17 +1452,17 @@ class TestPrepareForFlowRun:
         assert job_config.env == {
             **get_current_settings().to_environment_variables(exclude_unset=True),
             "MY_VAR": "foo",
-            "PREFECT__FLOW_RUN_ID": str(flow_run.id),
+            "SYNTASK__FLOW_RUN_ID": str(flow_run.id),
         }
         assert job_config.labels == {
             "my-label": "foo",
             "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
             "syntask.khulnasoft.com/flow-run-name": flow_run.name,
-            "syntask.khulnasoft.com/version": prefect.__version__,
+            "syntask.khulnasoft.com/version": syntask.__version__,
         }
         assert job_config.name == "my-job-name"
         # only thing that changes is the command
-        assert job_config.command == "prefect flow-run execute"
+        assert job_config.command == "syntask flow-run execute"
 
     def test_prepare_for_flow_run_with_deployment_and_flow(
         self, job_config, flow_run, deployment, flow
@@ -1472,26 +1472,26 @@ class TestPrepareForFlowRun:
         assert job_config.env == {
             **get_current_settings().to_environment_variables(exclude_unset=True),
             "MY_VAR": "foo",
-            "PREFECT__FLOW_RUN_ID": str(flow_run.id),
+            "SYNTASK__FLOW_RUN_ID": str(flow_run.id),
         }
         assert job_config.labels == {
             "my-label": "foo",
             "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
             "syntask.khulnasoft.com/flow-run-name": flow_run.name,
-            "syntask.khulnasoft.com/version": prefect.__version__,
+            "syntask.khulnasoft.com/version": syntask.__version__,
             "syntask.khulnasoft.com/deployment-id": str(deployment.id),
             "syntask.khulnasoft.com/deployment-name": deployment.name,
             "syntask.khulnasoft.com/flow-id": str(flow.id),
             "syntask.khulnasoft.com/flow-name": flow.name,
         }
         assert job_config.name == "my-job-name"
-        assert job_config.command == "prefect flow-run execute"
+        assert job_config.command == "syntask flow-run execute"
 
 
 async def test_get_flow_run_logger(
-    prefect_client: PrefectClient, worker_deployment_wq1, work_pool
+    syntask_client: SyntaskClient, worker_deployment_wq1, work_pool
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         worker_deployment_wq1.id
     )
 
@@ -1501,7 +1501,7 @@ async def test_get_flow_run_logger(
         await worker.sync_with_backend()
         logger = worker.get_flow_run_logger(flow_run)
 
-        assert logger.name == "prefect.flow_runs.worker"
+        assert logger.name == "syntask.flow_runs.worker"
         assert logger.extra == {
             "flow_run_name": flow_run.name,
             "flow_run_id": str(flow_run.id),
@@ -1515,16 +1515,16 @@ async def test_get_flow_run_logger(
 class TestInfrastructureIntegration:
     async def test_worker_crashes_flow_if_infrastructure_submission_fails(
         self,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         worker_deployment_infra_wq1,
         work_pool,
         monkeypatch,
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             worker_deployment_infra_wq1.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
-        await prefect_client.read_flow(worker_deployment_infra_wq1.flow_id)
+        await syntask_client.read_flow(worker_deployment_infra_wq1.flow_id)
 
         def raise_value_error():
             raise ValueError("Hello!")
@@ -1538,7 +1538,7 @@ class TestInfrastructureIntegration:
             monkeypatch.setattr(worker, "run", mock_run)
             await worker.get_and_submit_flow_runs()
 
-        state = (await prefect_client.read_flow_run(flow_run.id)).state
+        state = (await syntask_client.read_flow_run(flow_run.id)).state
         assert state.is_crashed()
         with pytest.raises(
             CrashedRun, match="Flow run could not be submitted to infrastructure"
@@ -1551,7 +1551,7 @@ async def test_worker_set_last_polled_time(
 ):
     now = pendulum.now("utc")
 
-    # https://github.com/synopkg/synopkg/issues/11619
+    # https://github.com/synopkg/syntask/issues/11619
     # Pendulum 3 Test Case
     if version.parse(pendulum.__version__) >= version.parse("3.0"):
         # https://github.com/sdispater/pendulum/blob/master/docs/docs/testing.md
@@ -1600,7 +1600,7 @@ async def test_worker_last_polled_health_check(
 ):
     now = pendulum.now("utc")
 
-    # https://github.com/synopkg/synopkg/issues/11619
+    # https://github.com/synopkg/syntask/issues/11619
     # Pendulum 3 Test Case
     if version.parse(pendulum.__version__) >= version.parse("3.0"):
         # https://github.com/sdispater/pendulum/blob/master/docs/docs/testing.md
@@ -1665,18 +1665,18 @@ class TestBaseWorkerStart:
         assert worker._work_pool.base_job_template == work_pool.base_job_template
 
     async def test_start_executes_flow_runs(
-        self, prefect_client: PrefectClient, worker_deployment_wq1, work_pool
+        self, syntask_client: SyntaskClient, worker_deployment_wq1, work_pool
     ):
         @flow
         def test_flow():
             pass
 
         def create_run_with_deployment(state):
-            return prefect_client.create_flow_run_from_deployment(
+            return syntask_client.create_flow_run_from_deployment(
                 worker_deployment_wq1.id, state=state
             )
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             worker_deployment_wq1.id,
             state=Scheduled(scheduled_time=pendulum.now("utc").subtract(days=1)),
         )
@@ -1725,7 +1725,7 @@ class TestBaseWorkerStart:
     ],
 )
 async def test_env_merge_logic_is_deep(
-    prefect_client,
+    syntask_client,
     session,
     flow,
     work_pool,
@@ -1765,7 +1765,7 @@ async def test_env_merge_logic_is_deep(
     )
     await session.commit()
 
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=Pending(),
         job_variables={"env": flow_run_env},

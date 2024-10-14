@@ -9,22 +9,22 @@ import pytest
 import yaml
 from typer import Exit
 
-from prefect.events.actions import CancelFlowRun, DoNothing, PauseAutomation
-from prefect.events.schemas.automations import (
+from syntask.events.actions import CancelFlowRun, DoNothing, PauseAutomation
+from syntask.events.schemas.automations import (
     Automation,
     EventTrigger,
     MetricTrigger,
     MetricTriggerOperator,
     MetricTriggerQuery,
     Posture,
-    PrefectMetric,
+    SyntaskMetric,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 
 @pytest.fixture(autouse=True)
 def interactive_console(monkeypatch):
-    monkeypatch.setattr("prefect.events.cli.automations.is_interactive", lambda: True)
+    monkeypatch.setattr("syntask.events.cli.automations.is_interactive", lambda: True)
 
     # `readchar` does not like the fake stdin provided by typer isolation so we provide
     # a version that does not require a fd to be attached
@@ -44,7 +44,7 @@ def interactive_console(monkeypatch):
 @pytest.fixture
 def read_automations() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.read_automations", autospec=True
+        "syntask.client.orchestration.SyntaskClient.read_automations", autospec=True
     ) as m:
         yield m
 
@@ -97,7 +97,7 @@ def various_automations(read_automations: mock.AsyncMock) -> List[Automation]:
             name="A Metric one",
             trigger=MetricTrigger(
                 metric=MetricTriggerQuery(
-                    name=PrefectMetric.successes,
+                    name=SyntaskMetric.successes,
                     operator=MetricTriggerOperator.LT,
                     threshold=0.78,
                 )
@@ -111,7 +111,7 @@ def various_automations(read_automations: mock.AsyncMock) -> List[Automation]:
             name="A Metric one",
             trigger=MetricTrigger(
                 metric=MetricTriggerQuery(
-                    name=PrefectMetric.successes,
+                    name=SyntaskMetric.successes,
                     operator=MetricTriggerOperator.LT,
                     threshold=0.78,
                 )
@@ -167,7 +167,7 @@ def test_listing_various_automations(various_automations: List[Automation]):
 @pytest.fixture
 def read_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.read_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.read_automation", autospec=True
     ) as m:
         yield m
 
@@ -297,7 +297,7 @@ def test_inspecting_by_id_in_yaml(
 @pytest.fixture
 def pause_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.pause_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.pause_automation", autospec=True
     ) as m:
         yield m
 
@@ -374,7 +374,7 @@ def test_pausing_by_id_not_found(
 @pytest.fixture
 def resume_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.resume_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.resume_automation", autospec=True
     ) as m:
         yield m
 
@@ -450,7 +450,7 @@ def test_resuming_by_id_not_found(
 @pytest.fixture
 def delete_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.delete_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.delete_automation", autospec=True
     ) as m:
         yield m
 
@@ -458,7 +458,7 @@ def delete_automation() -> Generator[mock.AsyncMock, None, None]:
 @pytest.fixture
 def read_automations_by_name() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.read_automations_by_name",
+        "syntask.client.orchestration.SyntaskClient.read_automations_by_name",
         autospec=True,
     ) as mock_read:
         yield mock_read

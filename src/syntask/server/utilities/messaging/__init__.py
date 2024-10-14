@@ -19,8 +19,8 @@ from typing import (
 )
 from typing_extensions import Self
 
-from prefect.settings import PREFECT_MESSAGING_CACHE, PREFECT_MESSAGING_BROKER
-from prefect.logging import get_logger
+from syntask.settings import SYNTASK_MESSAGING_CACHE, SYNTASK_MESSAGING_BROKER
+from syntask.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -39,30 +39,26 @@ M = TypeVar("M", bound=Message)
 
 class Cache(abc.ABC):
     @abc.abstractmethod
-    async def clear_recently_seen_messages(self) -> None:
-        ...
+    async def clear_recently_seen_messages(self) -> None: ...
 
     @abc.abstractmethod
-    async def without_duplicates(self, attribute: str, messages: List[M]) -> List[M]:
-        ...
+    async def without_duplicates(
+        self, attribute: str, messages: List[M]
+    ) -> List[M]: ...
 
     @abc.abstractmethod
-    async def forget_duplicates(self, attribute: str, messages: List[M]) -> None:
-        ...
+    async def forget_duplicates(self, attribute: str, messages: List[M]) -> None: ...
 
 
 class Publisher(abc.ABC):
     @abc.abstractmethod
-    async def __aenter__(self) -> Self:
-        ...
+    async def __aenter__(self) -> Self: ...
 
     @abc.abstractmethod
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        ...
+    async def __aexit__(self, exc_type, exc_value, traceback): ...
 
     @abc.abstractmethod
-    async def publish_data(self, data: bytes, attributes: Dict[str, str]):
-        ...
+    async def publish_data(self, data: bytes, attributes: Dict[str, str]): ...
 
 
 @dataclass
@@ -137,7 +133,7 @@ def create_cache() -> Cache:
     Returns:
         a new Cache instance
     """
-    module = importlib.import_module(PREFECT_MESSAGING_CACHE.value())
+    module = importlib.import_module(SYNTASK_MESSAGING_CACHE.value())
     assert isinstance(module, CacheModule)
     return module.Cache()
 
@@ -165,7 +161,7 @@ def create_publisher(
     """
     cache = cache or create_cache()
 
-    module = importlib.import_module(PREFECT_MESSAGING_BROKER.value())
+    module = importlib.import_module(SYNTASK_MESSAGING_BROKER.value())
     assert isinstance(module, BrokerModule)
     return module.Publisher(topic, cache, deduplicate_by=deduplicate_by)
 
@@ -176,7 +172,7 @@ async def ephemeral_subscription(topic: str) -> AsyncGenerator[Dict[str, Any], N
     Creates an ephemeral subscription to the given source, removing it when the context
     exits.
     """
-    module = importlib.import_module(PREFECT_MESSAGING_BROKER.value())
+    module = importlib.import_module(SYNTASK_MESSAGING_BROKER.value())
     assert isinstance(module, BrokerModule)
     async with module.ephemeral_subscription(topic) as consumer_create_kwargs:
         yield consumer_create_kwargs
@@ -190,6 +186,6 @@ def create_consumer(topic: str, **kwargs) -> Consumer:
     Returns:
         a new Consumer instance
     """
-    module = importlib.import_module(PREFECT_MESSAGING_BROKER.value())
+    module = importlib.import_module(SYNTASK_MESSAGING_BROKER.value())
     assert isinstance(module, BrokerModule)
     return module.Consumer(topic, **kwargs)

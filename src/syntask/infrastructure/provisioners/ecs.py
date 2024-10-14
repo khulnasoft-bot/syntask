@@ -19,19 +19,19 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 from rich.syntax import Syntax
 
-from prefect.cli._prompts import prompt
-from prefect.client.schemas.actions import BlockDocumentCreate
-from prefect.client.utilities import inject_client
-from prefect.exceptions import ObjectNotFound
-from prefect.settings import (
-    PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE,
+from syntask.cli._prompts import prompt
+from syntask.client.schemas.actions import BlockDocumentCreate
+from syntask.client.utilities import inject_client
+from syntask.exceptions import ObjectNotFound
+from syntask.settings import (
+    SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE,
     update_current_profile,
 )
-from prefect.utilities.collections import get_from_dict
-from prefect.utilities.importtools import lazy_import
+from syntask.utilities.collections import get_from_dict
+from syntask.utilities.importtools import lazy_import
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 boto3 = lazy_import("boto3")
 
@@ -52,7 +52,7 @@ class IamPolicyResource:
     Represents an IAM policy resource for managing ECS tasks.
 
     Args:
-        policy_name: The name of the IAM policy. Defaults to "prefect-ecs-policy".
+        policy_name: The name of the IAM policy. Defaults to "syntask-ecs-policy".
     """
 
     def __init__(
@@ -252,7 +252,7 @@ class CredentialsBlockResource:
 
     @inject_client
     async def requires_provisioning(
-        self, client: Optional["PrefectClient"] = None
+        self, client: Optional["SyntaskClient"] = None
     ) -> bool:
         if self._requires_provisioning is None:
             try:
@@ -282,7 +282,7 @@ class CredentialsBlockResource:
         self,
         base_job_template: Dict[str, Any],
         advance: Callable[[], None],
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ):
         """
         Provisions an AWS credentials block.
@@ -293,7 +293,7 @@ class CredentialsBlockResource:
         Args:
             base_job_template: The base job template.
             advance: A callback function to indicate progress.
-            client: A Prefect client to use for interacting with the Prefect API.
+            client: A Syntask client to use for interacting with the Syntask API.
         """
         assert client is not None, "Client injection failed"
         if not await self.requires_provisioning():
@@ -324,7 +324,7 @@ class CredentialsBlockResource:
                     To register the `aws-credentials` block type, run:
 
                             pip install prefect-aws
-                            prefect blocks register -m prefect_aws
+                            syntask blocks register -m prefect_aws
 
                     """
                     )
@@ -365,8 +365,8 @@ class AuthenticationResource:
     def __init__(
         self,
         work_pool_name: str,
-        user_name: str = "prefect-ecs-user",
-        policy_name: str = "prefect-ecs-policy",
+        user_name: str = "syntask-ecs-user",
+        policy_name: str = "syntask-ecs-policy",
         credentials_block_name: Optional[str] = None,
     ):
         self._user_name = user_name
@@ -378,7 +378,7 @@ class AuthenticationResource:
             "Version": "2012-10-17",
             "Statement": [
                 {
-                    "Sid": "PrefectEcsPolicy",
+                    "Sid": "SyntaskEcsPolicy",
                     "Effect": "Allow",
                     "Action": [
                         "ec2:AuthorizeSecurityGroupIngress",
@@ -516,7 +516,7 @@ class AuthenticationResource:
 
 
 class ClusterResource:
-    def __init__(self, cluster_name: str = "prefect-ecs-cluster"):
+    def __init__(self, cluster_name: str = "syntask-ecs-cluster"):
         self._ecs_client = boto3.client("ecs")
         self._cluster_name = cluster_name
         self._requires_provisioning = None
@@ -559,7 +559,7 @@ class ClusterResource:
         """
         if await self.requires_provisioning():
             return [
-                "Creating an ECS cluster for running Prefect flows:"
+                "Creating an ECS cluster for running Syntask flows:"
                 f" [blue]{self._cluster_name}[/]"
             ]
         return []
@@ -587,9 +587,9 @@ class ClusterResource:
             )
             advance()
 
-        base_job_template["variables"]["properties"]["cluster"][
-            "default"
-        ] = self._cluster_name
+        base_job_template["variables"]["properties"]["cluster"]["default"] = (
+            self._cluster_name
+        )
 
     @property
     def next_steps(self):
@@ -599,8 +599,8 @@ class ClusterResource:
 class VpcResource:
     def __init__(
         self,
-        vpc_name: str = "prefect-ecs-vpc",
-        ecs_security_group_name: str = "prefect-ecs-security-group",
+        vpc_name: str = "syntask-ecs-vpc",
+        ecs_security_group_name: str = "syntask-ecs-security-group",
     ):
         self._ec2_client = boto3.client("ec2")
         self._ec2_resource = boto3.resource("ec2")
@@ -629,7 +629,7 @@ class VpcResource:
         )
         return default_vpc is not None
 
-    async def _get_prefect_created_vpc(self):
+    async def _get_syntask_created_vpc(self):
         vpcs = await anyio.to_thread.run_sync(
             partial(
                 self._ec2_resource.vpcs.filter,
@@ -683,7 +683,7 @@ class VpcResource:
             self._requires_provisioning = False
             return False
 
-        if await self._get_prefect_created_vpc() is not None:
+        if await self._get_syntask_created_vpc() is not None:
             self._requires_provisioning = False
             return False
 
@@ -820,7 +820,7 @@ class VpcResource:
             )
             advance()
         else:
-            vpc = await self._get_prefect_created_vpc()
+            vpc = await self._get_syntask_created_vpc()
 
         if vpc is not None:
             base_job_template["variables"]["properties"]["vpc_id"]["default"] = str(
@@ -833,7 +833,7 @@ class VpcResource:
 
 
 class ContainerRepositoryResource:
-    def __init__(self, work_pool_name: str, repository_name: str = "prefect-flows"):
+    def __init__(self, work_pool_name: str, repository_name: str = "syntask-flows"):
         self._ecr_client = boto3.client("ecr")
         self._repository_name = repository_name
         self._requires_provisioning = None
@@ -849,7 +849,7 @@ class ContainerRepositoryResource:
         """
         return 3 if await self.requires_provisioning() else 0
 
-    async def _get_prefect_created_registry(self):
+    async def _get_syntask_created_registry(self):
         try:
             registries = await anyio.to_thread.run_sync(
                 partial(
@@ -871,7 +871,7 @@ class ContainerRepositoryResource:
         if self._requires_provisioning is not None:
             return self._requires_provisioning
 
-        if await self._get_prefect_created_registry() is not None:
+        if await self._get_syntask_created_registry() is not None:
             self._requires_provisioning = False
             return False
 
@@ -888,7 +888,7 @@ class ContainerRepositoryResource:
         """
         if await self.requires_provisioning():
             return [
-                "Creating an ECR repository for storing Prefect images:"
+                "Creating an ECR repository for storing Syntask images:"
                 f" [blue]{self._repository_name}[/]"
             ]
         return []
@@ -930,7 +930,7 @@ class ContainerRepositoryResource:
             advance()
             console.print("Setting default Docker build namespace")
             namespace = response["repository"]["repositoryUri"].split("/")[0]
-            update_current_profile({PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE: namespace})
+            update_current_profile({SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE: namespace})
             self._update_next_steps(namespace)
             advance()
 
@@ -949,8 +949,8 @@ class ContainerRepositoryResource:
                     Syntax(
                         dedent(
                             f"""\
-                                from prefect import flow
-                                from prefect.docker import DockerImage
+                                from syntask import flow
+                                from syntask.docker import DockerImage
 
 
                                 @flow(log_prints=True)
@@ -983,7 +983,7 @@ class ContainerRepositoryResource:
 
 
 class ExecutionRoleResource:
-    def __init__(self, execution_role_name: str = "PrefectEcsTaskExecutionRole"):
+    def __init__(self, execution_role_name: str = "SyntaskEcsTaskExecutionRole"):
         self._iam_client = boto3.client("iam")
         self._execution_role_name = execution_role_name
         self._trust_policy_document = json.dumps(
@@ -1128,13 +1128,13 @@ class ElasticContainerServicePushProvisioner:
     def _generate_resources(
         self,
         work_pool_name: str,
-        user_name: str = "prefect-ecs-user",
-        policy_name: str = "prefect-ecs-policy",
+        user_name: str = "syntask-ecs-user",
+        policy_name: str = "syntask-ecs-policy",
         credentials_block_name: Optional[str] = None,
-        cluster_name: str = "prefect-ecs-cluster",
-        vpc_name: str = "prefect-ecs-vpc",
-        ecs_security_group_name: str = "prefect-ecs-security-group",
-        repository_name: str = "prefect-flows",
+        cluster_name: str = "syntask-ecs-cluster",
+        vpc_name: str = "syntask-ecs-vpc",
+        ecs_security_group_name: str = "syntask-ecs-security-group",
+        repository_name: str = "syntask-flows",
     ):
         return [
             AuthenticationResource(
@@ -1190,18 +1190,18 @@ class ElasticContainerServicePushProvisioner:
             ):
                 user_name = prompt(
                     "Enter a name for the IAM user (manages ECS tasks)",
-                    default="prefect-ecs-user",
+                    default="syntask-ecs-user",
                 )
                 policy_name = prompt(
                     (
                         "Enter a name for the IAM policy (defines ECS task execution"
                         " and image management permissions)"
                     ),
-                    default="prefect-ecs-policy",
+                    default="syntask-ecs-policy",
                 )
                 cluster_name = prompt(
                     "Enter a name for the ECS cluster (hosts ECS tasks)",
-                    default="prefect-ecs-cluster",
+                    default="syntask-ecs-cluster",
                 )
                 credentials_name = prompt(
                     (
@@ -1215,21 +1215,21 @@ class ElasticContainerServicePushProvisioner:
                         "Enter a name for the VPC (provides network isolation for ECS"
                         " tasks)"
                     ),
-                    default="prefect-ecs-vpc",
+                    default="syntask-ecs-vpc",
                 )
                 ecs_security_group_name = prompt(
                     (
                         "Enter a name for the ECS security group (controls task network"
                         " traffic)"
                     ),
-                    default="prefect-ecs-security-group",
+                    default="syntask-ecs-security-group",
                 )
                 repository_name = prompt(
                     (
                         "Enter a name for the ECR repository (stores Docker images for"
                         " ECS tasks)"
                     ),
-                    default="prefect-flows",
+                    default="syntask-flows",
                 )
 
                 provision_preview = Panel(

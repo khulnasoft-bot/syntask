@@ -12,20 +12,20 @@ import readchar
 import respx
 from typer import Exit
 
-import prefect
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.actions import WorkPoolCreate
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_WORKER_PREFETCH_SECONDS,
+import syntask
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.actions import WorkPoolCreate
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_WORKER_PREFETCH_SECONDS,
     get_current_settings,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.utilities import AsyncMock, MagicMock
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
-from prefect.utilities.processutils import open_process
-from prefect.workers.base import BaseJobConfiguration, BaseWorker
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.utilities import AsyncMock, MagicMock
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.utilities.processutils import open_process
+from syntask.workers.base import BaseJobConfiguration, BaseWorker
 
 
 class MockKubernetesWorker(BaseWorker):
@@ -38,7 +38,7 @@ class MockKubernetesWorker(BaseWorker):
 
 @pytest.fixture
 def interactive_console(monkeypatch):
-    monkeypatch.setattr("prefect.cli.worker.is_interactive", lambda: True)
+    monkeypatch.setattr("syntask.cli.worker.is_interactive", lambda: True)
 
     # `readchar` does not like the fake stdin provided by typer isolation so we provide
     # a version that does not require a fd to be attached
@@ -56,13 +56,13 @@ def interactive_console(monkeypatch):
 
 
 @pytest.fixture
-async def kubernetes_work_pool(prefect_client: PrefectClient):
-    work_pool = await prefect_client.create_work_pool(
+async def kubernetes_work_pool(syntask_client: SyntaskClient):
+    work_pool = await syntask_client.create_work_pool(
         work_pool=WorkPoolCreate(name="test-k8s-work-pool", type="kubernetes-test")
     )
 
     with respx.mock(
-        assert_all_mocked=False, base_url=PREFECT_API_URL.value()
+        assert_all_mocked=False, base_url=SYNTASK_API_URL.value()
     ) as respx_mock:
         respx_mock.get("/csrf-token", params={"client": ANY}).pass_through()
         respx_mock.route(path__startswith="/work_pools/").pass_through()
@@ -70,13 +70,13 @@ async def kubernetes_work_pool(prefect_client: PrefectClient):
             return_value=httpx.Response(
                 200,
                 json={
-                    "prefect": {
-                        "prefect-agent": {
-                            "type": "prefect-agent",
+                    "syntask": {
+                        "syntask-agent": {
+                            "type": "syntask-agent",
                             "default_base_job_configuration": {},
                         }
                     },
-                    "prefect-kubernetes": {
+                    "syntask-kubernetes": {
                         "kubernetes-test": {
                             "type": "kubernetes-test",
                             "default_base_job_configuration": {},
@@ -94,7 +94,7 @@ def mock_worker(monkeypatch):
     mock_worker_start = AsyncMock()
     mock_worker = MagicMock()
     mock_worker.return_value.start = mock_worker_start
-    monkeypatch.setattr(prefect.cli.worker, "lookup_type", lambda x, y: mock_worker)
+    monkeypatch.setattr(syntask.cli.worker, "lookup_type", lambda x, y: mock_worker)
     return mock_worker
 
 
@@ -121,7 +121,7 @@ def test_start_worker_run_once_with_name():
 
 
 @pytest.mark.usefixtures("use_hosted_api_server")
-async def test_start_worker_creates_work_pool(prefect_client: PrefectClient):
+async def test_start_worker_creates_work_pool(syntask_client: SyntaskClient):
     await run_sync_in_worker_thread(
         invoke_and_assert,
         command=[
@@ -137,7 +137,7 @@ async def test_start_worker_creates_work_pool(prefect_client: PrefectClient):
         expected_output_contains=["Worker", "stopped!", "Worker", "started!"],
     )
 
-    work_pool = await prefect_client.read_work_pool("not-yet-created-pool")
+    work_pool = await syntask_client.read_work_pool("not-yet-created-pool")
     assert work_pool is not None
     assert work_pool.name == "not-yet-created-pool"
     assert work_pool.default_queue_id is not None
@@ -145,7 +145,7 @@ async def test_start_worker_creates_work_pool(prefect_client: PrefectClient):
 
 @pytest.mark.usefixtures("use_hosted_api_server")
 async def test_start_worker_creates_work_pool_with_base_config(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -164,7 +164,7 @@ async def test_start_worker_creates_work_pool_with_base_config(
         expected_output_contains=["Worker", "stopped!", "Worker", "started!"],
     )
 
-    work_pool = await prefect_client.read_work_pool("my-cool-pool")
+    work_pool = await syntask_client.read_work_pool("my-cool-pool")
     assert work_pool is not None
     assert work_pool.name == "my-cool-pool"
     assert work_pool.default_queue_id is not None
@@ -334,7 +334,7 @@ def test_start_worker_with_prefetch_seconds(mock_worker):
 
 @pytest.mark.usefixtures("use_hosted_api_server")
 def test_start_worker_with_prefetch_seconds_from_setting_by_default(mock_worker):
-    with temporary_settings({PREFECT_WORKER_PREFETCH_SECONDS: 100}):
+    with temporary_settings({SYNTASK_WORKER_PREFETCH_SECONDS: 100}):
         invoke_and_assert(
             command=[
                 "worker",
@@ -392,7 +392,7 @@ def test_start_worker_with_limit(mock_worker):
 
 
 @pytest.mark.usefixtures("use_hosted_api_server")
-async def test_worker_joins_existing_pool(work_pool, prefect_client: PrefectClient):
+async def test_worker_joins_existing_pool(work_pool, syntask_client: SyntaskClient):
     await run_sync_in_worker_thread(
         invoke_and_assert,
         command=[
@@ -413,7 +413,7 @@ async def test_worker_joins_existing_pool(work_pool, prefect_client: PrefectClie
         ],
     )
 
-    workers = await prefect_client.read_workers_for_work_pool(
+    workers = await syntask_client.read_workers_for_work_pool(
         work_pool_name=work_pool.name
     )
     assert workers[0].name == "test-worker"
@@ -421,7 +421,7 @@ async def test_worker_joins_existing_pool(work_pool, prefect_client: PrefectClie
 
 @pytest.mark.usefixtures("use_hosted_api_server")
 async def test_worker_discovers_work_pool_type(
-    process_work_pool, prefect_client: PrefectClient
+    process_work_pool, syntask_client: SyntaskClient
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -445,7 +445,7 @@ async def test_worker_discovers_work_pool_type(
         ],
     )
 
-    workers = await prefect_client.read_workers_for_work_pool(
+    workers = await syntask_client.read_workers_for_work_pool(
         work_pool_name=process_work_pool.name
     )
     assert workers[0].name == "test-worker"
@@ -453,7 +453,7 @@ async def test_worker_discovers_work_pool_type(
 
 @pytest.mark.usefixtures("use_hosted_api_server")
 async def test_worker_start_fails_informatively_with_bad_type(
-    process_work_pool, prefect_client: PrefectClient
+    process_work_pool, syntask_client: SyntaskClient
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -502,7 +502,7 @@ async def test_worker_does_not_run_with_push_pool(push_work_pool):
 
 @pytest.mark.usefixtures("use_hosted_api_server")
 async def test_start_worker_without_type_creates_process_work_pool(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -526,13 +526,13 @@ async def test_start_worker_without_type_creates_process_work_pool(
         ],
     )
 
-    workers = await prefect_client.read_workers_for_work_pool(work_pool_name="not-here")
+    workers = await syntask_client.read_workers_for_work_pool(work_pool_name="not-here")
     assert workers[0].name == "test-worker"
 
 
 @pytest.mark.usefixtures("use_hosted_api_server")
 async def test_worker_reports_heartbeat_interval(
-    prefect_client: PrefectClient, process_work_pool
+    syntask_client: SyntaskClient, process_work_pool
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -552,7 +552,7 @@ async def test_worker_reports_heartbeat_interval(
         ],
     )
 
-    workers = await prefect_client.read_workers_for_work_pool(
+    workers = await syntask_client.read_workers_for_work_pool(
         work_pool_name=process_work_pool.name
     )
     assert len(workers) == 1
@@ -568,8 +568,8 @@ class TestInstallPolicyOption:
         run_process_mock = AsyncMock()
         lookup_type_mock = MagicMock()
         lookup_type_mock.side_effect = [KeyError, MockKubernetesWorker]
-        monkeypatch.setattr("prefect.cli.worker.run_process", run_process_mock)
-        monkeypatch.setattr("prefect.cli.worker.lookup_type", lookup_type_mock)
+        monkeypatch.setattr("syntask.cli.worker.run_process", run_process_mock)
+        monkeypatch.setattr("syntask.cli.worker.lookup_type", lookup_type_mock)
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=[
@@ -583,14 +583,14 @@ class TestInstallPolicyOption:
                 "--install-policy=if-not-present",
             ],
             expected_output_contains=[
-                "Installing prefect-kubernetes...",
+                "Installing syntask-kubernetes...",
                 "Worker 'test-worker' started!",
                 "Worker 'test-worker' stopped!",
             ],
         )
 
         run_process_mock.assert_called_once_with(
-            [sys.executable, "-m", "pip", "install", "prefect[kubernetes]"],
+            [sys.executable, "-m", "pip", "install", "syntask[kubernetes]"],
             stream_output=True,
         )
 
@@ -599,8 +599,8 @@ class TestInstallPolicyOption:
         run_process_mock = AsyncMock()
         lookup_type_mock = MagicMock()
         lookup_type_mock.side_effect = [KeyError, MockKubernetesWorker]
-        monkeypatch.setattr("prefect.cli.worker.run_process", run_process_mock)
-        monkeypatch.setattr("prefect.cli.worker.lookup_type", lookup_type_mock)
+        monkeypatch.setattr("syntask.cli.worker.run_process", run_process_mock)
+        monkeypatch.setattr("syntask.cli.worker.lookup_type", lookup_type_mock)
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=[
@@ -614,28 +614,28 @@ class TestInstallPolicyOption:
             ],
             user_input=readchar.key.ENTER,
             expected_output_contains=[
-                "Could not find the Prefect integration library for the",
+                "Could not find the Syntask integration library for the",
                 "kubernetes",
                 "Install the library now?",
-                "Installing prefect-kubernetes...",
+                "Installing syntask-kubernetes...",
                 "Worker 'test-worker' started!",
                 "Worker 'test-worker' stopped!",
             ],
         )
 
         run_process_mock.assert_called_once_with(
-            [sys.executable, "-m", "pip", "install", "prefect[kubernetes]"],
+            [sys.executable, "-m", "pip", "install", "syntask[kubernetes]"],
             stream_output=True,
         )
 
     @pytest.mark.usefixtures("interactive_console")
-    async def test_install_policy_prompt_decline(self, monkeypatch, prefect_client):
+    async def test_install_policy_prompt_decline(self, monkeypatch, syntask_client):
         run_process_mock = AsyncMock()
         lookup_type_mock = MagicMock()
         lookup_type_mock.side_effect = [KeyError, MockKubernetesWorker]
-        monkeypatch.setattr("prefect.cli.worker.run_process", run_process_mock)
-        monkeypatch.setattr("prefect.cli.worker.lookup_type", lookup_type_mock)
-        kubernetes_work_pool = await prefect_client.create_work_pool(
+        monkeypatch.setattr("syntask.cli.worker.run_process", run_process_mock)
+        monkeypatch.setattr("syntask.cli.worker.lookup_type", lookup_type_mock)
+        kubernetes_work_pool = await syntask_client.create_work_pool(
             work_pool=WorkPoolCreate(name="test-k8s-work-pool", type="kubernetes")
         )
 
@@ -667,8 +667,8 @@ class TestInstallPolicyOption:
         run_process_mock = AsyncMock()
         lookup_type_mock = MagicMock()
         lookup_type_mock.side_effect = [KeyError, MockKubernetesWorker]
-        monkeypatch.setattr("prefect.cli.worker.run_process", run_process_mock)
-        monkeypatch.setattr("prefect.cli.worker.lookup_type", lookup_type_mock)
+        monkeypatch.setattr("syntask.cli.worker.run_process", run_process_mock)
+        monkeypatch.setattr("syntask.cli.worker.lookup_type", lookup_type_mock)
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=[
@@ -682,14 +682,14 @@ class TestInstallPolicyOption:
                 "--install-policy=if-not-present",
             ],
             expected_output_contains=[
-                "Installing prefect-kubernetes...",
+                "Installing syntask-kubernetes...",
                 "Worker 'test-worker' started!",
                 "Worker 'test-worker' stopped!",
             ],
         )
 
         run_process_mock.assert_called_once_with(
-            [sys.executable, "-m", "pip", "install", "prefect[kubernetes]"],
+            [sys.executable, "-m", "pip", "install", "syntask[kubernetes]"],
             stream_output=True,
         )
 
@@ -698,8 +698,8 @@ class TestInstallPolicyOption:
         run_process_mock = AsyncMock()
         lookup_type_mock = MagicMock()
         lookup_type_mock.return_value = MockKubernetesWorker
-        monkeypatch.setattr("prefect.cli.worker.run_process", run_process_mock)
-        monkeypatch.setattr("prefect.cli.worker.lookup_type", lookup_type_mock)
+        monkeypatch.setattr("syntask.cli.worker.run_process", run_process_mock)
+        monkeypatch.setattr("syntask.cli.worker.lookup_type", lookup_type_mock)
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=[
@@ -713,7 +713,7 @@ class TestInstallPolicyOption:
                 "--install-policy=always",
             ],
             expected_output_contains=[
-                "Installing prefect-kubernetes...",
+                "Installing syntask-kubernetes...",
                 "Worker 'test-worker' started!",
                 "Worker 'test-worker' stopped!",
             ],
@@ -725,23 +725,23 @@ class TestInstallPolicyOption:
                 "-m",
                 "pip",
                 "install",
-                "prefect[kubernetes]",
+                "syntask[kubernetes]",
                 "--upgrade",
             ],
             stream_output=True,
         )
 
     @pytest.mark.usefixtures("interactive_console")
-    async def test_install_policy_never(self, monkeypatch, prefect_client):
-        kubernetes_work_pool = await prefect_client.create_work_pool(
+    async def test_install_policy_never(self, monkeypatch, syntask_client):
+        kubernetes_work_pool = await syntask_client.create_work_pool(
             work_pool=WorkPoolCreate(name="test-k8s-work-pool", type="kubernetes")
         )
 
         run_process_mock = AsyncMock()
         lookup_type_mock = MagicMock()
         lookup_type_mock.side_effect = KeyError
-        monkeypatch.setattr("prefect.cli.worker.run_process", run_process_mock)
-        monkeypatch.setattr("prefect.cli.worker.lookup_type", lookup_type_mock)
+        monkeypatch.setattr("syntask.cli.worker.run_process", run_process_mock)
+        monkeypatch.setattr("syntask.cli.worker.lookup_type", lookup_type_mock)
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=[
@@ -763,7 +763,7 @@ class TestInstallPolicyOption:
 
         run_process_mock.assert_not_called()
 
-        def test_start_with_prefect_agent_type(worker_type):
+        def test_start_with_syntask_agent_type(worker_type):
             invoke_and_assert(
                 command=[
                     "worker",
@@ -774,13 +774,13 @@ class TestInstallPolicyOption:
                     "-n",
                     "test-worker",
                     "-t",
-                    "prefect-agent",
+                    "syntask-agent",
                 ],
                 expected_code=1,
                 expected_output_contains=(
-                    "'prefect-agent' typed work pools work with Prefect Agents instead"
-                    " of Workers. Please use the 'prefect agent start' to start a"
-                    " Prefect Agent."
+                    "'syntask-agent' typed work pools work with Syntask Agents instead"
+                    " of Workers. Please use the 'syntask agent start' to start a"
+                    " Syntask Agent."
                 ),
             )
 
@@ -812,7 +812,7 @@ async def worker_process(use_hosted_api_server):
     # Will connect to the same database as normal test clients
     async with open_process(
         command=[
-            "prefect",
+            "syntask",
             "worker",
             "start",
             "--type",

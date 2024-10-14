@@ -7,8 +7,8 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from prefect.server.events.actions import RunDeployment
-from prefect.server.events.schemas.automations import (
+from syntask.server.events.actions import RunDeployment
+from syntask.server.events.schemas.automations import (
     AutomationCore,
     EventTrigger,
     Posture,
@@ -21,9 +21,9 @@ def test_running_inferred_deployment_on_all_flow_run_state_changes():
         AutomationCore(
             name="Run inferred deployment on all flow run state changes",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                for_each={"prefect.resource.id"},
-                expect={"prefect.flow-run.*"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                for_each={"syntask.resource.id"},
+                expect={"syntask.flow-run.*"},
                 posture=Posture.Reactive,
                 threshold=1,
                 within=timedelta(seconds=0),
@@ -48,9 +48,9 @@ def test_running_inferred_deployment_on_filtered_flow_run_state_changes():
         AutomationCore(
             name="Run inferred deployment on some flow run state changes",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*", "some": "thing"},
-                for_each={"prefect.resource.id"},
-                expect={"prefect.flow-run.*"},
+                match={"syntask.resource.id": "syntask.flow-run.*", "some": "thing"},
+                for_each={"syntask.resource.id"},
+                expect={"syntask.flow-run.*"},
                 posture=Posture.Reactive,
                 threshold=1,
                 within=timedelta(seconds=0),
@@ -75,10 +75,10 @@ def test_running_inferred_deployment_on_related_filtered_flow_run_state_changes(
         AutomationCore(
             name="Run inferred deployment on some flow run state changes",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
                 match_related={"some": "thing"},
-                for_each={"prefect.resource.id"},
-                expect={"prefect.flow-run.*"},
+                for_each={"syntask.resource.id"},
+                expect={"syntask.flow-run.*"},
                 posture=Posture.Reactive,
                 threshold=1,
                 within=timedelta(seconds=0),
@@ -102,9 +102,9 @@ def test_running_a_selected_deployment_on_unfiltered_flow_run_state_changes():
         AutomationCore(
             name="Run selected deployment on all flow run state changes",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                for_each={"prefect.resource.id"},
-                expect={"prefect.flow-run.*"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                for_each={"syntask.resource.id"},
+                expect={"syntask.flow-run.*"},
                 posture=Posture.Reactive,
                 threshold=1,
                 within=timedelta(seconds=0),
@@ -128,9 +128,9 @@ def test_running_a_selected_deployment_on_filtered_flow_run_state_changes():
     AutomationCore(
         name="Run selected deployment on some flow run state changes",
         trigger=EventTrigger(
-            match={"prefect.resource.id": "prefect.flow-run.*", "some": "thing"},
-            for_each={"prefect.resource.id"},
-            expect={"prefect.flow-run.*"},
+            match={"syntask.resource.id": "syntask.flow-run.*", "some": "thing"},
+            for_each={"syntask.resource.id"},
+            expect={"syntask.flow-run.*"},
             posture=Posture.Reactive,
             threshold=1,
             within=timedelta(seconds=0),
@@ -141,10 +141,10 @@ def test_running_a_selected_deployment_on_filtered_flow_run_state_changes():
     AutomationCore(
         name="Run selected deployment on some flow run state changes",
         trigger=EventTrigger(
-            match={"prefect.resource.id": "prefect.flow-run.*"},
+            match={"syntask.resource.id": "syntask.flow-run.*"},
             match_related={"some": "thing"},
-            for_each={"prefect.resource.id"},
-            expect={"prefect.flow-run.*"},
+            for_each={"syntask.resource.id"},
+            expect={"syntask.flow-run.*"},
             posture=Posture.Reactive,
             threshold=1,
             within=timedelta(seconds=0),
@@ -156,13 +156,13 @@ def test_running_a_selected_deployment_on_filtered_flow_run_state_changes():
 @pytest.mark.parametrize(
     "allowed_events",
     [
-        {"prefect.flow-run.Failed"},
-        {"prefect.flow-run.Crashed"},
-        {"prefect.flow-run.TimedOut"},
+        {"syntask.flow-run.Failed"},
+        {"syntask.flow-run.Crashed"},
+        {"syntask.flow-run.TimedOut"},
         {
-            "prefect.flow-run.Failed",
-            "prefect.flow-run.Crashed",
-            "prefect.flow-run.TimedOut",
+            "syntask.flow-run.Failed",
+            "syntask.flow-run.Crashed",
+            "syntask.flow-run.TimedOut",
         },
     ],
 )
@@ -173,8 +173,8 @@ def test_allowing_specialized_flow_run_events(allowed_events: Set[str]):
     AutomationCore(
         name="Run inferred deployment on failure events",
         trigger=EventTrigger(
-            match={"prefect.resource.id": "prefect.flow-run.*"},
-            for_each={"prefect.resource.id"},
+            match={"syntask.resource.id": "syntask.flow-run.*"},
+            for_each={"syntask.resource.id"},
             expect=allowed_events,
             posture=Posture.Reactive,
             threshold=1,
@@ -186,12 +186,12 @@ def test_allowing_specialized_flow_run_events(allowed_events: Set[str]):
     AutomationCore(
         name="Run selected deployment on failure events",
         trigger=EventTrigger(
-            match={"prefect.resource.id": "prefect.flow-run.*"},
-            for_each={"prefect.resource.id"},
+            match={"syntask.resource.id": "syntask.flow-run.*"},
+            for_each={"syntask.resource.id"},
             expect={
-                "prefect.flow-run.TimedOut",
-                "prefect.flow-run.Failed",
-                "prefect.flow-run.Crashed",
+                "syntask.flow-run.TimedOut",
+                "syntask.flow-run.Failed",
+                "syntask.flow-run.Crashed",
             },
             posture=Posture.Reactive,
             threshold=1,
@@ -205,18 +205,18 @@ def test_allowing_specialized_flow_run_events(allowed_events: Set[str]):
     "naughty_events",
     [
         {
-            "prefect.flow-run.Failed",
-            "prefect.flow-run.Crashed",
-            "prefect.flow-run.Scheduled",  # nope
+            "syntask.flow-run.Failed",
+            "syntask.flow-run.Crashed",
+            "syntask.flow-run.Scheduled",  # nope
         },
         {
-            "prefect.flow-run.Failed",
-            "prefect.flow-run.*",  # nope
-            "prefect.flow-run.Crashed",
+            "syntask.flow-run.Failed",
+            "syntask.flow-run.*",  # nope
+            "syntask.flow-run.Crashed",
         },
-        {"prefect.flow-run.Pending"},  # nope
-        {"prefect.flow-run.Running"},  # nope
-        {"prefect.flow-run.Scheduled"},  # nope
+        {"syntask.flow-run.Pending"},  # nope
+        {"syntask.flow-run.Running"},  # nope
+        {"syntask.flow-run.Scheduled"},  # nope
     ],
 )
 def test_blocking_inferred_on_universal_flow_run_events(naughty_events: Set[str]):
@@ -228,8 +228,8 @@ def test_blocking_inferred_on_universal_flow_run_events(naughty_events: Set[str]
         AutomationCore(
             name="Run inferred deployment on failure events",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                for_each={"prefect.resource.id"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                for_each={"syntask.resource.id"},
                 expect=naughty_events,
                 posture=Posture.Reactive,
                 threshold=1,
@@ -251,17 +251,17 @@ def test_blocking_inferred_on_universal_flow_run_events(naughty_events: Set[str]
     "naughty_events",
     [
         {
-            "prefect.flow-run.Failed",
-            "prefect.flow-run.Crashed",
-            "prefect.flow-run.Scheduled",  # nope
+            "syntask.flow-run.Failed",
+            "syntask.flow-run.Crashed",
+            "syntask.flow-run.Scheduled",  # nope
         },
         {
-            "prefect.flow-run.Failed",
-            "prefect.flow-run.*",  # nope
-            "prefect.flow-run.Crashed",
+            "syntask.flow-run.Failed",
+            "syntask.flow-run.*",  # nope
+            "syntask.flow-run.Crashed",
         },
-        {"prefect.flow-run.Pending"},  # nope
-        {"prefect.flow-run.Running"},  # nope
+        {"syntask.flow-run.Pending"},  # nope
+        {"syntask.flow-run.Running"},  # nope
     ],
 )
 def test_blocking_selected_on_universal_flow_run_events(naughty_events: Set[str]):
@@ -273,8 +273,8 @@ def test_blocking_selected_on_universal_flow_run_events(naughty_events: Set[str]
         AutomationCore(
             name="Run inferred deployment on failure events",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                for_each={"prefect.resource.id"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                for_each={"syntask.resource.id"},
                 expect=naughty_events,
                 posture=Posture.Reactive,
                 threshold=1,

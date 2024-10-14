@@ -20,37 +20,37 @@ import pendulum
 import pytest
 from starlette import status
 
-import prefect.runner
-from prefect import __version__, flow, serve, task
-from prefect.client.orchestration import PrefectClient, SyncPrefectClient
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.objects import ConcurrencyLimitConfig, StateType
-from prefect.client.schemas.schedules import CronSchedule, IntervalSchedule
-from prefect.deployments.runner import (
+import syntask.runner
+from syntask import __version__, flow, serve, task
+from syntask.client.orchestration import SyncSyntaskClient, SyntaskClient
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.objects import ConcurrencyLimitConfig, StateType
+from syntask.client.schemas.schedules import CronSchedule, IntervalSchedule
+from syntask.deployments.runner import (
     DeploymentApplyError,
     EntrypointType,
     RunnerDeployment,
     deploy,
 )
-from prefect.docker.docker_image import DockerImage
-from prefect.events.clients import AssertingEventsClient
-from prefect.events.worker import EventsWorker
-from prefect.flows import load_flow_from_entrypoint
-from prefect.logging.loggers import flow_run_logger
-from prefect.runner.runner import Runner
-from prefect.runner.server import perform_health_check
-from prefect.settings import (
-    PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE,
-    PREFECT_DEFAULT_WORK_POOL_NAME,
-    PREFECT_RUNNER_POLL_FREQUENCY,
-    PREFECT_RUNNER_PROCESS_LIMIT,
-    PREFECT_RUNNER_SERVER_ENABLE,
+from syntask.docker.docker_image import DockerImage
+from syntask.events.clients import AssertingEventsClient
+from syntask.events.worker import EventsWorker
+from syntask.flows import load_flow_from_entrypoint
+from syntask.logging.loggers import flow_run_logger
+from syntask.runner.runner import Runner
+from syntask.runner.server import perform_health_check
+from syntask.settings import (
+    SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE,
+    SYNTASK_DEFAULT_WORK_POOL_NAME,
+    SYNTASK_RUNNER_POLL_FREQUENCY,
+    SYNTASK_RUNNER_PROCESS_LIMIT,
+    SYNTASK_RUNNER_SERVER_ENABLE,
     temporary_settings,
 )
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.dockerutils import parse_image_tag
-from prefect.utilities.filesystem import tmpchdir
-from prefect.utilities.slugify import slugify
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.dockerutils import parse_image_tag
+from syntask.utilities.filesystem import tmpchdir
+from syntask.utilities.slugify import slugify
 
 
 @flow(version="test")
@@ -113,7 +113,7 @@ class MockStorage:
 
     code = dedent(
         """\
-        from prefect import flow
+        from syntask import flow
 
         @flow
         def test_flow():
@@ -138,7 +138,7 @@ class MockStorage:
                 f.write(self.code)
 
     def to_pull_step(self):
-        return {"prefect.fake.module": {}}
+        return {"syntask.fake.module": {}}
 
 
 @pytest.fixture
@@ -156,23 +156,23 @@ def in_temporary_runner_directory(tmp_path: Path):
 class TestInit:
     async def test_runner_respects_limit_setting(self):
         runner = Runner()
-        assert runner.limit == PREFECT_RUNNER_PROCESS_LIMIT.value()
+        assert runner.limit == SYNTASK_RUNNER_PROCESS_LIMIT.value()
 
         runner = Runner(limit=50)
         assert runner.limit == 50
 
-        with temporary_settings({PREFECT_RUNNER_PROCESS_LIMIT: 100}):
+        with temporary_settings({SYNTASK_RUNNER_PROCESS_LIMIT: 100}):
             runner = Runner()
             assert runner.limit == 100
 
     async def test_runner_respects_poll_setting(self):
         runner = Runner()
-        assert runner.query_seconds == PREFECT_RUNNER_POLL_FREQUENCY.value()
+        assert runner.query_seconds == SYNTASK_RUNNER_POLL_FREQUENCY.value()
 
         runner = Runner(query_seconds=50)
         assert runner.query_seconds == 50
 
-        with temporary_settings({PREFECT_RUNNER_POLL_FREQUENCY: 100}):
+        with temporary_settings({SYNTASK_RUNNER_POLL_FREQUENCY: 100}):
             runner = Runner()
             assert runner.query_seconds == 100
 
@@ -181,7 +181,7 @@ class TestServe:
     @pytest.fixture(autouse=True)
     async def mock_runner_start(self, monkeypatch):
         mock = AsyncMock()
-        monkeypatch.setattr("prefect.runner.Runner.start", mock)
+        monkeypatch.setattr("syntask.runner.Runner.start", mock)
         return mock
 
     def test_serve_prints_help_message_on_startup(self, capsys):
@@ -200,7 +200,7 @@ class TestServe:
         assert "dummy-flow-1/test_runner" in captured.out
         assert "dummy-flow-2/test_runner" in captured.out
         assert "tired-flow/test_runner" in captured.out
-        assert "$ prefect deployment run [DEPLOYMENT_NAME]" in captured.out
+        assert "$ syntask deployment run [DEPLOYMENT_NAME]" in captured.out
 
     is_python_38 = sys.version_info[:2] == (3, 8)
 
@@ -230,18 +230,18 @@ class TestServe:
             in captured.out
         )
         assert "type-container-input-flow/test_runner" in captured.out
-        assert "$ prefect deployment run [DEPLOYMENT_NAME]" in captured.out
+        assert "$ syntask deployment run [DEPLOYMENT_NAME]" in captured.out
 
     def test_serve_can_create_multiple_deployments(
         self,
-        sync_prefect_client: SyncPrefectClient,
+        sync_syntask_client: SyncSyntaskClient,
     ):
         deployment_1 = dummy_flow_1.to_deployment(__file__, interval=3600)
         deployment_2 = dummy_flow_2.to_deployment(__file__, cron="* * * * *")
 
         serve(deployment_1, deployment_2)
 
-        deployment = sync_prefect_client.read_deployment_by_name(
+        deployment = sync_syntask_client.read_deployment_by_name(
             name="dummy-flow-1/test_runner"
         )
 
@@ -250,7 +250,7 @@ class TestServe:
             seconds=3600
         )
 
-        deployment = sync_prefect_client.read_deployment_by_name(
+        deployment = sync_syntask_client.read_deployment_by_name(
             name="dummy-flow-2/test_runner"
         )
 
@@ -258,7 +258,7 @@ class TestServe:
         assert deployment.schedules[0].schedule.cron == "* * * * *"
 
     def test_serve_starts_a_runner(
-        self, prefect_client: PrefectClient, mock_runner_start: AsyncMock
+        self, syntask_client: SyntaskClient, mock_runner_start: AsyncMock
     ):
         deployment = dummy_flow_1.to_deployment("test")
 
@@ -268,7 +268,7 @@ class TestServe:
 
 
 class TestRunner:
-    async def test_add_flows_to_runner(self, prefect_client: PrefectClient):
+    async def test_add_flows_to_runner(self, syntask_client: SyntaskClient):
         """Runner.add should create a deployment for the flow passed to it"""
         runner = Runner()
 
@@ -277,8 +277,8 @@ class TestRunner:
             dummy_flow_2, __file__, cron="* * * * *"
         )
 
-        deployment_1 = await prefect_client.read_deployment(deployment_id_1)
-        deployment_2 = await prefect_client.read_deployment(deployment_id_2)
+        deployment_1 = await syntask_client.read_deployment(deployment_id_1)
+        deployment_2 = await syntask_client.read_deployment(deployment_id_2)
 
         assert deployment_1 is not None
         assert deployment_1.name == "test_runner"
@@ -322,7 +322,7 @@ class TestRunner:
             with pytest.raises(ValueError, match=expected_message):
                 await runner.add_flow(dummy_flow_1, __file__, **kwargs)
 
-    async def test_add_deployments_to_runner(self, prefect_client: PrefectClient):
+    async def test_add_deployments_to_runner(self, syntask_client: SyntaskClient):
         """Runner.add_deployment should apply the deployment passed to it"""
         runner = Runner()
 
@@ -332,8 +332,8 @@ class TestRunner:
         deployment_id_1 = await runner.add_deployment(deployment_1)
         deployment_id_2 = await runner.add_deployment(deployment_2)
 
-        deployment_1 = await prefect_client.read_deployment(deployment_id_1)
-        deployment_2 = await prefect_client.read_deployment(deployment_id_2)
+        deployment_1 = await syntask_client.read_deployment(deployment_id_1)
+        deployment_2 = await syntask_client.read_deployment(deployment_id_2)
 
         assert deployment_1 is not None
         assert deployment_1.name == "test_runner"
@@ -346,7 +346,7 @@ class TestRunner:
         assert deployment_2.schedules[0].schedule.cron == "* * * * *"
 
     async def test_runner_can_pause_schedules_on_stop(
-        self, prefect_client: PrefectClient, caplog
+        self, syntask_client: SyntaskClient, caplog
     ):
         runner = Runner()
 
@@ -356,10 +356,10 @@ class TestRunner:
         await runner.add_deployment(deployment_1)
         await runner.add_deployment(deployment_2)
 
-        deployment_1 = await prefect_client.read_deployment_by_name(
+        deployment_1 = await syntask_client.read_deployment_by_name(
             name="dummy-flow-1/test_runner"
         )
-        deployment_2 = await prefect_client.read_deployment_by_name(
+        deployment_2 = await syntask_client.read_deployment_by_name(
             name="dummy-flow-2/test_runner"
         )
 
@@ -369,10 +369,10 @@ class TestRunner:
 
         await runner.start(run_once=True)
 
-        deployment_1 = await prefect_client.read_deployment_by_name(
+        deployment_1 = await syntask_client.read_deployment_by_name(
             name="dummy-flow-1/test_runner"
         )
-        deployment_2 = await prefect_client.read_deployment_by_name(
+        deployment_2 = await syntask_client.read_deployment_by_name(
             name="dummy-flow-2/test_runner"
         )
 
@@ -384,7 +384,7 @@ class TestRunner:
         assert "All deployments have been paused" in caplog.text
 
     @pytest.mark.usefixtures("use_hosted_api_server")
-    async def test_runner_executes_flow_runs(self, prefect_client: PrefectClient):
+    async def test_runner_executes_flow_runs(self, syntask_client: SyntaskClient):
         runner = Runner()
 
         deployment = await dummy_flow_1.to_deployment(__file__)
@@ -393,16 +393,16 @@ class TestRunner:
 
         await runner.start(run_once=True)
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             name="dummy-flow-1/test_runner"
         )
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment.id
         )
 
         await runner.start(run_once=True)
-        flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
 
         assert flow_run.state
         assert flow_run.state.is_completed()
@@ -410,7 +410,7 @@ class TestRunner:
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_runner_runs_on_cancellation_hooks_for_remotely_stored_flows(
         self,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         caplog: pytest.LogCaptureFixture,
         in_temporary_runner_directory: None,
         temp_storage: MockStorage,
@@ -421,8 +421,8 @@ class TestRunner:
             """\
             from time import sleep
 
-            from prefect import flow
-            from prefect.logging.loggers import flow_run_logger
+            from syntask import flow
+            from syntask.logging.loggers import flow_run_logger
 
             def on_cancellation(flow, flow_run, state):
                 logger = flow_run_logger(flow_run, flow)
@@ -442,7 +442,7 @@ class TestRunner:
         )
 
         async with runner:
-            flow_run = await prefect_client.create_flow_run_from_deployment(
+            flow_run = await syntask_client.create_flow_run_from_deployment(
                 deployment_id=deployment_id
             )
 
@@ -451,12 +451,12 @@ class TestRunner:
             # start execution
             while True:
                 await anyio.sleep(0.5)
-                flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+                flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
                 assert flow_run.state
                 if flow_run.state.is_running():
                     break
 
-            await prefect_client.set_flow_run_state(
+            await syntask_client.set_flow_run_state(
                 flow_run_id=flow_run.id,
                 state=flow_run.state.model_copy(
                     update={"name": "Cancelling", "type": StateType.CANCELLING}
@@ -465,7 +465,7 @@ class TestRunner:
 
             await execute_task
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
         assert flow_run.state.is_cancelled()
         # check to make sure on_cancellation hook was called
         assert "This flow was cancelled!" in caplog.text
@@ -473,7 +473,7 @@ class TestRunner:
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_runner_warns_if_unable_to_load_cancellation_hooks(
         self,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         caplog: pytest.LogCaptureFixture,
         in_temporary_runner_directory: None,
         temp_storage: MockStorage,
@@ -484,8 +484,8 @@ class TestRunner:
             """\
             from time import sleep
 
-            from prefect import flow
-            from prefect.logging.loggers import flow_run_logger
+            from syntask import flow
+            from syntask.logging.loggers import flow_run_logger
 
             def on_cancellation(flow, flow_run, state):
                 logger = flow_run_logger(flow_run, flow)
@@ -505,7 +505,7 @@ class TestRunner:
         )
 
         async with runner:
-            flow_run = await prefect_client.create_flow_run_from_deployment(
+            flow_run = await syntask_client.create_flow_run_from_deployment(
                 deployment_id=deployment_id
             )
 
@@ -514,14 +514,14 @@ class TestRunner:
             # start execution
             while True:
                 await anyio.sleep(0.5)
-                flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+                flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
                 assert flow_run.state
                 if flow_run.state.is_running():
                     break
 
-            await prefect_client.delete_deployment(deployment_id=deployment_id)
+            await syntask_client.delete_deployment(deployment_id=deployment_id)
 
-            await prefect_client.set_flow_run_state(
+            await syntask_client.set_flow_run_state(
                 flow_run_id=flow_run.id,
                 state=flow_run.state.model_copy(
                     update={"name": "Cancelling", "type": StateType.CANCELLING}
@@ -530,7 +530,7 @@ class TestRunner:
 
             await execute_task
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
 
         # Cancellation hook should not have been called successfully
         # but the flow run should still be cancelled correctly
@@ -544,7 +544,7 @@ class TestRunner:
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_runner_runs_on_crashed_hooks_for_remotely_stored_flows(
         self,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         caplog: pytest.LogCaptureFixture,
         in_temporary_runner_directory: None,
         temp_storage: MockStorage,
@@ -555,8 +555,8 @@ class TestRunner:
         import os
         import signal
 
-        from prefect import flow
-        from prefect.logging.loggers import flow_run_logger
+        from syntask import flow
+        from syntask.logging.loggers import flow_run_logger
 
         def on_crashed(flow, flow_run, state):
             logger = flow_run_logger(flow_run, flow)
@@ -576,12 +576,12 @@ class TestRunner:
             name=__file__,
         )
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment_id
         )
         await runner.execute_flow_run(flow_run.id)
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
         assert flow_run.state
         assert flow_run.state.is_crashed()
         # check to make sure on_cancellation hook was called
@@ -589,32 +589,32 @@ class TestRunner:
 
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_runner_can_execute_a_single_flow_run(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         runner = Runner()
 
         deployment_id = await (await dummy_flow_1.to_deployment(__file__)).apply()
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment_id
         )
         await runner.execute_flow_run(flow_run.id)
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
         assert flow_run.state
         assert flow_run.state.is_completed()
 
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_runner_respects_set_limit(
-        self, prefect_client: PrefectClient, caplog
+        self, syntask_client: SyntaskClient, caplog
     ):
         async with Runner(limit=1) as runner:
             deployment_id = await (await dummy_flow_1.to_deployment(__file__)).apply()
 
-            good_run = await prefect_client.create_flow_run_from_deployment(
+            good_run = await syntask_client.create_flow_run_from_deployment(
                 deployment_id=deployment_id
             )
-            bad_run = await prefect_client.create_flow_run_from_deployment(
+            bad_run = await syntask_client.create_flow_run_from_deployment(
                 deployment_id=deployment_id
             )
 
@@ -622,18 +622,18 @@ class TestRunner:
             await runner.execute_flow_run(bad_run.id)
             assert "run limit reached" in caplog.text
 
-            flow_run = await prefect_client.read_flow_run(flow_run_id=bad_run.id)
+            flow_run = await syntask_client.read_flow_run(flow_run_id=bad_run.id)
             assert flow_run.state.is_scheduled()
 
             runner._release_limit_slot(good_run.id)
             await runner.execute_flow_run(bad_run.id)
 
-            flow_run = await prefect_client.read_flow_run(flow_run_id=bad_run.id)
+            flow_run = await syntask_client.read_flow_run(flow_run_id=bad_run.id)
             assert flow_run.state.is_completed()
 
-    async def test_handles_spaces_in_sys_executable(self, monkeypatch, prefect_client):
+    async def test_handles_spaces_in_sys_executable(self, monkeypatch, syntask_client):
         """
-        Regression test for https://github.com/synopkg/synopkg/issues/10820
+        Regression test for https://github.com/synopkg/syntask/issues/10820
         """
         import sys
 
@@ -645,7 +645,7 @@ class TestRunner:
             return_value=mock_process,
         )
 
-        monkeypatch.setattr(prefect.runner.runner, "run_process", mock_run_process_call)
+        monkeypatch.setattr(syntask.runner.runner, "run_process", mock_run_process_call)
 
         monkeypatch.setattr(sys, "executable", "C:/Program Files/Python38/python.exe")
 
@@ -653,24 +653,24 @@ class TestRunner:
 
         deployment_id = await (await dummy_flow_1.to_deployment(__file__)).apply()
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment_id
         )
         await runner._run_process(flow_run)
 
         # Previously the command would have been
-        # ["C:/Program", "Files/Python38/python.exe", "-m", "prefect.engine"]
+        # ["C:/Program", "Files/Python38/python.exe", "-m", "syntask.engine"]
         assert mock_run_process_call.call_args[1]["command"] == [
             "C:/Program Files/Python38/python.exe",
             "-m",
-            "prefect.engine",
+            "syntask.engine",
         ]
 
     async def test_runner_sets_flow_run_env_var_with_dashes(
-        self, monkeypatch, prefect_client
+        self, monkeypatch, syntask_client
     ):
         """
-        Regression test for https://github.com/synopkg/synopkg/issues/10851
+        Regression test for https://github.com/synopkg/syntask/issues/10851
         """
         env_var_value = None
 
@@ -681,18 +681,18 @@ class TestRunner:
         def capture_env_var(*args, **kwargs):
             nonlocal env_var_value
             nonlocal mock_process
-            env_var_value = kwargs["env"].get("PREFECT__FLOW_RUN_ID")
+            env_var_value = kwargs["env"].get("SYNTASK__FLOW_RUN_ID")
             return mock_process
 
         mock_run_process_call = AsyncMock(side_effect=capture_env_var)
 
-        monkeypatch.setattr(prefect.runner.runner, "run_process", mock_run_process_call)
+        monkeypatch.setattr(syntask.runner.runner, "run_process", mock_run_process_call)
 
         runner = Runner()
 
         deployment_id = await (await dummy_flow_1.to_deployment(__file__)).apply()
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment_id
         )
         await runner._run_process(flow_run)
@@ -703,7 +703,7 @@ class TestRunner:
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_runner_runs_a_remotely_stored_flow(
         self,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         temp_storage: MockStorage,
     ):
         runner = Runner()
@@ -714,18 +714,18 @@ class TestRunner:
 
         deployment_id = await runner.add_deployment(deployment)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment_id
         )
 
         await runner.start(run_once=True)
-        flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
 
         assert flow_run.state
         assert flow_run.state.is_completed()
 
     @pytest.mark.usefixtures("use_hosted_api_server")
-    async def test_runner_caches_adhoc_pulls(self, prefect_client):
+    async def test_runner_caches_adhoc_pulls(self, syntask_client):
         runner = Runner()
 
         pull_code_spy = MagicMock()
@@ -740,7 +740,7 @@ class TestRunner:
 
             deployment_id = await runner.add_deployment(deployment)
 
-        await prefect_client.create_flow_run_from_deployment(
+        await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment_id
         )
 
@@ -751,7 +751,7 @@ class TestRunner:
         assert runner._storage_objs[0]._pull_code_spy is not None
         assert runner._storage_objs[0]._pull_code_spy.call_count == 3
 
-        await prefect_client.create_flow_run_from_deployment(
+        await syntask_client.create_flow_run_from_deployment(
             deployment_id=deployment_id
         )
 
@@ -759,9 +759,9 @@ class TestRunner:
         assert runner._storage_objs[0]._pull_code_spy.call_count == 3
 
     @pytest.mark.usefixtures("use_hosted_api_server")
-    async def test_runner_does_not_raise_on_duplicate_submission(self, prefect_client):
+    async def test_runner_does_not_raise_on_duplicate_submission(self, syntask_client):
         """
-        Regression test for https://github.com/synopkg/synopkg/issues/11093
+        Regression test for https://github.com/synopkg/syntask/issues/11093
 
         The runner has a race condition where it can try to borrow a limit slot
         that it already has. This test ensures that the runner does not raise
@@ -775,7 +775,7 @@ class TestRunner:
 
             deployment_id = await runner.add_deployment(deployment)
 
-            flow_run = await prefect_client.create_flow_run_from_deployment(
+            flow_run = await syntask_client.create_flow_run_from_deployment(
                 deployment_id=deployment_id
             )
             # acquire the limit slot and then try to borrow it again
@@ -794,7 +794,7 @@ class TestRunner:
 async def test_runner_emits_cancelled_event(
     asserting_events_worker: EventsWorker,
     reset_worker_events,
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     temp_storage: MockStorage,
     in_temporary_runner_directory: None,
 ):
@@ -803,8 +803,8 @@ async def test_runner_emits_cancelled_event(
         """\
         from time import sleep
 
-        from prefect import flow
-        from prefect.logging.loggers import flow_run_logger
+        from syntask import flow
+        from syntask.logging.loggers import flow_run_logger
 
         def on_cancellation(flow, flow_run, state):
             logger = flow_run_logger(flow_run, flow)
@@ -821,11 +821,11 @@ async def test_runner_emits_cancelled_event(
         name=__file__,
         tags=["test"],
     )
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment_id=deployment_id,
         tags=["flow-run-one"],
     )
-    api_flow = await prefect_client.read_flow(flow_run.flow_id)
+    api_flow = await syntask_client.read_flow(flow_run.flow_id)
 
     async with runner:
         execute_task = asyncio.create_task(
@@ -833,11 +833,11 @@ async def test_runner_emits_cancelled_event(
         )
         while True:
             await anyio.sleep(0.5)
-            flow_run = await prefect_client.read_flow_run(flow_run_id=flow_run.id)
+            flow_run = await syntask_client.read_flow_run(flow_run_id=flow_run.id)
             assert flow_run.state
             if flow_run.state.is_running():
                 break
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=flow_run.state.model_copy(
                 update={"name": "Cancelling", "type": StateType.CANCELLING}
@@ -853,43 +853,43 @@ async def test_runner_emits_cancelled_event(
 
     cancelled_events = list(
         filter(
-            lambda e: e.event == "prefect.runner.cancelled-flow-run",
+            lambda e: e.event == "syntask.runner.cancelled-flow-run",
             asserting_events_worker._client.events,
         )
     )
     assert len(cancelled_events) == 1
 
     assert dict(cancelled_events[0].resource.items()) == {
-        "prefect.resource.id": f"prefect.runner.{slugify(runner.name)}",
-        "prefect.resource.name": runner.name,
-        "prefect.version": str(__version__),
+        "syntask.resource.id": f"syntask.runner.{slugify(runner.name)}",
+        "syntask.resource.name": runner.name,
+        "syntask.version": str(__version__),
     }
 
     related = [dict(r.items()) for r in cancelled_events[0].related]
 
     assert related == [
         {
-            "prefect.resource.id": f"prefect.deployment.{deployment_id}",
-            "prefect.resource.role": "deployment",
-            "prefect.resource.name": "test_runner",
+            "syntask.resource.id": f"syntask.deployment.{deployment_id}",
+            "syntask.resource.role": "deployment",
+            "syntask.resource.name": "test_runner",
         },
         {
-            "prefect.resource.id": f"prefect.flow.{api_flow.id}",
-            "prefect.resource.role": "flow",
-            "prefect.resource.name": api_flow.name,
+            "syntask.resource.id": f"syntask.flow.{api_flow.id}",
+            "syntask.resource.role": "flow",
+            "syntask.resource.name": api_flow.name,
         },
         {
-            "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-            "prefect.resource.role": "flow-run",
-            "prefect.resource.name": flow_run.name,
+            "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+            "syntask.resource.role": "flow-run",
+            "syntask.resource.name": flow_run.name,
         },
         {
-            "prefect.resource.id": "prefect.tag.flow-run-one",
-            "prefect.resource.role": "tag",
+            "syntask.resource.id": "syntask.tag.flow-run-one",
+            "syntask.resource.role": "tag",
         },
         {
-            "prefect.resource.id": "prefect.tag.test",
-            "prefect.resource.role": "tag",
+            "syntask.resource.id": "syntask.tag.test",
+            "syntask.resource.role": "tag",
         },
     ]
 
@@ -1292,12 +1292,12 @@ class TestRunnerDeployment:
         assert deployment.version == "test"
         assert deployment.description == "I'm just here for tests"
 
-    async def test_apply(self, prefect_client: PrefectClient):
+    async def test_apply(self, syntask_client: SyntaskClient):
         deployment = RunnerDeployment.from_flow(dummy_flow_1, __file__, interval=3600)
 
         deployment_id = await deployment.apply()
 
-        deployment = await prefect_client.read_deployment(deployment_id)
+        deployment = await syntask_client.read_deployment(deployment_id)
 
         assert deployment.name == "test_runner"
         assert deployment.entrypoint == "tests/runner/test_runner.py:dummy_flow_1"
@@ -1314,7 +1314,7 @@ class TestRunnerDeployment:
         assert deployment.paused is False
         assert deployment.global_concurrency_limit is None
 
-    async def test_apply_with_work_pool(self, prefect_client: PrefectClient, work_pool):
+    async def test_apply_with_work_pool(self, syntask_client: SyntaskClient, work_pool):
         deployment = RunnerDeployment.from_flow(
             dummy_flow_1,
             __file__,
@@ -1325,7 +1325,7 @@ class TestRunnerDeployment:
             work_pool_name=work_pool.name, image="my-repo/my-image:latest"
         )
 
-        deployment = await prefect_client.read_deployment(deployment_id)
+        deployment = await syntask_client.read_deployment(deployment_id)
 
         assert deployment.work_pool_name == work_pool.name
         assert deployment.job_variables == {
@@ -1333,14 +1333,14 @@ class TestRunnerDeployment:
         }
         assert deployment.work_queue_name == "default"
 
-    async def test_apply_paused(self, prefect_client: PrefectClient):
+    async def test_apply_paused(self, syntask_client: SyntaskClient):
         deployment = RunnerDeployment.from_flow(
             dummy_flow_1, __file__, interval=3600, paused=True
         )
 
         deployment_id = await deployment.apply()
 
-        deployment = await prefect_client.read_deployment(deployment_id)
+        deployment = await syntask_client.read_deployment(deployment_id)
 
         assert deployment.paused is True
 
@@ -1523,8 +1523,8 @@ class TestServer:
     @pytest.mark.skip("This test is flaky and needs to be fixed")
     @pytest.mark.parametrize("enabled", [True, False])
     async def test_webserver_start_flag(self, enabled: bool):
-        with temporary_settings(updates={PREFECT_RUNNER_SERVER_ENABLE: enabled}):
-            with mock.patch("prefect.runner.runner.threading.Thread") as mocked_thread:
+        with temporary_settings(updates={SYNTASK_RUNNER_SERVER_ENABLE: enabled}):
+            with mock.patch("syntask.runner.runner.threading.Thread") as mocked_thread:
                 runner = Runner()
                 await runner.start(run_once=True)
 
@@ -1541,7 +1541,7 @@ class TestDeploy:
     def mock_build_image(self, monkeypatch):
         mock = MagicMock()
 
-        monkeypatch.setattr("prefect.docker.docker_image.build_image", mock)
+        monkeypatch.setattr("syntask.docker.docker_image.build_image", mock)
         return mock
 
     @pytest.fixture
@@ -1549,14 +1549,14 @@ class TestDeploy:
         mock = MagicMock()
         mock.return_value.__enter__.return_value = mock
         mock.api.push.return_value = []
-        monkeypatch.setattr("prefect.docker.docker_image.docker_client", mock)
+        monkeypatch.setattr("syntask.docker.docker_image.docker_client", mock)
         return mock
 
     @pytest.fixture
     def mock_generate_default_dockerfile(self, monkeypatch):
         mock = MagicMock()
         monkeypatch.setattr(
-            "prefect.docker.docker_image.generate_default_dockerfile", mock
+            "syntask.docker.docker_image.generate_default_dockerfile", mock
         )
         return mock
 
@@ -1566,7 +1566,7 @@ class TestDeploy:
         mock_docker_client,
         mock_generate_default_dockerfile,
         work_pool_with_image_variable,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         capsys,
         temp_storage: MockStorage,
     ):
@@ -1595,23 +1595,23 @@ class TestDeploy:
             decode=True,
         )
 
-        deployment_1 = await prefect_client.read_deployment_by_name(
+        deployment_1 = await syntask_client.read_deployment_by_name(
             f"{dummy_flow_1.name}/test_runner"
         )
         assert deployment_1.id == deployment_ids[0]
 
-        deployment_2 = await prefect_client.read_deployment_by_name(
+        deployment_2 = await syntask_client.read_deployment_by_name(
             "test-flow/test_runner"
         )
         assert deployment_2.id == deployment_ids[1]
-        assert deployment_2.pull_steps == [{"prefect.fake.module": {}}]
+        assert deployment_2.pull_steps == [{"syntask.fake.module": {}}]
 
         console_output = capsys.readouterr().out
         assert (
-            f"prefect worker start --pool {work_pool_with_image_variable.name!r}"
+            f"syntask worker start --pool {work_pool_with_image_variable.name!r}"
             in console_output
         )
-        assert "prefect deployment run [DEPLOYMENT_NAME]" in console_output
+        assert "syntask deployment run [DEPLOYMENT_NAME]" in console_output
 
     async def test_deploy_to_default_work_pool(
         self,
@@ -1619,12 +1619,12 @@ class TestDeploy:
         mock_docker_client,
         mock_generate_default_dockerfile,
         work_pool_with_image_variable,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         capsys,
         temp_storage: MockStorage,
     ):
         with temporary_settings(
-            updates={PREFECT_DEFAULT_WORK_POOL_NAME: work_pool_with_image_variable.name}
+            updates={SYNTASK_DEFAULT_WORK_POOL_NAME: work_pool_with_image_variable.name}
         ):
             deployment_ids = await deploy(
                 await dummy_flow_1.to_deployment(__file__),
@@ -1650,23 +1650,23 @@ class TestDeploy:
                 decode=True,
             )
 
-            deployment_1 = await prefect_client.read_deployment_by_name(
+            deployment_1 = await syntask_client.read_deployment_by_name(
                 f"{dummy_flow_1.name}/test_runner"
             )
             assert deployment_1.id == deployment_ids[0]
 
-            deployment_2 = await prefect_client.read_deployment_by_name(
+            deployment_2 = await syntask_client.read_deployment_by_name(
                 "test-flow/test_runner"
             )
             assert deployment_2.id == deployment_ids[1]
-            assert deployment_2.pull_steps == [{"prefect.fake.module": {}}]
+            assert deployment_2.pull_steps == [{"syntask.fake.module": {}}]
 
             console_output = capsys.readouterr().out
             assert (
-                f"prefect worker start --pool {work_pool_with_image_variable.name!r}"
+                f"syntask worker start --pool {work_pool_with_image_variable.name!r}"
                 in console_output
             )
-            assert "prefect deployment run [DEPLOYMENT_NAME]" in console_output
+            assert "syntask deployment run [DEPLOYMENT_NAME]" in console_output
 
     async def test_deploy_non_existent_work_pool(self):
         with pytest.raises(
@@ -1753,7 +1753,7 @@ class TestDeploy:
         mock_docker_client,
         mock_generate_default_dockerfile,
         work_pool_with_image_variable,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
     ):
         deployment_ids = await deploy(
             await dummy_flow_1.to_deployment(__file__),
@@ -1770,14 +1770,14 @@ class TestDeploy:
         mock_build_image.assert_not_called()
         mock_docker_client.api.push.assert_not_called()
 
-        deployment_1 = await prefect_client.read_deployment(
+        deployment_1 = await syntask_client.read_deployment(
             deployment_id=deployment_ids[0]
         )
         assert (
             deployment_1.job_variables["image"] == "test-registry/test-image:test-tag"
         )
 
-        deployment_2 = await prefect_client.read_deployment(
+        deployment_2 = await syntask_client.read_deployment(
             deployment_id=deployment_ids[1]
         )
         assert (
@@ -1833,7 +1833,7 @@ class TestDeploy:
         )
         assert len(deployment_ids) == 2
 
-        assert "prefect deployment run [DEPLOYMENT_NAME]" not in capsys.readouterr().out
+        assert "syntask deployment run [DEPLOYMENT_NAME]" not in capsys.readouterr().out
 
     async def test_deploy_push_work_pool(
         self,
@@ -1861,8 +1861,8 @@ class TestDeploy:
         assert len(deployment_ids) == 2
 
         console_output = capsys.readouterr().out
-        assert "prefect worker start" not in console_output
-        assert "prefect deployment run [DEPLOYMENT_NAME]" not in console_output
+        assert "syntask worker start" not in console_output
+        assert "syntask deployment run [DEPLOYMENT_NAME]" not in console_output
 
     async def test_deploy_managed_work_pool_doesnt_prompt_worker_start_or_build_image(
         self,
@@ -1895,8 +1895,8 @@ class TestDeploy:
 
         assert "Building image" not in capsys.readouterr().out
         assert "Pushing image" not in capsys.readouterr().out
-        assert "prefect worker start" not in console_output
-        assert "prefect deployment run [DEPLOYMENT_NAME]" not in console_output
+        assert "syntask worker start" not in console_output
+        assert "syntask deployment run [DEPLOYMENT_NAME]" not in console_output
 
         mock_generate_default_dockerfile.assert_not_called()
         mock_build_image.assert_not_called()
@@ -1985,7 +1985,7 @@ class TestDeploy:
             )
 
     async def test_deploy_with_module_path_entrypoint(
-        self, work_pool_with_image_variable, prefect_client
+        self, work_pool_with_image_variable, syntask_client
     ):
         deployment_ids = await deploy(
             await dummy_flow_1.to_deployment(
@@ -1995,7 +1995,7 @@ class TestDeploy:
         )
         assert len(deployment_ids) == 1
 
-        deployment = await prefect_client.read_deployment(deployment_ids[0])
+        deployment = await syntask_client.read_deployment(deployment_ids[0])
         assert deployment.entrypoint == "test_runner.dummy_flow_1"
 
     async def test_deploy_with_image_string_no_tag(
@@ -2054,7 +2054,7 @@ class TestDeploy:
         assert "failed" in console_output
         # just the start of the error due to wrapping
         assert "'blork' is not one" in console_output
-        assert "prefect worker start" in console_output
+        assert "syntask worker start" in console_output
         assert "To execute flow runs from these deployments" in console_output
 
     async def test_deploy_with_complete_failure(
@@ -2088,7 +2088,7 @@ class TestDeploy:
         # just the start of the error due to wrapping
         assert "'blork' is not one" in console_output
 
-        assert "prefect worker start" not in console_output
+        assert "syntask worker start" not in console_output
         assert "To execute flow runs from these deployments" not in console_output
 
     async def test_deploy_raises_with_only_deployment_failed(
@@ -2168,14 +2168,14 @@ class TestDeploy:
 class TestDockerImage:
     def test_adds_default_registry_url(self):
         with temporary_settings(
-            {PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE: "alltheimages.com/my-org"}
+            {SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE: "alltheimages.com/my-org"}
         ):
             image = DockerImage(name="test-image")
             assert image.name == "alltheimages.com/my-org/test-image"
 
     def test_override_default_registry_url(self):
         with temporary_settings(
-            {PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE: "alltheimages.com/my-org"}
+            {SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE: "alltheimages.com/my-org"}
         ):
             image = DockerImage(name="otherimages.com/my-org/test-image")
             assert image.name == "otherimages.com/my-org/test-image"

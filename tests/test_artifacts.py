@@ -3,8 +3,8 @@ from typing import List
 
 import pytest
 
-from prefect import flow, task
-from prefect.artifacts import (
+from syntask import flow, task
+from syntask.artifacts import (
     create_image_artifact,
     create_link_artifact,
     create_markdown_artifact,
@@ -12,9 +12,9 @@ from prefect.artifacts import (
     create_table_artifact,
     update_progress_artifact,
 )
-from prefect.context import get_run_context
-from prefect.server import schemas
-from prefect.server.schemas.actions import ArtifactCreate
+from syntask.context import get_run_context
+from syntask.server import schemas
+from syntask.server.schemas.actions import ArtifactCreate
 
 
 class TestCreateArtifacts:
@@ -30,7 +30,7 @@ class TestCreateArtifacts:
         self, artifact, client
     ):
         my_link = "syntask.khulnasoft.com"
-        link_text = "Prefect"
+        link_text = "Syntask"
 
         @flow
         async def my_flow():
@@ -124,7 +124,7 @@ class TestCreateArtifacts:
         Test that we can create a markdown artifact using map.
         """
 
-        # An ode to prefect issue #5309.
+        # An ode to syntask issue #5309.
         @task
         def add_ten(x):
             create_link_artifact(
@@ -379,7 +379,7 @@ class TestCreateArtifacts:
     async def test_create_table_artifact_using_map_succeeds(self):
         """
         Test that we can create a table artifact using map.
-        An ode to prefect issue
+        An ode to syntask issue
         """
 
         @task

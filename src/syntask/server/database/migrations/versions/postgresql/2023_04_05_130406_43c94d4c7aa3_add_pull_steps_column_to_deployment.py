@@ -9,7 +9,7 @@ Create Date: 2023-04-05 13:04:06.669728
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "43c94d4c7aa3"
@@ -23,7 +23,7 @@ def upgrade():
         "deployment",
         sa.Column(
             "pull_steps",
-            prefect.server.utilities.database.JSON(astext_type=sa.Text()),
+            syntask.server.utilities.database.JSON(astext_type=sa.Text()),
             nullable=True,
         ),
     )

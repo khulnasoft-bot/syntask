@@ -3,10 +3,10 @@ import rich
 import typer
 from typer.testing import CliRunner
 
-from prefect.cli.root import app as APP
-from prefect.cli.root import is_interactive
-from prefect.settings import (
-    PREFECT_CLI_PROMPT,
+from syntask.cli.root import app as APP
+from syntask.cli.root import is_interactive
+from syntask.settings import (
+    SYNTASK_CLI_PROMPT,
     temporary_settings,
 )
 
@@ -70,20 +70,20 @@ def test_prompt_force_false(test_app):
 
 
 def test_prompt_force_true_with_setting(test_app):
-    with temporary_settings({PREFECT_CLI_PROMPT: True}):
+    with temporary_settings({SYNTASK_CLI_PROMPT: True}):
         assert_interactive(test_app)
 
 
 def test_prompt_force_false_with_setting(test_app):
-    with temporary_settings({PREFECT_CLI_PROMPT: False}):
+    with temporary_settings({SYNTASK_CLI_PROMPT: False}):
         assert_not_interactive(test_app)
 
 
 def test_prompt_cli_takes_precendence_over_setting_false(test_app):
-    with temporary_settings({PREFECT_CLI_PROMPT: True}):
+    with temporary_settings({SYNTASK_CLI_PROMPT: True}):
         assert_not_interactive(test_app, "--no-prompt")
 
 
 def test_prompt_cli_takes_precendence_over_setting_true(test_app):
-    with temporary_settings({PREFECT_CLI_PROMPT: False}):
+    with temporary_settings({SYNTASK_CLI_PROMPT: False}):
         assert_interactive(test_app, "--prompt")

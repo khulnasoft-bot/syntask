@@ -1,10 +1,10 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Prefect Prefect REST API",
+        "title": "Syntask Syntask REST API",
         "version": "3.0",
         "x-logo": {
-            "url": "static/prefect-logo-mark-gradient.png"
+            "url": "static/syntask-logo-mark-gradient.png"
         }
     },
     "paths": {
@@ -56,12 +56,12 @@
                 "operationId": "create_flow_flows__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -121,12 +121,12 @@
                         "description": "The flow id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -177,12 +177,12 @@
                         "description": "The flow id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -230,12 +230,12 @@
                         "description": "The flow id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -266,12 +266,12 @@
                 "operationId": "count_flows_flows_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -330,12 +330,12 @@
                         "description": "The name of the flow"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -373,12 +373,12 @@
                 "operationId": "read_flows_flows_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -429,12 +429,12 @@
                 "operationId": "paginate_flows_flows_paginate_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -481,12 +481,12 @@
                 "operationId": "create_flow_run_flow_runs__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -546,12 +546,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -602,12 +602,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -655,12 +655,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -691,12 +691,12 @@
                 "operationId": "count_flow_runs_flow_runs_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -744,12 +744,12 @@
                 "operationId": "average_flow_run_lateness_flow_runs_lateness_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -804,12 +804,12 @@
                 "operationId": "flow_run_history_flow_runs_history_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -873,12 +873,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -945,12 +945,12 @@
                         "description": "Only include runs that start or end after this time."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1000,12 +1000,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1052,12 +1052,12 @@
                 "operationId": "read_flow_runs_flow_runs_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1120,12 +1120,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1185,12 +1185,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1248,12 +1248,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1328,12 +1328,12 @@
                         "description": "The input key"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1390,12 +1390,12 @@
                         "description": "The input key"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1426,12 +1426,12 @@
                 "operationId": "paginate_flow_runs_flow_runs_paginate_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1490,12 +1490,12 @@
                         "description": "The flow run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1531,12 +1531,12 @@
                 "operationId": "create_task_run_task_runs__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1596,12 +1596,12 @@
                         "description": "The task run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1652,12 +1652,12 @@
                         "description": "The task run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1705,12 +1705,12 @@
                         "description": "The task run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1741,12 +1741,12 @@
                 "operationId": "count_task_runs_task_runs_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1794,12 +1794,12 @@
                 "operationId": "task_run_history_task_runs_history_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1851,12 +1851,12 @@
                 "operationId": "read_task_runs_task_runs_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1919,12 +1919,12 @@
                         "description": "The task run id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -1984,12 +1984,12 @@
                         "description": "The flow run state id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2037,12 +2037,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2096,12 +2096,12 @@
                         "description": "The task run state id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2149,12 +2149,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2196,12 +2196,12 @@
                 "operationId": "create_flow_run_notification_policy_flow_run_notification_policies__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2261,12 +2261,12 @@
                         "description": "The flow run notification policy id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2317,12 +2317,12 @@
                         "description": "The flow run notification policy id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2370,12 +2370,12 @@
                         "description": "The flow run notification policy id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2406,12 +2406,12 @@
                 "operationId": "read_flow_run_notification_policies_flow_run_notification_policies_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2462,12 +2462,12 @@
                 "operationId": "create_deployment_deployments__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2526,12 +2526,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2582,12 +2582,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2635,12 +2635,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2693,12 +2693,12 @@
                         "description": "The name of the deployment"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2736,12 +2736,12 @@
                 "operationId": "read_deployments_deployments_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2792,12 +2792,12 @@
                 "operationId": "paginate_deployments_deployments_paginate_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2844,12 +2844,12 @@
                 "operationId": "get_scheduled_flow_runs_for_deployments_deployments_get_scheduled_flow_runs_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2901,12 +2901,12 @@
                 "operationId": "count_deployments_deployments_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -2966,12 +2966,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3028,12 +3028,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3081,12 +3081,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3134,12 +3134,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3200,12 +3200,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3258,12 +3258,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3314,12 +3314,12 @@
                         "description": "The deployment id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3399,12 +3399,12 @@
                         "description": "The schedule id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3467,12 +3467,12 @@
                         "description": "The schedule id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3503,12 +3503,12 @@
                 "operationId": "create_saved_search_saved_searches__put",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3568,12 +3568,12 @@
                         "description": "The saved search id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3621,12 +3621,12 @@
                         "description": "The saved search id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3657,12 +3657,12 @@
                 "operationId": "read_saved_searches_saved_searches_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3713,12 +3713,12 @@
                 "operationId": "create_logs_logs__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3768,12 +3768,12 @@
                 "operationId": "read_logs_logs_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3823,12 +3823,12 @@
                 "operationId": "create_concurrency_limit_concurrency_limits__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3888,12 +3888,12 @@
                         "description": "The concurrency limit id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3940,12 +3940,12 @@
                         "description": "The concurrency limit id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -3992,12 +3992,12 @@
                         "description": "The tag name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4043,12 +4043,12 @@
                         "description": "The tag name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4084,12 +4084,12 @@
                 "operationId": "read_concurrency_limits_concurrency_limits_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4150,12 +4150,12 @@
                         "description": "The tag name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4199,12 +4199,12 @@
                 "operationId": "increment_concurrency_limits_v1_concurrency_limits_increment_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4255,12 +4255,12 @@
                 "operationId": "decrement_concurrency_limits_v1_concurrency_limits_decrement_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4305,12 +4305,12 @@
                 "operationId": "create_concurrency_limit_v2_v2_concurrency_limits__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4376,12 +4376,12 @@
                         "description": "The ID or name of the concurrency limit"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4435,12 +4435,12 @@
                         "description": "The ID or name of the concurrency limit"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4497,12 +4497,12 @@
                         "description": "The ID or name of the concurrency limit"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4532,12 +4532,12 @@
                 "operationId": "read_all_concurrency_limits_v2_v2_concurrency_limits_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4587,12 +4587,12 @@
                 "operationId": "bulk_increment_active_slots_v2_concurrency_limits_increment_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4643,12 +4643,12 @@
                 "operationId": "bulk_decrement_active_slots_v2_concurrency_limits_decrement_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4700,12 +4700,12 @@
                 "operationId": "create_block_type_block_types__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4765,12 +4765,12 @@
                         "description": "The block type ID"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4818,12 +4818,12 @@
                         "description": "The block type ID"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4873,12 +4873,12 @@
                         "description": "The block type ID"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4920,12 +4920,12 @@
                         "description": "The block type name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -4963,12 +4963,12 @@
                 "operationId": "read_block_types_block_types_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5043,12 +5043,12 @@
                         "description": "Whether to include sensitive values in the block document."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5125,12 +5125,12 @@
                         "description": "Whether to include sensitive values in the block document."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5167,12 +5167,12 @@
                 "operationId": "install_system_block_types_block_types_install_system_block_types_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5208,12 +5208,12 @@
                 "operationId": "create_block_document_block_documents__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5261,12 +5261,12 @@
                 "operationId": "read_block_documents_block_documents_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5317,12 +5317,12 @@
                 "operationId": "count_block_documents_block_documents_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5393,12 +5393,12 @@
                         "description": "Whether to include sensitive values in the block document."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5445,12 +5445,12 @@
                         "description": "The block document id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5490,12 +5490,12 @@
                         "description": "The block document id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5536,12 +5536,12 @@
                 "operationId": "create_work_pool_work_pools__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5600,12 +5600,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5652,12 +5652,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5707,12 +5707,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5743,12 +5743,12 @@
                 "operationId": "read_work_pools_work_pools_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5799,12 +5799,12 @@
                 "operationId": "count_work_pools_work_pools_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5863,12 +5863,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -5930,12 +5930,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6005,12 +6005,12 @@
                         "description": "The work pool queue name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6068,12 +6068,12 @@
                         "description": "The work pool queue name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6134,12 +6134,12 @@
                         "description": "The work pool queue name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6181,12 +6181,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6247,12 +6247,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6304,12 +6304,12 @@
                         "description": "The work pool name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6382,12 +6382,12 @@
                         "description": "The work pool's worker name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6418,12 +6418,12 @@
                 "operationId": "read_task_workers_task_workers_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6474,12 +6474,12 @@
                 "operationId": "create_work_queue_work_queues__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6539,12 +6539,12 @@
                         "description": "The work queue id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6595,12 +6595,12 @@
                         "description": "The work queue id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6648,12 +6648,12 @@
                         "description": "The work queue id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6695,12 +6695,12 @@
                         "description": "The work queue name"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6750,7 +6750,7 @@
                         "description": "The work queue id"
                     },
                     {
-                        "name": "x-prefect-ui",
+                        "name": "x-syntask-ui",
                         "in": "header",
                         "required": false,
                         "schema": {
@@ -6762,19 +6762,19 @@
                                     "type": "null"
                                 }
                             ],
-                            "description": "A header to indicate this request came from the Prefect UI.",
+                            "description": "A header to indicate this request came from the Syntask UI.",
                             "default": false,
-                            "title": "X-Prefect-Ui"
+                            "title": "X-Syntask-Ui"
                         },
-                        "description": "A header to indicate this request came from the Prefect UI."
+                        "description": "A header to indicate this request came from the Syntask UI."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6825,12 +6825,12 @@
                 "operationId": "read_work_queues_work_queues_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6893,12 +6893,12 @@
                         "description": "The work queue id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -6935,12 +6935,12 @@
                 "operationId": "create_artifact_artifacts__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7000,12 +7000,12 @@
                         "description": "The ID of the artifact to retrieve."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7053,12 +7053,12 @@
                         "description": "The ID of the artifact to update."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7109,12 +7109,12 @@
                         "description": "The ID of the artifact to delete."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7156,12 +7156,12 @@
                         "description": "The key of the artifact to retrieve."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7199,12 +7199,12 @@
                 "operationId": "read_artifacts_artifacts_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7255,12 +7255,12 @@
                 "operationId": "read_latest_artifacts_artifacts_latest_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7311,12 +7311,12 @@
                 "operationId": "count_artifacts_artifacts_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7364,12 +7364,12 @@
                 "operationId": "count_latest_artifacts_artifacts_latest_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7416,12 +7416,12 @@
                 "operationId": "create_block_schema_block_schemas__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7481,12 +7481,12 @@
                         "description": "The block schema id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7527,12 +7527,12 @@
                         "description": "The block schema id"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7570,12 +7570,12 @@
                 "operationId": "read_block_schemas_block_schemas_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7654,12 +7654,12 @@
                         "description": "Version of block schema. If not provided the most recently created block schema with the matching checksum will be returned."
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7696,12 +7696,12 @@
                 "operationId": "read_available_block_capabilities_block_capabilities__get",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7739,7 +7739,7 @@
                     "Collections"
                 ],
                 "summary": "Read View Content",
-                "description": "Reads the content of a view from the prefect-collection-registry.",
+                "description": "Reads the content of a view from the syntask-collection-registry.",
                 "operationId": "read_view_content_collections_views__view__get",
                 "parameters": [
                     {
@@ -7752,12 +7752,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7795,12 +7795,12 @@
                 "operationId": "create_variable_variables__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7857,12 +7857,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7907,12 +7907,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -7960,12 +7960,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8004,12 +8004,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8053,12 +8053,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8105,12 +8105,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8140,12 +8140,12 @@
                 "operationId": "read_variables_variables_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8195,12 +8195,12 @@
                 "operationId": "count_variables_variables_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8256,12 +8256,12 @@
                         "description": "The client to create a CSRF token for"
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8299,12 +8299,12 @@
                 "operationId": "create_events_events_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8349,12 +8349,12 @@
                 "operationId": "read_events_events_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8410,12 +8410,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8461,12 +8461,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8517,12 +8517,12 @@
                 "operationId": "create_automation_automations__post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8579,12 +8579,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8632,12 +8632,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8685,12 +8685,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8728,12 +8728,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8770,12 +8770,12 @@
                 "operationId": "read_automations_automations_filter_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8825,12 +8825,12 @@
                 "operationId": "count_automations_automations_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8877,12 +8877,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8932,12 +8932,12 @@
                         }
                     },
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -8972,12 +8972,12 @@
                 "operationId": "validate_template_templates_validate_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9020,12 +9020,12 @@
                 "operationId": "count_deployments_by_flow_ui_flows_count_deployments_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9078,12 +9078,12 @@
                 "operationId": "next_runs_by_flow_ui_flows_next_runs_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9142,12 +9142,12 @@
                 "operationId": "read_flow_run_history_ui_flow_runs_history_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9199,12 +9199,12 @@
                 "operationId": "count_task_runs_by_flow_run_ui_flow_runs_count_task_runs_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9256,12 +9256,12 @@
                 "operationId": "validate_obj_ui_schemas_validate_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9307,12 +9307,12 @@
                 "operationId": "read_dashboard_task_run_counts_ui_task_runs_dashboard_counts_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9364,12 +9364,12 @@
                 "operationId": "read_task_run_counts_by_state_ui_task_runs_count_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9412,16 +9412,16 @@
                     "Admin"
                 ],
                 "summary": "Read Settings",
-                "description": "Get the current Prefect REST API settings.\n\nSecret setting values will be obfuscated.",
+                "description": "Get the current Syntask REST API settings.\n\nSecret setting values will be obfuscated.",
                 "operationId": "read_settings_admin_settings_get",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9455,16 +9455,16 @@
                     "Admin"
                 ],
                 "summary": "Read Version",
-                "description": "Returns the Prefect version number",
+                "description": "Returns the Syntask version number",
                 "operationId": "read_version_admin_version_get",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9503,12 +9503,12 @@
                 "operationId": "clear_database_admin_database_clear_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9548,12 +9548,12 @@
                 "operationId": "drop_database_admin_database_drop_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9593,12 +9593,12 @@
                 "operationId": "create_database_admin_database_create_post",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9638,12 +9638,12 @@
                 "operationId": "hello_hello_get",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -9678,12 +9678,12 @@
                 "operationId": "perform_readiness_check_ready_get",
                 "parameters": [
                     {
-                        "name": "x-prefect-api-version",
+                        "name": "x-syntask-api-version",
                         "in": "header",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "title": "X-Prefect-Api-Version"
+                            "title": "X-Syntask-Api-Version"
                         }
                     }
                 ],
@@ -10301,7 +10301,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "ArtifactCreate",
-                "description": "Data used by the Prefect REST API to create an artifact."
+                "description": "Data used by the Syntask REST API to create an artifact."
             },
             "ArtifactFilter": {
                 "properties": {
@@ -10586,7 +10586,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "ArtifactUpdate",
-                "description": "Data used by the Prefect REST API to update an artifact."
+                "description": "Data used by the Syntask REST API to update an artifact."
             },
             "Automation": {
                 "properties": {
@@ -11481,7 +11481,7 @@
                     "is_anonymous": {
                         "type": "boolean",
                         "title": "Is Anonymous",
-                        "description": "Whether the block is anonymous (anonymous blocks are usually created by Prefect automatically)",
+                        "description": "Whether the block is anonymous (anonymous blocks are usually created by Syntask automatically)",
                         "default": false
                     }
                 },
@@ -11527,7 +11527,7 @@
                     "is_anonymous": {
                         "type": "boolean",
                         "title": "Is Anonymous",
-                        "description": "Whether the block is anonymous (anonymous blocks are usually created by Prefect automatically)",
+                        "description": "Whether the block is anonymous (anonymous blocks are usually created by Syntask automatically)",
                         "default": false
                     }
                 },
@@ -11538,7 +11538,7 @@
                     "block_type_id"
                 ],
                 "title": "BlockDocumentCreate",
-                "description": "Data used by the Prefect REST API to create a block document."
+                "description": "Data used by the Syntask REST API to create a block document."
             },
             "BlockDocumentFilter": {
                 "properties": {
@@ -11745,7 +11745,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "BlockDocumentUpdate",
-                "description": "Data used by the Prefect REST API to update a block document."
+                "description": "Data used by the Syntask REST API to update a block document."
             },
             "BlockSchema": {
                 "properties": {
@@ -11869,7 +11869,7 @@
                     "block_type_id"
                 ],
                 "title": "BlockSchemaCreate",
-                "description": "Data used by the Prefect REST API to create a block schema."
+                "description": "Data used by the Syntask REST API to create a block schema."
             },
             "BlockSchemaFilter": {
                 "properties": {
@@ -12208,7 +12208,7 @@
                     "slug"
                 ],
                 "title": "BlockTypeCreate",
-                "description": "Data used by the Prefect REST API to create a block type."
+                "description": "Data used by the Syntask REST API to create a block type."
             },
             "BlockTypeFilter": {
                 "properties": {
@@ -12336,7 +12336,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "BlockTypeUpdate",
-                "description": "Data used by the Prefect REST API to update a block type."
+                "description": "Data used by the Syntask REST API to update a block type."
             },
             "Body_average_flow_run_lateness_flow_runs_lateness_post": {
                 "properties": {
@@ -12931,7 +12931,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -12965,7 +12965,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13046,7 +13046,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13127,7 +13127,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13198,7 +13198,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13215,7 +13215,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13251,7 +13251,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13282,7 +13282,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13346,7 +13346,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13373,7 +13373,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13410,7 +13410,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13427,7 +13427,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13528,7 +13528,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13610,7 +13610,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13691,7 +13691,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13727,7 +13727,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13763,7 +13763,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13787,7 +13787,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13804,7 +13804,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13911,7 +13911,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13959,7 +13959,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -13986,7 +13986,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -14011,12 +14011,12 @@
                             }
                         ],
                         "title": "Agent Id",
-                        "description": "An optional unique identifier for the agent making this query. If provided, the Prefect REST API will track the last time this agent polled the work queue."
+                        "description": "An optional unique identifier for the agent making this query. If provided, the Syntask REST API will track the last time this agent polled the work queue."
                     },
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -14036,7 +14036,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -14056,7 +14056,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -14076,7 +14076,7 @@
                     "limit": {
                         "type": "integer",
                         "title": "Limit",
-                        "description": "Defaults to PREFECT_API_DEFAULT_LIMIT if not provided."
+                        "description": "Defaults to SYNTASK_API_DEFAULT_LIMIT if not provided."
                     }
                 },
                 "type": "object",
@@ -14591,7 +14591,7 @@
                     "concurrency_limit"
                 ],
                 "title": "ConcurrencyLimitCreate",
-                "description": "Data used by the Prefect REST API to create a concurrency limit."
+                "description": "Data used by the Syntask REST API to create a concurrency limit."
             },
             "ConcurrencyLimitStrategy": {
                 "type": "string",
@@ -14732,7 +14732,7 @@
                     "limit"
                 ],
                 "title": "ConcurrencyLimitV2Create",
-                "description": "Data used by the Prefect REST API to create a v2 concurrency limit."
+                "description": "Data used by the Syntask REST API to create a v2 concurrency limit."
             },
             "ConcurrencyLimitV2Update": {
                 "properties": {
@@ -14811,7 +14811,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "ConcurrencyLimitV2Update",
-                "description": "Data used by the Prefect REST API to update a v2 concurrency limit."
+                "description": "Data used by the Syntask REST API to update a v2 concurrency limit."
             },
             "ConcurrencyOptions": {
                 "properties": {
@@ -15365,7 +15365,7 @@
                     "flow_id"
                 ],
                 "title": "DeploymentCreate",
-                "description": "Data used by the Prefect REST API to create a deployment."
+                "description": "Data used by the Syntask REST API to create a deployment."
             },
             "DeploymentFilter": {
                 "properties": {
@@ -15786,7 +15786,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "DeploymentFlowRunCreate",
-                "description": "Data used by the Prefect REST API to create a flow run from a deployment."
+                "description": "Data used by the Syntask REST API to create a flow run from a deployment."
             },
             "DeploymentOrFlowNameFilter": {
                 "properties": {
@@ -16595,7 +16595,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "DeploymentUpdate",
-                "description": "Data used by the Prefect REST API to update a deployment."
+                "description": "Data used by the Syntask REST API to update a deployment."
             },
             "DoNothing": {
                 "properties": {
@@ -17155,7 +17155,7 @@
                         "type": "array",
                         "uniqueItems": true,
                         "title": "After",
-                        "description": "The event(s) which must first been seen to fire this trigger.  If empty, then fire this trigger immediately.  Events may include trailing wildcards, like `prefect.flow-run.*`"
+                        "description": "The event(s) which must first been seen to fire this trigger.  If empty, then fire this trigger immediately.  Events may include trailing wildcards, like `syntask.flow-run.*`"
                     },
                     "expect": {
                         "items": {
@@ -17164,7 +17164,7 @@
                         "type": "array",
                         "uniqueItems": true,
                         "title": "Expect",
-                        "description": "The event(s) this trigger is expecting to see.  If empty, this trigger will match any event.  Events may include trailing wildcards, like `prefect.flow-run.*`"
+                        "description": "The event(s) this trigger is expecting to see.  If empty, this trigger will match any event.  Events may include trailing wildcards, like `syntask.flow-run.*`"
                     },
                     "for_each": {
                         "items": {
@@ -17173,7 +17173,7 @@
                         "type": "array",
                         "uniqueItems": true,
                         "title": "For Each",
-                        "description": "Evaluate the trigger separately for each distinct value of these labels on the resource.  By default, labels refer to the primary resource of the triggering event.  You may also refer to labels from related resources by specifying `related:<role>:<label>`.  This will use the value of that label for the first related resource in that role.  For example, `\"for_each\": [\"related:flow:prefect.resource.id\"]` would evaluate the trigger for each flow."
+                        "description": "Evaluate the trigger separately for each distinct value of these labels on the resource.  By default, labels refer to the primary resource of the triggering event.  You may also refer to labels from related resources by specifying `related:<role>:<label>`.  This will use the value of that label for the first related resource in that role.  For example, `\"for_each\": [\"related:flow:syntask.resource.id\"]` would evaluate the trigger for each flow."
                     },
                     "posture": {
                         "type": "string",
@@ -17298,7 +17298,7 @@
                     "name"
                 ],
                 "title": "FlowCreate",
-                "description": "Data used by the Prefect REST API to create a flow."
+                "description": "Data used by the Syntask REST API to create a flow."
             },
             "FlowFilter": {
                 "properties": {
@@ -18010,7 +18010,7 @@
                     "flow_id"
                 ],
                 "title": "FlowRunCreate",
-                "description": "Data used by the Prefect REST API to create a flow run."
+                "description": "Data used by the Syntask REST API to create a flow run."
             },
             "FlowRunFilter": {
                 "properties": {
@@ -19004,7 +19004,7 @@
                     "block_document_id"
                 ],
                 "title": "FlowRunNotificationPolicyCreate",
-                "description": "Data used by the Prefect REST API to create a flow run notification policy."
+                "description": "Data used by the Syntask REST API to create a flow run notification policy."
             },
             "FlowRunNotificationPolicyFilter": {
                 "properties": {
@@ -19116,7 +19116,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "FlowRunNotificationPolicyUpdate",
-                "description": "Data used by the Prefect REST API to update a flow run notification policy."
+                "description": "Data used by the Syntask REST API to update a flow run notification policy."
             },
             "FlowRunPaginationResponse": {
                 "properties": {
@@ -19688,7 +19688,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "FlowRunUpdate",
-                "description": "Data used by the Prefect REST API to update a flow run."
+                "description": "Data used by the Syntask REST API to update a flow run."
             },
             "FlowSort": {
                 "type": "string",
@@ -19721,7 +19721,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "FlowUpdate",
-                "description": "Data used by the Prefect REST API to update a flow."
+                "description": "Data used by the Syntask REST API to update a flow."
             },
             "GlobalConcurrencyLimitResponse": {
                 "properties": {
@@ -20209,7 +20209,7 @@
                     "timestamp"
                 ],
                 "title": "LogCreate",
-                "description": "Data used by the Prefect REST API to create a log."
+                "description": "Data used by the Syntask REST API to create a log."
             },
             "LogFilter": {
                 "properties": {
@@ -20869,7 +20869,7 @@
                         "type": "string",
                         "format": "date-time",
                         "title": "Received",
-                        "description": "When the event was received by Prefect Cloud"
+                        "description": "When the event was received by Syntask Cloud"
                     }
                 },
                 "type": "object",
@@ -21224,7 +21224,7 @@
                     "name"
                 ],
                 "title": "SavedSearchCreate",
-                "description": "Data used by the Prefect REST API to create a saved search."
+                "description": "Data used by the Syntask REST API to create a saved search."
             },
             "SavedSearchFilter": {
                 "properties": {
@@ -21262,7 +21262,7 @@
                     "value"
                 ],
                 "title": "SavedSearchFilter",
-                "description": "A filter for a saved search model. Intended for use by the Prefect UI."
+                "description": "A filter for a saved search model. Intended for use by the Syntask UI."
             },
             "SendNotification": {
                 "properties": {
@@ -21284,7 +21284,7 @@
                     "subject": {
                         "type": "string",
                         "title": "Subject",
-                        "default": "Prefect automated notification"
+                        "default": "Syntask automated notification"
                     },
                     "body": {
                         "type": "string",
@@ -21421,7 +21421,7 @@
             },
             "Settings": {
                 "title": "Settings",
-                "description": "Settings for Prefect using Pydantic settings.\n\nSee https://docs.pydantic.dev/latest/concepts/pydantic_settings"
+                "description": "Settings for Syntask using Pydantic settings.\n\nSee https://docs.pydantic.dev/latest/concepts/pydantic_settings"
             },
             "SimpleFlowRun": {
                 "properties": {
@@ -21666,7 +21666,7 @@
                     "type"
                 ],
                 "title": "StateCreate",
-                "description": "Data used by the Prefect REST API to create a new state."
+                "description": "Data used by the Syntask REST API to create a new state."
             },
             "StateDetails": {
                 "properties": {
@@ -22365,7 +22365,7 @@
                     "dynamic_key"
                 ],
                 "title": "TaskRunCreate",
-                "description": "Data used by the Prefect REST API to create a task run"
+                "description": "Data used by the Syntask REST API to create a task run"
             },
             "TaskRunFilter": {
                 "properties": {
@@ -22919,7 +22919,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "TaskRunUpdate",
-                "description": "Data used by the Prefect REST API to update a task run"
+                "description": "Data used by the Syntask REST API to update a task run"
             },
             "TaskWorkerFilter": {
                 "properties": {
@@ -23208,7 +23208,7 @@
                     "value"
                 ],
                 "title": "VariableCreate",
-                "description": "Data used by the Prefect REST API to create a Variable."
+                "description": "Data used by the Syntask REST API to create a Variable."
             },
             "VariableFilter": {
                 "properties": {
@@ -23449,7 +23449,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "VariableUpdate",
-                "description": "Data used by the Prefect REST API to update a Variable."
+                "description": "Data used by the Syntask REST API to update a Variable."
             },
             "WorkPool": {
                 "properties": {
@@ -23586,7 +23586,7 @@
                         "type": "string",
                         "title": "Type",
                         "description": "The work pool type.",
-                        "default": "prefect-agent"
+                        "default": "syntask-agent"
                     },
                     "base_job_template": {
                         "type": "object",
@@ -23619,7 +23619,7 @@
                     "name"
                 ],
                 "title": "WorkPoolCreate",
-                "description": "Data used by the Prefect REST API to create a work pool."
+                "description": "Data used by the Syntask REST API to create a work pool."
             },
             "WorkPoolFilter": {
                 "properties": {
@@ -23798,7 +23798,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "WorkPoolUpdate",
-                "description": "Data used by the Prefect REST API to update a work pool."
+                "description": "Data used by the Syntask REST API to update a work pool."
             },
             "WorkQueue": {
                 "properties": {
@@ -23994,7 +23994,7 @@
                     "name"
                 ],
                 "title": "WorkQueueCreate",
-                "description": "Data used by the Prefect REST API to create a work queue."
+                "description": "Data used by the Syntask REST API to create a work queue."
             },
             "WorkQueueFilter": {
                 "properties": {
@@ -24411,7 +24411,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "WorkQueueUpdate",
-                "description": "Data used by the Prefect REST API to update a work queue."
+                "description": "Data used by the Syntask REST API to update a work queue."
             },
             "WorkerFilter": {
                 "properties": {

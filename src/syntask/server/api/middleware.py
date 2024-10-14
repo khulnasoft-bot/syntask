@@ -5,9 +5,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from prefect import settings
-from prefect.server import models
-from prefect.server.database.dependencies import provide_database_interface
+from syntask import settings
+from syntask.server import models
+from syntask.server.database.dependencies import provide_database_interface
 
 NextMiddlewareFunction = Callable[[Request], Awaitable[Response]]
 
@@ -39,11 +39,11 @@ class CsrfMiddleware(BaseHTTPMiddleware):
         }
 
         if (
-            settings.PREFECT_SERVER_CSRF_PROTECTION_ENABLED.value()
+            settings.SYNTASK_SERVER_CSRF_PROTECTION_ENABLED.value()
             and request_needs_csrf_protection
         ):
-            incoming_token = request.headers.get("Prefect-Csrf-Token")
-            incoming_client = request.headers.get("Prefect-Csrf-Client")
+            incoming_token = request.headers.get("Syntask-Csrf-Token")
+            incoming_client = request.headers.get("Syntask-Csrf-Client")
 
             if incoming_token is None:
                 return JSONResponse(

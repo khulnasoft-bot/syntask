@@ -7,10 +7,10 @@ import pytest
 from pydantic_core import from_json, to_json
 from sqlalchemy.exc import InterfaceError
 
-import prefect.server
-from prefect.client.orchestration import get_client
-from prefect.server import models
-from prefect.server.schemas import actions, core, filters, schedules, states
+import syntask.server
+from syntask.client.orchestration import get_client
+from syntask.server import models
+from syntask.server.schemas import actions, core, filters, schedules, states
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -142,7 +142,7 @@ async def data(flow_function, db):
                 flow_id=f_1.id,
                 name="test-happy-duck",
                 tags=["db", "blue"],
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
                 deployment_id=d_1_1.id,
             )
         )
@@ -152,7 +152,7 @@ async def data(flow_function, db):
                 flow_id=f_1.id,
                 name="sad-duck",
                 tags=["db", "blue"],
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
             )
         )
         await create_flow_run(
@@ -160,7 +160,7 @@ async def data(flow_function, db):
                 flow_id=f_1.id,
                 name="test-happy-mallard",
                 tags=["db", "red"],
-                state=prefect.server.schemas.states.Failed(),
+                state=syntask.server.schemas.states.Failed(),
                 deployment_id=d_1_1.id,
             )
         )
@@ -168,13 +168,13 @@ async def data(flow_function, db):
             flow_run=core.FlowRun(
                 flow_id=f_1.id,
                 tags=["red"],
-                state=prefect.server.schemas.states.Running(),
+                state=syntask.server.schemas.states.Running(),
             )
         )
         await create_flow_run(
             flow_run=core.FlowRun(
                 flow_id=f_1.id,
-                state=prefect.server.schemas.states.Running(),
+                state=syntask.server.schemas.states.Running(),
                 deployment_id=d_1_2.id,
             )
         )
@@ -186,7 +186,7 @@ async def data(flow_function, db):
                 flow_id=f_2.id,
                 name="another-test-happy-duck",
                 tags=["db", "blue"],
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
             )
         )
 
@@ -195,14 +195,14 @@ async def data(flow_function, db):
                 flow_id=f_2.id,
                 name="another-sad-duck",
                 tags=["red"],
-                state=prefect.server.schemas.states.Running(),
+                state=syntask.server.schemas.states.Running(),
             )
         )
         await create_flow_run(
             flow_run=core.FlowRun(
                 flow_id=f_2.id,
                 tags=["db", "red"],
-                state=prefect.server.schemas.states.Failed(),
+                state=syntask.server.schemas.states.Failed(),
             )
         )
 
@@ -212,7 +212,7 @@ async def data(flow_function, db):
             flow_run=core.FlowRun(
                 flow_id=f_3.id,
                 tags=[],
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
                 deployment_id=d_3_1.id,
                 work_queue_id=wp.default_queue_id,
             )
@@ -222,7 +222,7 @@ async def data(flow_function, db):
             flow_run=core.FlowRun(
                 flow_id=f_3.id,
                 tags=["db", "red"],
-                state=prefect.server.schemas.states.Scheduled(
+                state=syntask.server.schemas.states.Scheduled(
                     scheduled_time=pendulum.now("UTC")
                 ),
             )
@@ -244,7 +244,7 @@ async def data(flow_function, db):
                 flow_run_id=fr_1_1.id,
                 name="task-run-2",
                 task_key="b",
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
                 dynamic_key="0",
             )
         )
@@ -253,7 +253,7 @@ async def data(flow_function, db):
                 name="task-run-2a",
                 flow_run_id=fr_1_1.id,
                 task_key="c",
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
                 dynamic_key="0",
             )
         )
@@ -262,7 +262,7 @@ async def data(flow_function, db):
             task_run=core.TaskRun(
                 flow_run_id=fr_2_2.id,
                 task_key="a",
-                state=prefect.server.schemas.states.Running(),
+                state=syntask.server.schemas.states.Running(),
                 dynamic_key="0",
             )
         )
@@ -270,7 +270,7 @@ async def data(flow_function, db):
             task_run=core.TaskRun(
                 flow_run_id=fr_2_2.id,
                 task_key="b",
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
                 dynamic_key="0",
             )
         )
@@ -278,7 +278,7 @@ async def data(flow_function, db):
             task_run=core.TaskRun(
                 flow_run_id=fr_2_2.id,
                 task_key="c",
-                state=prefect.server.schemas.states.Completed(),
+                state=syntask.server.schemas.states.Completed(),
                 dynamic_key="0",
             )
         )
@@ -287,7 +287,7 @@ async def data(flow_function, db):
             task_run=core.TaskRun(
                 flow_run_id=fr_3_1.id,
                 task_key="a",
-                state=prefect.server.schemas.states.Failed(),
+                state=syntask.server.schemas.states.Failed(),
                 dynamic_key="0",
             )
         )

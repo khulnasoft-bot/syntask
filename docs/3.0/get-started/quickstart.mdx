@@ -1,78 +1,78 @@
 ---
 title: Quickstart
-description: Get started with Prefect, the easiest way to orchestrate and observe your data pipelines
+description: Get started with Syntask, the easiest way to orchestrate and observe your data pipelines
 ---
 
 import Installation from '/snippets/installation.mdx'
 
-Prefect is an orchestration and observability platform that empowers developers to build and scale workflows quickly.
-In this quickstart, you will use Prefect to convert the following Python script to a schedulable, observable, resilient, and deployable workflow in minutes:
+Syntask is an orchestration and observability platform that empowers developers to build and scale workflows quickly.
+In this quickstart, you will use Syntask to convert the following Python script to a schedulable, observable, resilient, and deployable workflow in minutes:
 
 ```python
 import httpx
 
 def get_repo_info():
-    """Fetch statistics about the Prefect repository"""
-    url = "https://api.github.com/repos/PrefectHQ/prefect"
+    """Fetch statistics about the Syntask repository"""
+    url = "https://api.github.com/repos/SynoPKG/syntask"
     response = httpx.get(url)
     repo = response.json()
-    print("PrefectHQ/prefect repository statistics 🤓:")
+    print("SynoPKG/syntask repository statistics 🤓:")
     print(f"Stars 🌠 : {repo['stargazers_count']}")
 
 if __name__ == "__main__":
     get_repo_info()
 ```
 
-## Install Prefect
+## Install Syntask
 
 <Installation />
 
 <Tip>
-See [Install Prefect](/3.0/get-started/install/) for more details on installation.
+See [Install Syntask](/3.0/get-started/install/) for more details on installation.
 </Tip>
 
-## Connect to a Prefect API
+## Connect to a Syntask API
 
-Connect to a Prefect API:
+Connect to a Syntask API:
 
 <Tabs>
   <Tab title="Self-hosted">
 1. Start a local API server:
 
    ```bash
-   prefect server start
+   syntask server start
    ```
 
-1. Open the Prefect dashboard in your browser at [http://localhost:4200](http://localhost:4200).
+1. Open the Syntask dashboard in your browser at [http://localhost:4200](http://localhost:4200).
   </Tab>
-  <Tab title="Prefect Cloud">
-1. Head to [https://app.prefect.cloud/](https://app.prefect.cloud/) and sign in or create a forever-free Prefect Cloud account.
-1. Log in to Prefect Cloud from your development environment:
+  <Tab title="Syntask Cloud">
+1. Head to [https://app.syntask.cloud/](https://app.syntask.cloud/) and sign in or create a forever-free Syntask Cloud account.
+1. Log in to Syntask Cloud from your development environment:
 
    ```bash
-   prefect cloud login
+   syntask cloud login
    ```
 
 1. Choose **Log in with a web browser** and click the **Authorize** button in the browser window that opens.
 
-Your CLI is now authenticated with your Prefect Cloud account through a locally stored API key that expires in 30 days.
+Your CLI is now authenticated with your Syntask Cloud account through a locally stored API key that expires in 30 days.
 
 If you have any issues with browser-based authentication, you can [authenticate with a manually created API key](/3.0/manage/cloud/manage-users/api-keys/) instead.
   </Tab>
 </Tabs>
 
-## Convert your script to a Prefect workflow
+## Convert your script to a Syntask workflow
 
 The easiest way to convert a Python script into a workflow is to add a `@flow` decorator to the script's entrypoint.
 This will create a corresponding [flow](/3.0/develop/write-flows/). 
 
 Adding `@task` decorators to any functions called by the flow converts them to [tasks](/3.0/develop/write-tasks/). 
 Tasks receive metadata about upstream dependencies and the state of those dependencies before they run.
-Prefect will then record these dependencies and states as it orchestrates these tasks.
+Syntask will then record these dependencies and states as it orchestrates these tasks.
 
 ```python my_gh_workflow.py
-import httpx   # an HTTP client library and dependency of Prefect
-from prefect import flow, task
+import httpx   # an HTTP client library and dependency of Syntask
+from syntask import flow, task
 
 @task(retries=2)
 def get_repo_info(repo_owner: str, repo_name: str):
@@ -93,7 +93,7 @@ def get_contributors(repo_info: dict):
     return contributors
 
 @flow(log_prints=True)
-def log_repo_info(repo_owner: str = "PrefectHQ", repo_name: str = "prefect"):
+def log_repo_info(repo_owner: str = "SynoPKG", repo_name: str = "syntask"):
     """
     Given a GitHub repository, logs the number of stargazers
     and contributors for that repo.
@@ -114,13 +114,13 @@ The `log_prints=True` argument provided to the `@flow` decorator automatically c
 
 ## Run your flow
 
-You can run your Prefect flow just as you would a Python script:
+You can run your Syntask flow just as you would a Python script:
 
 ```bash
 python my_gh_workflow.py
 ```
 
-Prefect automatically tracks the state of the flow run and logs the output, which can be viewed directly in the terminal or in the UI.
+Syntask automatically tracks the state of the flow run and logs the output, which can be viewed directly in the terminal or in the UI.
 
 ## Create a work pool
 
@@ -130,35 +130,35 @@ A [work pool](/3.0/deploy/infrastructure-concepts/work-pools/) is the most commo
 <Tabs>
   <Tab title="Self-hosted">
 
-Deploy your flow to a self-hosted Prefect server instance using a `Process` work pool.
+Deploy your flow to a self-hosted Syntask server instance using a `Process` work pool.
 All flow runs submitted to this work pool will run in a local subprocess (the mechanics are similar for other work pool types that run on remote infrastructure).
 
 1. Create a `Process` work pool:
 
    ```bash
-   prefect work-pool create --type process my-work-pool
+   syntask work-pool create --type process my-work-pool
    ```
 
 1. Verify that the work pool exists:
 
    ```bash
-   prefect work-pool ls
+   syntask work-pool ls
    ```
 
 1. Start a worker to poll the work pool:
 
    ```bash
-   prefect worker start --pool my-work-pool
+   syntask worker start --pool my-work-pool
    ```
 
   </Tab>
-  <Tab title="Prefect Cloud">
-Deploy your flow to Prefect Cloud using a managed work pool.
+  <Tab title="Syntask Cloud">
+Deploy your flow to Syntask Cloud using a managed work pool.
 
 1. Create a [managed work pool](/3.0/deploy/infrastructure-concepts/work-pools):
 
    ```bash
-   prefect work-pool create my-work-pool --type prefect:managed
+   syntask work-pool create my-work-pool --type syntask:managed
    ```
 
 1. View your new work pool on the **Work Pools** page of the UI.
@@ -177,10 +177,10 @@ Deployments elevate flows to remotely configurable entities that have their own 
 1. Create a deployment in code:
 
    ```bash create_deployment.py
-   from prefect import flow
+   from syntask import flow
 
    # Source for the code to deploy (here, a GitHub repo)
-   SOURCE_REPO="https://github.com/prefecthq/demos.git"
+   SOURCE_REPO="https://github.com/synopkg/demos.git"
 
    if __name__ == "__main__":
        flow.from_source(
@@ -194,7 +194,7 @@ Deployments elevate flows to remotely configurable entities that have their own 
    ```
 
    <Tip>
-   You can store your flow code in nearly any location as long as Prefect can access it.
+   You can store your flow code in nearly any location as long as Syntask can access it.
    See [Where to store your flow code](/3.0/deploy/infrastructure-concepts/store-flow-code) for more details.
    </Tip>
 
@@ -220,7 +220,7 @@ Deployments elevate flows to remotely configurable entities that have their own 
 1. Schedule a run for the deployment:
 
    ```bash
-   prefect deployment run 'repo-info/my-first-deployment'
+   syntask deployment run 'repo-info/my-first-deployment'
    ```
 
    Soon you should see the flow run graph and logs on the **Flow Run** page in the UI.
@@ -230,7 +230,7 @@ Deployments elevate flows to remotely configurable entities that have their own 
 
 ## Next steps
 
-You've seen how to move from a Python script to a scheduled, observable, remotely orchestrated workflow with Prefect.
+You've seen how to move from a Python script to a scheduled, observable, remotely orchestrated workflow with Syntask.
 Now consider reading: 
 
 * [Write flows](/3.0/develop/write-flows)
@@ -239,5 +239,5 @@ Now consider reading:
 * [Manage infrastructure with work pools](/3.0/deploy/infrastructure-concepts/work-pools) to learn about running workflows on Kubernetes, Docker, and serverless infrastructure.
 
 <Tip>
-Need help? [Book a meeting](https://calendly.com/prefect-experts/prefect-product-advocates?utm_campaign=prefect_docs_cloud&utm_content=prefect_docs&utm_medium=docs&utm_source=docs) with a Prefect Product Advocate to get your questions answered.
+Need help? [Book a meeting](https://calendly.com/syntask-experts/syntask-product-advocates?utm_campaign=syntask_docs_cloud&utm_content=syntask_docs&utm_medium=docs&utm_source=docs) with a Syntask Product Advocate to get your questions answered.
 </Tip>

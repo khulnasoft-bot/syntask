@@ -9,7 +9,7 @@ Create Date: 2022-10-19 09:39:02.371032
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "6d548701edef"
@@ -24,8 +24,8 @@ def upgrade():
         "deployment",
         sa.Column(
             "created_by",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.core.CreatedBy
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.core.CreatedBy
             ),
             nullable=True,
         ),
@@ -34,8 +34,8 @@ def upgrade():
         "deployment",
         sa.Column(
             "updated_by",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.core.UpdatedBy
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.core.UpdatedBy
             ),
             nullable=True,
         ),
@@ -44,8 +44,8 @@ def upgrade():
         "flow_run",
         sa.Column(
             "created_by",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.core.CreatedBy
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.core.CreatedBy
             ),
             nullable=True,
         ),

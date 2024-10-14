@@ -5,20 +5,20 @@ from uuid import uuid4
 import pendulum
 import pytest
 
-from prefect.server.events.ordering import (
+from syntask.server.events.ordering import (
     MAX_DEPTH_OF_PRECEDING_EVENT,
     CausalOrdering,
     EventArrivedEarly,
     MaxDepthExceeded,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, Resource
+from syntask.server.events.schemas.events import ReceivedEvent, Resource
 
 pytestmark = pytest.mark.usefixtures("cleared_automations")
 
 
 @pytest.fixture
 def resource() -> Resource:
-    return Resource({"prefect.resource.id": "any.thing"})
+    return Resource({"syntask.resource.id": "any.thing"})
 
 
 @pytest.fixture
@@ -232,7 +232,7 @@ async def test_returns_lost_followers_in_occurred_order(
 
     # setting to a negative duration here simulates moving into the future
     monkeypatch.setattr(
-        "prefect.server.events.ordering.PRECEDING_EVENT_LOOKBACK",
+        "syntask.server.events.ordering.PRECEDING_EVENT_LOOKBACK",
         timedelta(minutes=-1),
     )
 

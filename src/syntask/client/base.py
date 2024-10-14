@@ -28,21 +28,21 @@ from httpx import HTTPStatusError, Request, Response
 from starlette import status
 from typing_extensions import Self
 
-import prefect
-from prefect.client import constants
-from prefect.client.schemas.objects import CsrfToken
-from prefect.exceptions import PrefectHTTPStatusError
-from prefect.logging import get_logger
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_CLIENT_MAX_RETRIES,
-    PREFECT_CLIENT_RETRY_EXTRA_CODES,
-    PREFECT_CLIENT_RETRY_JITTER_FACTOR,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
+import syntask
+from syntask.client import constants
+from syntask.client.schemas.objects import CsrfToken
+from syntask.exceptions import SyntaskHTTPStatusError
+from syntask.logging import get_logger
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_CLIENT_MAX_RETRIES,
+    SYNTASK_CLIENT_RETRY_EXTRA_CODES,
+    SYNTASK_CLIENT_RETRY_JITTER_FACTOR,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
 )
-from prefect.utilities.collections import AutoEnum
-from prefect.utilities.math import bounded_poisson_interval, clamped_poisson_interval
+from syntask.utilities.collections import AutoEnum
+from syntask.utilities.math import bounded_poisson_interval, clamped_poisson_interval
 
 # Datastores for lifespan management, keys should be a tuple of thread and app
 # identities.
@@ -66,8 +66,7 @@ Send = Callable[[Message], Awaitable[None]]
 
 @runtime_checkable
 class ASGIApp(Protocol):
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        ...
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None: ...
 
 
 @asynccontextmanager
@@ -104,7 +103,7 @@ async def app_lifespan_context(app: ASGIApp) -> AsyncGenerator[None, None]:
     #       lifespan context is being used. This has only been reproduced on Python 3.7
     #       and while we hope to discourage using multiple event loops in threads, this
     #       bug may emerge again.
-    #       See https://github.com/PrefectHQ/orion/pull/1696
+    #       See https://github.com/SynoPKG/orion/pull/1696
     thread_id = threading.get_ident()
 
     # The id of the application is used instead of the hash so each application instance
@@ -154,9 +153,9 @@ async def app_lifespan_context(app: ASGIApp) -> AsyncGenerator[None, None]:
                     await context.__aexit__(*exc_info)
 
 
-class PrefectResponse(httpx.Response):
+class SyntaskResponse(httpx.Response):
     """
-    A Prefect wrapper for the `httpx.Response` class.
+    A Syntask wrapper for the `httpx.Response` class.
 
     Provides more informative error messages.
     """
@@ -165,21 +164,21 @@ class PrefectResponse(httpx.Response):
         """
         Raise an exception if the response contains an HTTPStatusError.
 
-        The `PrefectHTTPStatusError` contains useful additional information that
+        The `SyntaskHTTPStatusError` contains useful additional information that
         is not contained in the `HTTPStatusError`.
         """
         try:
             return super().raise_for_status()
         except HTTPStatusError as exc:
-            raise PrefectHTTPStatusError.from_httpx_error(exc) from exc.__cause__
+            raise SyntaskHTTPStatusError.from_httpx_error(exc) from exc.__cause__
 
     @classmethod
     def from_httpx_response(cls: Type[Self], response: httpx.Response) -> Self:
         """
-        Create a `PrefectReponse` from an `httpx.Response`.
+        Create a `SyntaskReponse` from an `httpx.Response`.
 
         By changing the `__class__` attribute of the Response, we change the method
-        resolution order to look for methods defined in PrefectResponse, while leaving
+        resolution order to look for methods defined in SyntaskResponse, while leaving
         everything else about the original Response instance intact.
         """
         new_response = copy.copy(response)
@@ -187,9 +186,9 @@ class PrefectResponse(httpx.Response):
         return new_response
 
 
-class PrefectHttpxAsyncClient(httpx.AsyncClient):
+class SyntaskHttpxAsyncClient(httpx.AsyncClient):
     """
-    A Prefect wrapper for the async httpx client with support for retry-after headers
+    A Syntask wrapper for the async httpx client with support for retry-after headers
     for the provided status codes (typically 429, 502 and 503).
 
     Additionally, this client will always call `raise_for_status` on responses.
@@ -214,7 +213,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
         super().__init__(*args, **kwargs)
 
         user_agent = (
-            f"prefect/{prefect.__version__} (API {constants.SERVER_API_VERSION})"
+            f"syntask/{syntask.__version__} (API {constants.SERVER_API_VERSION})"
         )
         self.headers["User-Agent"] = user_agent
 
@@ -230,7 +229,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
         """
         Send a request and retry it if it fails.
 
-        Sends the provided request and retries it up to PREFECT_CLIENT_MAX_RETRIES times
+        Sends the provided request and retries it up to SYNTASK_CLIENT_MAX_RETRIES times
         if the request either raises an exception listed in `retry_exceptions` or
         receives a response with a status code listed in `retry_codes`.
 
@@ -245,7 +244,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
         if self.enable_csrf_support and is_change_request:
             await self._add_csrf_headers(request=request)
 
-        while try_count <= PREFECT_CLIENT_MAX_RETRIES.value():
+        while try_count <= SYNTASK_CLIENT_MAX_RETRIES.value():
             try_count += 1
             retry_seconds = None
             exc_info = None
@@ -253,7 +252,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
             try:
                 response = await send(request, *send_args, **send_kwargs)
             except retry_exceptions:  # type: ignore
-                if try_count > PREFECT_CLIENT_MAX_RETRIES.value():
+                if try_count > SYNTASK_CLIENT_MAX_RETRIES.value():
                     raise
                 # Otherwise, we will ignore this error but capture the info for logging
                 exc_info = sys.exc_info()
@@ -278,7 +277,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
                 retry_seconds = 2**try_count
 
             # Add jitter
-            jitter_factor = PREFECT_CLIENT_RETRY_JITTER_FACTOR.value()
+            jitter_factor = SYNTASK_CLIENT_RETRY_JITTER_FACTOR.value()
             if retry_seconds > 0 and jitter_factor > 0:
                 if response is not None and "Retry-After" in response.headers:
                     # Always wait for _at least_ retry seconds if requested by the API
@@ -302,7 +301,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
                 )
                 + f"Another attempt will be made in {retry_seconds}s. "
                 "This is attempt"
-                f" {try_count}/{PREFECT_CLIENT_MAX_RETRIES.value() + 1}.",
+                f" {try_count}/{SYNTASK_CLIENT_MAX_RETRIES.value() + 1}.",
                 exc_info=exc_info,
             )
             await anyio.sleep(retry_seconds)
@@ -323,7 +322,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
         - 429 CloudFlare-style rate limiting
         - 502 Bad Gateway
         - 503 Service unavailable
-        - Any additional status codes provided in `PREFECT_CLIENT_RETRY_EXTRA_CODES`
+        - Any additional status codes provided in `SYNTASK_CLIENT_RETRY_EXTRA_CODES`
         """
 
         super_send = super().send
@@ -337,7 +336,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
                 status.HTTP_503_SERVICE_UNAVAILABLE,
                 status.HTTP_502_BAD_GATEWAY,
                 status.HTTP_408_REQUEST_TIMEOUT,
-                *PREFECT_CLIENT_RETRY_EXTRA_CODES.value(),
+                *SYNTASK_CLIENT_RETRY_EXTRA_CODES.value(),
             },
             retry_exceptions=(
                 httpx.ReadTimeout,
@@ -347,15 +346,15 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
                 httpx.ReadError,
                 # Sockets can be closed during writes resulting in a `WriteError`
                 httpx.WriteError,
-                # Uvicorn bug, see https://github.com/synopkg/synopkg/issues/7512
+                # Uvicorn bug, see https://github.com/synopkg/syntask/issues/7512
                 httpx.RemoteProtocolError,
-                # HTTP2 bug, see https://github.com/synopkg/synopkg/issues/7442
+                # HTTP2 bug, see https://github.com/synopkg/syntask/issues/7442
                 httpx.LocalProtocolError,
             ),
         )
 
-        # Convert to a Prefect response to add nicer errors messages
-        response = PrefectResponse.from_httpx_response(response)
+        # Convert to a Syntask response to add nicer errors messages
+        response = SyntaskResponse.from_httpx_response(response)
 
         if self.raise_on_all_errors:
             response.raise_for_status()
@@ -377,7 +376,7 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
 
             try:
                 token_response = await self.send(token_request)
-            except PrefectHTTPStatusError as exc:
+            except SyntaskHTTPStatusError as exc:
                 old_server = exc.response.status_code == status.HTTP_404_NOT_FOUND
                 unconfigured_server = (
                     exc.response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -397,13 +396,13 @@ class PrefectHttpxAsyncClient(httpx.AsyncClient):
             self.csrf_token = token.token
             self.csrf_token_expiration = token.expiration
 
-        request.headers["Prefect-Csrf-Token"] = self.csrf_token
-        request.headers["Prefect-Csrf-Client"] = str(self.csrf_client_id)
+        request.headers["Syntask-Csrf-Token"] = self.csrf_token
+        request.headers["Syntask-Csrf-Client"] = str(self.csrf_client_id)
 
 
-class PrefectHttpxSyncClient(httpx.Client):
+class SyntaskHttpxSyncClient(httpx.Client):
     """
-    A Prefect wrapper for the async httpx client with support for retry-after headers
+    A Syntask wrapper for the async httpx client with support for retry-after headers
     for the provided status codes (typically 429, 502 and 503).
 
     Additionally, this client will always call `raise_for_status` on responses.
@@ -428,7 +427,7 @@ class PrefectHttpxSyncClient(httpx.Client):
         super().__init__(*args, **kwargs)
 
         user_agent = (
-            f"prefect/{prefect.__version__} (API {constants.SERVER_API_VERSION})"
+            f"syntask/{syntask.__version__} (API {constants.SERVER_API_VERSION})"
         )
         self.headers["User-Agent"] = user_agent
 
@@ -444,7 +443,7 @@ class PrefectHttpxSyncClient(httpx.Client):
         """
         Send a request and retry it if it fails.
 
-        Sends the provided request and retries it up to PREFECT_CLIENT_MAX_RETRIES times
+        Sends the provided request and retries it up to SYNTASK_CLIENT_MAX_RETRIES times
         if the request either raises an exception listed in `retry_exceptions` or
         receives a response with a status code listed in `retry_codes`.
 
@@ -459,7 +458,7 @@ class PrefectHttpxSyncClient(httpx.Client):
         if self.enable_csrf_support and is_change_request:
             self._add_csrf_headers(request=request)
 
-        while try_count <= PREFECT_CLIENT_MAX_RETRIES.value():
+        while try_count <= SYNTASK_CLIENT_MAX_RETRIES.value():
             try_count += 1
             retry_seconds = None
             exc_info = None
@@ -467,7 +466,7 @@ class PrefectHttpxSyncClient(httpx.Client):
             try:
                 response = send(request, *send_args, **send_kwargs)
             except retry_exceptions:  # type: ignore
-                if try_count > PREFECT_CLIENT_MAX_RETRIES.value():
+                if try_count > SYNTASK_CLIENT_MAX_RETRIES.value():
                     raise
                 # Otherwise, we will ignore this error but capture the info for logging
                 exc_info = sys.exc_info()
@@ -492,7 +491,7 @@ class PrefectHttpxSyncClient(httpx.Client):
                 retry_seconds = 2**try_count
 
             # Add jitter
-            jitter_factor = PREFECT_CLIENT_RETRY_JITTER_FACTOR.value()
+            jitter_factor = SYNTASK_CLIENT_RETRY_JITTER_FACTOR.value()
             if retry_seconds > 0 and jitter_factor > 0:
                 if response is not None and "Retry-After" in response.headers:
                     # Always wait for _at least_ retry seconds if requested by the API
@@ -516,7 +515,7 @@ class PrefectHttpxSyncClient(httpx.Client):
                 )
                 + f"Another attempt will be made in {retry_seconds}s. "
                 "This is attempt"
-                f" {try_count}/{PREFECT_CLIENT_MAX_RETRIES.value() + 1}.",
+                f" {try_count}/{SYNTASK_CLIENT_MAX_RETRIES.value() + 1}.",
                 exc_info=exc_info,
             )
             time.sleep(retry_seconds)
@@ -537,7 +536,7 @@ class PrefectHttpxSyncClient(httpx.Client):
         - 429 CloudFlare-style rate limiting
         - 502 Bad Gateway
         - 503 Service unavailable
-        - Any additional status codes provided in `PREFECT_CLIENT_RETRY_EXTRA_CODES`
+        - Any additional status codes provided in `SYNTASK_CLIENT_RETRY_EXTRA_CODES`
         """
 
         super_send = super().send
@@ -551,7 +550,7 @@ class PrefectHttpxSyncClient(httpx.Client):
                 status.HTTP_503_SERVICE_UNAVAILABLE,
                 status.HTTP_502_BAD_GATEWAY,
                 status.HTTP_408_REQUEST_TIMEOUT,
-                *PREFECT_CLIENT_RETRY_EXTRA_CODES.value(),
+                *SYNTASK_CLIENT_RETRY_EXTRA_CODES.value(),
             },
             retry_exceptions=(
                 httpx.ReadTimeout,
@@ -561,15 +560,15 @@ class PrefectHttpxSyncClient(httpx.Client):
                 httpx.ReadError,
                 # Sockets can be closed during writes resulting in a `WriteError`
                 httpx.WriteError,
-                # Uvicorn bug, see https://github.com/synopkg/synopkg/issues/7512
+                # Uvicorn bug, see https://github.com/synopkg/syntask/issues/7512
                 httpx.RemoteProtocolError,
-                # HTTP2 bug, see https://github.com/synopkg/synopkg/issues/7442
+                # HTTP2 bug, see https://github.com/synopkg/syntask/issues/7442
                 httpx.LocalProtocolError,
             ),
         )
 
-        # Convert to a Prefect response to add nicer errors messages
-        response = PrefectResponse.from_httpx_response(response)
+        # Convert to a Syntask response to add nicer errors messages
+        response = SyntaskResponse.from_httpx_response(response)
 
         if self.raise_on_all_errors:
             response.raise_for_status()
@@ -591,7 +590,7 @@ class PrefectHttpxSyncClient(httpx.Client):
 
             try:
                 token_response = self.send(token_request)
-            except PrefectHTTPStatusError as exc:
+            except SyntaskHTTPStatusError as exc:
                 old_server = exc.response.status_code == status.HTTP_404_NOT_FOUND
                 unconfigured_server = (
                     exc.response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -611,8 +610,8 @@ class PrefectHttpxSyncClient(httpx.Client):
             self.csrf_token = token.token
             self.csrf_token_expiration = token.expiration
 
-        request.headers["Prefect-Csrf-Token"] = self.csrf_token
-        request.headers["Prefect-Csrf-Client"] = str(self.csrf_client_id)
+        request.headers["Syntask-Csrf-Token"] = self.csrf_token
+        request.headers["Syntask-Csrf-Client"] = str(self.csrf_client_id)
 
 
 class ServerType(AutoEnum):
@@ -633,13 +632,13 @@ def determine_server_type() -> ServerType:
         - `ServerType.UNCONFIGURED` if no API URL is configured and ephemeral mode is
             not enabled
     """
-    api_url = PREFECT_API_URL.value()
+    api_url = SYNTASK_API_URL.value()
     if api_url is None:
-        if PREFECT_SERVER_ALLOW_EPHEMERAL_MODE.value():
+        if SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE.value():
             return ServerType.EPHEMERAL
         else:
             return ServerType.UNCONFIGURED
-    if api_url.startswith(PREFECT_CLOUD_API_URL.value()):
+    if api_url.startswith(SYNTASK_CLOUD_API_URL.value()):
         return ServerType.CLOUD
     else:
         return ServerType.SERVER

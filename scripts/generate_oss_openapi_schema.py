@@ -1,6 +1,6 @@
 import json
 
-from prefect.server.api.server import create_app
+from syntask.server.api.server import create_app
 
 app = create_app()
 openapi_schema = app.openapi()

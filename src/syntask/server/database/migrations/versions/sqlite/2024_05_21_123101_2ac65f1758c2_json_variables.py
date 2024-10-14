@@ -11,7 +11,7 @@ import json
 import sqlalchemy as sa
 from alembic import op
 
-from prefect.server.utilities.database import JSON
+from syntask.server.utilities.database import JSON
 
 # revision identifiers, used by Alembic.
 revision = "2ac65f1758c2"

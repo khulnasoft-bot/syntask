@@ -1,8 +1,8 @@
 from typing import Dict, List, Literal, Optional, Union
 from uuid import UUID
 
-from prefect.client.schemas.responses import MinimalConcurrencyLimitResponse
-from prefect.events import Event, RelatedResource, emit_event
+from syntask.client.schemas.responses import MinimalConcurrencyLimitResponse
+from syntask.events import Event, RelatedResource, emit_event
 
 
 def _emit_concurrency_event(
@@ -13,8 +13,8 @@ def _emit_concurrency_event(
     follows: Union[Event, None] = None,
 ) -> Union[Event, None]:
     resource: Dict[str, str] = {
-        "prefect.resource.id": f"prefect.concurrency-limit.{primary_limit.id}",
-        "prefect.resource.name": primary_limit.name,
+        "syntask.resource.id": f"syntask.concurrency-limit.{primary_limit.id}",
+        "syntask.resource.name": primary_limit.name,
         "slots-acquired": str(slots),
         "limit": str(primary_limit.limit),
     }
@@ -22,8 +22,8 @@ def _emit_concurrency_event(
     related = [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.concurrency-limit.{limit.id}",
-                "prefect.resource.role": "concurrency-limit",
+                "syntask.resource.id": f"syntask.concurrency-limit.{limit.id}",
+                "syntask.resource.role": "concurrency-limit",
             }
         )
         for limit in related_limits
@@ -31,7 +31,7 @@ def _emit_concurrency_event(
     ]
 
     return emit_event(
-        f"prefect.concurrency-limit.{phase}",
+        f"syntask.concurrency-limit.{phase}",
         resource=resource,
         related=related,
         follows=follows,

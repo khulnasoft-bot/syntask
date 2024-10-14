@@ -1,47 +1,47 @@
 # Import user-facing API
-from prefect.deployments import deploy
-from prefect.states import State
-from prefect.logging import get_run_logger
-from prefect.flows import flow, Flow, serve
-from prefect.transactions import Transaction
-from prefect.tasks import task, Task
-from prefect.context import tags
-from prefect.utilities.annotations import unmapped, allow_failure
-from prefect.results import BaseResult, ResultRecordMetadata
-from prefect.flow_runs import pause_flow_run, resume_flow_run, suspend_flow_run
-from prefect.client.orchestration import get_client, PrefectClient
-from prefect.client.cloud import get_cloud_client, CloudClient
-import prefect.variables
-import prefect.runtime
+from syntask.deployments import deploy
+from syntask.states import State
+from syntask.logging import get_run_logger
+from syntask.flows import flow, Flow, serve
+from syntask.transactions import Transaction
+from syntask.tasks import task, Task
+from syntask.context import tags
+from syntask.utilities.annotations import unmapped, allow_failure
+from syntask.results import BaseResult, ResultRecordMetadata
+from syntask.flow_runs import pause_flow_run, resume_flow_run, suspend_flow_run
+from syntask.client.orchestration import get_client, SyntaskClient
+from syntask.client.cloud import get_cloud_client, CloudClient
+import syntask.variables
+import syntask.runtime
 
 # Import modules that register types
-import prefect.serializers
-import prefect.blocks.notifications
-import prefect.blocks.system
+import syntask.serializers
+import syntask.blocks.notifications
+import syntask.blocks.system
 
 # Initialize the process-wide profile and registry at import time
-import prefect.context
+import syntask.context
 
 # Perform any forward-ref updates needed for Pydantic models
-import prefect.client.schemas
+import syntask.client.schemas
 
-prefect.context.FlowRunContext.model_rebuild(
+syntask.context.FlowRunContext.model_rebuild(
     _types_namespace={
         "Flow": Flow,
         "BaseResult": BaseResult,
         "ResultRecordMetadata": ResultRecordMetadata,
     }
 )
-prefect.context.TaskRunContext.model_rebuild(
+syntask.context.TaskRunContext.model_rebuild(
     _types_namespace={"Task": Task, "BaseResult": BaseResult}
 )
-prefect.client.schemas.State.model_rebuild(
+syntask.client.schemas.State.model_rebuild(
     _types_namespace={
         "BaseResult": BaseResult,
         "ResultRecordMetadata": ResultRecordMetadata,
     }
 )
-prefect.client.schemas.StateCreate.model_rebuild(
+syntask.client.schemas.StateCreate.model_rebuild(
     _types_namespace={
         "BaseResult": BaseResult,
         "ResultRecordMetadata": ResultRecordMetadata,
@@ -50,15 +50,15 @@ prefect.client.schemas.StateCreate.model_rebuild(
 Transaction.model_rebuild()
 
 # Configure logging
-import prefect.logging.configuration
+import syntask.logging.configuration
 
-prefect.logging.configuration.setup_logging()
-prefect.logging.get_logger("profiles").debug(
-    f"Using profile {prefect.context.get_settings_context().profile.name!r}"
+syntask.logging.configuration.setup_logging()
+syntask.logging.get_logger("profiles").debug(
+    f"Using profile {syntask.context.get_settings_context().profile.name!r}"
 )
 
 
-from prefect._internal.compatibility.deprecated import (
+from syntask._internal.compatibility.deprecated import (
     inject_renamed_module_alias_finder,
 )
 

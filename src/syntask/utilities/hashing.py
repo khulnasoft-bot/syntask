@@ -6,7 +6,7 @@ from typing import Optional, Union
 
 import cloudpickle
 
-from prefect.serializers import JSONSerializer
+from syntask.serializers import JSONSerializer
 
 if sys.version_info[:2] >= (3, 9):
     _md5 = partial(hashlib.md5, usedforsecurity=False)

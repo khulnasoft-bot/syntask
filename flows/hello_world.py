@@ -1,5 +1,5 @@
-from prefect import flow
-from prefect.logging import get_run_logger
+from syntask import flow
+from syntask.logging import get_run_logger
 
 
 @flow

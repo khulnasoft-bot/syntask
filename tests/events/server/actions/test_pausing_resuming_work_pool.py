@@ -7,10 +7,10 @@ from pendulum.datetime import DateTime
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -18,13 +18,13 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
-from prefect.server.models import workers
-from prefect.server.schemas.actions import WorkPoolCreate
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.models import workers
+from syntask.server.schemas.actions import WorkPoolCreate
+from syntask.utilities.pydantic import parse_obj_as
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMWorkPool
+    from syntask.server.database.orm_models import ORMWorkPool
 
 
 def test_source_determines_if_work_pool_id_is_required_or_allowed():
@@ -85,12 +85,12 @@ def scream_n_shout(
     return ReceivedEvent(
         occurred=start_of_test + timedelta(microseconds=2),
         event="scream-n-shout",
-        resource={"prefect.resource.id": "toddler"},
+        resource={"syntask.resource.id": "toddler"},
         related=[
             {
-                "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                "prefect.resource.role": "work-pool",
-                "prefect.resource.name": work_pool.name,
+                "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                "syntask.resource.role": "work-pool",
+                "syntask.resource.name": work_pool.name,
             }
         ],
         id=uuid4(),
@@ -240,16 +240,16 @@ async def test_inferring_work_pool_requires_recognizable_resource_id(
         List[RelatedResource],
         [
             {
-                "prefect.resource.role": "work-pool",
-                "prefect.resource.id": "prefect.work-pool.nope",  # not a uuid
+                "syntask.resource.role": "work-pool",
+                "syntask.resource.id": "syntask.work-pool.nope",  # not a uuid
             },
             {
-                "prefect.resource.role": "work-pool",
-                "prefect.resource.id": f"oh.so.close.{uuid4()}",  # not a work-pool
+                "syntask.resource.role": "work-pool",
+                "syntask.resource.id": f"oh.so.close.{uuid4()}",  # not a work-pool
             },
             {
-                "prefect.resource.role": "work-pool",
-                "prefect.resource.id": "nah-ah",  # not a dotted name
+                "syntask.resource.role": "work-pool",
+                "syntask.resource.id": "nah-ah",  # not a dotted name
             },
         ],
     )
@@ -272,13 +272,13 @@ async def test_pausing_publishes_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                "prefect.resource.name": work_pool.name,
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                "syntask.resource.name": work_pool.name,
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -288,13 +288,13 @@ async def test_pausing_publishes_success_event(
         "invocation": str(triggered_pause_action.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                "prefect.resource.name": work_pool.name,
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                "syntask.resource.name": work_pool.name,
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -315,7 +315,7 @@ async def test_pausing_publishes_success_event(
 # -----------------------------------------------------
 @pytest.fixture
 async def paused_work_pool(
-    db: PrefectDBInterface, work_pool: "ORMWorkPool", session: AsyncSession
+    db: SyntaskDBInterface, work_pool: "ORMWorkPool", session: AsyncSession
 ) -> "ORMWorkPool":
     work_pool = await session.get(db.WorkPool, work_pool.id)
     work_pool.is_paused = True
@@ -473,16 +473,16 @@ async def test_resuming_with_inferred_work_pool_requires_recognizable_resource_i
             List[RelatedResource],
             [
                 {
-                    "prefect.resource.role": "work-pool",
-                    "prefect.resource.id": "prefect.work-pool.nope",  # not a uuid
+                    "syntask.resource.role": "work-pool",
+                    "syntask.resource.id": "syntask.work-pool.nope",  # not a uuid
                 },
                 {
-                    "prefect.resource.role": "work-pool",
-                    "prefect.resource.id": f"oh.so.close.{uuid4()}",  # not a work-pool
+                    "syntask.resource.role": "work-pool",
+                    "syntask.resource.id": f"oh.so.close.{uuid4()}",  # not a work-pool
                 },
                 {
-                    "prefect.resource.role": "work-pool",
-                    "prefect.resource.id": "nah-ah",  # not a dotted name
+                    "syntask.resource.role": "work-pool",
+                    "syntask.resource.id": "nah-ah",  # not a dotted name
                 },
             ],
         )
@@ -506,13 +506,13 @@ async def test_resuming_publishes_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-pool.{paused_work_pool.id}",
-                "prefect.resource.name": paused_work_pool.name,
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-pool.{paused_work_pool.id}",
+                "syntask.resource.name": paused_work_pool.name,
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -522,13 +522,13 @@ async def test_resuming_publishes_success_event(
         "invocation": str(triggered_resume_action.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-pool.{paused_work_pool.id}",
-                "prefect.resource.name": paused_work_pool.name,
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-pool.{paused_work_pool.id}",
+                "syntask.resource.name": paused_work_pool.name,
+                "syntask.resource.role": "target",
             }
         )
     ]

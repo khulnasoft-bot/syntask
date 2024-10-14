@@ -4,7 +4,7 @@ description: Learn about where to store your flow code.
 ---
 
 When a deployment runs, the execution environment needs access to the flow code.
-Flow code is not stored in Prefect server or Prefect Cloud.
+Flow code is not stored in Syntask server or Syntask Cloud.
 
 You have several flow code storage options for remote execution:
 - Git-based storage (GitHub, GitLab, Bitbucket)
@@ -18,7 +18,7 @@ Local storage is also an option for deployments that run locally.
 In the examples below, we show how to create a work pool-based deployment for each of these storage options. 
 
 ## Deployment creation options
-You can create a deployment through [Python code with the `flow.deploy` method](/3.0/deploy/infrastructure-concepts/deploy-via-python) or through a [YAML specification defined in a `prefect.yaml` file](/3.0/deploy/infrastructure-concepts/prefect-yaml).
+You can create a deployment through [Python code with the `flow.deploy` method](/3.0/deploy/infrastructure-concepts/deploy-via-python) or through a [YAML specification defined in a `syntask.yaml` file](/3.0/deploy/infrastructure-concepts/syntask-yaml).
 
 When using the Python `deploy` method specify a flow storage location other than a Docker image requires the `flow.from_source` method. The `source` and `entrypoint` arguments are required. 
 
@@ -26,11 +26,11 @@ The `entrypoint` is the path to the file the flow is located in and the function
 
 The `source` is either a URL to a git repository or a storage object.
 
-To create a `prefect.yaml` file interactively, run `prefect deploy` from the CLI and select the appropriate storage option.
+To create a `syntask.yaml` file interactively, run `syntask deploy` from the CLI and select the appropriate storage option.
 
 ## Git-based storage
 
-Git-based version control platforms provide redundancy, version control, and collaboration capabilities. Prefect supports:
+Git-based version control platforms provide redundancy, version control, and collaboration capabilities. Syntask supports:
 
 - [GitHub](https://github.com/)
 - [GitLab](https://www.gitlab.com)
@@ -41,9 +41,9 @@ For a public repository, you can use the repository URL directly.
 If you are using a private repository and are authenticated in your environment at deployment creation and deployment execution, you can use the repository URL directly.
 
 Alternatively, for a private repository, you can create a `Secret` block or create a credentials block specific to your git-based version control platform to store your credentials. 
-Then you can reference the block in the Python `deploy` method or the `prefect.yaml` file pull step.
+Then you can reference the block in the Python `deploy` method or the `syntask.yaml` file pull step.
 
-If using the Python `deploy` method with a private repository that references a block, provide a [`GitRepository`](https://prefect-python-sdk-docs.netlify.app/prefect/flows/#prefect.runner.storage.GitRepository) object instead of a URL, as shown below.
+If using the Python `deploy` method with a private repository that references a block, provide a [`GitRepository`](https://syntask-python-sdk-docs.netlify.app/syntask/flows/#syntask.runner.storage.GitRepository) object instead of a URL, as shown below.
 
 <Tabs>
   <Tab title="GitHub">
@@ -51,7 +51,7 @@ If using the Python `deploy` method with a private repository that references a 
     <CodeGroup>
 
     ```python gh_no_block.py
-    from prefect import flow
+    from syntask import flow
 
     if __name__ == "__main__":
         flow.from_source(
@@ -64,9 +64,9 @@ If using the Python `deploy` method with a private repository that references a 
     ```
 
     ```python gh_credentials_block.py
-    from prefect import flow
-    from prefect.runner.storage import GitRepository
-    from prefect_github import GitHubCredentials
+    from syntask import flow
+    from syntask.runner.storage import GitRepository
+    from syntask_github import GitHubCredentials
 
 
     if __name__ == "__main__":
@@ -86,9 +86,9 @@ If using the Python `deploy` method with a private repository that references a 
     ```
 
     ```python gh_secret_block.py
-    from prefect import flow
-    from prefect.runner.storage import GitRepository
-    from prefect.blocks.system import Secret
+    from syntask import flow
+    from syntask.runner.storage import GitRepository
+    from syntask.blocks.system import Secret
 
 
     if __name__ == "__main__":
@@ -109,15 +109,15 @@ If using the Python `deploy` method with a private repository that references a 
         )
     ```
 
-    ```yaml prefect.yaml
+    ```yaml syntask.yaml
     # relevant section of the file:
     pull:
-        - prefect.deployments.steps.git_clone:
+        - syntask.deployments.steps.git_clone:
             repository: https://gitlab.com/org/my-repo.git
             # Uncomment the following line if using a credentials block
-            # credentials: "{{ prefect.blocks.github-credentials.my-github-credentials-block }}"
+            # credentials: "{{ syntask.blocks.github-credentials.my-github-credentials-block }}"
             # Uncomment the following line if using a Secret block
-            # access_token: "{{ prefect.blocks.secret.my-block-name }}"
+            # access_token: "{{ syntask.blocks.secret.my-block-name }}"
     ```
     </CodeGroup>
 
@@ -135,16 +135,16 @@ If using the Python `deploy` method with a private repository that references a 
 
     If using a credentials block, you can create it ahead of time and reference it at deployment creation. 
 
-    1. Install prefect-github with `pip install -U prefect-github`
-    1. Register the blocks in that library to make them available on the server with `prefect block register -m prefect_github`
-    1. Create a GitHub Credentials block through code or the Prefect UI and reference it at deployment creation as shown above.
+    1. Install syntask-github with `pip install -U syntask-github`
+    1. Register the blocks in that library to make them available on the server with `syntask block register -m syntask_github`
+    1. Create a GitHub Credentials block through code or the Syntask UI and reference it at deployment creation as shown above.
 
   </Tab>  
   <Tab title="Bitbucket">
     <CodeGroup>
 
     ```python bb_no_block.py
-    from prefect import flow
+    from syntask import flow
 
 
     if __name__ == "__main__":
@@ -159,9 +159,9 @@ If using the Python `deploy` method with a private repository that references a 
 
     ```python bb_credentials_block.py
 
-    from prefect import flow
-    from prefect.runner.storage import GitRepository
-    from prefect_bitbucket import BitBucketCredentials
+    from syntask import flow
+    from syntask.runner.storage import GitRepository
+    from syntask_bitbucket import BitBucketCredentials
 
     if __name__ == "__main__":
 
@@ -181,9 +181,9 @@ If using the Python `deploy` method with a private repository that references a 
 
     ```python bb_secret_block.py
 
-    from prefect import flow
-    from prefect.runner.storage import GitRepository
-    from prefect.blocks.system import Secret
+    from syntask import flow
+    from syntask.runner.storage import GitRepository
+    from syntask.blocks.system import Secret
 
 
     if __name__ == "__main__":
@@ -203,15 +203,15 @@ If using the Python `deploy` method with a private repository that references a 
         )
     ```
 
-    ```yaml prefect.yaml
+    ```yaml syntask.yaml
     # relevant section of the file:
     pull:
-        - prefect.deployments.steps.git_clone:
+        - syntask.deployments.steps.git_clone:
             repository: https://bitbucket.org/org/my-private-repo.git
             # Uncomment the following line if using a credentials block
-            # credentials: "{{ prefect.blocks.bitbucket-credentials.my-bitbucket-credentials-block }}"
+            # credentials: "{{ syntask.blocks.bitbucket-credentials.my-bitbucket-credentials-block }}"
             # Uncomment the following line if using a Secret block
-            # access_token: "{{ prefect.blocks.secret.my-block-name }}"
+            # access_token: "{{ syntask.blocks.secret.my-block-name }}"
     ```
     </CodeGroup>
 
@@ -226,8 +226,8 @@ If using the Python `deploy` method with a private repository that references a 
     If using a credentials block, you can create it ahead of time and reference it at deployment creation. 
 
     1. Install prefect-bitbucket with `pip install -U prefect-bitbucket`
-    1. Register the blocks in that library with `prefect block register -m prefect_bitbucket` 
-    1. Create a Bitbucket credentials block in code or the Prefect UI and reference at deployment creation as shown above.
+    1. Register the blocks in that library with `syntask block register -m syntask_bitbucket` 
+    1. Create a Bitbucket credentials block in code or the Syntask UI and reference at deployment creation as shown above.
 
   </Tab>
 
@@ -236,7 +236,7 @@ If using the Python `deploy` method with a private repository that references a 
     <CodeGroup>
 
     ```python gl_no_block.py
-    from prefect import flow
+    from syntask import flow
 
 
     if __name__ == "__main__":
@@ -253,9 +253,9 @@ If using the Python `deploy` method with a private repository that references a 
 
     ```python gl_credentials_block.py
 
-    from prefect import flow
-    from prefect.runner.storage import GitRepository
-    from prefect_gitlab import GitLabCredentials
+    from syntask import flow
+    from syntask.runner.storage import GitRepository
+    from syntask_gitlab import GitLabCredentials
 
 
     if __name__ == "__main__":
@@ -276,9 +276,9 @@ If using the Python `deploy` method with a private repository that references a 
 
     ```python gl_secret_block.py    
 
-    from prefect import flow
-    from prefect.runner.storage import GitRepository
-    from prefect.blocks.system import Secret
+    from syntask import flow
+    from syntask.runner.storage import GitRepository
+    from syntask.blocks.system import Secret
 
 
     if __name__ == "__main__":
@@ -298,15 +298,15 @@ If using the Python `deploy` method with a private repository that references a 
         )
     ```
 
-    ```yaml prefect.yaml
+    ```yaml syntask.yaml
     # relevant section of the file:
     pull:
-        - prefect.deployments.steps.git_clone:
+        - syntask.deployments.steps.git_clone:
             repository: https://gitlab.com/org/my-private-repo.git
             # Uncomment the following line if using a credentials block
-            # credentials: "{{ prefect.blocks.gitlab-credentials.my-gitlab-credentials-block }}"
+            # credentials: "{{ syntask.blocks.gitlab-credentials.my-gitlab-credentials-block }}"
             # Uncomment the following line if using a Secret block
-            # access_token: "{{ prefect.blocks.secret.my-block-name }}"
+            # access_token: "{{ syntask.blocks.secret.my-block-name }}"
     ```
     </CodeGroup>
 
@@ -319,9 +319,9 @@ If using the Python `deploy` method with a private repository that references a 
 
     If using a credentials block, you can create it ahead of time and reference it at deployment creation. 
 
-    1. Install prefect-gitlab with `pip install -U prefect-gitlab`
-    1. Register the blocks in that library with `prefect block register -m prefect_gitlab` 
-    1. Create a GitLab credentials block in code or the Prefect UI and reference it at deployment creation as shown above.
+    1. Install syntask-gitlab with `pip install -U syntask-gitlab`
+    1. Register the blocks in that library with `syntask block register -m syntask_gitlab` 
+    1. Create a GitLab credentials block in code or the Syntask UI and reference it at deployment creation as shown above.
 
   </Tab>
 </Tabs>
@@ -332,7 +332,7 @@ The default is `"main"`.
 <Warning>
 **Push your code**
 
-When you make a change to your code, Prefect does not push your code to your git-based version control platform.
+When you make a change to your code, Syntask does not push your code to your git-based version control platform.
 You need to push your code manually or as part of your CI/CD pipeline.
 This is intentional to avoid confusion about the git history and push process.
 </Warning>
@@ -340,22 +340,22 @@ This is intentional to avoid confusion about the git history and push process.
 ## Docker-based storage
 
 Another popular flow code storage option is to include it in a Docker image. 
-All work pool options except **Process** and **Prefect Managed** allow you to bake your code into a Docker image.
+All work pool options except **Process** and **Syntask Managed** allow you to bake your code into a Docker image.
 
-To create a deployment with Docker-based flow code storage use the Python `deploy` method or create a `prefect.yaml` file.
+To create a deployment with Docker-based flow code storage use the Python `deploy` method or create a `syntask.yaml` file.
 
 <Note>
 If you use the Python `deploy` method to store the flow code in a Docker image, you don't need to use the `from_source` method.
 </Note>
 
-The `prefect.yaml` file below was generated by running `prefect deploy` from the CLI (a few lines of metadata were excluded from the top of the file output for brevity).
+The `syntask.yaml` file below was generated by running `syntask deploy` from the CLI (a few lines of metadata were excluded from the top of the file output for brevity).
 
 Note that the `build` section is necessary if baking your flow code into a Docker image.
 
 <CodeGroup>
 
 ```python docker_deploy.py
-from prefect import flow
+from syntask import flow
 
 
 @flow
@@ -370,10 +370,10 @@ if __name__ == "__main__":
     )
 ```
 
-```yaml prefect.yaml
+```yaml syntask.yaml
 # build section allows you to manage and build docker images
 build:
-- prefect_docker.deployments.steps.build_docker_image:
+- syntask_docker.deployments.steps.build_docker_image:
     requires: prefect-docker>=0.3.1
     id: build-image
     dockerfile: auto
@@ -385,8 +385,8 @@ push: null
 
 # pull section allows you to provide instructions for cloning this project in remote locations
 pull:
-- prefect.deployments.steps.set_working_directory:
-    directory: /opt/prefect/my_directory
+- syntask.deployments.steps.set_working_directory:
+    directory: /opt/syntask/my_directory
 
 
 # the deployments section allows you to provide configuration for deploying flows
@@ -413,13 +413,13 @@ Any pip packages specified in a `requirements.txt` file will be included in the 
 
 In the examples above, we elected not to push the image to a remote registry.
 
-To push the image to a remote registry, pass `push=True` in the Python `deploy` method or change `push: true` in the `prefect.yaml` file.
+To push the image to a remote registry, pass `push=True` in the Python `deploy` method or change `push: true` in the `syntask.yaml` file.
 
 ### Custom Docker image
 
-By default, your deployment will use the base Prefect image when creating your image.
-Alternatively, you can create a custom Docker image outside of Prefect. 
-If doing this with and you don't need push or pull steps in the `prefect.yaml` file.
+By default, your deployment will use the base Syntask image when creating your image.
+Alternatively, you can create a custom Docker image outside of Syntask. 
+If doing this with and you don't need push or pull steps in the `syntask.yaml` file.
 Instead, the work pool can reference the image directly.
 
 For more information, see [this discussion of custom Docker images](/3.0/deploy/infrastructure-examples/docker/#automatically-build-a-custom-docker-image-with-a-local-dockerfile).
@@ -433,7 +433,7 @@ You don't need to pass credentials explicitly.
 
 To pass credentials explicitly to authenticate to your storage location, you can use either of the following block types:
 
-- Prefect integration library storage blocks, such as the `prefect-aws` library's `S3Bucket` block, which can use a `AWSCredentials` block when it is created.
+- Syntask integration library storage blocks, such as the `prefect-aws` library's `S3Bucket` block, which can use a `AWSCredentials` block when it is created.
 - Secret blocks
 
 <Note>
@@ -444,10 +444,10 @@ You can do any of the following to make the library available:
 1. Install the library into the execution environment directly
 1. Specify the library in the work pool's Base Job Template in the **Environment Variables** section like this:`{"EXTRA_PIP_PACKAGES":"prefect-aws"}`
 1. Specify the library in the environment variables of the `deploy` method as shown in the examples below
-1. Specify the library in a `requirements.txt` file and reference the file in the `pull` step of the `prefect.yaml` file like this:
+1. Specify the library in a `requirements.txt` file and reference the file in the `pull` step of the `syntask.yaml` file like this:
 
 ```yaml
-    - prefect.deployments.steps.pip_install_requirements:
+    - syntask.deployments.steps.pip_install_requirements:
         directory: "{{ pull_code.directory }}" 
         requirements_file: requirements.txt
 ```
@@ -456,7 +456,7 @@ You can do any of the following to make the library available:
 
 The examples below show how to create a deployment with flow code in a cloud provider storage location.
 For each example, we show how to access code that is publicly available.
-The `prefect.yaml` example includes an additional line to reference a credentials block if authenticating to a private storage location through that option. 
+The `syntask.yaml` example includes an additional line to reference a credentials block if authenticating to a private storage location through that option. 
 
 We also include Python code that shows how to use an existing storage block and an example of that creates, but doesn't save, a storage block that references an existing nested credentials block.
 
@@ -467,7 +467,7 @@ We also include Python code that shows how to use an existing storage block and 
     <CodeGroup>
 
     ```python s3_no_block.py
-    from prefect import flow
+    from syntask import flow
 
 
     if __name__ == "__main__":
@@ -482,7 +482,7 @@ We also include Python code that shows how to use an existing storage block and 
 
     ```python s3_block.py
 
-    from prefect import flow
+    from syntask import flow
     from prefect_aws.s3 import S3Bucket
 
     if __name__ == "__main__":
@@ -505,7 +505,7 @@ We also include Python code that shows how to use an existing storage block and 
         )
     ```
 
-    ```yaml prefect.yaml
+    ```yaml syntask.yaml
     build: null
 
     push:
@@ -514,7 +514,7 @@ We also include Python code that shows how to use an existing storage block and 
         requires: prefect-aws>=0.5
         bucket: my-bucket
         folder: my-folder
-        credentials: "{{ prefect.blocks.aws-credentials.my-credentials-block }}" # if explicit authentication is required
+        credentials: "{{ syntask.blocks.aws-credentials.my-credentials-block }}" # if explicit authentication is required
 
     pull:
     - prefect_aws.deployments.steps.pull_from_s3:
@@ -522,7 +522,7 @@ We also include Python code that shows how to use an existing storage block and 
         requires: prefect-aws>=0.5
         bucket: '{{ push_code.bucket }}'
         folder: '{{ push_code.folder }}'
-        credentials: "{{ prefect.blocks.aws-credentials.my-credentials-block }}" # if explicit authentication is required 
+        credentials: "{{ syntask.blocks.aws-credentials.my-credentials-block }}" # if explicit authentication is required 
     
     deployments:
     - name: my-aws-deployment
@@ -544,10 +544,10 @@ We also include Python code that shows how to use an existing storage block and 
 
     To create an `AwsCredentials` block:
 
-    1. Install the [prefect-aws](https://prefecthq.github.io/prefect-aws/) library with `pip install -U prefect-aws`
-    1. Register the blocks in prefect-aws with `prefect block register -m prefect_aws` 
+    1. Install the [prefect-aws](https://synopkg.github.io/prefect-aws/) library with `pip install -U prefect-aws`
+    1. Register the blocks in prefect-aws with `syntask block register -m prefect_aws` 
     1. Create a user with a role with read and write permissions to access the bucket. If using the UI, create an access key pair with *IAM -> Users -> Security credentials -> Access keys -> Create access key*. Choose *Use case -> Other* and then copy the *Access key* and *Secret access key* values.
-    1. Create an [`AWSCredentials` block](/integrations/prefect-aws/index#save-credentials-to-an-aws-credentials-block) in code or the Prefect UI. In addition to the block name, most users will fill in the *AWS Access Key ID* and *AWS Access Key Secret* fields.
+    1. Create an [`AWSCredentials` block](/integrations/prefect-aws/index#save-credentials-to-an-aws-credentials-block) in code or the Syntask UI. In addition to the block name, most users will fill in the *AWS Access Key ID* and *AWS Access Key Secret* fields.
     1. Reference the block as shown above.
     
 
@@ -557,7 +557,7 @@ We also include Python code that shows how to use an existing storage block and 
     <CodeGroup>
 
     ```python azure_no_block.py
-    from prefect import flow
+    from syntask import flow
 
 
     if __name__ == "__main__":
@@ -567,13 +567,13 @@ We also include Python code that shows how to use an existing storage block and 
         ).deploy(
             name="my-azure-deployment",
             work_pool_name="my-work-pool",
-            job_variables={"env": {"EXTRA_PIP_PACKAGES": "prefect-azure"} }, 
+            job_variables={"env": {"EXTRA_PIP_PACKAGES": "syntask-azure"} }, 
         )
     ```
 
     ```python azure_block.py
-    from prefect import flow
-    from prefect_azure import AzureBlobCredentials, AzureBlobStorage
+    from syntask import flow
+    from syntask_azure import AzureBlobCredentials, AzureBlobStorage
 
 
     if __name__ == "__main__":
@@ -582,7 +582,7 @@ We also include Python code that shows how to use an existing storage block and 
 
         # or 
         # azure_blob_storage_block = AzureBlobStorage(   
-        #     container="my-prefect-azure-container",
+        #     container="my-syntask-azure-container",
         #     folder="my-folder",
         #     credentials=AzureBlobCredentials.load("my-credentials-block")
         # )
@@ -592,25 +592,25 @@ We also include Python code that shows how to use an existing storage block and 
         )
     ```
 
-    ```yaml prefect.yaml
+    ```yaml syntask.yaml
     build: null
 
     push:
-    - prefect_azure.deployments.steps.push_to_azure_blob_storage:
+    - syntask_azure.deployments.steps.push_to_azure_blob_storage:
         id: push_code
-        requires: prefect-azure>=0.4
-        container: my-prefect-azure-container
+        requires: syntask-azure>=0.4
+        container: my-syntask-azure-container
         folder: my-folder
-        credentials: "{{ prefect.blocks.azure-blob-storage-credentials.my-credentials-block }}" 
+        credentials: "{{ syntask.blocks.azure-blob-storage-credentials.my-credentials-block }}" 
         # if explicit authentication is required
 
     pull:
-    - prefect_azure.deployments.steps.pull_from_azure_blob_storage:
+    - syntask_azure.deployments.steps.pull_from_azure_blob_storage:
         id: pull_code
-        requires: prefect-azure>=0.4
+        requires: syntask-azure>=0.4
         container: '{{ push_code.container }}'
         folder: '{{ push_code.folder }}'
-        credentials: "{{ prefect.blocks.azure-blob-storage-credentials.my-credentials-block }}" # if explicit authentication is required
+        credentials: "{{ syntask.blocks.azure-blob-storage-credentials.my-credentials-block }}" # if explicit authentication is required
     
     deployments:
     - name: my-azure-deployment
@@ -632,11 +632,11 @@ We also include Python code that shows how to use an existing storage block and 
 
     To create an `AzureBlobCredentials` block:
 
-    1. Install the [prefect-azure](/integrations/prefect-azure/) library with `pip install -U prefect-azure`
-    1. Register the blocks in prefect-azure with `prefect block register -m prefect_azure` 
+    1. Install the [syntask-azure](/integrations/syntask-azure/) library with `pip install -U syntask-azure`
+    1. Register the blocks in syntask-azure with `syntask block register -m syntask_azure` 
     1. Create an access key for a role with sufficient (read and write) permissions to access the blob. 
     You can create a connection string containing all required information in the UI under *Storage Account -> Access keys*.
-    1. Create an Azure Blob Storage Credentials block in code or the Prefect UI. Enter a name for the block and paste the 
+    1. Create an Azure Blob Storage Credentials block in code or the Syntask UI. Enter a name for the block and paste the 
     connection string into the *Connection String* field.
     1. Reference the block as shown above.
   </Tab>
@@ -645,7 +645,7 @@ We also include Python code that shows how to use an existing storage block and 
     <CodeGroup>
 
     ```python gcs_no_block.py
-    from prefect import flow
+    from syntask import flow
 
 
     if __name__ == "__main__":
@@ -659,8 +659,8 @@ We also include Python code that shows how to use an existing storage block and 
     ```
 
     ```python gcs_block.py
-    from prefect import flow
-    from prefect_gcp import GcpCredentials, GCSBucket
+    from syntask import flow
+    from syntask_gcp import GcpCredentials, GCSBucket
 
 
     if __name__ == "__main__":
@@ -680,28 +680,28 @@ We also include Python code that shows how to use an existing storage block and 
         ).deploy(
             name="my-gcs-deployment",
             work_pool_name="my_pool",
-            job_variables={"env": {"EXTRA_PIP_PACKAGES": "prefect-gcp"} }, 
+            job_variables={"env": {"EXTRA_PIP_PACKAGES": "syntask-gcp"} }, 
         )
     ```
 
-    ```yaml prefect.yaml
+    ```yaml syntask.yaml
     build: null
 
     push:
-    - prefect_gcp.deployment.steps.push_to_gcs:
+    - syntask_gcp.deployment.steps.push_to_gcs:
         id: push_code
-        requires: prefect-gcp>=0.6
+        requires: syntask-gcp>=0.6
         bucket: my-bucket
         folder: my-folder
-        credentials: "{{ prefect.blocks.gcp-credentials.my-credentials-block }}" # if explicit authentication is required 
+        credentials: "{{ syntask.blocks.gcp-credentials.my-credentials-block }}" # if explicit authentication is required 
 
     pull:
-    - prefect_gcp.deployment.steps.pull_from_gcs:
+    - syntask_gcp.deployment.steps.pull_from_gcs:
         id: pull_code
-        requires: prefect-gcp>=0.6
+        requires: syntask-gcp>=0.6
         bucket: '{{ push_code.bucket }}'
         folder: '{{ pull_code.folder }}'
-        credentials: "{{ prefect.blocks.gcp-credentials.my-credentials-block }}" # if explicit authentication is required 
+        credentials: "{{ syntask.blocks.gcp-credentials.my-credentials-block }}" # if explicit authentication is required 
     
     deployments:
     - name: my-gcs-deployment
@@ -722,14 +722,14 @@ We also include Python code that shows how to use an existing storage block and 
     
      To create a `GcpCredentials` block:
 
-    1. Install the [prefect-gcp](/integrations/prefect-gcp/) library with `pip install -U prefect-gcp`
-    1. Register the blocks in prefect-gcp with `prefect block register -m prefect_gcp` 
+    1. Install the [syntask-gcp](/integrations/syntask-gcp/) library with `pip install -U syntask-gcp`
+    1. Register the blocks in syntask-gcp with `syntask block register -m syntask_gcp` 
     1. Create a service account in GCP for a role with read and write permissions to access the bucket contents. 
     If using the GCP console, go to *IAM & Admin -> Service accounts -> Create service account*. 
     After choosing a role with the required permissions, 
     see your service account and click on the three dot menu in the *Actions* column. 
     Select *Manage Keys -> ADD KEY -> Create new key -> JSON*. Download the JSON file.
-    1. Create a GCP Credentials block in code or the Prefect UI. Enter a name for the block and paste the entire contents of the JSON key file into the *Service Account Info* field.
+    1. Create a GCP Credentials block in code or the Syntask UI. Enter a name for the block and paste the entire contents of the JSON key file into the *Service Account Info* field.
     1. Reference the block as shown above.
     </Tab>
 </Tabs>
@@ -745,7 +745,7 @@ Here is an example of how to create a deployment with flow code stored locally:
 <CodeGroup>
 
 ```python local_process_deploy_local_code.py
-from prefect import flow
+from syntask import flow
 from pathlib import Path
 
 
@@ -765,13 +765,13 @@ if __name__ == "__main__":
     )
 ```
 
-```yaml prefect.yaml
+```yaml syntask.yaml
 build: null
 
 push: null
 
 pull:
-- prefect.deployments.steps.set_working_directory:
+- syntask.deployments.steps.set_working_directory:
     directory: /my_directory
 
 deployments:
@@ -793,11 +793,11 @@ deployments:
 
 ## Include or exclude files from storage
 
-By default, Prefect includes all files in the current folder when you create a deployment.
+By default, Syntask includes all files in the current folder when you create a deployment.
 
 When using a git repository, Docker image, or cloud-provider storage location, you may want to exclude certain files or directories. 
 If you are familiar with Docker you are likely familiar with the [`.dockerignore`](https://docs.docker.com/engine/reference/builder/#dockerignore-file) file. 
-For remote storage, the `.prefectignore` file serves the same purpose and follows a similar syntax. 
+For remote storage, the `.syntaskignore` file serves the same purpose and follows a similar syntax. 
 For example, an entry of `*.pyc` will exclude all `.pyc` files from upload.
 
 ## Update flow code
@@ -808,7 +808,7 @@ If storing your flow code in a git-based version control platform or a cloud-bas
 
 The exception is when something the server needs to know about has changed, such as the flow entrypoint parameters.
 
-Rerun the Python script with `deploy` or run `prefect deploy` from the CLI for YAML-based deployments to update your deployment with the new flow code.
+Rerun the Python script with `deploy` or run `syntask deploy` from the CLI for YAML-based deployments to update your deployment with the new flow code.
 
 ## Flow code storage for deployments created with `serve` 
 

@@ -1,1 +1,1 @@
-prefect>2
+syntask>2

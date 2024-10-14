@@ -1,6 +1,6 @@
 """
 Functions for interacting with task run ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 import contextlib
@@ -13,21 +13,21 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.logging import get_logger
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.orchestration.core_policy import (
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.logging import get_logger
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.orchestration.core_policy import (
     BackgroundTaskPolicy,
     MinimalTaskPolicy,
 )
-from prefect.server.orchestration.global_policy import GlobalTaskPolicy
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.orchestration.rules import TaskOrchestrationContext
-from prefect.server.schemas.responses import OrchestrationResult
+from syntask.server.orchestration.global_policy import GlobalTaskPolicy
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.orchestration.rules import TaskOrchestrationContext
+from syntask.server.schemas.responses import OrchestrationResult
 
 T = TypeVar("T", bound=tuple)
 
@@ -36,7 +36,7 @@ logger = get_logger("server")
 
 @db_injector
 async def create_task_run(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     task_run: schemas.core.TaskRun,
     orchestration_parameters: Optional[Dict[str, Any]] = None,
@@ -411,7 +411,7 @@ async def set_task_run_state(
     Creates a new orchestrated task run state.
 
     Setting a new state on a run is the one of the principal actions that is governed by
-    Prefect's orchestration logic. Setting a new run state will not guarantee creation,
+    Syntask's orchestration logic. Setting a new run state will not guarantee creation,
     but instead trigger orchestration rules to govern the proposed `state` input. If
     the state is considered valid, it will be written to the database. Otherwise, a
     it's possible a different state, or no state, will be created. A `force` flag is

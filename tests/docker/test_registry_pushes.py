@@ -8,13 +8,13 @@ import pendulum
 import pytest
 from _pytest.capture import CaptureFixture
 
-from prefect.utilities.dockerutils import (
+from syntask.utilities.dockerutils import (
     ImageBuilder,
     PushError,
     push_image,
     silence_docker_warnings,
 )
-from prefect.utilities.slugify import slugify
+from syntask.utilities.slugify import slugify
 
 with silence_docker_warnings():
     from docker import DockerClient
@@ -41,7 +41,7 @@ def howdy(docker: DockerClient, worker_id: str, frozen_now: pendulum.DateTime) -
     # new image each time
     message = f"hello from the registry, {str(uuid4())}!"
     with ImageBuilder("busybox") as image:
-        image.add_line(f"LABEL io.prefect.test-worker {worker_id}")
+        image.add_line(f"LABEL io.syntask.test-worker {worker_id}")
         image.add_line(f'ENTRYPOINT [ "echo", "{message}" ]')
         image_id = image.build()
 
@@ -81,8 +81,8 @@ def test_pushing_with_owner(
 ):
     tag_prefix = slugify(frozen_now.isoformat())[:20]
 
-    registry_tag = push_image(howdy, registry, "prefecthq/howdy")
-    assert registry_tag.startswith(f"localhost:5555/prefecthq/howdy:{tag_prefix}")
+    registry_tag = push_image(howdy, registry, "synopkg/howdy")
+    assert registry_tag.startswith(f"localhost:5555/synopkg/howdy:{tag_prefix}")
 
     greeting = docker.containers.run(registry_tag, remove=True).decode().strip()
     assert greeting.startswith("hello from the registry")

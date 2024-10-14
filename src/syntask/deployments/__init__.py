@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from prefect._internal.compatibility.migration import getattr_migration
+from syntask._internal.compatibility.migration import getattr_migration
 
 
 if TYPE_CHECKING:

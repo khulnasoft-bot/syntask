@@ -5,14 +5,14 @@ import sqlalchemy as sa
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.settings import PREFECT_SERVER_CSRF_PROTECTION_ENABLED, temporary_settings
+from syntask.server import models, schemas
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.settings import SYNTASK_SERVER_CSRF_PROTECTION_ENABLED, temporary_settings
 
 
 @pytest.fixture(autouse=True)
 def enable_csrf_protection():
-    with temporary_settings({PREFECT_SERVER_CSRF_PROTECTION_ENABLED: True}):
+    with temporary_settings({SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: True}):
         yield
 
 
@@ -48,14 +48,14 @@ async def test_client_param_required(client: AsyncClient):
 
 
 async def test_422_when_csrf_protection_disabled(client: AsyncClient):
-    with temporary_settings({PREFECT_SERVER_CSRF_PROTECTION_ENABLED: False}):
+    with temporary_settings({SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: False}):
         response = await client.get("/csrf-token?client=client123")
         assert response.status_code == 422
         assert response.json() == {"detail": "CSRF protection is disabled."}
 
 
 async def test_deletes_expired_tokens(
-    db: PrefectDBInterface, session: AsyncSession, client: AsyncClient
+    db: SyntaskDBInterface, session: AsyncSession, client: AsyncClient
 ):
     # Create some tokens
     for i in range(5):

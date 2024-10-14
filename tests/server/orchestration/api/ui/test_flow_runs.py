@@ -3,11 +3,11 @@ from typing import List
 import pytest
 from starlette import status
 
-from prefect.server import models, schemas
-from prefect.server.api.ui.flow_runs import SimpleFlowRun
-from prefect.server.database import orm_models
-from prefect.server.schemas import actions, states
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.server import models, schemas
+from syntask.server.api.ui.flow_runs import SimpleFlowRun
+from syntask.server.database import orm_models
+from syntask.server.schemas import actions, states
+from syntask.utilities.pydantic import parse_obj_as
 
 
 @pytest.fixture

@@ -1,11 +1,11 @@
 ---
-description: Prefect SDK documentation
+description: Syntask SDK documentation
 hide:
   - toc
 ---
 
-# Prefect SDK
+# Syntask SDK
 
-Explore the SDK documentation for Prefect and the Prefect integration libraries using the sidebar navigation.
+Explore the SDK documentation for Syntask and the Syntask integration libraries using the sidebar navigation.
 
-Go to the [Prefect 3 main documentation site](https://docs-3.syntask.khulnasoft.com/).
+Go to the [Syntask 3 main documentation site](https://docs-3.syntask.khulnasoft.com/).

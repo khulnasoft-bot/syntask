@@ -10,11 +10,11 @@ import queue
 import threading
 from typing import List, Optional
 
-from prefect._internal.concurrency import logger
-from prefect._internal.concurrency.calls import Call, Portal
-from prefect._internal.concurrency.cancellation import CancelledError
-from prefect._internal.concurrency.event_loop import get_running_loop
-from prefect._internal.concurrency.primitives import Event
+from syntask._internal.concurrency import logger
+from syntask._internal.concurrency.calls import Call, Portal
+from syntask._internal.concurrency.cancellation import CancelledError
+from syntask._internal.concurrency.event_loop import get_running_loop
+from syntask._internal.concurrency.primitives import Event
 
 
 class WorkerThread(Portal):

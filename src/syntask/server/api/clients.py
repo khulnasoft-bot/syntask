@@ -8,32 +8,32 @@ from httpx import Response
 from starlette import status
 from typing_extensions import Self
 
-from prefect.client.base import PrefectHttpxAsyncClient
-from prefect.exceptions import ObjectNotFound
-from prefect.logging import get_logger
-from prefect.server.schemas.actions import DeploymentFlowRunCreate, StateCreate
-from prefect.server.schemas.core import WorkPool
-from prefect.server.schemas.filters import VariableFilter, VariableFilterName
-from prefect.server.schemas.responses import DeploymentResponse, OrchestrationResult
-from prefect.types import StrictVariableValue
+from syntask.client.base import SyntaskHttpxAsyncClient
+from syntask.exceptions import ObjectNotFound
+from syntask.logging import get_logger
+from syntask.server.schemas.actions import DeploymentFlowRunCreate, StateCreate
+from syntask.server.schemas.core import WorkPool
+from syntask.server.schemas.filters import VariableFilter, VariableFilterName
+from syntask.server.schemas.responses import DeploymentResponse, OrchestrationResult
+from syntask.types import StrictVariableValue
 
 logger = get_logger(__name__)
 
 
 class BaseClient:
-    _http_client: PrefectHttpxAsyncClient
+    _http_client: SyntaskHttpxAsyncClient
 
     def __init__(self, additional_headers: Dict[str, str] = {}):
-        from prefect.server.api.server import create_app
+        from syntask.server.api.server import create_app
 
         # create_app caches application instances, and invoking it with no arguments
         # will point it to the the currently running server instance
         api_app = create_app()
 
-        self._http_client = PrefectHttpxAsyncClient(
+        self._http_client = SyntaskHttpxAsyncClient(
             transport=httpx.ASGITransport(app=api_app, raise_app_exceptions=False),
             headers={**additional_headers},
-            base_url="http://prefect-in-memory/api",
+            base_url="http://syntask-in-memory/api",
             enable_csrf_support=False,
             raise_on_all_errors=False,
         )

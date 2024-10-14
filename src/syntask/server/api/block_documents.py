@@ -7,19 +7,19 @@ from uuid import UUID
 
 from fastapi import Body, Depends, HTTPException, Path, Query, status
 
-from prefect.server import models, schemas
-from prefect.server.api import dependencies
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.server import PrefectRouter
+from syntask.server import models, schemas
+from syntask.server.api import dependencies
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="/block_documents", tags=["Block documents"])
+router = SyntaskRouter(prefix="/block_documents", tags=["Block documents"])
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_block_document(
     block_document: schemas.actions.BlockDocumentCreate,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.BlockDocument:
     """
     Create a new block document.
@@ -57,7 +57,7 @@ async def read_block_documents(
         schemas.sorting.BlockDocumentSort.NAME_ASC
     ),
     offset: int = Body(0, ge=0),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.core.BlockDocument]:
     """
     Query for block documents.
@@ -82,7 +82,7 @@ async def count_block_documents(
     block_documents: Optional[schemas.filters.BlockDocumentFilter] = None,
     block_types: Optional[schemas.filters.BlockTypeFilter] = None,
     block_schemas: Optional[schemas.filters.BlockSchemaFilter] = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     """
     Count block documents.
@@ -106,7 +106,7 @@ async def read_block_document_by_id(
     include_secrets: bool = Query(
         False, description="Whether to include sensitive values in the block document."
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.BlockDocument:
     async with db.session_context() as session:
         block_document = await models.block_documents.read_block_document_by_id(
@@ -124,7 +124,7 @@ async def delete_block_document(
     block_document_id: UUID = Path(
         ..., description="The block document id", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         result = await models.block_documents.delete_block_document(
@@ -142,7 +142,7 @@ async def update_block_document_data(
     block_document_id: UUID = Path(
         ..., description="The block document id", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     try:
         async with db.session_context(begin_transaction=True) as session:

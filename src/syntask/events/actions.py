@@ -5,11 +5,11 @@ from uuid import UUID
 from pydantic import Field, model_validator
 from typing_extensions import Literal, Self, TypeAlias
 
-from prefect._internal.schemas.bases import PrefectBaseModel
-from prefect.client.schemas.objects import StateType
+from syntask._internal.schemas.bases import SyntaskBaseModel
+from syntask.client.schemas.objects import StateType
 
 
-class Action(PrefectBaseModel, abc.ABC):
+class Action(SyntaskBaseModel, abc.ABC):
     """An Action that may be performed when an Automation is triggered"""
 
     type: str
@@ -145,7 +145,7 @@ class SendNotification(Action):
     block_document_id: UUID = Field(
         description="The identifier of the notification block to use"
     )
-    subject: str = Field("Prefect automated notification")
+    subject: str = Field("Syntask automated notification")
     body: str = Field(description="The text of the notification to send")
 
 
@@ -266,7 +266,7 @@ class ResumeAutomation(AutomationAction):
 
 
 class DeclareIncident(Action):
-    """Declares an incident for the triggering event.  Only available on Prefect Cloud"""
+    """Declares an incident for the triggering event.  Only available on Syntask Cloud"""
 
     type: Literal["declare-incident"] = "declare-incident"
 
@@ -290,6 +290,6 @@ ActionTypes: TypeAlias = Union[
     SuspendFlowRun,
     PauseWorkPool,
     ResumeWorkPool,
-    # Prefect Cloud only
+    # Syntask Cloud only
     DeclareIncident,
 ]

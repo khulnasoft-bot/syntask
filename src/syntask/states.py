@@ -12,9 +12,9 @@ import httpx
 import pendulum
 from typing_extensions import TypeGuard
 
-from prefect.client.schemas import State as State
-from prefect.client.schemas import StateDetails, StateType
-from prefect.exceptions import (
+from syntask.client.schemas import State as State
+from syntask.client.schemas import StateDetails, StateType
+from syntask.exceptions import (
     CancelledRun,
     CrashedRun,
     FailedRun,
@@ -24,18 +24,18 @@ from prefect.exceptions import (
     TerminationSignal,
     UnfinishedRun,
 )
-from prefect.logging.loggers import get_logger, get_run_logger
-from prefect.results import (
+from syntask.logging.loggers import get_logger, get_run_logger
+from syntask.results import (
     BaseResult,
     R,
     ResultRecord,
     ResultRecordMetadata,
     ResultStore,
 )
-from prefect.settings import PREFECT_ASYNC_FETCH_STATE_RESULT
-from prefect.utilities.annotations import BaseAnnotation
-from prefect.utilities.asyncutils import in_async_main_thread, sync_compatible
-from prefect.utilities.collections import ensure_iterable
+from syntask.settings import SYNTASK_ASYNC_FETCH_STATE_RESULT
+from syntask.utilities.annotations import BaseAnnotation
+from syntask.utilities.asyncutils import in_async_main_thread, sync_compatible
+from syntask.utilities.collections import ensure_iterable
 
 logger = get_logger("states")
 
@@ -53,7 +53,7 @@ def get_state_result(
     """
 
     if fetch is None and (
-        PREFECT_ASYNC_FETCH_STATE_RESULT or not in_async_main_thread()
+        SYNTASK_ASYNC_FETCH_STATE_RESULT or not in_async_main_thread()
     ):
         # Fetch defaults to `True` for sync users or async users who have opted in
         fetch = True
@@ -168,8 +168,8 @@ def format_exception(exc: BaseException, tb: TracebackType = None) -> str:
     else:
         formatted = f"{exc_type.__name__}: {exc}"
 
-    # Trim `prefect` module paths from our exception types
-    if exc_type.__module__.startswith("prefect."):
+    # Trim `syntask` module paths from our exception types
+    if exc_type.__module__.startswith("syntask."):
         formatted = formatted.replace(
             f"{exc_type.__module__}.{exc_type.__name__}", exc_type.__name__
         )

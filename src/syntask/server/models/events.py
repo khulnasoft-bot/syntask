@@ -6,8 +6,8 @@ import pendulum
 from cachetools import TTLCache
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.database.orm_models import (
+from syntask.server import models, schemas
+from syntask.server.database.orm_models import (
     ORMDeployment,
     ORMFlow,
     ORMFlowRun,
@@ -17,11 +17,11 @@ from prefect.server.database.orm_models import (
     ORMWorkPool,
     ORMWorkQueue,
 )
-from prefect.server.events.schemas.events import Event
-from prefect.server.models import deployments
-from prefect.server.schemas.statuses import DeploymentStatus
-from prefect.settings import PREFECT_API_EVENTS_RELATED_RESOURCE_CACHE_TTL
-from prefect.utilities.text import truncated_to
+from syntask.server.events.schemas.events import Event
+from syntask.server.models import deployments
+from syntask.server.schemas.statuses import DeploymentStatus
+from syntask.settings import SYNTASK_API_EVENTS_RELATED_RESOURCE_CACHE_TTL
+from syntask.utilities.text import truncated_to
 
 ResourceData = Dict[str, Dict[str, Any]]
 RelatedResourceList = List[Dict[str, str]]
@@ -34,7 +34,7 @@ TRUNCATE_STATE_MESSAGES_AT = 100_000
 
 _flow_run_resource_data_cache: MutableMapping[UUID, ResourceData] = TTLCache(
     maxsize=1000,
-    ttl=PREFECT_API_EVENTS_RELATED_RESOURCE_CACHE_TTL.value().total_seconds(),
+    ttl=SYNTASK_API_EVENTS_RELATED_RESOURCE_CACHE_TTL.value().total_seconds(),
 )
 
 
@@ -49,20 +49,20 @@ async def flow_run_state_change_event(
 ) -> Event:
     return Event(
         occurred=occurred,
-        event=f"prefect.flow-run.{validated_state.name}",
+        event=f"syntask.flow-run.{validated_state.name}",
         resource={
-            "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-            "prefect.resource.name": flow_run.name,
-            "prefect.state-message": truncated_to(
+            "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+            "syntask.resource.name": flow_run.name,
+            "syntask.state-message": truncated_to(
                 TRUNCATE_STATE_MESSAGES_AT, validated_state.message
             ),
-            "prefect.state-name": validated_state.name or "",
-            "prefect.state-timestamp": (
+            "syntask.state-name": validated_state.name or "",
+            "syntask.state-timestamp": (
                 validated_state.timestamp.isoformat()
                 if validated_state.timestamp
                 else None
             ),
-            "prefect.state-type": validated_state.type.value,
+            "syntask.state-type": validated_state.type.value,
         },
         related=await _flow_run_related_resources_from_orm(
             session=session, flow_run=flow_run
@@ -206,16 +206,16 @@ def _resource_data_as_related_resources(
 
         related.append(
             {
-                "prefect.resource.id": f"prefect.{kind}.{data['id']}",
-                "prefect.resource.role": data["role"],
-                "prefect.resource.name": data["name"],
+                "syntask.resource.id": f"syntask.{kind}.{data['id']}",
+                "syntask.resource.role": data["role"],
+                "syntask.resource.name": data["name"],
             }
         )
 
     related += [
         {
-            "prefect.resource.id": f"prefect.tag.{tag}",
-            "prefect.resource.role": "tag",
+            "syntask.resource.id": f"syntask.tag.{tag}",
+            "syntask.resource.role": "tag",
         }
         for tag in sorted(tags)
     ]
@@ -232,18 +232,18 @@ def _provenance_as_related_resources(
     resource_id: str
 
     if created_by.type == "DEPLOYMENT":
-        resource_id = f"prefect.deployment.{created_by.id}"
+        resource_id = f"syntask.deployment.{created_by.id}"
     elif created_by.type == "AUTOMATION":
-        resource_id = f"prefect.automation.{created_by.id}"
+        resource_id = f"syntask.automation.{created_by.id}"
     else:
         return []
 
     related = {
-        "prefect.resource.id": resource_id,
-        "prefect.resource.role": "creator",
+        "syntask.resource.id": resource_id,
+        "syntask.resource.role": "creator",
     }
     if created_by.display_value:
-        related["prefect.resource.name"] = created_by.display_value
+        related["syntask.resource.name"] = created_by.display_value
     return [related]
 
 
@@ -319,37 +319,37 @@ async def deployment_status_event(
     if flow is not None:
         related_work_queue_and_pool_info.append(
             {
-                "prefect.resource.id": f"prefect.flow.{flow.id}",
-                "prefect.resource.name": flow.name,
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": f"syntask.flow.{flow.id}",
+                "syntask.resource.name": flow.name,
+                "syntask.resource.role": "flow",
             }
         )
 
     if work_queue is not None:
         related_work_queue_and_pool_info.append(
             {
-                "prefect.resource.id": f"prefect.work-queue.{work_queue.id}",
-                "prefect.resource.name": work_queue.name,
-                "prefect.resource.role": "work-queue",
+                "syntask.resource.id": f"syntask.work-queue.{work_queue.id}",
+                "syntask.resource.name": work_queue.name,
+                "syntask.resource.role": "work-queue",
             }
         )
 
     if work_pool is not None:
         related_work_queue_and_pool_info.append(
             {
-                "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                "prefect.resource.name": work_pool.name,
-                "prefect.work-pool.type": work_pool.type,
-                "prefect.resource.role": "work-pool",
+                "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                "syntask.resource.name": work_pool.name,
+                "syntask.work-pool.type": work_pool.type,
+                "syntask.resource.role": "work-pool",
             }
         )
 
     return Event(
         occurred=occurred,
-        event=f"prefect.deployment.{status.in_kebab_case()}",
+        event=f"syntask.deployment.{status.in_kebab_case()}",
         resource={
-            "prefect.resource.id": f"prefect.deployment.{deployment.id}",
-            "prefect.resource.name": f"{deployment.name}",
+            "syntask.resource.id": f"syntask.deployment.{deployment.id}",
+            "syntask.resource.name": f"{deployment.name}",
         },
         related=related_work_queue_and_pool_info,
         id=uuid4(),
@@ -372,20 +372,20 @@ async def work_queue_status_event(
         if work_pool and work_pool.id and work_pool.name:
             related_work_pool_info.append(
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.work-pool.type": work_pool.type,
-                    "prefect.resource.role": "work-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.work-pool.type": work_pool.type,
+                    "syntask.resource.role": "work-pool",
                 }
             )
 
     return Event(
         occurred=occurred,
-        event=f"prefect.work-queue.{work_queue.status.in_kebab_case()}",
+        event=f"syntask.work-queue.{work_queue.status.in_kebab_case()}",
         resource={
-            "prefect.resource.id": f"prefect.work-queue.{work_queue.id}",
-            "prefect.resource.name": work_queue.name,
-            "prefect.resource.role": "work-queue",
+            "syntask.resource.id": f"syntask.work-queue.{work_queue.id}",
+            "syntask.resource.name": work_queue.name,
+            "syntask.resource.role": "work-queue",
         },
         related=related_work_pool_info,
         id=uuid4(),
@@ -403,11 +403,11 @@ async def work_pool_status_event(
     return Event(
         id=event_id,
         occurred=occurred,
-        event=f"prefect.work-pool.{work_pool.status.in_kebab_case()}",
+        event=f"syntask.work-pool.{work_pool.status.in_kebab_case()}",
         resource={
-            "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-            "prefect.resource.name": work_pool.name,
-            "prefect.work-pool.type": work_pool.type,
+            "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+            "syntask.resource.name": work_pool.name,
+            "syntask.work-pool.type": work_pool.type,
         },
         follows=_get_recent_preceding_work_pool_event_id(pre_update_work_pool),
     )

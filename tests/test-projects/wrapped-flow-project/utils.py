@@ -1,4 +1,4 @@
-from prefect import flow
+from syntask import flow
 
 
 def pipeline_flow(name=None):

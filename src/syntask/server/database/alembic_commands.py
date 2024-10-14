@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy.exc import SAWarning
 
-import prefect.server
+import syntask.server
 
 ALEMBIC_LOCK = Lock()
 
@@ -17,7 +17,7 @@ def with_alembic_lock(fn):
     This is necessary because alembic uses a global configuration object
     that is not thread-safe.
 
-    This issue occurred in https://github.com/synopkg/synopkg-dask/pull/50, where
+    This issue occurred in https://github.com/synopkg/prefect-dask/pull/50, where
     dask threads were simultaneously performing alembic upgrades, and causing
     cryptic `KeyError: 'config'` when `del globals_[attr_name]`.
     """
@@ -33,7 +33,7 @@ def with_alembic_lock(fn):
 def alembic_config():
     from alembic.config import Config
 
-    alembic_dir = Path(prefect.server.database.__file__).parent
+    alembic_dir = Path(syntask.server.database.__file__).parent
     if not alembic_dir.joinpath("alembic.ini").exists():
         raise ValueError(f"Couldn't find alembic.ini at {alembic_dir}/alembic.ini")
 
@@ -45,7 +45,7 @@ def alembic_config():
 @with_alembic_lock
 def alembic_upgrade(revision: str = "head", dry_run: bool = False):
     """
-    Run alembic upgrades on Prefect REST API database
+    Run alembic upgrades on Syntask REST API database
 
     Args:
         revision: The revision passed to `alembic downgrade`. Defaults to 'head', upgrading all revisions.
@@ -67,7 +67,7 @@ def alembic_upgrade(revision: str = "head", dry_run: bool = False):
 @with_alembic_lock
 def alembic_downgrade(revision: str = "-1", dry_run: bool = False):
     """
-    Run alembic downgrades on Prefect REST API database
+    Run alembic downgrades on Syntask REST API database
 
     Args:
         revision: The revision passed to `alembic downgrade`. Defaults to 'base', downgrading all revisions.

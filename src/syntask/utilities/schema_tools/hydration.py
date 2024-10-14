@@ -6,12 +6,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import TypeAlias
 
-from prefect.server.utilities.user_templates import (
+from syntask.server.utilities.user_templates import (
     TemplateSecurityError,
     render_user_template_sync,
     validate_user_template,
 )
-from prefect.types import StrictVariableValue
+from syntask.types import StrictVariableValue
 
 
 class HydrationContext(BaseModel):
@@ -32,7 +32,7 @@ class HydrationContext(BaseModel):
         render_jinja: bool = False,
         render_workspace_variables: bool = False,
     ) -> "HydrationContext":
-        from prefect.server.models.variables import read_variables
+        from syntask.server.models.variables import read_variables
 
         if render_workspace_variables:
             variables = await read_variables(
@@ -52,9 +52,9 @@ class HydrationContext(BaseModel):
 
 
 Handler: TypeAlias = Callable[[dict, HydrationContext], Any]
-PrefectKind: TypeAlias = Optional[str]
+SyntaskKind: TypeAlias = Optional[str]
 
-_handlers: Dict[PrefectKind, Handler] = {}
+_handlers: Dict[SyntaskKind, Handler] = {}
 
 
 class Placeholder:
@@ -96,7 +96,7 @@ class HydrationError(Placeholder, Exception):
 class KeyNotFound(HydrationError):
     @property
     def message(self):
-        return f"Missing '{self.key}' key in __prefect object"
+        return f"Missing '{self.key}' key in __syntask object"
 
     @property
     def key(self) -> str:
@@ -168,7 +168,7 @@ class ValidJinja(Placeholder):
         return isinstance(other, type(self)) and self.template == other.template
 
 
-def handler(kind: PrefectKind) -> Callable:
+def handler(kind: SyntaskKind) -> Callable:
     def decorator(func: Handler) -> Handler:
         _handlers[kind] = func
         return func
@@ -176,7 +176,7 @@ def handler(kind: PrefectKind) -> Callable:
     return decorator
 
 
-def call_handler(kind: PrefectKind, obj: dict, ctx: HydrationContext) -> Any:
+def call_handler(kind: SyntaskKind, obj: dict, ctx: HydrationContext) -> Any:
     if kind not in _handlers:
         return (obj or {}).get("value", None)
 
@@ -213,11 +213,11 @@ def json_handler(obj: dict, ctx: HydrationContext):
             return InvalidJSON(detail=str(e))
     else:
         # If `value` is not in the object, we need special handling to help
-        # the UI. For now if an object looks like {"__prefect_kind": "json"}
+        # the UI. For now if an object looks like {"__syntask_kind": "json"}
         # We will remove it from the parent object. e.x.
-        # {"a": {"__prefect_kind": "json"}} -> {}
+        # {"a": {"__syntask_kind": "json"}} -> {}
         # or
-        # [{"__prefect_kind": "json"}] -> []
+        # [{"__syntask_kind": "json"}] -> []
         return RemoveValue()
 
 
@@ -267,13 +267,13 @@ def workspace_variable_handler(obj: dict, ctx: HydrationContext):
             return WorkspaceVariableNotFound(detail=dehydrated_variable)
     else:
         # Special handling if `variable_name` is not in the object.
-        # If an object looks like {"__prefect_kind": "workspace_variable"}
+        # If an object looks like {"__syntask_kind": "workspace_variable"}
         # we will remove it from the parent object. e.x.
-        # {"a": {"__prefect_kind": "workspace_variable"}} -> {}
+        # {"a": {"__syntask_kind": "workspace_variable"}} -> {}
         # or
-        # [{"__prefect_kind": "workspace_variable"}] -> []
+        # [{"__syntask_kind": "workspace_variable"}] -> []
         # or
-        # {"__prefect_kind": "workspace_variable"} -> {}
+        # {"__syntask_kind": "workspace_variable"} -> {}
         return RemoveValue()
 
 
@@ -290,11 +290,11 @@ def _hydrate(obj, ctx: Optional[HydrationContext] = None) -> Any:
     if ctx is None:
         ctx = HydrationContext()
 
-    prefect_object = isinstance(obj, dict) and "__prefect_kind" in obj
+    syntask_object = isinstance(obj, dict) and "__syntask_kind" in obj
 
-    if prefect_object:
-        prefect_kind = obj.get("__prefect_kind")
-        return call_handler(prefect_kind, obj, ctx)
+    if syntask_object:
+        syntask_kind = obj.get("__syntask_kind")
+        return call_handler(syntask_kind, obj, ctx)
     else:
         if isinstance(obj, dict):
             return {

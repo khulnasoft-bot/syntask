@@ -7,17 +7,17 @@ import pytest
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions, triggers
-from prefect.server.events.models import automations
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions, triggers
+from syntask.server.events.models import automations
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
     Posture,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, matches
-from prefect.settings import PREFECT_EVENTS_EXPIRED_BUCKET_BUFFER
+from syntask.server.events.schemas.events import ReceivedEvent, matches
+from syntask.settings import SYNTASK_EVENTS_EXPIRED_BUCKET_BUFFER
 
 
 def test_triggers_have_identifiers(arachnophobia: Automation):
@@ -182,7 +182,7 @@ async def test_reactive_automation_triggers_only_on_expected_events(
     assert_acted_with: Callable[[Union[Firing, List[Firing]]], None],
     frozen_time: DateTime,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/2776, where
+    """Regression test for https://github.com/SynoPKG/nebula/issues/2776, where
     we were triggering actions for events that didn't actually match the expect"""
 
     # this is not the event we're expecting
@@ -300,7 +300,7 @@ async def test_reactive_automation_triggers_immediately_even_if_event_matches_af
     assert_acted_with: Callable[[Union[Firing, List[Firing]]], None],
     frozen_time: DateTime,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/3091"""
+    """Regression test for https://github.com/SynoPKG/nebula/issues/3091"""
 
     # First, we need an event that trivially matches the "after" criteria
     trivial_after_match_event = woodchonk_table_for_one.model_copy(
@@ -487,7 +487,7 @@ async def test_reactive_triggers_clean_up_after_themselves_if_they_do_fire(
     act: mock.AsyncMock,
     assert_acted_with: Callable[[Union[Firing, List[Firing]]], None],
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/2935, where
+    """Regression test for https://github.com/SynoPKG/nebula/issues/2935, where
     expired buckets were left in the DB by Reactive automations"""
 
     # This automation was taken verbatim from an automation in staging that exhibited
@@ -499,15 +499,15 @@ async def test_reactive_triggers_clean_up_after_themselves_if_they_do_fire(
             name="Repro for #2935",
             trigger=EventTrigger(
                 after=[],
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                expect=["prefect.flow-run.Failed"],
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                expect=["syntask.flow-run.Failed"],
                 within=10.0,
                 posture="Reactive",
-                for_each=["prefect.resource.id"],
+                for_each=["syntask.resource.id"],
                 threshold=1,
                 match_related={
-                    "prefect.resource.id": ["prefect.flow.ffffffff"],
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.id": ["syntask.flow.ffffffff"],
+                    "syntask.resource.role": "flow",
                 },
             ),
             actions=[actions.DoNothing()],
@@ -525,12 +525,12 @@ async def test_reactive_triggers_clean_up_after_themselves_if_they_do_fire(
     # to be created
     running_event = ReceivedEvent(
         occurred=now,
-        event="prefect.flow-run.Running",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Running",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.ffffffff",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.ffffffff",
+                "syntask.resource.role": "flow",
             }
         ],
         received=now,
@@ -554,12 +554,12 @@ async def test_reactive_triggers_clean_up_after_themselves_if_they_do_fire(
     # The failed event _is_ relevant and should cause this automation to fire
     failed_event = ReceivedEvent(
         occurred=now,
-        event="prefect.flow-run.Failed",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Failed",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.ffffffff",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.ffffffff",
+                "syntask.resource.role": "flow",
             }
         ],
         received=now,
@@ -591,7 +591,7 @@ async def test_reactive_triggers_clean_up_after_themselves_if_they_do_fire(
     # Only when we're past the bucket's `end` by a short buffer can we remove it, this
     # avoids contention with other in-flight changes to buckets
     await triggers.reset_events_clock()
-    now += PREFECT_EVENTS_EXPIRED_BUCKET_BUFFER.value() + timedelta(seconds=1)
+    now += SYNTASK_EVENTS_EXPIRED_BUCKET_BUFFER.value() + timedelta(seconds=1)
     await triggers.periodic_evaluation(now)
     bucket = await triggers.read_bucket(automations_session, trigger, bucketing_key)
     assert not bucket
@@ -613,11 +613,11 @@ async def test_follower_messages_are_processed_when_leaders_arrive(
             name="Testing out-of-order events",
             trigger=EventTrigger(
                 after=[],
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                expect=["prefect.flow-run.Failed"],
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                expect=["syntask.flow-run.Failed"],
                 within=10.0,
                 posture="Reactive",
-                for_each=["prefect.resource.id"],
+                for_each=["syntask.resource.id"],
                 threshold=1,
             ),
             actions=[actions.DoNothing()],
@@ -628,16 +628,16 @@ async def test_follower_messages_are_processed_when_leaders_arrive(
 
     pending = ReceivedEvent(
         occurred=start_of_test,
-        event="prefect.flow-run.Pending",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Pending",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=start_of_test + timedelta(seconds=2),
         id=uuid4(),
     )
 
     running = ReceivedEvent(
         occurred=start_of_test + timedelta(minutes=1),
-        event="prefect.flow-run.Running",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Running",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=start_of_test + timedelta(minutes=1, seconds=2),
         id=uuid4(),
         follows=pending.id,
@@ -645,8 +645,8 @@ async def test_follower_messages_are_processed_when_leaders_arrive(
 
     failed = ReceivedEvent(
         occurred=start_of_test + timedelta(minutes=3),
-        event="prefect.flow-run.Failed",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Failed",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=start_of_test + timedelta(minutes=2, seconds=3),
         id=uuid4(),
         follows=running.id,
@@ -667,7 +667,7 @@ async def test_follower_messages_are_processed_when_leaders_arrive(
             trigger=automation.trigger,
             trigger_states={TriggerState.Triggered},
             triggered=frozen_time,  # type: ignore
-            triggering_labels={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            triggering_labels={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             triggering_event=failed,  # we reacted due to the Failed event, not Running
         ),
     )
@@ -689,11 +689,11 @@ async def test_old_follower_messages_are_processed_immediately(
             name="Testing out-of-order events",
             trigger=EventTrigger(
                 after=[],
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                expect=["prefect.flow-run.Failed"],
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                expect=["syntask.flow-run.Failed"],
                 within=10.0,
                 posture="Reactive",
-                for_each=["prefect.resource.id"],
+                for_each=["syntask.resource.id"],
                 threshold=1,
             ),
             actions=[actions.DoNothing()],
@@ -706,16 +706,16 @@ async def test_old_follower_messages_are_processed_immediately(
 
     pending = ReceivedEvent(
         occurred=base_date,
-        event="prefect.flow-run.Pending",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Pending",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=base_date + timedelta(seconds=1),
         id=uuid4(),
     )
 
     running = ReceivedEvent(
         occurred=base_date + timedelta(minutes=1),
-        event="prefect.flow-run.Running",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Running",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=base_date + timedelta(minutes=1, seconds=2),
         id=uuid4(),
         follows=pending.id,
@@ -723,8 +723,8 @@ async def test_old_follower_messages_are_processed_immediately(
 
     failed = ReceivedEvent(
         occurred=base_date + timedelta(minutes=3),
-        event="prefect.flow-run.Failed",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Failed",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=base_date + timedelta(minutes=2, seconds=3),
         id=uuid4(),
         follows=running.id,
@@ -742,7 +742,7 @@ async def test_old_follower_messages_are_processed_immediately(
             trigger=automation.trigger,
             trigger_states={TriggerState.Triggered},
             triggered=frozen_time,  # type: ignore
-            triggering_labels={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            triggering_labels={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             triggering_event=failed,
         ),
     )
@@ -765,11 +765,11 @@ async def test_lost_followers_are_processed_during_proactive_evaluation(
             name="Testing out-of-order events",
             trigger=EventTrigger(
                 after=[],
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                expect=["prefect.flow-run.Failed"],
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                expect=["syntask.flow-run.Failed"],
                 within=10.0,
                 posture="Reactive",
-                for_each=["prefect.resource.id"],
+                for_each=["syntask.resource.id"],
                 threshold=1,
             ),
             actions=[actions.DoNothing()],
@@ -784,15 +784,15 @@ async def test_lost_followers_are_processed_during_proactive_evaluation(
     bogus = ReceivedEvent(
         occurred=base_date,
         event="nope",
-        resource={"prefect.resource.id": "never"},
+        resource={"syntask.resource.id": "never"},
         received=base_date,
         id=uuid4(),
     )
 
     pending = ReceivedEvent(
         occurred=base_date,
-        event="prefect.flow-run.Pending",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Pending",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=base_date + timedelta(seconds=1),
         id=uuid4(),
     )
@@ -800,8 +800,8 @@ async def test_lost_followers_are_processed_during_proactive_evaluation(
     # have both of these events follow something that is never coming
     running = ReceivedEvent(
         occurred=base_date + timedelta(minutes=1),
-        event="prefect.flow-run.Running",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Running",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=base_date + timedelta(minutes=1, seconds=2),
         id=uuid4(),
         follows=bogus.id,
@@ -809,8 +809,8 @@ async def test_lost_followers_are_processed_during_proactive_evaluation(
 
     failed = ReceivedEvent(
         occurred=base_date + timedelta(minutes=3),
-        event="prefect.flow-run.Failed",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Failed",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         received=base_date + timedelta(minutes=2, seconds=3),
         id=uuid4(),
         follows=bogus.id,
@@ -833,7 +833,7 @@ async def test_lost_followers_are_processed_during_proactive_evaluation(
 
     # A proactive evaluation happening before the timeout should not process these
     # events
-    with mock.patch("prefect.server.events.triggers.pendulum.now") as the_future:
+    with mock.patch("syntask.server.events.triggers.pendulum.now") as the_future:
         the_future.return_value = base_date + timedelta(minutes=10)
         await triggers.periodic_evaluation(base_date + timedelta(minutes=10))
 
@@ -842,7 +842,7 @@ async def test_lost_followers_are_processed_during_proactive_evaluation(
     # Only after a later proactive evaluation are these processed; use a mock for
     # pendulum.now because the age calculation for the TTLCache of recently seen events
     # is based on the current wall-clock time
-    with mock.patch("prefect.server.events.triggers.pendulum.now") as the_future:
+    with mock.patch("syntask.server.events.triggers.pendulum.now") as the_future:
         the_future.return_value = base_date + timedelta(minutes=20)
         await triggers.periodic_evaluation(base_date + timedelta(minutes=20))
 
@@ -851,7 +851,7 @@ async def test_lost_followers_are_processed_during_proactive_evaluation(
             trigger=automation.trigger,
             trigger_states={TriggerState.Triggered},
             triggered=the_future.return_value,
-            triggering_labels={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            triggering_labels={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             triggering_event=failed,
         ),
     )

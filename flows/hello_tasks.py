@@ -1,7 +1,7 @@
 import os
 
-from prefect import flow, task
-from prefect.logging import get_run_logger
+from syntask import flow, task
+from syntask.logging import get_run_logger
 
 
 @task

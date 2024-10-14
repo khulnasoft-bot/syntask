@@ -13,19 +13,19 @@ from typing import (
     Union,
 )
 
-from prefect.client.utilities import inject_client
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.collections import get_from_dict
+from syntask.client.utilities import inject_client
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.collections import get_from_dict
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 T = TypeVar("T", str, int, float, bool, dict, list, None)
 
 PLACEHOLDER_CAPTURE_REGEX = re.compile(r"({{\s*([\w\.\-\[\]$]+)\s*}})")
-BLOCK_DOCUMENT_PLACEHOLDER_PREFIX = "prefect.blocks."
-VARIABLE_PLACEHOLDER_PREFIX = "prefect.variables."
+BLOCK_DOCUMENT_PLACEHOLDER_PREFIX = "syntask.blocks."
+VARIABLE_PLACEHOLDER_PREFIX = "syntask.variables."
 ENV_VAR_PLACEHOLDER_PREFIX = "$"
 
 
@@ -177,7 +177,7 @@ def apply_values(
 
 @inject_client
 async def resolve_block_document_references(
-    template: T, client: "PrefectClient" = None
+    template: T, client: "SyntaskClient" = None
 ) -> Union[T, Dict[str, Any]]:
     """
     Resolve block document references in a template by replacing each reference with
@@ -221,15 +221,15 @@ async def resolve_block_document_references(
     examples of value resolution are as follows:
 
     1. Accessing a nested dictionary:
-       Format: prefect.blocks.<block_type_slug>.<block_document_name>.value.key
+       Format: syntask.blocks.<block_type_slug>.<block_document_name>.value.key
        Example: Returns {"nested-key": "nested-value"}
 
     2. Accessing a specific nested value:
-       Format: prefect.blocks.<block_type_slug>.<block_document_name>.value.key.nested-key
+       Format: syntask.blocks.<block_type_slug>.<block_document_name>.value.key.nested-key
        Example: Returns "nested-value"
 
     3. Accessing a list element's key-value:
-       Format: prefect.blocks.<block_type_slug>.<block_document_name>.value.list[0].list-key
+       Format: syntask.blocks.<block_type_slug>.<block_document_name>.value.list[0].list-key
        Example: Returns "list-value"
 
     Default Resolution for System Blocks:
@@ -311,7 +311,7 @@ async def resolve_block_document_references(
 
 
 @inject_client
-async def resolve_variables(template: T, client: Optional["PrefectClient"] = None):
+async def resolve_variables(template: T, client: Optional["SyntaskClient"] = None):
     """
     Resolve variables in a template by replacing each variable placeholder with the
     value of the variable.

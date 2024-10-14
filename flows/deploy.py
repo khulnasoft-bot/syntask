@@ -3,25 +3,25 @@ import sys
 
 import anyio
 
-import prefect
-from prefect.deployments import run_deployment
+import syntask
+from syntask.deployments import run_deployment
 
 
 async def read_flow_run(flow_run_id):
-    async with prefect.get_client() as client:
+    async with syntask.get_client() as client:
         return await client.read_flow_run(flow_run_id)
 
 
 def main():
     try:
         subprocess.check_call(
-            ["prefect", "work-pool", "create", "test-pool", "-t", "process"],
+            ["syntask", "work-pool", "create", "test-pool", "-t", "process"],
             stdout=sys.stdout,
             stderr=sys.stderr,
         )
 
-        flow_instance = prefect.flow.from_source(
-            source="https://github.com/synopkg/synopkg-recipes.git",
+        flow_instance = syntask.flow.from_source(
+            source="https://github.com/synopkg/syntask-recipes.git",
             entrypoint="flows-starter/hello.py:hello",
         )
 
@@ -35,7 +35,7 @@ def main():
 
         subprocess.check_call(
             [
-                "prefect",
+                "syntask",
                 "flow-run",
                 "execute",
                 str(flow_run.id),
@@ -49,7 +49,7 @@ def main():
 
     finally:
         subprocess.check_call(
-            ["prefect", "work-pool", "delete", "test-pool"],
+            ["syntask", "work-pool", "delete", "test-pool"],
             stdout=sys.stdout,
             stderr=sys.stderr,
         )

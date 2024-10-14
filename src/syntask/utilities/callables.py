@@ -15,22 +15,22 @@ import pydantic
 from griffe import Docstring, DocstringSectionKind, Parser, parse
 from typing_extensions import Literal
 
-from prefect._internal.pydantic.v1_schema import has_v1_type_as_param
-from prefect._internal.pydantic.v2_schema import (
+from syntask._internal.pydantic.v1_schema import has_v1_type_as_param
+from syntask._internal.pydantic.v2_schema import (
     create_v2_schema,
     process_v2_params,
 )
-from prefect.exceptions import (
+from syntask.exceptions import (
     MappingLengthMismatch,
     MappingMissingIterable,
     ParameterBindError,
     ReservedArgumentError,
     SignatureMismatchError,
 )
-from prefect.logging.loggers import disable_logger, get_logger
-from prefect.utilities.annotations import allow_failure, quote, unmapped
-from prefect.utilities.collections import isiterable
-from prefect.utilities.importtools import safe_load_namespace
+from syntask.logging.loggers import disable_logger, get_logger
+from syntask.utilities.annotations import allow_failure, quote, unmapped
+from syntask.utilities.collections import isiterable
+from syntask.utilities.importtools import safe_load_namespace
 
 logger = get_logger(__name__)
 
@@ -45,19 +45,19 @@ def get_call_parameters(
     Bind a call to a function to get parameter/value mapping. Default values on
     the signature will be included if not overridden.
 
-    If the function has a `__prefect_self__` attribute, it will be included as
-    the first parameter. This attribute is set when Prefect decorates a bound
-    method, so this approach allows Prefect to work with bound methods in a way
+    If the function has a `__syntask_self__` attribute, it will be included as
+    the first parameter. This attribute is set when Syntask decorates a bound
+    method, so this approach allows Syntask to work with bound methods in a way
     that is consistent with how Python handles them (i.e. users don't have to
     pass the instance argument to the method) while still making the implicit self
-    argument visible to all of Prefect's parameter machinery (such as cache key
+    argument visible to all of Syntask's parameter machinery (such as cache key
     functions).
 
     Raises a ParameterBindError if the arguments/kwargs are not valid for the
     function
     """
-    if hasattr(fn, "__prefect_self__"):
-        call_args = (fn.__prefect_self__,) + call_args
+    if hasattr(fn, "__syntask_self__"):
+        call_args = (fn.__syntask_self__,) + call_args
 
     try:
         bound_signature = inspect.signature(fn).bind(*call_args, **call_kwargs)

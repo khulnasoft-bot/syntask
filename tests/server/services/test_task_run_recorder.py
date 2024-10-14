@@ -8,18 +8,18 @@ import pendulum
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.models.flow_runs import create_flow_run
-from prefect.server.models.task_run_states import (
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.models.flow_runs import create_flow_run
+from syntask.server.models.task_run_states import (
     read_task_run_state,
     read_task_run_states,
 )
-from prefect.server.models.task_runs import read_task_run
-from prefect.server.schemas.core import FlowRun, TaskRunPolicy
-from prefect.server.schemas.states import StateDetails, StateType
-from prefect.server.services import task_run_recorder
-from prefect.server.utilities.messaging import MessageHandler
-from prefect.server.utilities.messaging.memory import MemoryMessage
+from syntask.server.models.task_runs import read_task_run
+from syntask.server.schemas.core import FlowRun, TaskRunPolicy
+from syntask.server.schemas.states import StateDetails, StateType
+from syntask.server.services import task_run_recorder
+from syntask.server.utilities.messaging import MessageHandler
+from syntask.server.utilities.messaging.memory import MemoryMessage
 
 
 async def test_start_and_stop_service():
@@ -55,12 +55,12 @@ def hello_event() -> ReceivedEvent:
         occurred=pendulum.datetime(2022, 1, 2, 3, 4, 5, 6, "UTC"),
         event="hello",
         resource={
-            "prefect.resource.id": "my.resource.id",
+            "syntask.resource.id": "my.resource.id",
         },
         related=[
-            {"prefect.resource.id": "related-1", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-2", "prefect.resource.role": "role-1"},
-            {"prefect.resource.id": "related-3", "prefect.resource.role": "role-2"},
+            {"syntask.resource.id": "related-1", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-2", "syntask.resource.role": "role-1"},
+            {"syntask.resource.id": "related-3", "syntask.resource.role": "role-2"},
         ],
         payload={"hello": "world"},
         account=UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
@@ -75,17 +75,17 @@ def hello_event() -> ReceivedEvent:
 def client_orchestrated_task_run_event() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=pendulum.datetime(2022, 1, 2, 3, 4, 5, 6, "UTC"),
-        event="prefect.task-run.Running",
+        event="syntask.task-run.Running",
         resource={
-            "prefect.resource.id": "prefect.task-run.b75b283c-7cd5-439a-b23e-d0c59e78b042",
-            "prefect.resource.name": "my_task",
-            "prefect.state-message": "",
-            "prefect.state-name": "Running",
-            "prefect.state-timestamp": pendulum.datetime(
+            "syntask.resource.id": "syntask.task-run.b75b283c-7cd5-439a-b23e-d0c59e78b042",
+            "syntask.resource.name": "my_task",
+            "syntask.state-message": "",
+            "syntask.state-name": "Running",
+            "syntask.state-timestamp": pendulum.datetime(
                 2022, 1, 2, 3, 4, 5, 6, "UTC"
             ).isoformat(),
-            "prefect.state-type": "RUNNING",
-            "prefect.orchestration": "client",
+            "syntask.state-type": "RUNNING",
+            "syntask.orchestration": "client",
         },
         related=[],
         payload={
@@ -132,17 +132,17 @@ def client_orchestrated_task_run_event() -> ReceivedEvent:
 def server_orchestrated_task_run_event() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=pendulum.datetime(2022, 1, 2, 3, 4, 5, 6, "UTC"),
-        event="prefect.task-run.Running",
+        event="syntask.task-run.Running",
         resource={
-            "prefect.resource.id": "prefect.task-run.b75b283c-7cd5-439a-b23e-d0c59e78b042",
-            "prefect.resource.name": "my_task",
-            "prefect.state-message": "",
-            "prefect.state-name": "Running",
-            "prefect.state-timestamp": pendulum.datetime(
+            "syntask.resource.id": "syntask.task-run.b75b283c-7cd5-439a-b23e-d0c59e78b042",
+            "syntask.resource.name": "my_task",
+            "syntask.state-message": "",
+            "syntask.state-name": "Running",
+            "syntask.state-timestamp": pendulum.datetime(
                 2022, 1, 2, 3, 4, 5, 6, "UTC"
             ).isoformat(),
-            "prefect.state-type": "RUNNING",
-            "prefect.orchestration": "server",
+            "syntask.state-type": "RUNNING",
+            "syntask.orchestration": "server",
         },
         related=[],
         payload={
@@ -212,20 +212,20 @@ def pending_event(flow_run) -> ReceivedEvent:
     occurred = pendulum.datetime(2024, 1, 1, 0, 0, 0, 0, "UTC")
     return ReceivedEvent(
         occurred=occurred,
-        event="prefect.task-run.Pending",
+        event="syntask.task-run.Pending",
         resource={
-            "prefect.resource.id": "prefect.task-run.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-            "prefect.resource.name": "my_task",
-            "prefect.state-message": "",
-            "prefect.state-type": "PENDING",
-            "prefect.state-name": "Pending",
-            "prefect.state-timestamp": occurred.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": "syntask.task-run.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "syntask.resource.name": "my_task",
+            "syntask.state-message": "",
+            "syntask.state-type": "PENDING",
+            "syntask.state-name": "Pending",
+            "syntask.state-timestamp": occurred.isoformat(),
+            "syntask.orchestration": "client",
         },
         related=[
             {
-                "prefect.resource.id": "prefect.flow-run.ffffffff-ffff-ffff-ffff-ffffffffffff",
-                "prefect.resource.role": "flow-run",
+                "syntask.resource.id": "syntask.flow-run.ffffffff-ffff-ffff-ffff-ffffffffffff",
+                "syntask.resource.role": "flow-run",
             },
         ],
         payload={
@@ -274,20 +274,20 @@ def running_event(flow_run) -> ReceivedEvent:
     occurred = pendulum.datetime(2024, 1, 1, 0, 1, 0, 0, "UTC")
     return ReceivedEvent(
         occurred=occurred,
-        event="prefect.task-run.Running",
+        event="syntask.task-run.Running",
         resource={
-            "prefect.resource.id": "prefect.task-run.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-            "prefect.resource.name": "my_task",
-            "prefect.state-message": "",
-            "prefect.state-type": "RUNNING",
-            "prefect.state-name": "Running",
-            "prefect.state-timestamp": occurred.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": "syntask.task-run.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "syntask.resource.name": "my_task",
+            "syntask.state-message": "",
+            "syntask.state-type": "RUNNING",
+            "syntask.state-name": "Running",
+            "syntask.state-timestamp": occurred.isoformat(),
+            "syntask.orchestration": "client",
         },
         related=[
             {
-                "prefect.resource.id": "prefect.flow-run.ffffffff-ffff-ffff-ffff-ffffffffffff",
-                "prefect.resource.role": "flow-run",
+                "syntask.resource.id": "syntask.flow-run.ffffffff-ffff-ffff-ffff-ffffffffffff",
+                "syntask.resource.role": "flow-run",
             },
         ],
         payload={
@@ -349,20 +349,20 @@ def completed_event(flow_run) -> ReceivedEvent:
     occurred = pendulum.datetime(2024, 1, 1, 0, 2, 0, 0, "UTC")
     return ReceivedEvent(
         occurred=occurred,
-        event="prefect.task-run.Completed",
+        event="syntask.task-run.Completed",
         resource={
-            "prefect.resource.id": "prefect.task-run.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-            "prefect.resource.name": "my_task",
-            "prefect.state-message": "",
-            "prefect.state-type": "COMPLETED",
-            "prefect.state-name": "Completed",
-            "prefect.state-timestamp": occurred.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": "syntask.task-run.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "syntask.resource.name": "my_task",
+            "syntask.state-message": "",
+            "syntask.state-type": "COMPLETED",
+            "syntask.state-name": "Completed",
+            "syntask.state-timestamp": occurred.isoformat(),
+            "syntask.orchestration": "client",
         },
         related=[
             {
-                "prefect.resource.id": "prefect.flow-run.ffffffff-ffff-ffff-ffff-ffffffffffff",
-                "prefect.resource.role": "flow-run",
+                "syntask.resource.id": "syntask.flow-run.ffffffff-ffff-ffff-ffff-ffffffffffff",
+                "syntask.resource.role": "flow-run",
             },
         ],
         payload={

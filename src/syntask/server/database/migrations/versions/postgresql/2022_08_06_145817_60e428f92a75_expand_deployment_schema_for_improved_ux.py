@@ -9,7 +9,7 @@ Create Date: 2022-08-06 14:58:17.138505
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "60e428f92a75"
@@ -23,7 +23,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "infra_overrides",
-                prefect.server.utilities.database.JSON(astext_type=sa.Text()),
+                syntask.server.utilities.database.JSON(astext_type=sa.Text()),
                 server_default="{}",
                 nullable=False,
             )

@@ -12,15 +12,15 @@ from pydantic import ConfigDict, Field, field_validator, model_validator
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import Self
 
-from prefect.server.utilities.schemas.bases import (
+from syntask.server.utilities.schemas.bases import (
     IDBaseModel,
-    PrefectBaseModel,
+    SyntaskBaseModel,
 )
-from prefect.utilities.collections import AutoEnum
+from syntask.utilities.collections import AutoEnum
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMFlowRunState, ORMTaskRunState
-    from prefect.server.schemas.actions import StateCreate
+    from syntask.server.database.orm_models import ORMFlowRunState, ORMTaskRunState
+    from syntask.server.schemas.actions import StateCreate
 
 R = TypeVar("R")
 
@@ -39,7 +39,7 @@ class StateType(AutoEnum):
     CANCELLING = AutoEnum.auto()
 
 
-class CountByState(PrefectBaseModel):
+class CountByState(SyntaskBaseModel):
     COMPLETED: int = Field(default=0)
     PENDING: int = Field(default=0)
     RUNNING: int = Field(default=0)
@@ -68,7 +68,7 @@ TERMINAL_STATES = {
 }
 
 
-class StateDetails(PrefectBaseModel):
+class StateDetails(SyntaskBaseModel):
     flow_run_id: Optional[UUID] = None
     task_run_id: Optional[UUID] = None
     # for task runs that represent subflows, the subflow's run ID
@@ -160,7 +160,7 @@ class State(StateBaseModel):
 
     @model_validator(mode="after")
     def default_scheduled_start_time(self):
-        from prefect.server.schemas.states import StateType
+        from syntask.server.schemas.states import StateType
 
         if self.type == StateType.SCHEDULED:
             if not self.state_details.scheduled_time:
@@ -215,13 +215,13 @@ class State(StateBaseModel):
 
     def result(self, raise_on_failure: bool = True, fetch: Optional[bool] = None):
         # Backwards compatible `result` handling on the server-side schema
-        from prefect.states import State
+        from syntask.states import State
 
         warnings.warn(
             (
                 "`result` is no longer supported by"
-                " `prefect.server.schemas.states.State` and will be removed in a future"
-                " release. When result retrieval is needed, use `prefect.states.State`."
+                " `syntask.server.schemas.states.State` and will be removed in a future"
+                " release. When result retrieval is needed, use `syntask.states.State`."
             ),
             DeprecationWarning,
             stacklevel=2,
@@ -231,7 +231,7 @@ class State(StateBaseModel):
         return state.result(raise_on_failure=raise_on_failure, fetch=fetch)
 
     def to_state_create(self) -> "StateCreate":
-        from prefect.server.schemas.actions import StateCreate
+        from syntask.server.schemas.actions import StateCreate
 
         return StateCreate(
             type=self.type,

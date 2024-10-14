@@ -7,14 +7,14 @@ import anyio
 import fsspec
 from pydantic import BaseModel, Field, SecretStr, field_validator
 
-from prefect._internal.schemas.validators import (
+from syntask._internal.schemas.validators import (
     stringify_path,
     validate_basepath,
 )
-from prefect.blocks.core import Block
-from prefect.utilities.asyncutils import run_sync_in_worker_thread, sync_compatible
-from prefect.utilities.compat import copytree
-from prefect.utilities.filesystem import filter_files
+from syntask.blocks.core import Block
+from syntask.utilities.asyncutils import run_sync_in_worker_thread, sync_compatible
+from syntask.utilities.compat import copytree
+from syntask.utilities.filesystem import filter_files
 
 from ._internal.compatibility.migration import getattr_migration
 
@@ -75,7 +75,7 @@ class LocalFileSystem(WritableFileSystem, WritableDeploymentStorage):
     Example:
         Load stored local file system config:
         ```python
-        from prefect.filesystems import LocalFileSystem
+        from syntask.filesystems import LocalFileSystem
 
         local_file_system_block = LocalFileSystem.load("BLOCK_NAME")
         ```
@@ -83,9 +83,7 @@ class LocalFileSystem(WritableFileSystem, WritableDeploymentStorage):
 
     _block_type_name = "Local File System"
     _logo_url = "https://cdn.sanity.io/images/3ugk85nk/production/ad39089fa66d273b943394a68f003f7a19aa850e-48x48.png"
-    _documentation_url = (
-        "https://docs.syntask.khulnasoft.com/latest/develop/results#specifying-a-default-filesystem"
-    )
+    _documentation_url = "https://docs.syntask.khulnasoft.com/latest/develop/results#specifying-a-default-filesystem"
 
     basepath: Optional[str] = Field(
         default=None, description="Default local path for this block to write to."
@@ -146,11 +144,11 @@ class LocalFileSystem(WritableFileSystem, WritableDeploymentStorage):
             # and we avoid shutil.copytree raising an error
             return
 
-        # .prefectignore exists in the original location, not the current location which
+        # .syntaskignore exists in the original location, not the current location which
         # is most likely temporary
-        if (from_path / Path(".prefectignore")).exists():
+        if (from_path / Path(".syntaskignore")).exists():
             ignore_func = await self._get_ignore_func(
-                local_path=from_path, ignore_file=from_path / Path(".prefectignore")
+                local_path=from_path, ignore_file=from_path / Path(".syntaskignore")
             )
         else:
             ignore_func = None
@@ -251,7 +249,7 @@ class RemoteFileSystem(WritableFileSystem, WritableDeploymentStorage):
     Example:
         Load stored remote file system config:
         ```python
-        from prefect.filesystems import RemoteFileSystem
+        from syntask.filesystems import RemoteFileSystem
 
         remote_file_system_block = RemoteFileSystem.load("BLOCK_NAME")
         ```
@@ -259,9 +257,7 @@ class RemoteFileSystem(WritableFileSystem, WritableDeploymentStorage):
 
     _block_type_name = "Remote File System"
     _logo_url = "https://cdn.sanity.io/images/3ugk85nk/production/e86b41bc0f9c99ba9489abeee83433b43d5c9365-48x48.png"
-    _documentation_url = (
-        "https://docs.syntask.khulnasoft.com/latest/develop/results#specifying-a-default-filesystem"
-    )
+    _documentation_url = "https://docs.syntask.khulnasoft.com/latest/develop/results#specifying-a-default-filesystem"
 
     basepath: str = Field(
         default=...,
@@ -426,16 +422,14 @@ class SMB(WritableFileSystem, WritableDeploymentStorage):
         Load stored SMB config:
 
         ```python
-        from prefect.filesystems import SMB
+        from syntask.filesystems import SMB
         smb_block = SMB.load("BLOCK_NAME")
         ```
     """
 
     _block_type_name = "SMB"
     _logo_url = "https://cdn.sanity.io/images/3ugk85nk/production/3f624663f7beb97d011d011bffd51ecf6c499efc-195x195.png"
-    _documentation_url = (
-        "https://docs.syntask.khulnasoft.com/latest/develop/results#specifying-a-default-filesystem"
-    )
+    _documentation_url = "https://docs.syntask.khulnasoft.com/latest/develop/results#specifying-a-default-filesystem"
 
     share_path: str = Field(
         default=...,

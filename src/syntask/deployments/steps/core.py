@@ -1,11 +1,11 @@
 """
-Core primitives for running Prefect deployment steps.
+Core primitives for running Syntask deployment steps.
 
 Deployment steps are YAML representations of Python functions along with their inputs.
 
 Whenever a step is run, the following actions are taken:
 
-- The step's inputs and block / variable references are resolved (see [the `prefect deploy` documentation](/guides/prefect-deploy/#templating-options) for more details)
+- The step's inputs and block / variable references are resolved (see [the `syntask deploy` documentation](/guides/syntask-deploy/#templating-options) for more details)
 - The step's function is imported; if it cannot be found, the `requires` keyword is used to install the necessary packages
 - The step's function is called with the resolved inputs
 - The step's output is returned and used to resolve inputs for subsequent steps
@@ -20,13 +20,13 @@ from copy import deepcopy
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
-from prefect._internal.concurrency.api import Call, from_async
-from prefect._internal.integrations import KNOWN_EXTRAS_FOR_PACKAGES
-from prefect.logging.loggers import get_logger
-from prefect.settings import PREFECT_DEBUG_MODE
-from prefect.utilities.importtools import import_object
-from prefect.utilities.templating import (
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
+from syntask._internal.concurrency.api import Call, from_async
+from syntask._internal.integrations import KNOWN_EXTRAS_FOR_PACKAGES
+from syntask.logging.loggers import get_logger
+from syntask.settings import SYNTASK_DEBUG_MODE
+from syntask.utilities.importtools import import_object
+from syntask.utilities.templating import (
     apply_values,
     resolve_block_document_references,
     resolve_variables,
@@ -152,7 +152,7 @@ async def run_steps(
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter(
                     "always",
-                    category=PrefectDeprecationWarning,
+                    category=SyntaskDeprecationWarning,
                 )
                 warnings.simplefilter(
                     "always",
@@ -174,7 +174,7 @@ async def run_steps(
                         printed_messages.append(message)
 
             if not isinstance(step_output, dict):
-                if PREFECT_DEBUG_MODE:
+                if SYNTASK_DEBUG_MODE:
                     get_logger().warning(
                         "Step function %s returned unexpected type: %s",
                         fqn,

@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import Text
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "15768c2ec702"
@@ -24,28 +24,28 @@ def upgrade():
         "event_resources",
         sa.Column(
             "occurred",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column("resource_id", sa.Text(), nullable=False),
         sa.Column("resource_role", sa.Text(), nullable=False),
         sa.Column("resource", sa.JSON(), nullable=False),
-        sa.Column("event_id", prefect.server.utilities.database.UUID(), nullable=False),
+        sa.Column("event_id", syntask.server.utilities.database.UUID(), nullable=False),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -67,59 +67,59 @@ def upgrade():
         "events",
         sa.Column(
             "occurred",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column("event", sa.Text(), nullable=False),
         sa.Column("resource_id", sa.Text(), nullable=False),
         sa.Column(
             "resource",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             nullable=False,
         ),
         sa.Column(
             "related_resource_ids",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
         sa.Column(
             "related",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="[]",
             nullable=False,
         ),
         sa.Column(
             "payload",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             nullable=False,
         ),
         sa.Column(
             "received",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column(
             "recorded",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
-        sa.Column("follows", prefect.server.utilities.database.UUID(), nullable=True),
+        sa.Column("follows", syntask.server.utilities.database.UUID(), nullable=True),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),

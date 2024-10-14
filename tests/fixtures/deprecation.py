@@ -9,7 +9,7 @@ from datetime import datetime
 
 import pytest
 
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
 
 
 def should_reraise_warning(warning):
@@ -37,15 +37,15 @@ def should_reraise_warning(warning):
 
 
 @pytest.fixture
-def ignore_prefect_deprecation_warnings():
+def ignore_syntask_deprecation_warnings():
     """
     Ignore deprecation warnings from the agent module to avoid
     test failures.
     """
     with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("ignore", category=PrefectDeprecationWarning)
+        warnings.simplefilter("ignore", category=SyntaskDeprecationWarning)
         yield
         for warning in w:
-            if isinstance(warning.message, PrefectDeprecationWarning):
+            if isinstance(warning.message, SyntaskDeprecationWarning):
                 if should_reraise_warning(warning):
                     warnings.warn(warning.message, warning.category, stacklevel=2)

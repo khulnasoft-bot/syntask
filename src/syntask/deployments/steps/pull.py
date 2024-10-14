@@ -1,20 +1,20 @@
 """
-Core set of steps for specifying a Prefect project pull step.
+Core set of steps for specifying a Syntask project pull step.
 """
 
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-from prefect._internal.retries import retry_async_fn
-from prefect.logging.loggers import get_logger
-from prefect.runner.storage import BlockStorageAdapter, GitRepository, RemoteStorage
-from prefect.utilities.asyncutils import sync_compatible
+from syntask._internal.retries import retry_async_fn
+from syntask.logging.loggers import get_logger
+from syntask.runner.storage import BlockStorageAdapter, GitRepository, RemoteStorage
+from syntask.utilities.asyncutils import sync_compatible
 
 deployment_logger = get_logger("deployment")
 
 if TYPE_CHECKING:
-    from prefect.blocks.core import Block
+    from syntask.blocks.core import Block
 
 
 def set_working_directory(directory: str) -> dict:
@@ -68,32 +68,32 @@ async def git_clone(
         Clone a public repository:
         ```yaml
         pull:
-            - prefect.deployments.steps.git_clone:
-                repository: https://github.com/synopkg/synopkg.git
+            - syntask.deployments.steps.git_clone:
+                repository: https://github.com/synopkg/syntask.git
         ```
 
         Clone a branch of a public repository:
         ```yaml
         pull:
-            - prefect.deployments.steps.git_clone:
-                repository: https://github.com/synopkg/synopkg.git
+            - syntask.deployments.steps.git_clone:
+                repository: https://github.com/synopkg/syntask.git
                 branch: my-branch
         ```
 
         Clone a private repository using a GitHubCredentials block:
         ```yaml
         pull:
-            - prefect.deployments.steps.git_clone:
+            - syntask.deployments.steps.git_clone:
                 repository: https://github.com/org/repo.git
-                credentials: "{{ prefect.blocks.github-credentials.my-github-credentials-block }}"
+                credentials: "{{ syntask.blocks.github-credentials.my-github-credentials-block }}"
         ```
 
         Clone a private repository using an access token:
         ```yaml
         pull:
-            - prefect.deployments.steps.git_clone:
+            - syntask.deployments.steps.git_clone:
                 repository: https://github.com/org/repo.git
-                access_token: "{{ prefect.blocks.secret.github-access-token }}" # Requires creation of a Secret block
+                access_token: "{{ syntask.blocks.secret.github-access-token }}" # Requires creation of a Secret block
         ```
         Note that you will need to [create a Secret block](/concepts/blocks/#using-existing-block-types) to store the
         value of your git credentials. You can also store a username/password combo or token prefix (e.g. `x-token-auth`)
@@ -102,7 +102,7 @@ async def git_clone(
         Clone a repository with submodules:
         ```yaml
         pull:
-            - prefect.deployments.steps.git_clone:
+            - syntask.deployments.steps.git_clone:
                 repository: https://github.com/org/repo.git
                 include_submodules: true
         ```
@@ -111,7 +111,7 @@ async def git_clone(
         before executing flows):
         ```yaml
         pull:
-            - prefect.deployments.steps.git_clone:
+            - syntask.deployments.steps.git_clone:
                 repository: git@github.com:org/repo.git
         ```
     """
@@ -156,17 +156,17 @@ async def pull_from_remote_storage(url: str, **settings: Any):
         Pull code from a remote storage location:
         ```yaml
         pull:
-            - prefect.deployments.steps.pull_from_remote_storage:
+            - syntask.deployments.steps.pull_from_remote_storage:
                 url: s3://my-bucket/my-folder
         ```
 
         Pull code from a remote storage location with additional settings:
         ```yaml
         pull:
-            - prefect.deployments.steps.pull_from_remote_storage:
+            - syntask.deployments.steps.pull_from_remote_storage:
                 url: s3://my-bucket/my-folder
-                key: {{ prefect.blocks.secret.my-aws-access-key }}}
-                secret: {{ prefect.blocks.secret.my-aws-secret-key }}}
+                key: {{ syntask.blocks.secret.my-aws-access-key }}}
+                secret: {{ syntask.blocks.secret.my-aws-secret-key }}}
         ```
     """
     storage = RemoteStorage(url, **settings)
@@ -186,7 +186,7 @@ async def pull_with_block(block_document_name: str, block_type_slug: str):
         block_document_name: The name of the block document to use
         block_type_slug: The slug of the type of block to use
     """
-    from prefect.blocks.core import Block
+    from syntask.blocks.core import Block
 
     full_slug = f"{block_type_slug}/{block_document_name}"
     try:

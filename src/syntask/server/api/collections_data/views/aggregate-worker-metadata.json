@@ -1,5 +1,5 @@
 {
-  "prefect": {
+  "syntask": {
     "process": {
       "default_base_job_configuration": {
         "job_configuration": {
@@ -56,8 +56,8 @@
       },
       "description": "Execute flow runs as subprocesses on a worker. Works well for local execution when first getting started.",
       "display_name": "Process",
-      "documentation_url": "https://docs.syntask.khulnasoft.com/latest/api-ref/prefect/workers/process/",
-      "install_command": "pip install prefect",
+      "documentation_url": "https://docs.syntask.khulnasoft.com/latest/api-ref/syntask/workers/process/",
+      "install_command": "pip install syntask",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/356e6766a91baf20e1d08bbe16e8b5aaef4d8643-48x48.png",
       "type": "process"
@@ -129,7 +129,7 @@
             },
             "env": {
               "title": "Environment Variables",
-              "description": "Environment variables to provide to the task run. These variables are set on the Prefect container at task runtime. These will not be set on the task definition.",
+              "description": "Environment variables to provide to the task run. These variables are set on the Syntask container at task runtime. These will not be set on the task definition.",
               "type": "object",
               "additionalProperties": {
                 "type": "string"
@@ -194,7 +194,7 @@
             },
             "image": {
               "title": "Image",
-              "description": "The image to use for the Prefect container in the task. If this value is not null, it will override the value in the task definition. This value defaults to a Prefect base image matching your local versions.",
+              "description": "The image to use for the Syntask container in the task. If this value is not null, it will override the value in the task definition. This value defaults to a Syntask base image matching your local versions.",
               "type": "string"
             },
             "cpu": {
@@ -209,7 +209,7 @@
             },
             "container_name": {
               "title": "Container Name",
-              "description": "The name of the container flow run orchestration will occur in. If not specified, a default value of prefect will be used and if that is not found in the task definition the first container will be used.",
+              "description": "The name of the container flow run orchestration will occur in. If not specified, a default value of syntask will be used and if that is not found in the task definition the first container will be used.",
               "type": "string"
             },
             "task_role_arn": {
@@ -229,7 +229,7 @@
             },
             "configure_cloudwatch_logs": {
               "title": "Configure Cloudwatch Logs",
-              "description": "If enabled, the Prefect container will be configured to send its output to the AWS CloudWatch logs service. This functionality requires an execution role with logs:CreateLogStream, logs:CreateLogGroup, and logs:PutLogEvents permissions. The default for this field is `False` unless `stream_output` is set.",
+              "description": "If enabled, the Syntask container will be configured to send its output to the AWS CloudWatch logs service. This functionality requires an execution role with logs:CreateLogStream, logs:CreateLogGroup, and logs:PutLogEvents permissions. The default for this field is `False` unless `stream_output` is set.",
               "type": "boolean"
             },
             "cloudwatch_logs_options": {
@@ -242,7 +242,7 @@
             },
             "cloudwatch_logs_prefix": {
               "title": "Cloudwatch Logs Prefix",
-              "description": "When `configure_cloudwatch_logs` is enabled, this setting may be used to set a prefix for the log group. If not provided, the default prefix will be `prefect-logs_<work_pool_name>_<deployment_id>`. If `awslogs-stream-prefix` is present in `Cloudwatch logs options` this setting will be ignored.",
+              "description": "When `configure_cloudwatch_logs` is enabled, this setting may be used to set a prefix for the log group. If not provided, the default prefix will be `syntask-logs_<work_pool_name>_<deployment_id>`. If `awslogs-stream-prefix` is present in `Cloudwatch logs options` this setting will be ignored.",
               "type": "string"
             },
             "network_configuration": {
@@ -252,7 +252,7 @@
             },
             "stream_output": {
               "title": "Stream Output",
-              "description": "If enabled, logs will be streamed from the Prefect container to the local console. Unless you have configured AWS CloudWatch logs manually on your task definition, this requires the same prerequisites outlined in `configure_cloudwatch_logs`.",
+              "description": "If enabled, logs will be streamed from the Syntask container to the local console. Unless you have configured AWS CloudWatch logs manually on your task definition, this requires the same prerequisites outlined in `configure_cloudwatch_logs`.",
               "type": "boolean"
             },
             "task_start_timeout_seconds": {
@@ -275,7 +275,7 @@
             },
             "match_latest_revision_in_family": {
               "title": "Match Latest Revision In Family",
-              "description": "If enabled, the most recent active revision in the task definition family will be compared against the desired ECS task configuration. If they are equal, the existing task definition will be used instead of registering a new one. If no family is specified the default family \"prefect\" will be used.",
+              "description": "If enabled, the most recent active revision in the task definition family will be compared against the desired ECS task configuration. If they are equal, the existing task definition will be used instead of registering a new one. If no family is specified the default family \"syntask\" will be used.",
               "default": false,
               "type": "boolean"
             }
@@ -406,14 +406,14 @@
       },
       "description": "Execute flow runs within containers on AWS ECS. Works with EC2 and Fargate clusters. Requires an AWS account.",
       "display_name": "AWS Elastic Container Service",
-      "documentation_url": "https://prefecthq.github.io/prefect-aws/ecs_worker/",
+      "documentation_url": "https://synopkg.github.io/prefect-aws/ecs_worker/",
       "install_command": "pip install prefect-aws",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/d74b16fe84ce626345adf235a47008fea2869a60-225x225.png",
       "type": "ecs"
     }
   },
-  "prefect-azure": {
+  "syntask-azure": {
     "azure-container-instance": {
       "default_base_job_configuration": {
         "job_configuration": {
@@ -525,12 +525,12 @@
             },
             "image": {
               "title": "Image",
-              "description": "The image to use for the Prefect container in the task. This value defaults to a Prefect base image matching your local versions.",
+              "description": "The image to use for the Syntask container in the task. This value defaults to a Syntask base image matching your local versions.",
               "type": "string"
             },
             "resource_group_name": {
               "title": "Azure Resource Group Name",
-              "description": "The name of the Azure Resource Group in which to run Prefect ACI tasks.",
+              "description": "The name of the Azure Resource Group in which to run Syntask ACI tasks.",
               "type": "string"
             },
             "subscription_id": {
@@ -550,8 +550,8 @@
             },
             "entrypoint": {
               "title": "Entrypoint",
-              "description": "The entrypoint of the container you wish you run. This value defaults to the entrypoint used by Prefect images and should only be changed when using a custom image that is not based on an official Prefect image. Any commands set on deployments will be passed to the entrypoint as parameters.",
-              "default": "/opt/prefect/entrypoint.sh",
+              "description": "The entrypoint of the container you wish you run. This value defaults to the entrypoint used by Syntask images and should only be changed when using a custom image that is not based on an official Syntask image. Any commands set on deployments will be passed to the entrypoint as parameters.",
+              "default": "/opt/syntask/entrypoint.sh",
               "type": "string"
             },
             "image_registry": {
@@ -615,7 +615,7 @@
             },
             "stream_output": {
               "title": "Stream Output",
-              "description": "If `True`, logs will be streamed from the Prefect container to the local console.",
+              "description": "If `True`, logs will be streamed from the Syntask container to the local console.",
               "default": false,
               "type": "boolean"
             },
@@ -737,8 +737,8 @@
       },
       "description": "Execute flow runs within containers on Azure's Container Instances service. Requires an Azure account.",
       "display_name": "Azure Container Instances",
-      "documentation_url": "https://prefecthq.github.io/prefect-azure/container_instance_worker/",
-      "install_command": "pip install prefect-azure",
+      "documentation_url": "https://synopkg.github.io/syntask-azure/container_instance_worker/",
+      "install_command": "pip install syntask-azure",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/54e3fa7e00197a4fbd1d82ed62494cb58d08c96a-250x250.png",
       "type": "azure-container-instance"
@@ -765,7 +765,7 @@
           "privileged": "{{ privileged }}"
         },
         "variables": {
-          "description": "Configuration class used by the Docker worker.\n\nAn instance of this class is passed to the Docker worker's `run` method\nfor each flow run. It contains all the information necessary to execute the\nflow run as a Docker container.\n\nAttributes:\n    name: The name to give to created Docker containers.\n    command: The command executed in created Docker containers to kick off\n        flow run execution.\n    env: The environment variables to set in created Docker containers.\n    labels: The labels to set on created Docker containers.\n    image: The image reference of a container image to use for created jobs.\n        If not set, the latest Prefect image will be used.\n    image_pull_policy: The image pull policy to use when pulling images.\n    networks: Docker networks that created containers should be connected to.\n    network_mode: The network mode for the created containers (e.g. host, bridge).\n        If 'networks' is set, this cannot be set.\n    auto_remove: If set, containers will be deleted on completion.\n    volumes: Docker volumes that should be mounted in created containers.\n    stream_output: If set, the output from created containers will be streamed\n        to local standard output.\n    mem_limit: Memory limit of created containers. Accepts a value\n        with a unit identifier (e.g. 100000b, 1000k, 128m, 1g.) If a value is\n        given without a unit, bytes are assumed.\n    memswap_limit: Total memory (memory + swap), -1 to disable swap. Should only be\n        set if `mem_limit` is also set. If `mem_limit` is set, this defaults to\n        allowing the container to use as much swap as memory. For example, if\n        `mem_limit` is 300m and `memswap_limit` is not set, containers can use\n        600m in total of memory and swap.\n    privileged: Give extended privileges to created containers.",
+          "description": "Configuration class used by the Docker worker.\n\nAn instance of this class is passed to the Docker worker's `run` method\nfor each flow run. It contains all the information necessary to execute the\nflow run as a Docker container.\n\nAttributes:\n    name: The name to give to created Docker containers.\n    command: The command executed in created Docker containers to kick off\n        flow run execution.\n    env: The environment variables to set in created Docker containers.\n    labels: The labels to set on created Docker containers.\n    image: The image reference of a container image to use for created jobs.\n        If not set, the latest Syntask image will be used.\n    image_pull_policy: The image pull policy to use when pulling images.\n    networks: Docker networks that created containers should be connected to.\n    network_mode: The network mode for the created containers (e.g. host, bridge).\n        If 'networks' is set, this cannot be set.\n    auto_remove: If set, containers will be deleted on completion.\n    volumes: Docker volumes that should be mounted in created containers.\n    stream_output: If set, the output from created containers will be streamed\n        to local standard output.\n    mem_limit: Memory limit of created containers. Accepts a value\n        with a unit identifier (e.g. 100000b, 1000k, 128m, 1g.) If a value is\n        given without a unit, bytes are assumed.\n    memswap_limit: Total memory (memory + swap), -1 to disable swap. Should only be\n        set if `mem_limit` is also set. If `mem_limit` is set, this defaults to\n        allowing the container to use as much swap as memory. For example, if\n        `mem_limit` is 300m and `memswap_limit` is not set, containers can use\n        600m in total of memory and swap.\n    privileged: Give extended privileges to created containers.",
           "type": "object",
           "properties": {
             "command": {
@@ -796,8 +796,8 @@
             },
             "image": {
               "title": "Image",
-              "description": "The image reference of a container image to use for created jobs. If not set, the latest Prefect image will be used.",
-              "example": "docker.io/prefecthq/prefect:3-latest",
+              "description": "The image reference of a container image to use for created jobs. If not set, the latest Syntask image will be used.",
+              "example": "docker.io/synopkg/syntask:3-latest",
               "type": "string"
             },
             "registry_credentials": {
@@ -919,14 +919,14 @@
       },
       "description": "Execute flow runs within Docker containers. Works well for managing flow execution environments via Docker images. Requires access to a running Docker daemon.",
       "display_name": "Docker",
-      "documentation_url": "https://prefecthq.github.io/prefect-docker/worker/",
+      "documentation_url": "https://synopkg.github.io/prefect-docker/worker/",
       "install_command": "pip install prefect-docker",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/14a315b79990200db7341e42553e23650b34bb96-250x250.png",
       "type": "docker"
     }
   },
-  "prefect-gcp": {
+  "syntask-gcp": {
     "cloud-run": {
       "default_base_job_configuration": {
         "job_configuration": {
@@ -1030,8 +1030,8 @@
             },
             "image": {
               "title": "Image Name",
-              "description": "The image to use for a new Cloud Run Job. If not set, the latest Prefect image will be used. See https://cloud.google.com/run/docs/deploying#images.",
-              "example": "docker.io/prefecthq/prefect:3-latest",
+              "description": "The image to use for a new Cloud Run Job. If not set, the latest Syntask image will be used. See https://cloud.google.com/run/docs/deploying#images.",
+              "example": "docker.io/synopkg/syntask:3-latest",
               "type": "string"
             },
             "cpu": {
@@ -1067,7 +1067,7 @@
             },
             "timeout": {
               "title": "Job Timeout",
-              "description": "The length of time that Prefect will wait for Cloud Run Job state changes.",
+              "description": "The length of time that Syntask will wait for Cloud Run Job state changes.",
               "default": 600,
               "exclusiveMinimum": 0,
               "maximum": 3600,
@@ -1108,8 +1108,8 @@
       },
       "description": "Execute flow runs within containers on Google Cloud Run. Requires a Google Cloud Platform account.",
       "display_name": "Google Cloud Run",
-      "documentation_url": "https://prefecthq.github.io/prefect-gcp/cloud_run_worker/",
-      "install_command": "pip install prefect-gcp",
+      "documentation_url": "https://synopkg.github.io/syntask-gcp/cloud_run_worker/",
+      "install_command": "pip install syntask-gcp",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/10424e311932e31c477ac2b9ef3d53cefbaad708-250x250.png",
       "type": "cloud-run"
@@ -1123,7 +1123,7 @@
           "name": "{{ name }}",
           "credentials": "{{ credentials }}",
           "job_body": {
-            "client": "prefect",
+            "client": "syntask",
             "launchStage": "{{ launch_stage }}",
             "template": {
               "template": {
@@ -1201,8 +1201,8 @@
             },
             "image": {
               "title": "Image Name",
-              "description": "The image to use for the Cloud Run job. If not provided the default Prefect image will be used.",
-              "default": "prefecthq/prefect:3-latest",
+              "description": "The image to use for the Cloud Run job. If not provided the default Syntask image will be used.",
+              "default": "synopkg/syntask:3-latest",
               "type": "string"
             },
             "args": {
@@ -1257,7 +1257,7 @@
             },
             "timeout": {
               "title": "Job Timeout",
-              "description": "The length of time that Prefect will wait for a Cloud Run Job to complete before raising an exception (maximum of 86400 seconds, 1 day).",
+              "description": "The length of time that Syntask will wait for a Cloud Run Job to complete before raising an exception (maximum of 86400 seconds, 1 day).",
               "default": 600,
               "exclusiveMinimum": 0,
               "maximum": 86400,
@@ -1309,8 +1309,8 @@
       },
       "description": "Execute flow runs within containers on Google Cloud Run (V2 API). Requires a Google Cloud Platform account.",
       "display_name": "Google Cloud Run V2",
-      "documentation_url": "https://prefecthq.github.io/prefect-gcp/worker_v2/",
-      "install_command": "pip install prefect-gcp",
+      "documentation_url": "https://synopkg.github.io/syntask-gcp/worker_v2/",
+      "install_command": "pip install syntask-gcp",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/10424e311932e31c477ac2b9ef3d53cefbaad708-250x250.png",
       "type": "cloud-run-v2"
@@ -1501,14 +1501,14 @@
       },
       "description": "Execute flow runs within containers on Google Vertex AI. Requires a Google Cloud Platform account.",
       "display_name": "Google Vertex AI",
-      "documentation_url": "https://prefecthq.github.io/prefect-gcp/vertex_worker/",
-      "install_command": "pip install prefect-gcp",
+      "documentation_url": "https://synopkg.github.io/syntask-gcp/vertex_worker/",
+      "install_command": "pip install syntask-gcp",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/10424e311932e31c477ac2b9ef3d53cefbaad708-250x250.png",
       "type": "vertex-ai"
     }
   },
-  "prefect-kubernetes": {
+  "syntask-kubernetes": {
     "kubernetes": {
       "default_base_job_configuration": {
         "job_configuration": {
@@ -1536,7 +1536,7 @@
                   "serviceAccountName": "{{ service_account_name }}",
                   "containers": [
                     {
-                      "name": "prefect-job",
+                      "name": "syntask-job",
                       "env": "{{ env }}",
                       "image": "{{ image }}",
                       "imagePullPolicy": "{{ image_pull_policy }}",
@@ -1590,8 +1590,8 @@
             },
             "image": {
               "title": "Image",
-              "description": "The image reference of a container image to use for created jobs. If not set, the latest Prefect image will be used.",
-              "example": "docker.io/prefecthq/prefect:3-latest",
+              "description": "The image reference of a container image to use for created jobs. If not set, the latest Syntask image will be used.",
+              "example": "docker.io/synopkg/syntask:3-latest",
               "type": "string"
             },
             "service_account_name": {
@@ -1672,8 +1672,8 @@
       },
       "description": "Execute flow runs within jobs scheduled on a Kubernetes cluster. Requires a Kubernetes cluster.",
       "display_name": "Kubernetes",
-      "documentation_url": "https://prefecthq.github.io/prefect-kubernetes/worker/",
-      "install_command": "pip install prefect-kubernetes",
+      "documentation_url": "https://synopkg.github.io/syntask-kubernetes/worker/",
+      "install_command": "pip install syntask-kubernetes",
       "is_beta": false,
       "logo_url": "https://cdn.sanity.io/images/3ugk85nk/production/2d0b896006ad463b49c28aaac14f31e00e32cfab-250x250.png",
       "type": "kubernetes"

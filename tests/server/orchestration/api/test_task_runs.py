@@ -5,13 +5,13 @@ import pendulum
 import pytest
 from starlette import status
 
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.objects import State
-from prefect.server import models, schemas
-from prefect.server.database.orm_models import TaskRun
-from prefect.server.schemas import responses, states
-from prefect.server.schemas.responses import OrchestrationResult
-from prefect.states import Pending
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.objects import State
+from syntask.server import models, schemas
+from syntask.server.database.orm_models import TaskRun
+from syntask.server.schemas import responses, states
+from syntask.server.schemas.responses import OrchestrationResult
+from syntask.states import Pending
 
 
 class TestCreateTaskRun:
@@ -443,7 +443,7 @@ class TestSetTaskRunState:
         self, task_run, client, session, proposed_state
     ):
         # Task runner infrastructure may kill and restart tasks without informing
-        # Prefect. This test checks that a task can re-transition  its current state
+        # Syntask. This test checks that a task can re-transition  its current state
         # to ensure restarts occur without error.
 
         # first, ensure the parent flow run is in a running state
@@ -546,7 +546,7 @@ class TestSetTaskRunState:
         "incoming_state_type", ["PENDING", "RUNNING", "CANCELLED", "CANCELLING"]
     )
     async def test_autonomous_task_run_aborts_if_enters_pending_from_disallowed_state(
-        self, client, session, incoming_state_type, prefect_client: PrefectClient
+        self, client, session, incoming_state_type, syntask_client: SyntaskClient
     ):
         autonomous_task_run = await models.task_runs.create_task_run(
             session=session,
@@ -562,7 +562,7 @@ class TestSetTaskRunState:
 
         state = State(type=incoming_state_type)
         state.state_details.deferred = True
-        response_1 = await prefect_client.set_task_run_state(
+        response_1 = await syntask_client.set_task_run_state(
             task_run_id=autonomous_task_run.id, state=state
         )
 
@@ -570,7 +570,7 @@ class TestSetTaskRunState:
 
         new_state = Pending()
         new_state.state_details.deferred = True
-        response_2 = await prefect_client.set_task_run_state(
+        response_2 = await syntask_client.set_task_run_state(
             task_run_id=autonomous_task_run.id, state=new_state
         )
 

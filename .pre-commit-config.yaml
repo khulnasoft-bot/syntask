@@ -25,10 +25,10 @@ repos:
           - types-pyyaml==6.0.12.9
         files: |
           (?x)^(
-            src/prefect/server/models/.*|
-            src/prefect/concurrency/.*|
-            src/prefect/events/.*|
-            src/prefect/input/.*
+            src/syntask/server/models/.*|
+            src/syntask/concurrency/.*|
+            src/syntask/events/.*|
+            src/syntask/input/.*
           )$
   - repo: local
     hooks:
@@ -40,8 +40,8 @@ repos:
         files: |
           (?x)^(
               .pre-commit-config.yaml|
-              src/prefect/server/api/.*|
-              src/prefect/server/schemas/.*|
-              src/prefect/server/events/.*|
+              src/syntask/server/api/.*|
+              src/syntask/server/schemas/.*|
+              src/syntask/server/events/.*|
               scripts/generate_mintlify_openapi_docs.py
           )$

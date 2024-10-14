@@ -5,11 +5,12 @@ Revises: f93e1439f022
 Create Date: 2024-09-11 09:01:06.678866
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
-from prefect.server.schemas.core import ConcurrencyOptions
+import syntask
+from syntask.server.schemas.core import ConcurrencyOptions
 
 # revision identifiers, used by Alembic.
 revision = "7d6350aea855"
@@ -23,7 +24,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "concurrency_options",
-                prefect.server.utilities.database.Pydantic(ConcurrencyOptions),
+                syntask.server.utilities.database.Pydantic(ConcurrencyOptions),
                 nullable=True,
             )
         )

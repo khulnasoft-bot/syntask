@@ -3,17 +3,17 @@ from typing import Optional
 
 import pytest
 
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.schedules import (
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,
 )
-from prefect.deployments.schedules import (
+from syntask.deployments.schedules import (
     create_deployment_schedule_create,
     normalize_to_deployment_schedule_create,
 )
-from prefect.server.schemas.schedules import CronSchedule as ServerCronSchedule
+from syntask.server.schemas.schedules import CronSchedule as ServerCronSchedule
 
 
 @pytest.mark.parametrize(

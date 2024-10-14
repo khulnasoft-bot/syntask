@@ -8,12 +8,12 @@ from pydantic import BaseModel as V2BaseModel
 from pydantic import ConfigDict, PydanticUndefinedAnnotation, create_model
 from pydantic.type_adapter import TypeAdapter
 
-from prefect._internal.pydantic.annotations.pendulum import (
+from syntask._internal.pydantic.annotations.pendulum import (
     PydanticPendulumDateTimeType,
     PydanticPendulumDateType,
     PydanticPendulumDurationType,
 )
-from prefect._internal.pydantic.schemas import GenerateEmptySchemaForUserClasses
+from syntask._internal.pydantic.schemas import GenerateEmptySchemaForUserClasses
 
 
 def is_v2_model(v) -> bool:

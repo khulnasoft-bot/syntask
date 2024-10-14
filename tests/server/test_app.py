@@ -1,10 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from prefect.server.api.server import create_app
-from prefect.settings import (
-    PREFECT_SERVER_CSRF_PROTECTION_ENABLED,
-    PREFECT_UI_API_URL,
+from syntask.server.api.server import create_app
+from syntask.settings import (
+    SYNTASK_SERVER_CSRF_PROTECTION_ENABLED,
+    SYNTASK_UI_API_URL,
     temporary_settings,
 )
 
@@ -26,15 +26,15 @@ def test_app_exposes_ui_settings():
     response = client.get("/ui-settings")
     response.raise_for_status()
     assert response.json() == {
-        "api_url": PREFECT_UI_API_URL.value(),
-        "csrf_enabled": PREFECT_SERVER_CSRF_PROTECTION_ENABLED.value(),
+        "api_url": SYNTASK_UI_API_URL.value(),
+        "csrf_enabled": SYNTASK_SERVER_CSRF_PROTECTION_ENABLED.value(),
         "flags": [],
     }
 
 
 @pytest.mark.parametrize("enabled", [True, False])
 def test_app_add_csrf_middleware_when_enabled(enabled: bool):
-    with temporary_settings({PREFECT_SERVER_CSRF_PROTECTION_ENABLED: enabled}):
+    with temporary_settings({SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: enabled}):
         app = create_app()
         matching = [
             middleware

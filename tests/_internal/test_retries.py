@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from prefect._internal.retries import retry_async_fn
+from syntask._internal.retries import retry_async_fn
 
 
 @pytest.fixture(autouse=True)

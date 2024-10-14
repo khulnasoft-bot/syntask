@@ -9,7 +9,7 @@ Create Date: 2023-04-05 13:43:01.901404
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "3d46e23593d6"
@@ -25,7 +25,7 @@ def upgrade():
         "variable",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -38,13 +38,13 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
@@ -52,7 +52,7 @@ def upgrade():
         sa.Column("value", sa.String(), nullable=False),
         sa.Column(
             "tags",
-            prefect.server.utilities.database.JSON(astext_type=sa.Text()),
+            syntask.server.utilities.database.JSON(astext_type=sa.Text()),
             server_default="[]",
             nullable=False,
         ),

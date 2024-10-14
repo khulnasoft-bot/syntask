@@ -37,6 +37,6 @@ Instead, a simple API is exposed in the  `concurrency.api` module. The API is sp
 respectively.
 """
 
-import prefect._internal._logging
+import syntask._internal._logging
 
-logger = prefect._internal._logging.logger.getChild("concurrency")
+logger = syntask._internal._logging.logger.getChild("concurrency")

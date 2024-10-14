@@ -5,10 +5,10 @@ import pytest
 from httpx import AsyncClient
 from starlette import status
 
-from prefect.server import schemas
-from prefect.server.api.concurrency_limits_v2 import MinimalConcurrencyLimitResponse
-from prefect.server.schemas.actions import ConcurrencyLimitCreate
-from prefect.settings import PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS
+from syntask.server import schemas
+from syntask.server.api.concurrency_limits_v2 import MinimalConcurrencyLimitResponse
+from syntask.server.schemas.actions import ConcurrencyLimitCreate
+from syntask.settings import SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS
 
 
 class TestConcurrencyLimits:
@@ -186,7 +186,7 @@ class TestAcquiringAndReleasing:
         assert (
             0.0
             <= float(response.headers["Retry-After"])
-            <= PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS.value() * 2
+            <= SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS.value() * 2
         )
         assert (
             "Concurrency limit for the tag1 tag has been reached"

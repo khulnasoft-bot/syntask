@@ -9,10 +9,10 @@ from wsgiref.simple_server import WSGIServer
 import anyio
 import httpx
 
-from prefect.logging.loggers import get_logger
-from prefect.settings import PREFECT_CLIENT_ENABLE_METRICS, PREFECT_CLIENT_METRICS_PORT
-from prefect.utilities.collections import distinct
-from prefect.utilities.math import clamped_poisson_interval
+from syntask.logging.loggers import get_logger
+from syntask.settings import SYNTASK_CLIENT_ENABLE_METRICS, SYNTASK_CLIENT_METRICS_PORT
+from syntask.utilities.collections import distinct
+from syntask.utilities.math import clamped_poisson_interval
 
 logger = get_logger("utilities.services.critical_service_loop")
 
@@ -74,8 +74,8 @@ async def critical_service_loop(
             # httpx.TransportError is the base class for any kind of communications
             # error, like timeouts, connection failures, etc.  This does _not_ cover
             # routine HTTP error codes (even 5xx errors like 502/503) so this
-            # handler should not be attempting to cover cases where the Prefect server
-            # or Prefect Cloud is having an outage (which will be covered by the
+            # handler should not be attempting to cover cases where the Syntask server
+            # or Syntask Cloud is having an outage (which will be covered by the
             # exception clause below)
             track_record.append(False)
             failures.append((exc, sys.exc_info()[-1]))
@@ -84,7 +84,7 @@ async def critical_service_loop(
             )
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code >= 500:
-                # 5XX codes indicate a potential outage of the Prefect API which is
+                # 5XX codes indicate a potential outage of the Syntask API which is
                 # likely to be temporary and transient.  Don't quit over these unless
                 # it is prolonged.
                 track_record.append(False)
@@ -160,8 +160,8 @@ _metrics_server: Optional[Tuple[WSGIServer, threading.Thread]] = None
 
 def start_client_metrics_server():
     """Start the process-wide Prometheus metrics server for client metrics (if enabled
-    with `PREFECT_CLIENT_ENABLE_METRICS`) on the port `PREFECT_CLIENT_METRICS_PORT`."""
-    if not PREFECT_CLIENT_ENABLE_METRICS:
+    with `SYNTASK_CLIENT_ENABLE_METRICS`) on the port `SYNTASK_CLIENT_METRICS_PORT`."""
+    if not SYNTASK_CLIENT_ENABLE_METRICS:
         return
 
     global _metrics_server
@@ -170,7 +170,7 @@ def start_client_metrics_server():
 
     from prometheus_client import start_http_server
 
-    _metrics_server = start_http_server(port=PREFECT_CLIENT_METRICS_PORT.value())
+    _metrics_server = start_http_server(port=SYNTASK_CLIENT_METRICS_PORT.value())
 
 
 def stop_client_metrics_server():

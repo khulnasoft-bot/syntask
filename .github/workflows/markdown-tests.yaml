@@ -21,7 +21,7 @@ on:
       - main
     paths:
       - .github/workflows/markdown-tests.yaml
-      - "src/prefect/**/*.py"
+      - "src/syntask/**/*.py"
       - "tests/**/*.py"
       - requirements-client.txt
       - requirements-dev.txt
@@ -95,11 +95,11 @@ jobs:
 
       - name: Start server
         run: |
-          PREFECT_HOME=$(pwd) prefect server start&
-          PREFECT_API_URL="http://127.0.0.1:4200/api" ./scripts/wait-for-server.py
+          SYNTASK_HOME=$(pwd) syntask server start&
+          SYNTASK_API_URL="http://127.0.0.1:4200/api" ./scripts/wait-for-server.py
 
       - name: Run tests
         run: >
-          PREFECT_API_URL="http://127.0.0.1:4200/api" pytest docs/ --markdown-docs -m markdown-docs
+          SYNTASK_API_URL="http://127.0.0.1:4200/api" pytest docs/ --markdown-docs -m markdown-docs
           --numprocesses auto
           --maxprocesses 6

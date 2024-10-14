@@ -10,12 +10,12 @@ import fsspec
 from anyio import run_process
 from pydantic import SecretStr
 
-from prefect._internal.concurrency.api import create_call, from_async
-from prefect.blocks.core import Block, BlockNotSavedError
-from prefect.blocks.system import Secret
-from prefect.filesystems import ReadableDeploymentStorage, WritableDeploymentStorage
-from prefect.logging.loggers import get_logger
-from prefect.utilities.collections import visit_collection
+from syntask._internal.concurrency.api import create_call, from_async
+from syntask.blocks.core import Block, BlockNotSavedError
+from syntask.blocks.system import Secret
+from syntask.filesystems import ReadableDeploymentStorage, WritableDeploymentStorage
+from syntask.logging.loggers import get_logger
+from syntask.utilities.collections import visit_collection
 
 
 @runtime_checkable
@@ -92,7 +92,7 @@ class GitRepository:
         Pull the contents of a private git repository to the local filesystem:
 
         ```python
-        from prefect.runner.storage import GitRepository
+        from syntask.runner.storage import GitRepository
 
         storage = GitRepository(
             url="https://github.com/org/repo.git",
@@ -275,22 +275,22 @@ class GitRepository:
 
     def to_pull_step(self) -> Dict:
         pull_step = {
-            "prefect.deployments.steps.git_clone": {
+            "syntask.deployments.steps.git_clone": {
                 "repository": self._url,
                 "branch": self._branch,
             }
         }
         if self._include_submodules:
-            pull_step["prefect.deployments.steps.git_clone"][
-                "include_submodules"
-            ] = self._include_submodules
+            pull_step["syntask.deployments.steps.git_clone"]["include_submodules"] = (
+                self._include_submodules
+            )
         if isinstance(self._credentials, Block):
-            pull_step["prefect.deployments.steps.git_clone"][
-                "credentials"
-            ] = f"{{{{ {self._credentials.get_block_placeholder()} }}}}"
+            pull_step["syntask.deployments.steps.git_clone"]["credentials"] = (
+                f"{{{{ {self._credentials.get_block_placeholder()} }}}}"
+            )
         elif isinstance(self._credentials, dict):
             if isinstance(self._credentials.get("access_token"), Secret):
-                pull_step["prefect.deployments.steps.git_clone"]["credentials"] = {
+                pull_step["syntask.deployments.steps.git_clone"]["credentials"] = {
                     **self._credentials,
                     "access_token": (
                         "{{"
@@ -325,7 +325,7 @@ class RemoteStorage:
         Pull the contents of a remote storage location to the local filesystem:
 
         ```python
-        from prefect.runner.storage import RemoteStorage
+        from syntask.runner.storage import RemoteStorage
 
         storage = RemoteStorage(url="s3://my-bucket/my-folder")
 
@@ -336,8 +336,8 @@ class RemoteStorage:
         with additional settings:
 
         ```python
-        from prefect.runner.storage import RemoteStorage
-        from prefect.blocks.system import Secret
+        from syntask.runner.storage import RemoteStorage
+        from syntask.blocks.system import Secret
 
         storage = RemoteStorage(
             url="s3://my-bucket/my-folder",
@@ -474,15 +474,15 @@ class RemoteStorage:
             urlparse(self._url).scheme
         )
         step = {
-            "prefect.deployments.steps.pull_from_remote_storage": {
+            "syntask.deployments.steps.pull_from_remote_storage": {
                 "url": self._url,
                 **settings_with_placeholders,
             }
         }
         if required_package:
-            step["prefect.deployments.steps.pull_from_remote_storage"][
-                "requires"
-            ] = required_package
+            step["syntask.deployments.steps.pull_from_remote_storage"]["requires"] = (
+                required_package
+            )
         return step
 
     def __eq__(self, __value) -> bool:
@@ -551,7 +551,7 @@ class BlockStorageAdapter:
                     " pull step."
                 )
             return {
-                "prefect.deployments.steps.pull_with_block": {
+                "syntask.deployments.steps.pull_with_block": {
                     "block_type_slug": self._block.get_block_type_slug(),
                     "block_document_name": self._block._block_document_name,
                 }
@@ -571,7 +571,7 @@ class LocalStorage:
     Examples:
         Sets the working directory for the local path to the flow:
         ```python
-        from prefect.runner.storage import Localstorage
+        from syntask.runner.storage import Localstorage
         storage = LocalStorage(
             path="/path/to/local/flow_directory",
         )
@@ -610,7 +610,7 @@ class LocalStorage:
         used as a deployment pull step.
         """
         step = {
-            "prefect.deployments.steps.set_working_directory": {
+            "syntask.deployments.steps.set_working_directory": {
                 "directory": str(self.destination)
             }
         }

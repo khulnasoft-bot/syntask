@@ -22,12 +22,12 @@ In addition to manually triggering and managing flow runs, deploying a flow expo
 This is the simplest way to get started with deployments:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 @flow
 def my_flow():
-    print("Hello, Prefect!")
+    print("Hello, Syntask!")
 
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ Work pools are popular with data platform teams because they allow you to manage
 
 ### Create a work pool-based deployment
 
-Prefect offers two options for creating work pool-based deployments: a Python script or a YAML file.
+Syntask offers two options for creating work pool-based deployments: a Python script or a YAML file.
 
 ### Create a deployment with `deploy`
 
@@ -57,12 +57,12 @@ To define a deployment with a Python script, use the `flow.deploy` method.
 Here's an example of a deployment that uses a work pool and bakes the code into a Docker image.
 
 ```python
-from prefect import flow
+from syntask import flow
 
 
 @flow
 def my_flow():
-    print("Hello, Prefect!")
+    print("Hello, Syntask!")
 
 if __name__ == "__main__":
     my_flow.deploy(
@@ -78,26 +78,26 @@ To learn more about the `deploy` method, see [Deploy flows with Python](/3.0/dep
 
 ### Create a deployment with a YAML file
 
-If you'd rather take a declarative approach to defining a deployment through a YAML file, use a [`prefect.yaml` file](/3.0/deploy/infrastructure-concepts/prefect-yaml).
+If you'd rather take a declarative approach to defining a deployment through a YAML file, use a [`syntask.yaml` file](/3.0/deploy/infrastructure-concepts/syntask-yaml).
 
-Prefect provides an interactive CLI that walks you through creating a `prefect.yaml` file:
+Syntask provides an interactive CLI that walks you through creating a `syntask.yaml` file:
 
 ```bash
-prefect deploy
+syntask deploy
 ```
 
-The result is a `prefect.yaml` file for deployment creation. 
+The result is a `syntask.yaml` file for deployment creation. 
 The file contains `build`, `push`, and `pull` steps for building a Docker image, pushing code to a Docker registry, and pulling code at runtime.
-Learn more about creating deployments with a YAML file in [Define deployments with YAML](/3.0/deploy/infrastructure-concepts/prefect-yaml).
+Learn more about creating deployments with a YAML file in [Define deployments with YAML](/3.0/deploy/infrastructure-concepts/syntask-yaml).
 
-Prefect also provides [CI/CD options](/3.0/deploy/infrastructure-concepts/deploy-ci-cd) for automatically creating YAML-based deployments. 
+Syntask also provides [CI/CD options](/3.0/deploy/infrastructure-concepts/deploy-ci-cd) for automatically creating YAML-based deployments. 
 
 ### Work pools
 
 [Work pools](/3.0/deploy/infrastructure-concepts/work-pools/) allow you to switch between different types of infrastructure and to create a template for deployments. 
 Data platform teams find work pools especially useful for managing infrastructure configuration across teams of data professionals.
 
-Common work pool types include [Docker](/3.0/deploy/infrastructure-examples/docker), [Kubernetes](/3.0/deploy/infrastructure-examples/kubernetes), and serverless options such as [AWS ECS](/integrations/prefect-aws/ecs_guide#ecs-worker-guide), [Azure ACI](/integrations/prefect-azure/aci_worker), [GCP Vertex AI](/integrations/prefect-gcp/index#run-flows-on-google-cloud-run-or-vertex-ai), or [GCP Google Cloud Run](/integrations/prefect-gcp/gcp-worker-guide). 
+Common work pool types include [Docker](/3.0/deploy/infrastructure-examples/docker), [Kubernetes](/3.0/deploy/infrastructure-examples/kubernetes), and serverless options such as [AWS ECS](/integrations/prefect-aws/ecs_guide#ecs-worker-guide), [Azure ACI](/integrations/syntask-azure/aci_worker), [GCP Vertex AI](/integrations/syntask-gcp/index#run-flows-on-google-cloud-run-or-vertex-ai), or [GCP Google Cloud Run](/integrations/syntask-gcp/gcp-worker-guide). 
 
 ### Work pool-based deployment requirements
 
@@ -108,7 +108,7 @@ A `work_pool_name` is also required.
 Your flow code location can be specified in a few ways:
 
 1. Bake it into your Docker image (for work-pools that use Docker images). 
-    As shown in the example above,Prefect facilitates this as the default method for deployments created with the Python SDK. 
+    As shown in the example above,Syntask facilitates this as the default method for deployments created with the Python SDK. 
     This method requires that you specify the `image` argument in the `deploy` method.
 2. Call `from_source` on a flow and specify one of the following:  
     1. the git-based cloud provider location (for example, GitHub) 
@@ -127,17 +127,17 @@ The deployment inherits the infrastructure configuration from the work pool, and
 
 To run a deployment with a hybrid work pool type, such as Docker or Kubernetes, you must start a [worker](/3.0/deploy/infrastructure-concepts/workers/).
 
-A [Prefect worker](/3.0/deploy/infrastructure-concepts/workers) is a client-side process that checks for scheduled flow runs in the work pool that it matches.
+A [Syntask worker](/3.0/deploy/infrastructure-concepts/workers) is a client-side process that checks for scheduled flow runs in the work pool that it matches.
 When a scheduled run is found, the worker kicks off a flow run on the specified infrastructure and monitors the flow run until completion.
 
 ### Work pools that don't require a worker
 
-Prefect Cloud offers [push work pools](/3.0/deploy/infrastructure-examples/serverless#automatically-create-a-new-push-work-pool-and-provision-infrastructure) that run flows on Cloud provider serverless infrastructure without a worker and that can be set up quickly. 
+Syntask Cloud offers [push work pools](/3.0/deploy/infrastructure-examples/serverless#automatically-create-a-new-push-work-pool-and-provision-infrastructure) that run flows on Cloud provider serverless infrastructure without a worker and that can be set up quickly. 
 
-Prefect Cloud also provides the option to run work flows on Prefect's infrastructure through a [Prefect Managed work pool](/3.0/deploy/infrastructure-examples/managed).
+Syntask Cloud also provides the option to run work flows on Syntask's infrastructure through a [Syntask Managed work pool](/3.0/deploy/infrastructure-examples/managed).
 
 These work pool types do not require a worker to run flows. 
-However, they do require sharing a bit more information with Prefect, which can be a challenge depending upon the security posture of your organization.
+However, they do require sharing a bit more information with Syntask, which can be a challenge depending upon the security posture of your organization.
 
 ## Static vs. dynamic infrastructure
 
@@ -152,7 +152,7 @@ is a great option for managing multiple flows simultaneously.
 
 Once you have authored your flow and decided on its deployment settings, run this long-running
 process in a location of your choosing.
-The process stays in communication with the Prefect API, monitoring for work and submitting each run
+The process stays in communication with the Syntask API, monitoring for work and submitting each run
 within an individual subprocess.
 Because runs are submitted to subprocesses, any external infrastructure configuration
 must be set up beforehand and kept associated with this process.
@@ -175,19 +175,19 @@ Consider running flows on dynamically provisioned infrastructure with work pools
 - An internal organizational structure in which deployment authors or runners are not members of
 the team that manages the infrastructure.
 
-[Work pools](/3.0/deploy/infrastructure-concepts/work-pools/) allow Prefect to exercise greater control
+[Work pools](/3.0/deploy/infrastructure-concepts/work-pools/) allow Syntask to exercise greater control
 of the infrastructure on which flows run.
 Options for [serverless work pools](/3.0/deploy/infrastructure-examples/serverless/) allow you to
 scale to zero when workflows aren't running.
-Prefect even provides you with the ability to
+Syntask even provides you with the ability to
 [provision cloud infrastructure via a single CLI command](/3.0/deploy/infrastructure-examples/serverless/#automatically-create-a-new-push-work-pool-and-provision-infrastructure),
-if you use a Prefect Cloud push work pool option.
+if you use a Syntask Cloud push work pool option.
 
 With work pools:
 
-- You can configure and monitor infrastructure configuration within the Prefect UI.
+- You can configure and monitor infrastructure configuration within the Syntask UI.
 - Infrastructure is ephemeral and dynamically provisioned.
-- Prefect is more infrastructure-aware and collects more event data from your infrastructure by default.
+- Syntask is more infrastructure-aware and collects more event data from your infrastructure by default.
 - Highly decoupled setups are possible.
 
 <Note>
@@ -239,7 +239,7 @@ class Deployment:
     pull_steps: Optional[Dict[str, Any]] = None
 ```
 
-All methods for creating Prefect deployments are interfaces for populating this schema.
+All methods for creating Syntask deployments are interfaces for populating this schema.
 
 ### Required defining data
 
@@ -249,17 +249,17 @@ The deployment name is not required to be unique across all deployments, but is 
 for a given flow ID. This means you will often see references to the deployment's unique identifying name
 `{FLOW_NAME}/{DEPLOYMENT_NAME}`.
 
-For example, to trigger a deployment run from the Prefect CLI:
+For example, to trigger a deployment run from the Syntask CLI:
 
 ```bash
-prefect deployment run my-first-flow/my-first-deployment
+syntask deployment run my-first-flow/my-first-deployment
 ```
 
-or from the Python SDK with [`run_deployment`](https://prefect-python-sdk-docs.netlify.app/prefect/deployments/flow_runs/#prefect.deployments.flow_runs.run_deployment):
+or from the Python SDK with [`run_deployment`](https://syntask-python-sdk-docs.netlify.app/syntask/deployments/flow_runs/#syntask.deployments.flow_runs.run_deployment):
 
 {/* pmd-metadata: notest */}
 ```python
-from prefect.deployments import run_deployment
+from syntask.deployments import run_deployment
 
 
 run_deployment(
@@ -283,10 +283,10 @@ Entrypoints use Python's standard path-to-object syntax
 
 The entrypoint must reference the same flow as the flow ID.
 
-Prefect requires that deployments reference flows defined _within Python files_.
+Syntask requires that deployments reference flows defined _within Python files_.
 Flows defined within interactive REPLs or notebooks cannot currently be deployed as such.
 They are still valid flows that will be monitored by the API and observable in the UI whenever they are run,
-but Prefect cannot trigger them.
+but Syntask cannot trigger them.
 
 <Note>
 **Deployments do not contain code definitions**
@@ -295,8 +295,8 @@ Deployment metadata references code that exists in potentially diverse locations
 This separation means that your flow code stays within your storage and execution
 infrastructure.
 
-This is key to the Prefect hybrid model: there's a boundary between your proprietary assets,
-such as your flow code, and the Prefect backend (including [Prefect Cloud](/3.0/manage/cloud/)).
+This is key to the Syntask hybrid model: there's a boundary between your proprietary assets,
+such as your flow code, and the Syntask backend (including [Syntask Cloud](/3.0/manage/cloud/)).
 </Note>
 
 ### Workflow scheduling and parametrization
@@ -327,7 +327,7 @@ Pausing a schedule, updating your deployment, and other actions reset your auto-
 
 ### Concurrency limiting
 
-Prefect supports managing concurrency at the deployment level to enable limiting how many runs of a
+Syntask supports managing concurrency at the deployment level to enable limiting how many runs of a
 deployment can be active at once. To enable this behavior, deployments have the following fields:
 
 - **`concurrency_limit`**: an integer that sets the maximum number of concurrent flow runs for the deployment.
@@ -338,12 +338,12 @@ Falls back to `ENQUEUE` if unset.
 
 <CodeGroup>
 
-```sh prefect deploy
-prefect deploy ... --concurrency-limit 3 --collision-strategy ENQUEUE
+```sh syntask deploy
+syntask deploy ... --concurrency-limit 3 --collision-strategy ENQUEUE
 ```
 
 ```python flow.deploy()
-from prefect.client.schemas.objects import (
+from syntask.client.schemas.objects import (
     ConcurrencyLimitConfig, 
     ConcurrencyLimitStrategy
 )
@@ -359,7 +359,7 @@ my_flow.deploy(
 ```
 
 ```python flow.serve()
-from prefect.client.schemas.objects import (
+from syntask.client.schemas.objects import (
     ConcurrencyLimitConfig, 
     ConcurrencyLimitStrategy
 )
@@ -383,7 +383,7 @@ Important information for the versions, descriptions, and tags fields:
 - **`version`**: versions are always set by the client and can be any arbitrary string.
 We recommend tightly coupling this field on your deployments to your software development lifecycle.
 For example if you leverage `git` to manage code changes, use either a tag or commit hash in this field.
-If you don't set a value for the version, Prefect will compute a hash.
+If you don't set a value for the version, Syntask will compute a hash.
 - **`description`**: provide reference material such as intended use and parameter documentation.
 Markdown is accepted. The docstring of your flow function is the default value.
 - **`tags`**: group related work together across a diverse set of objects.

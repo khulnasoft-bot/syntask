@@ -1,5 +1,5 @@
 """
-Utilities for the Prefect REST API server.
+Utilities for the Syntask REST API server.
 """
 
 from contextlib import AsyncExitStack
@@ -25,7 +25,7 @@ def method_paths_from_routes(routes: Sequence[BaseRoute]) -> Set[str]:
     return method_paths
 
 
-class PrefectAPIRoute(APIRoute):
+class SyntaskAPIRoute(APIRoute):
     """
     A FastAPIRoute class which attaches an async stack to requests that exits before
     a response is returned.
@@ -51,13 +51,13 @@ class PrefectAPIRoute(APIRoute):
         return handle_response_scoped_depends
 
 
-class PrefectRouter(APIRouter):
+class SyntaskRouter(APIRouter):
     """
-    A base class for Prefect REST API routers.
+    A base class for Syntask REST API routers.
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        kwargs.setdefault("route_class", PrefectAPIRoute)
+        kwargs.setdefault("route_class", SyntaskAPIRoute)
         super().__init__(**kwargs)
 
     def add_api_route(

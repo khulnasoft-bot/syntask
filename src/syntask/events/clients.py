@@ -28,40 +28,40 @@ from websockets.exceptions import (
     ConnectionClosedOK,
 )
 
-from prefect.events import Event
-from prefect.logging import get_logger
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_DEBUG_MODE,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
+from syntask.events import Event
+from syntask.logging import get_logger
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_DEBUG_MODE,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
 )
 
 if TYPE_CHECKING:
-    from prefect.events.filters import EventFilter
+    from syntask.events.filters import EventFilter
 
 EVENTS_EMITTED = Counter(
-    "prefect_events_emitted",
-    "The number of events emitted by Prefect event clients",
+    "syntask_events_emitted",
+    "The number of events emitted by Syntask event clients",
     labelnames=["client"],
 )
 EVENTS_OBSERVED = Counter(
-    "prefect_events_observed",
-    "The number of events observed by Prefect event subscribers",
+    "syntask_events_observed",
+    "The number of events observed by Syntask event subscribers",
     labelnames=["client"],
 )
 EVENT_WEBSOCKET_CONNECTIONS = Counter(
-    "prefect_event_websocket_connections",
+    "syntask_event_websocket_connections",
     (
-        "The number of times Prefect event clients have connected to an event stream, "
+        "The number of times Syntask event clients have connected to an event stream, "
         "broken down by direction (in/out) and connection (initial/reconnect)"
     ),
     labelnames=["client", "direction", "connection"],
 )
 EVENT_WEBSOCKET_CHECKPOINTS = Counter(
-    "prefect_event_websocket_checkpoints",
-    "The number of checkpoints performed by Prefect event clients",
+    "syntask_event_websocket_checkpoints",
+    "The number of checkpoints performed by Syntask event clients",
     labelnames=["client"],
 )
 
@@ -84,65 +84,65 @@ def get_events_client(
     reconnection_attempts: int = 10,
     checkpoint_every: int = 700,
 ) -> "EventsClient":
-    api_url = PREFECT_API_URL.value()
-    if isinstance(api_url, str) and api_url.startswith(PREFECT_CLOUD_API_URL.value()):
-        return PrefectCloudEventsClient(
+    api_url = SYNTASK_API_URL.value()
+    if isinstance(api_url, str) and api_url.startswith(SYNTASK_CLOUD_API_URL.value()):
+        return SyntaskCloudEventsClient(
             reconnection_attempts=reconnection_attempts,
             checkpoint_every=checkpoint_every,
         )
     elif api_url:
-        return PrefectEventsClient(
+        return SyntaskEventsClient(
             reconnection_attempts=reconnection_attempts,
             checkpoint_every=checkpoint_every,
         )
-    elif PREFECT_SERVER_ALLOW_EPHEMERAL_MODE:
-        from prefect.server.api.server import SubprocessASGIServer
+    elif SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE:
+        from syntask.server.api.server import SubprocessASGIServer
 
         server = SubprocessASGIServer()
         server.start()
-        return PrefectEventsClient(
+        return SyntaskEventsClient(
             api_url=server.api_url,
             reconnection_attempts=reconnection_attempts,
             checkpoint_every=checkpoint_every,
         )
     else:
         raise ValueError(
-            "No Prefect API URL provided. Please set PREFECT_API_URL to the address of a running Prefect server."
+            "No Syntask API URL provided. Please set SYNTASK_API_URL to the address of a running Syntask server."
         )
 
 
 def get_events_subscriber(
     filter: Optional["EventFilter"] = None,
     reconnection_attempts: int = 10,
-) -> "PrefectEventSubscriber":
-    api_url = PREFECT_API_URL.value()
+) -> "SyntaskEventSubscriber":
+    api_url = SYNTASK_API_URL.value()
 
-    if isinstance(api_url, str) and api_url.startswith(PREFECT_CLOUD_API_URL.value()):
-        return PrefectCloudEventSubscriber(
+    if isinstance(api_url, str) and api_url.startswith(SYNTASK_CLOUD_API_URL.value()):
+        return SyntaskCloudEventSubscriber(
             filter=filter, reconnection_attempts=reconnection_attempts
         )
     elif api_url:
-        return PrefectEventSubscriber(
+        return SyntaskEventSubscriber(
             filter=filter, reconnection_attempts=reconnection_attempts
         )
-    elif PREFECT_SERVER_ALLOW_EPHEMERAL_MODE:
-        from prefect.server.api.server import SubprocessASGIServer
+    elif SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE:
+        from syntask.server.api.server import SubprocessASGIServer
 
         server = SubprocessASGIServer()
         server.start()
-        return PrefectEventSubscriber(
+        return SyntaskEventSubscriber(
             api_url=server.api_url,
             filter=filter,
             reconnection_attempts=reconnection_attempts,
         )
     else:
         raise ValueError(
-            "No Prefect API URL provided. Please set PREFECT_API_URL to the address of a running Prefect server."
+            "No Syntask API URL provided. Please set SYNTASK_API_URL to the address of a running Syntask server."
         )
 
 
 class EventsClient(abc.ABC):
-    """The abstract interface for all Prefect Events clients"""
+    """The abstract interface for all Syntask Events clients"""
 
     @property
     def client_name(self) -> str:
@@ -180,14 +180,14 @@ class EventsClient(abc.ABC):
 
 
 class NullEventsClient(EventsClient):
-    """A Prefect Events client implementation that does nothing"""
+    """A Syntask Events client implementation that does nothing"""
 
     async def _emit(self, event: Event) -> None:
         pass
 
 
 class AssertingEventsClient(EventsClient):
-    """A Prefect Events client that records all events sent to it for inspection during
+    """A Syntask Events client that records all events sent to it for inspection during
     tests."""
 
     last: ClassVar["Optional[AssertingEventsClient]"] = None
@@ -227,19 +227,19 @@ class AssertingEventsClient(EventsClient):
 def _get_api_url_and_key(
     api_url: Optional[str], api_key: Optional[str]
 ) -> Tuple[str, str]:
-    api_url = api_url or PREFECT_API_URL.value()
-    api_key = api_key or PREFECT_API_KEY.value()
+    api_url = api_url or SYNTASK_API_URL.value()
+    api_key = api_key or SYNTASK_API_KEY.value()
 
     if not api_url or not api_key:
         raise ValueError(
-            "api_url and api_key must be provided or set in the Prefect configuration"
+            "api_url and api_key must be provided or set in the Syntask configuration"
         )
 
     return api_url, api_key
 
 
-class PrefectEventsClient(EventsClient):
-    """A Prefect Events client that streams events to a Prefect server"""
+class SyntaskEventsClient(EventsClient):
+    """A Syntask Events client that streams events to a Syntask server"""
 
     _websocket: Optional[WebSocketClientProtocol]
     _unconfirmed_events: List[Event]
@@ -252,16 +252,16 @@ class PrefectEventsClient(EventsClient):
     ):
         """
         Args:
-            api_url: The base URL for a Prefect server
+            api_url: The base URL for a Syntask server
             reconnection_attempts: When the client is disconnected, how many times
                 the client should attempt to reconnect
             checkpoint_every: How often the client should sync with the server to
                 confirm receipt of all previously sent events
         """
-        api_url = api_url or PREFECT_API_URL.value()
+        api_url = api_url or SYNTASK_API_URL.value()
         if not api_url:
             raise ValueError(
-                "api_url must be provided or set in the Prefect configuration"
+                "api_url must be provided or set in the Syntask configuration"
             )
 
         self._events_socket_url = events_in_socket_from_api_url(api_url)
@@ -307,10 +307,10 @@ class PrefectEventsClient(EventsClient):
                 "Please check your network settings to ensure websocket connections "
                 "to the API are allowed. Otherwise event data (including task run data) may be lost. "
                 "Reason: %s. "
-                "Set PREFECT_DEBUG_MODE=1 to see the full error.",
+                "Set SYNTASK_DEBUG_MODE=1 to see the full error.",
                 self._events_socket_url,
                 str(e),
-                exc_info=PREFECT_DEBUG_MODE,
+                exc_info=SYNTASK_DEBUG_MODE,
             )
             raise
 
@@ -369,9 +369,9 @@ class PrefectEventsClient(EventsClient):
                     await asyncio.sleep(1)
 
 
-class AssertingPassthroughEventsClient(PrefectEventsClient):
-    """A Prefect Events client that BOTH records all events sent to it for inspection
-    during tests AND sends them to a Prefect server."""
+class AssertingPassthroughEventsClient(SyntaskEventsClient):
+    """A Syntask Events client that BOTH records all events sent to it for inspection
+    during tests AND sends them to a Syntask server."""
 
     last: ClassVar["Optional[AssertingPassthroughEventsClient]"] = None
     all: ClassVar[List["AssertingPassthroughEventsClient"]] = []
@@ -410,8 +410,8 @@ class AssertingPassthroughEventsClient(PrefectEventsClient):
         return self
 
 
-class PrefectCloudEventsClient(PrefectEventsClient):
-    """A Prefect Events client that streams events to a Prefect Cloud Workspace"""
+class SyntaskCloudEventsClient(SyntaskEventsClient):
+    """A Syntask Events client that streams events to a Syntask Cloud Workspace"""
 
     def __init__(
         self,
@@ -422,7 +422,7 @@ class PrefectCloudEventsClient(PrefectEventsClient):
     ):
         """
         Args:
-            api_url: The base URL for a Prefect Cloud workspace
+            api_url: The base URL for a Syntask Cloud workspace
             api_key: The API of an actor with the manage_events scope
             reconnection_attempts: When the client is disconnected, how many times
                 the client should attempt to reconnect
@@ -445,18 +445,18 @@ SEEN_EVENTS_SIZE = 500_000
 SEEN_EVENTS_TTL = 120
 
 
-class PrefectEventSubscriber:
+class SyntaskEventSubscriber:
     """
-    Subscribes to a Prefect event stream, yielding events as they occur.
+    Subscribes to a Syntask event stream, yielding events as they occur.
 
     Example:
 
-        from prefect.events.clients import PrefectEventSubscriber
-        from prefect.events.filters import EventFilter, EventNameFilter
+        from syntask.events.clients import SyntaskEventSubscriber
+        from syntask.events.filters import EventFilter, EventNameFilter
 
-        filter = EventFilter(event=EventNameFilter(prefix=["prefect.flow-run."]))
+        filter = EventFilter(event=EventNameFilter(prefix=["syntask.flow-run."]))
 
-        async with PrefectEventSubscriber(filter=filter) as subscriber:
+        async with SyntaskEventSubscriber(filter=filter) as subscriber:
             async for event in subscriber:
                 print(event.occurred, event.resource.id, event.event)
 
@@ -476,16 +476,16 @@ class PrefectEventSubscriber:
     ):
         """
         Args:
-            api_url: The base URL for a Prefect Cloud workspace
+            api_url: The base URL for a Syntask Cloud workspace
             api_key: The API of an actor with the manage_events scope
             reconnection_attempts: When the client is disconnected, how many times
                 the client should attempt to reconnect
         """
         self._api_key = None
         if not api_url:
-            api_url = cast(str, PREFECT_API_URL.value())
+            api_url = cast(str, SYNTASK_API_URL.value())
 
-        from prefect.events.filters import EventFilter
+        from syntask.events.filters import EventFilter
 
         self._filter = filter or EventFilter()  # type: ignore[call-arg]
         self._seen_events = TTLCache(maxsize=SEEN_EVENTS_SIZE, ttl=SEEN_EVENTS_TTL)
@@ -496,7 +496,7 @@ class PrefectEventSubscriber:
 
         self._connect = connect(
             socket_url,
-            subprotocols=[Subprotocol("prefect")],
+            subprotocols=[Subprotocol("syntask")],
         )
         self._websocket = None
         self._reconnection_attempts = reconnection_attempts
@@ -551,7 +551,7 @@ class PrefectEventSubscriber:
             msg += f"Reason: {reason}" if reason else ""
             raise Exception(msg) from e
 
-        from prefect.events.filters import EventOccurredFilter
+        from syntask.events.filters import EventOccurredFilter
 
         self._filter.occurred = EventOccurredFilter(
             since=pendulum.now("UTC").subtract(minutes=1),
@@ -628,7 +628,7 @@ class PrefectEventSubscriber:
         raise StopAsyncIteration
 
 
-class PrefectCloudEventSubscriber(PrefectEventSubscriber):
+class SyntaskCloudEventSubscriber(SyntaskEventSubscriber):
     def __init__(
         self,
         api_url: Optional[str] = None,
@@ -638,7 +638,7 @@ class PrefectCloudEventSubscriber(PrefectEventSubscriber):
     ):
         """
         Args:
-            api_url: The base URL for a Prefect Cloud workspace
+            api_url: The base URL for a Syntask Cloud workspace
             api_key: The API of an actor with the manage_events scope
             reconnection_attempts: When the client is disconnected, how many times
                 the client should attempt to reconnect
@@ -654,7 +654,7 @@ class PrefectCloudEventSubscriber(PrefectEventSubscriber):
         self._api_key = api_key
 
 
-class PrefectCloudAccountEventSubscriber(PrefectCloudEventSubscriber):
+class SyntaskCloudAccountEventSubscriber(SyntaskCloudEventSubscriber):
     def __init__(
         self,
         api_url: Optional[str] = None,
@@ -664,7 +664,7 @@ class PrefectCloudAccountEventSubscriber(PrefectCloudEventSubscriber):
     ):
         """
         Args:
-            api_url: The base URL for a Prefect Cloud workspace
+            api_url: The base URL for a Syntask Cloud workspace
             api_key: The API of an actor with the manage_events scope
             reconnection_attempts: When the client is disconnected, how many times
                 the client should attempt to reconnect

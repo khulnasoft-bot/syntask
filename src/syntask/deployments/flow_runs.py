@@ -5,22 +5,22 @@ from uuid import UUID
 import anyio
 import pendulum
 
-import prefect
-from prefect.client.schemas import FlowRun
-from prefect.client.utilities import inject_client
-from prefect.context import FlowRunContext, TaskRunContext
-from prefect.logging import get_logger
-from prefect.results import BaseResult, ResultRecordMetadata
-from prefect.states import Pending, Scheduled
-from prefect.tasks import Task
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.slugify import slugify
+import syntask
+from syntask.client.schemas import FlowRun
+from syntask.client.utilities import inject_client
+from syntask.context import FlowRunContext, TaskRunContext
+from syntask.logging import get_logger
+from syntask.results import BaseResult, ResultRecordMetadata
+from syntask.states import Pending, Scheduled
+from syntask.tasks import Task
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.slugify import slugify
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
-    from prefect.client.schemas.objects import FlowRun
+    from syntask.client.orchestration import SyntaskClient
+    from syntask.client.schemas.objects import FlowRun
 
-prefect.client.schemas.StateCreate.model_rebuild(
+syntask.client.schemas.StateCreate.model_rebuild(
     _types_namespace={
         "BaseResult": BaseResult,
         "ResultRecordMetadata": ResultRecordMetadata,
@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 @inject_client
 async def run_deployment(
     name: Union[str, UUID],
-    client: Optional["PrefectClient"] = None,
+    client: Optional["SyntaskClient"] = None,
     parameters: Optional[dict] = None,
     scheduled_time: Optional[datetime] = None,
     flow_run_name: Optional[str] = None,
@@ -84,7 +84,7 @@ async def run_deployment(
             flow or task run.
         job_variables: A dictionary of dot delimited infrastructure overrides that
             will be applied at runtime; for example `env.CONFIG_KEY=config_value` or
-            `namespace='prefect'`
+            `namespace='syntask'`
     """
     if timeout is not None and timeout < 0:
         raise ValueError("`timeout` cannot be negative")
@@ -113,7 +113,7 @@ async def run_deployment(
     task_run_ctx = TaskRunContext.get()
     if as_subflow and (flow_run_ctx or task_run_ctx):
         # TODO: this logic can likely be simplified by using `Task.create_run`
-        from prefect.utilities.engine import (
+        from syntask.utilities.engine import (
             _dynamic_key_for_task_run,
             collect_task_run_inputs,
         )

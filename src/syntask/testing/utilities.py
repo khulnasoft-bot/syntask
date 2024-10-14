@@ -11,26 +11,26 @@ from pprint import pprint
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-import prefect.context
-import prefect.settings
-from prefect.blocks.core import Block
-from prefect.client.orchestration import get_client
-from prefect.client.schemas import sorting
-from prefect.client.utilities import inject_client
-from prefect.logging.handlers import APILogWorker
-from prefect.results import (
+import syntask.context
+import syntask.settings
+from syntask.blocks.core import Block
+from syntask.client.orchestration import get_client
+from syntask.client.schemas import sorting
+from syntask.client.utilities import inject_client
+from syntask.logging.handlers import APILogWorker
+from syntask.results import (
     ResultRecord,
     ResultRecordMetadata,
     ResultStore,
     get_default_result_storage,
 )
-from prefect.serializers import Serializer
-from prefect.server.api.server import SubprocessASGIServer
-from prefect.states import State
+from syntask.serializers import Serializer
+from syntask.server.api.server import SubprocessASGIServer
+from syntask.states import State
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
-    from prefect.filesystems import ReadableFileSystem
+    from syntask.client.orchestration import SyntaskClient
+    from syntask.filesystems import ReadableFileSystem
 
 
 def exceptions_equal(a, b):
@@ -108,28 +108,28 @@ def assert_does_not_warn(ignore_warnings=[]):
 
 
 @contextmanager
-def prefect_test_harness(server_startup_timeout: Optional[int] = 30):
+def syntask_test_harness(server_startup_timeout: Optional[int] = 30):
     """
     Temporarily run flows against a local SQLite database for testing.
 
     Args:
         server_startup_timeout: The maximum time to wait for the server to start.
             Defaults to 30 seconds. If set to `None`, the value of
-            `PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS` will be used.
+            `SYNTASK_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS` will be used.
 
     Examples:
-        >>> from prefect import flow
-        >>> from prefect.testing.utilities import prefect_test_harness
+        >>> from syntask import flow
+        >>> from syntask.testing.utilities import syntask_test_harness
         >>>
         >>>
         >>> @flow
         >>> def my_flow():
         >>>     return 'Done!'
         >>>
-        >>> with prefect_test_harness():
+        >>> with syntask_test_harness():
         >>>     assert my_flow() == 'Done!' # run against temporary db
     """
-    from prefect.server.database.dependencies import temporary_database_interface
+    from syntask.server.database.dependencies import temporary_database_interface
 
     # create temp directory for the testing database
     temp_dir = mkdtemp()
@@ -143,12 +143,12 @@ def prefect_test_harness(server_startup_timeout: Optional[int] = 30):
         # temporarily override any database interface components
         stack.enter_context(temporary_database_interface())
 
-        DB_PATH = "sqlite+aiosqlite:///" + str(Path(temp_dir) / "prefect-test.db")
+        DB_PATH = "sqlite+aiosqlite:///" + str(Path(temp_dir) / "syntask-test.db")
         stack.enter_context(
-            prefect.settings.temporary_settings(
+            syntask.settings.temporary_settings(
                 # Use a temporary directory for the database
                 updates={
-                    prefect.settings.PREFECT_API_DATABASE_CONNECTION_URL: DB_PATH,
+                    syntask.settings.SYNTASK_API_DATABASE_CONNECTION_URL: DB_PATH,
                 },
             )
         )
@@ -157,13 +157,13 @@ def prefect_test_harness(server_startup_timeout: Optional[int] = 30):
         test_server.start(
             timeout=server_startup_timeout
             if server_startup_timeout is not None
-            else prefect.settings.PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS.value()
+            else syntask.settings.SYNTASK_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS.value()
         )
         stack.enter_context(
-            prefect.settings.temporary_settings(
+            syntask.settings.temporary_settings(
                 # Use a temporary directory for the database
                 updates={
-                    prefect.settings.PREFECT_API_URL: test_server.api_url,
+                    syntask.settings.SYNTASK_API_URL: test_server.api_url,
                 },
             )
         )
@@ -173,7 +173,7 @@ def prefect_test_harness(server_startup_timeout: Optional[int] = 30):
         test_server.stop()
 
 
-async def get_most_recent_flow_run(client: "PrefectClient" = None):
+async def get_most_recent_flow_run(client: "SyntaskClient" = None):
     if client is None:
         client = get_client()
 
@@ -202,7 +202,7 @@ def assert_blocks_equal(
 
 
 async def assert_uses_result_serializer(
-    state: State, serializer: Union[str, Serializer], client: "PrefectClient"
+    state: State, serializer: Union[str, Serializer], client: "SyntaskClient"
 ):
     assert isinstance(state.data, (ResultRecord, ResultRecordMetadata))
     if isinstance(state.data, ResultRecord):
@@ -238,7 +238,7 @@ async def assert_uses_result_serializer(
 
 @inject_client
 async def assert_uses_result_storage(
-    state: State, storage: Union[str, "ReadableFileSystem"], client: "PrefectClient"
+    state: State, storage: Union[str, "ReadableFileSystem"], client: "SyntaskClient"
 ):
     assert isinstance(state.data, (ResultRecord, ResultRecordMetadata))
     if isinstance(state.data, ResultRecord):

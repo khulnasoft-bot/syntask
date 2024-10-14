@@ -5,9 +5,9 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.locking.filesystem import FileSystemLockManager
-from prefect.locking.memory import MemoryLockManager
-from prefect.results import ResultStore
+from syntask.locking.filesystem import FileSystemLockManager
+from syntask.locking.memory import MemoryLockManager
+from syntask.results import ResultStore
 
 
 class TestMemoryLockManager:

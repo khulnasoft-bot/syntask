@@ -1,0 +1,6 @@
+integrationName: syntask-github
+author: Syntask
+authorUrl: https://syntask.khulnasoft.com
+documentation: syntask-github
+iconUrl: /images/integrations/github.png
+tag: GitHub

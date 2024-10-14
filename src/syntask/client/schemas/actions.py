@@ -6,9 +6,9 @@ import jsonschema
 from pydantic import Field, field_validator, model_validator
 from pydantic_extra_types.pendulum_dt import DateTime
 
-import prefect.client.schemas.objects as objects
-from prefect._internal.schemas.bases import ActionBaseModel
-from prefect._internal.schemas.validators import (
+import syntask.client.schemas.objects as objects
+from syntask._internal.schemas.bases import ActionBaseModel
+from syntask._internal.schemas.validators import (
     convert_to_strings,
     remove_old_deployment_fields,
     validate_artifact_key,
@@ -19,13 +19,13 @@ from prefect._internal.schemas.validators import (
     validate_schedule_max_scheduled_runs,
     validate_variable_name,
 )
-from prefect.client.schemas.objects import (
+from syntask.client.schemas.objects import (
     StateDetails,
     StateType,
 )
-from prefect.client.schemas.schedules import SCHEDULE_TYPES
-from prefect.settings import PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS
-from prefect.types import (
+from syntask.client.schemas.schedules import SCHEDULE_TYPES
+from syntask.settings import SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS
+from syntask.types import (
     MAX_VARIABLE_NAME_LENGTH,
     Name,
     NonEmptyishName,
@@ -34,17 +34,17 @@ from prefect.types import (
     PositiveInteger,
     StrictVariableValue,
 )
-from prefect.utilities.collections import listrepr
-from prefect.utilities.pydantic import get_class_fields_only
+from syntask.utilities.collections import listrepr
+from syntask.utilities.pydantic import get_class_fields_only
 
 if TYPE_CHECKING:
-    from prefect.results import BaseResult, ResultRecordMetadata
+    from syntask.results import BaseResult, ResultRecordMetadata
 
 R = TypeVar("R")
 
 
 class StateCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a new state."""
+    """Data used by the Syntask REST API to create a new state."""
 
     type: StateType
     name: Optional[str] = Field(default=None)
@@ -56,7 +56,7 @@ class StateCreate(ActionBaseModel):
 
 
 class FlowCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a flow."""
+    """Data used by the Syntask REST API to create a flow."""
 
     name: str = Field(
         default=..., description="The name of the flow", examples=["my-flow"]
@@ -69,7 +69,7 @@ class FlowCreate(ActionBaseModel):
 
 
 class FlowUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a flow."""
+    """Data used by the Syntask REST API to update a flow."""
 
     tags: List[str] = Field(
         default_factory=list,
@@ -102,7 +102,7 @@ class DeploymentScheduleCreate(ActionBaseModel):
     @classmethod
     def validate_max_scheduled_runs(cls, v):
         return validate_schedule_max_scheduled_runs(
-            v, PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()
+            v, SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()
         )
 
 
@@ -133,12 +133,12 @@ class DeploymentScheduleUpdate(ActionBaseModel):
     @classmethod
     def validate_max_scheduled_runs(cls, v):
         return validate_schedule_max_scheduled_runs(
-            v, PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()
+            v, SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()
         )
 
 
 class DeploymentCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a deployment."""
+    """Data used by the Syntask REST API to create a deployment."""
 
     @model_validator(mode="before")
     @classmethod
@@ -217,7 +217,7 @@ class DeploymentCreate(ActionBaseModel):
 
 
 class DeploymentUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a deployment."""
+    """Data used by the Syntask REST API to update a deployment."""
 
     @model_validator(mode="before")
     @classmethod
@@ -289,7 +289,7 @@ class DeploymentUpdate(ActionBaseModel):
 
 
 class FlowRunUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a flow run."""
+    """Data used by the Syntask REST API to update a flow run."""
 
     name: Optional[str] = Field(None)
     flow_version: Optional[str] = Field(None)
@@ -303,7 +303,7 @@ class FlowRunUpdate(ActionBaseModel):
 
 
 class TaskRunCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a task run"""
+    """Data used by the Syntask REST API to create a task run"""
 
     id: Optional[UUID] = Field(None, description="The ID to assign to the task run")
     # TaskRunCreate states must be provided as StateCreate objects
@@ -346,13 +346,13 @@ class TaskRunCreate(ActionBaseModel):
 
 
 class TaskRunUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a task run"""
+    """Data used by the Syntask REST API to update a task run"""
 
     name: Optional[str] = Field(None)
 
 
 class FlowRunCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a flow run."""
+    """Data used by the Syntask REST API to create a flow run."""
 
     # FlowRunCreate states must be provided as StateCreate objects
     state: Optional[StateCreate] = Field(
@@ -379,7 +379,7 @@ class FlowRunCreate(ActionBaseModel):
 
 
 class DeploymentFlowRunCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a flow run from a deployment."""
+    """Data used by the Syntask REST API to create a flow run from a deployment."""
 
     # FlowRunCreate states must be provided as StateCreate objects
     state: Optional[StateCreate] = Field(
@@ -409,7 +409,7 @@ class DeploymentFlowRunCreate(ActionBaseModel):
 
 
 class SavedSearchCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a saved search."""
+    """Data used by the Syntask REST API to create a saved search."""
 
     name: str = Field(default=..., description="The name of the saved search.")
     filters: List[objects.SavedSearchFilter] = Field(
@@ -418,7 +418,7 @@ class SavedSearchCreate(ActionBaseModel):
 
 
 class ConcurrencyLimitCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a concurrency limit."""
+    """Data used by the Syntask REST API to create a concurrency limit."""
 
     tag: str = Field(
         default=..., description="A tag the concurrency limit is applied to."
@@ -427,7 +427,7 @@ class ConcurrencyLimitCreate(ActionBaseModel):
 
 
 class ConcurrencyLimitV2Create(ActionBaseModel):
-    """Data used by the Prefect REST API to create a v2 concurrency limit."""
+    """Data used by the Syntask REST API to create a v2 concurrency limit."""
 
     active: bool = Field(
         default=True, description="Whether the concurrency limit is active."
@@ -447,7 +447,7 @@ class ConcurrencyLimitV2Create(ActionBaseModel):
 
 
 class ConcurrencyLimitV2Update(ActionBaseModel):
-    """Data used by the Prefect REST API to update a v2 concurrency limit."""
+    """Data used by the Syntask REST API to update a v2 concurrency limit."""
 
     active: Optional[bool] = Field(None)
     name: Optional[Name] = Field(None)
@@ -458,7 +458,7 @@ class ConcurrencyLimitV2Update(ActionBaseModel):
 
 
 class BlockTypeCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a block type."""
+    """Data used by the Syntask REST API to create a block type."""
 
     name: str = Field(default=..., description="A block type's name")
     slug: str = Field(default=..., description="A block type's slug")
@@ -482,7 +482,7 @@ class BlockTypeCreate(ActionBaseModel):
 
 
 class BlockTypeUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a block type."""
+    """Data used by the Syntask REST API to update a block type."""
 
     logo_url: Optional[objects.HttpUrl] = Field(None)
     documentation_url: Optional[objects.HttpUrl] = Field(None)
@@ -495,7 +495,7 @@ class BlockTypeUpdate(ActionBaseModel):
 
 
 class BlockSchemaCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a block schema."""
+    """Data used by the Syntask REST API to create a block schema."""
 
     fields: Dict[str, Any] = Field(
         default_factory=dict, description="The block schema's field schema"
@@ -512,7 +512,7 @@ class BlockSchemaCreate(ActionBaseModel):
 
 
 class BlockDocumentCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a block document."""
+    """Data used by the Syntask REST API to create a block document."""
 
     name: Optional[Name] = Field(
         default=None, description="The name of the block document"
@@ -530,7 +530,7 @@ class BlockDocumentCreate(ActionBaseModel):
         default=False,
         description=(
             "Whether the block is anonymous (anonymous blocks are usually created by"
-            " Prefect automatically)"
+            " Syntask automatically)"
         ),
     )
 
@@ -542,7 +542,7 @@ class BlockDocumentCreate(ActionBaseModel):
 
 
 class BlockDocumentUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a block document."""
+    """Data used by the Syntask REST API to update a block document."""
 
     block_schema_id: Optional[UUID] = Field(
         default=None, description="A block schema ID"
@@ -572,7 +572,7 @@ class BlockDocumentReferenceCreate(ActionBaseModel):
 
 
 class LogCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a log."""
+    """Data used by the Syntask REST API to create a log."""
 
     name: str = Field(default=..., description="The logger name.")
     level: int = Field(default=..., description="The log level.")
@@ -583,14 +583,14 @@ class LogCreate(ActionBaseModel):
 
 
 class WorkPoolCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a work pool."""
+    """Data used by the Syntask REST API to create a work pool."""
 
     name: NonEmptyishName = Field(
         description="The name of the work pool.",
     )
     description: Optional[str] = Field(None)
     type: str = Field(
-        description="The work pool type.", default="prefect-agent"
+        description="The work pool type.", default="syntask-agent"
     )  # TODO: change default
     base_job_template: Dict[str, Any] = Field(
         default_factory=dict,
@@ -606,7 +606,7 @@ class WorkPoolCreate(ActionBaseModel):
 
 
 class WorkPoolUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a work pool."""
+    """Data used by the Syntask REST API to update a work pool."""
 
     description: Optional[str] = Field(None)
     is_paused: Optional[bool] = Field(None)
@@ -615,7 +615,7 @@ class WorkPoolUpdate(ActionBaseModel):
 
 
 class WorkQueueCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a work queue."""
+    """Data used by the Syntask REST API to create a work queue."""
 
     name: str = Field(default=..., description="The name of the work queue.")
     description: Optional[str] = Field(None)
@@ -644,7 +644,7 @@ class WorkQueueCreate(ActionBaseModel):
 
 
 class WorkQueueUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a work queue."""
+    """Data used by the Syntask REST API to update a work queue."""
 
     name: Optional[str] = Field(None)
     description: Optional[str] = Field(None)
@@ -667,7 +667,7 @@ class WorkQueueUpdate(ActionBaseModel):
 
 
 class FlowRunNotificationPolicyCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a flow run notification policy."""
+    """Data used by the Syntask REST API to create a flow run notification policy."""
 
     is_active: bool = Field(
         default=True, description="Whether the policy is currently active"
@@ -702,7 +702,7 @@ class FlowRunNotificationPolicyCreate(ActionBaseModel):
 
 
 class FlowRunNotificationPolicyUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a flow run notification policy."""
+    """Data used by the Syntask REST API to update a flow run notification policy."""
 
     is_active: Optional[bool] = Field(None)
     state_names: Optional[List[str]] = Field(None)
@@ -712,7 +712,7 @@ class FlowRunNotificationPolicyUpdate(ActionBaseModel):
 
 
 class ArtifactCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create an artifact."""
+    """Data used by the Syntask REST API to create an artifact."""
 
     key: Optional[str] = Field(None)
     type: Optional[str] = Field(None)
@@ -726,7 +726,7 @@ class ArtifactCreate(ActionBaseModel):
 
 
 class ArtifactUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update an artifact."""
+    """Data used by the Syntask REST API to update an artifact."""
 
     data: Optional[Union[Dict[str, Any], Any]] = Field(None)
     description: Optional[str] = Field(None)
@@ -734,7 +734,7 @@ class ArtifactUpdate(ActionBaseModel):
 
 
 class VariableCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a Variable."""
+    """Data used by the Syntask REST API to create a Variable."""
 
     name: str = Field(
         default=...,
@@ -754,7 +754,7 @@ class VariableCreate(ActionBaseModel):
 
 
 class VariableUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a Variable."""
+    """Data used by the Syntask REST API to update a Variable."""
 
     name: Optional[str] = Field(
         default=None,
@@ -774,7 +774,7 @@ class VariableUpdate(ActionBaseModel):
 
 
 class GlobalConcurrencyLimitCreate(ActionBaseModel):
-    """Data used by the Prefect REST API to create a global concurrency limit."""
+    """Data used by the Syntask REST API to create a global concurrency limit."""
 
     name: Name = Field(description="The name of the global concurrency limit.")
     limit: NonNegativeInteger = Field(
@@ -801,7 +801,7 @@ class GlobalConcurrencyLimitCreate(ActionBaseModel):
 
 
 class GlobalConcurrencyLimitUpdate(ActionBaseModel):
-    """Data used by the Prefect REST API to update a global concurrency limit."""
+    """Data used by the Syntask REST API to update a global concurrency limit."""
 
     name: Optional[Name] = Field(None)
     limit: Optional[NonNegativeInteger] = Field(None)

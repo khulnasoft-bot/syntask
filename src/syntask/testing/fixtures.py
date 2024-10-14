@@ -16,32 +16,32 @@ from starlette.status import WS_1008_POLICY_VIOLATION
 from websockets.exceptions import ConnectionClosed
 from websockets.legacy.server import WebSocketServer, WebSocketServerProtocol, serve
 
-from prefect.events import Event
-from prefect.events.clients import (
+from syntask.events import Event
+from syntask.events.clients import (
     AssertingEventsClient,
     AssertingPassthroughEventsClient,
 )
-from prefect.events.filters import EventFilter
-from prefect.events.worker import EventsWorker
-from prefect.server.api.server import SubprocessASGIServer
-from prefect.server.events.pipeline import EventsPipeline
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
-    PREFECT_SERVER_CSRF_PROTECTION_ENABLED,
+from syntask.events.filters import EventFilter
+from syntask.events.worker import EventsWorker
+from syntask.server.api.server import SubprocessASGIServer
+from syntask.server.events.pipeline import EventsPipeline
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
+    SYNTASK_SERVER_CSRF_PROTECTION_ENABLED,
     get_current_settings,
     temporary_settings,
 )
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.processutils import open_process
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.processutils import open_process
 
 
 @pytest.fixture(autouse=True)
-def add_prefect_loggers_to_caplog(caplog):
+def add_syntask_loggers_to_caplog(caplog):
     import logging
 
-    logger = logging.getLogger("prefect")
+    logger = logging.getLogger("syntask")
     logger.propagate = True
 
     try:
@@ -58,7 +58,7 @@ def is_port_in_use(port: int) -> bool:
 @pytest.fixture(scope="session")
 async def hosted_api_server(unused_tcp_port_factory):
     """
-    Runs an instance of the Prefect API server in a subprocess instead of the using the
+    Runs an instance of the Syntask API server in a subprocess instead of the using the
     ephemeral application.
 
     Uses the same database as the rest of the tests.
@@ -75,7 +75,7 @@ async def hosted_api_server(unused_tcp_port_factory):
         command=[
             "uvicorn",
             "--factory",
-            "prefect.server.api.server:create_app",
+            "syntask.server.api.server:create_app",
             "--host",
             "127.0.0.1",
             "--port",
@@ -109,7 +109,7 @@ async def hosted_api_server(unused_tcp_port_factory):
                 response.raise_for_status()
             if not response:
                 raise RuntimeError(
-                    "Timed out while attempting to connect to hosted test Prefect API."
+                    "Timed out while attempting to connect to hosted test Syntask API."
                 )
 
         # Yield to the consuming tests
@@ -135,12 +135,12 @@ async def hosted_api_server(unused_tcp_port_factory):
 @pytest.fixture(autouse=True)
 def use_hosted_api_server(hosted_api_server):
     """
-    Sets `PREFECT_API_URL` to the test session's hosted API endpoint.
+    Sets `SYNTASK_API_URL` to the test session's hosted API endpoint.
     """
     with temporary_settings(
         {
-            PREFECT_API_URL: hosted_api_server,
-            PREFECT_SERVER_CSRF_PROTECTION_ENABLED: False,
+            SYNTASK_API_URL: hosted_api_server,
+            SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: False,
         }
     ):
         yield hosted_api_server
@@ -149,11 +149,11 @@ def use_hosted_api_server(hosted_api_server):
 @pytest.fixture
 def disable_hosted_api_server():
     """
-    Disables the hosted API server by setting `PREFECT_API_URL` to `None`.
+    Disables the hosted API server by setting `SYNTASK_API_URL` to `None`.
     """
     with temporary_settings(
         {
-            PREFECT_API_URL: None,
+            SYNTASK_API_URL: None,
         }
     ):
         yield hosted_api_server
@@ -162,11 +162,11 @@ def disable_hosted_api_server():
 @pytest.fixture
 def enable_ephemeral_server(disable_hosted_api_server):
     """
-    Enables the ephemeral server by setting `PREFECT_SERVER_ALLOW_EPHEMERAL_MODE` to `True`.
+    Enables the ephemeral server by setting `SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE` to `True`.
     """
     with temporary_settings(
         {
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: True,
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: True,
         }
     ):
         yield hosted_api_server
@@ -370,7 +370,7 @@ def events_cloud_api_url(events_server: WebSocketServer, unused_tcp_port: int) -
 def mock_should_emit_events(monkeypatch) -> mock.Mock:
     m = mock.Mock()
     m.return_value = True
-    monkeypatch.setattr("prefect.events.utilities.should_emit_events", m)
+    monkeypatch.setattr("syntask.events.utilities.should_emit_events", m)
     return m
 
 

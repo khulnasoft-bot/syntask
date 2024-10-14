@@ -1,5 +1,5 @@
 """
-The base class for all Prefect REST API loop services.
+The base class for all Syntask REST API loop services.
 """
 
 import asyncio
@@ -9,11 +9,11 @@ from typing import List, Optional
 import anyio
 import pendulum
 
-from prefect.logging import get_logger
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.settings import PREFECT_API_LOG_RETRYABLE_ERRORS
-from prefect.utilities.processutils import _register_signal
+from syntask.logging import get_logger
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.settings import SYNTASK_API_LOG_RETRYABLE_ERRORS
+from syntask.utilities.processutils import _register_signal
 
 
 class LoopService:
@@ -48,7 +48,7 @@ class LoopService:
             _register_signal(signal.SIGTERM, self._stop)
 
     @inject_db
-    async def _on_start(self, db: PrefectDBInterface) -> None:
+    async def _on_start(self, db: SyntaskDBInterface) -> None:
         """
         Called prior to running the service
         """
@@ -88,11 +88,11 @@ class LoopService:
             # if an error is raised, log and continue
             except Exception as exc:
                 # avoid circular import
-                from prefect.server.api.server import is_client_retryable_exception
+                from syntask.server.api.server import is_client_retryable_exception
 
                 retryable_error = is_client_retryable_exception(exc)
                 if not retryable_error or (
-                    retryable_error and PREFECT_API_LOG_RETRYABLE_ERRORS.value()
+                    retryable_error and SYNTASK_API_LOG_RETRYABLE_ERRORS.value()
                 ):
                     self.logger.error(
                         f"Unexpected error in: {repr(exc)}", exc_info=True

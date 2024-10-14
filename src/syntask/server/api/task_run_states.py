@@ -7,13 +7,13 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, Path, status
 
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.server import PrefectRouter
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="/task_run_states", tags=["Task Run States"])
+router = SyntaskRouter(prefix="/task_run_states", tags=["Task Run States"])
 
 
 @router.get("/{id}")
@@ -21,7 +21,7 @@ async def read_task_run_state(
     task_run_state_id: UUID = Path(
         ..., description="The task run state id", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.states.State:
     """
     Get a task run state by id.
@@ -40,7 +40,7 @@ async def read_task_run_state(
 @router.get("/")
 async def read_task_run_states(
     task_run_id: UUID,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.states.State]:
     """
     Get states associated with a task run.

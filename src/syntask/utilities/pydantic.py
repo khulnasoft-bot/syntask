@@ -24,9 +24,9 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema, to_jsonable_python
 from typing_extensions import Literal
 
-from prefect.utilities.dispatch import get_dispatch_key, lookup_type, register_base_type
-from prefect.utilities.importtools import from_qualified_name, to_qualified_name
-from prefect.utilities.names import obfuscate
+from syntask.utilities.dispatch import get_dispatch_key, lookup_type, register_base_type
+from syntask.utilities.importtools import from_qualified_name, to_qualified_name
+from syntask.utilities.names import obfuscate
 
 D = TypeVar("D", bound=Any)
 M = TypeVar("M", bound=BaseModel)
@@ -56,15 +56,13 @@ def _unreduce_model(model_name, json):
 
 
 @overload
-def add_cloudpickle_reduction(__model_cls: Type[M]) -> Type[M]:
-    ...
+def add_cloudpickle_reduction(__model_cls: Type[M]) -> Type[M]: ...
 
 
 @overload
 def add_cloudpickle_reduction(
     **kwargs: Any,
-) -> Callable[[Type[M]], Type[M]]:
-    ...
+) -> Callable[[Type[M]], Type[M]]: ...
 
 
 def add_cloudpickle_reduction(__model_cls: Optional[Type[M]] = None, **kwargs: Any):
@@ -133,7 +131,7 @@ def add_type_dispatch(model_cls: Type[M]) -> Type[M]:
 
     The base class must not define a 'type' field. If it is not desirable to add a field
     to the model and the dispatch key can be tracked separately, the lower level
-    utilities in `prefect.utilities.dispatch` should be used directly.
+    utilities in `syntask.utilities.dispatch` should be used directly.
     """
     defines_dispatch_key = hasattr(
         model_cls, "__dispatch_key__"
@@ -329,7 +327,7 @@ def parse_obj_as(
     Example:
         Basic Usage of `parse_as`
         ```python
-        from prefect.utilities.pydantic import parse_as
+        from syntask.utilities.pydantic import parse_as
         from pydantic import BaseModel
 
         class ExampleModel(BaseModel):

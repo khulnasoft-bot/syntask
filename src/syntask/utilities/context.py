@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Tuple, cast
 from uuid import UUID
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.objects import FlowRun, TaskRun
+    from syntask.client.schemas.objects import FlowRun, TaskRun
 
 
 @contextmanager
@@ -21,7 +21,7 @@ def temporary_context(context: Context):
 
 
 def get_task_run_id() -> Optional[UUID]:
-    from prefect.context import TaskRunContext
+    from syntask.context import TaskRunContext
 
     context = TaskRunContext.get()
     if task_run := cast(Optional["TaskRun"], getattr(context, "task_run", None)):
@@ -30,7 +30,7 @@ def get_task_run_id() -> Optional[UUID]:
 
 
 def get_flow_run_id() -> Optional[UUID]:
-    from prefect.context import FlowRunContext
+    from syntask.context import FlowRunContext
 
     context = FlowRunContext.get()
     if flow_run := cast(Optional["FlowRun"], getattr(context, "flow_run", None)):

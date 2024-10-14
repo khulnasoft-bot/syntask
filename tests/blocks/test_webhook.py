@@ -1,7 +1,7 @@
 import pytest
 
-from prefect.blocks.webhook import Webhook
-from prefect.testing.utilities import AsyncMock
+from syntask.blocks.webhook import Webhook
+from syntask.testing.utilities import AsyncMock
 
 RESTRICTED_URLS = [
     ("", ""),

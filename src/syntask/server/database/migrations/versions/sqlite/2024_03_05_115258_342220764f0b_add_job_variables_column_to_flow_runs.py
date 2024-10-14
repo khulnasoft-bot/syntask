@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import Text
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "342220764f0b"
@@ -24,7 +24,7 @@ def upgrade():
         "flow_run",
         sa.Column(
             "job_variables",
-            prefect.server.utilities.database.JSON(astext_type=Text()),
+            syntask.server.utilities.database.JSON(astext_type=Text()),
             server_default="{}",
             nullable=True,
         ),

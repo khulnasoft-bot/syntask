@@ -18,25 +18,25 @@ from fastapi import (
 from pydantic_extra_types.pendulum_dt import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.api.dependencies as dependencies
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.api.validation import validate_job_variable_defaults_for_work_pool
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models.deployments import mark_deployments_ready
-from prefect.server.models.work_queues import (
+import syntask.server.api.dependencies as dependencies
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.api.validation import validate_job_variable_defaults_for_work_pool
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models.deployments import mark_deployments_ready
+from syntask.server.models.work_queues import (
     emit_work_queue_status_event,
     mark_work_queues_ready,
 )
-from prefect.server.models.workers import emit_work_pool_status_event
-from prefect.server.schemas.statuses import WorkQueueStatus
-from prefect.server.utilities.server import PrefectRouter
+from syntask.server.models.workers import emit_work_pool_status_event
+from syntask.server.schemas.statuses import WorkQueueStatus
+from syntask.server.utilities.server import SyntaskRouter
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMWorkQueue
+    from syntask.server.database.orm_models import ORMWorkQueue
 
-router = PrefectRouter(
+router = SyntaskRouter(
     prefix="/work_pools",
     tags=["Work Pools"],
 )
@@ -157,16 +157,16 @@ class WorkerLookups:
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_work_pool(
     work_pool: schemas.actions.WorkPoolCreate,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.WorkPool:
     """
     Creates a new work pool. If a work pool with the same
     name already exists, an error will be raised.
     """
-    if work_pool.name.lower().startswith("prefect"):
+    if work_pool.name.lower().startswith("syntask"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Work pools starting with 'Prefect' are reserved for internal use.",
+            detail="Work pools starting with 'Syntask' are reserved for internal use.",
         )
 
     try:
@@ -198,7 +198,7 @@ async def create_work_pool(
 async def read_work_pool(
     work_pool_name: str = Path(..., description="The work pool name", alias="name"),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.WorkPool:
     """
     Read a work pool by name
@@ -220,7 +220,7 @@ async def read_work_pools(
     limit: int = dependencies.LimitBody(),
     offset: int = Body(0, ge=0),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.core.WorkPool]:
     """
     Read multiple work pools
@@ -241,7 +241,7 @@ async def read_work_pools(
 @router.post("/count")
 async def count_work_pools(
     work_pools: Optional[schemas.filters.WorkPoolFilter] = Body(None, embed=True),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     """
     Count work pools
@@ -257,7 +257,7 @@ async def update_work_pool(
     work_pool: schemas.actions.WorkPoolUpdate,
     work_pool_name: str = Path(..., description="The work pool name", alias="name"),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Update a work pool
@@ -265,13 +265,13 @@ async def update_work_pool(
 
     # Reserved pools can only updated pause / concurrency
     update_values = work_pool.model_dump(exclude_unset=True)
-    if work_pool_name.lower().startswith("prefect") and (
+    if work_pool_name.lower().startswith("syntask") and (
         set(update_values).difference({"is_paused", "concurrency_limit"})
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=(
-                "Work pools starting with 'Prefect' are reserved for internal use "
+                "Work pools starting with 'Syntask' are reserved for internal use "
                 "and can only be updated to set concurrency limits or pause."
             ),
         )
@@ -292,17 +292,17 @@ async def update_work_pool(
 async def delete_work_pool(
     work_pool_name: str = Path(..., description="The work pool name", alias="name"),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete a work pool
     """
 
-    if work_pool_name.lower().startswith("prefect"):
+    if work_pool_name.lower().startswith("syntask"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=(
-                "Work pools starting with 'Prefect' are reserved for internal use and"
+                "Work pools starting with 'Syntask' are reserved for internal use and"
                 " can not be deleted."
             ),
         )
@@ -332,7 +332,7 @@ async def get_scheduled_flow_runs(
     ),
     limit: int = dependencies.LimitBody(),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.WorkerFlowRunResponse]:
     """
     Load scheduled runs for a worker
@@ -404,7 +404,7 @@ async def create_work_queue(
     work_queue: schemas.actions.WorkQueueCreate,
     work_pool_name: str = Path(..., description="The work pool name"),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.responses.WorkQueueResponse:
     """
     Creates a new work pool queue. If a work pool queue with the same
@@ -444,7 +444,7 @@ async def read_work_queue(
         ..., description="The work pool queue name", alias="name"
     ),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.responses.WorkQueueResponse:
     """
     Read a work pool queue
@@ -473,7 +473,7 @@ async def read_work_queues(
     limit: int = dependencies.LimitBody(),
     offset: int = Body(0, ge=0),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.WorkQueueResponse]:
     """
     Read all work pool queues
@@ -505,7 +505,7 @@ async def update_work_queue(
         ..., description="The work pool queue name", alias="name"
     ),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Update a work pool queue
@@ -535,7 +535,7 @@ async def delete_work_queue(
         ..., description="The work pool queue name", alias="name"
     ),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete a work pool queue
@@ -573,7 +573,7 @@ async def worker_heartbeat(
         None, description="The worker's heartbeat interval in seconds", embed=True
     ),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         work_pool = await models.workers.read_work_pool_by_name(
@@ -611,7 +611,7 @@ async def read_workers(
     limit: int = dependencies.LimitBody(),
     offset: int = Body(0, ge=0),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.WorkerResponse]:
     """
     Read all worker processes
@@ -638,7 +638,7 @@ async def delete_worker(
         ..., description="The work pool's worker name", alias="name"
     ),
     worker_lookups: WorkerLookups = Depends(WorkerLookups),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete a work pool's worker

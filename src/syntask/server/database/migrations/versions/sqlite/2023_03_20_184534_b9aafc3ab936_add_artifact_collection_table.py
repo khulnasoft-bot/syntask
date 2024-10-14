@@ -9,7 +9,7 @@ Create Date: 2023-03-20 18:45:34.438841
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "b9aafc3ab936"
@@ -25,7 +25,7 @@ def upgrade():
         "artifact_collection",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -38,19 +38,19 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column("key", sa.String(), nullable=False),
         sa.Column(
-            "latest_id", prefect.server.utilities.database.UUID(), nullable=False
+            "latest_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_artifact_collection")),
         sa.UniqueConstraint("key", name=op.f("uq_artifact_collection__key")),

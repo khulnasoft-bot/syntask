@@ -9,7 +9,7 @@ Create Date: 2022-05-12 20:31:58.658936
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "888a0bb0df7b"
@@ -24,7 +24,7 @@ def upgrade():
         "flow_run_alert_queue",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4))) \n        || '-' \n       "
                 " || lower(hex(randomblob(2))) \n        || '-4' \n        ||"
@@ -37,24 +37,24 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "flow_run_alert_policy_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.Column(
             "flow_run_state_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_flow_run_alert_queue")),
@@ -69,7 +69,7 @@ def upgrade():
         "flow_run_alert_policy",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4))) \n        || '-' \n       "
                 " || lower(hex(randomblob(2))) \n        || '-4' \n        ||"
@@ -82,13 +82,13 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
@@ -96,20 +96,20 @@ def upgrade():
         sa.Column("is_active", sa.Boolean(), server_default="1", nullable=False),
         sa.Column(
             "state_names",
-            prefect.server.utilities.database.JSON(astext_type=sa.Text()),
+            syntask.server.utilities.database.JSON(astext_type=sa.Text()),
             server_default="[]",
             nullable=False,
         ),
         sa.Column(
             "tags",
-            prefect.server.utilities.database.JSON(astext_type=sa.Text()),
+            syntask.server.utilities.database.JSON(astext_type=sa.Text()),
             server_default="[]",
             nullable=False,
         ),
         sa.Column("message_template", sa.String(), nullable=True),
         sa.Column(
             "block_document_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.ForeignKeyConstraint(

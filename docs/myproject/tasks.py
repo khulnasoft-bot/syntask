@@ -1,6 +1,5 @@
-from prefect import task
+from syntask import task
 
 
 @task
-def my_background_task(name: str):
-    ...
+def my_background_task(name: str): ...

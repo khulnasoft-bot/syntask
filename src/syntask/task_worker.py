@@ -18,26 +18,26 @@ from exceptiongroup import BaseExceptionGroup  # novermin
 from fastapi import FastAPI
 from websockets.exceptions import InvalidStatusCode
 
-from prefect import Task
-from prefect._internal.concurrency.api import create_call, from_sync
-from prefect.cache_policies import DEFAULT, NONE
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.objects import TaskRun
-from prefect.client.subscriptions import Subscription
-from prefect.logging.loggers import get_logger
-from prefect.results import ResultStore, get_or_create_default_task_scheduling_storage
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_TASK_SCHEDULING_DELETE_FAILED_SUBMISSIONS,
+from syntask import Task
+from syntask._internal.concurrency.api import create_call, from_sync
+from syntask.cache_policies import DEFAULT, NONE
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.objects import TaskRun
+from syntask.client.subscriptions import Subscription
+from syntask.logging.loggers import get_logger
+from syntask.results import ResultStore, get_or_create_default_task_scheduling_storage
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_TASK_SCHEDULING_DELETE_FAILED_SUBMISSIONS,
 )
-from prefect.states import Pending
-from prefect.task_engine import run_task_async, run_task_sync
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.asyncutils import asyncnullcontext, sync_compatible
-from prefect.utilities.engine import emit_task_run_state_change_event
-from prefect.utilities.processutils import _register_signal
-from prefect.utilities.services import start_client_metrics_server
-from prefect.utilities.urls import url_for
+from syntask.states import Pending
+from syntask.task_engine import run_task_async, run_task_sync
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.asyncutils import asyncnullcontext, sync_compatible
+from syntask.utilities.engine import emit_task_run_state_change_event
+from syntask.utilities.processutils import _register_signal
+from syntask.utilities.services import start_client_metrics_server
+from syntask.utilities.urls import url_for
 
 logger = get_logger("task_worker")
 
@@ -167,9 +167,9 @@ class TaskWorker:
                 if exc.status_code == 403:
                     logger.error(
                         "403: Could not establish a connection to the `/task_runs/subscriptions/scheduled`"
-                        f" endpoint found at:\n\n {PREFECT_API_URL.value()}"
+                        f" endpoint found at:\n\n {SYNTASK_API_URL.value()}"
                         "\n\nPlease double-check the values of your"
-                        " `PREFECT_API_URL` and `PREFECT_API_KEY` environment variables."
+                        " `SYNTASK_API_URL` and `SYNTASK_API_KEY` environment variables."
                     )
                 else:
                     raise
@@ -209,10 +209,10 @@ class TaskWorker:
         return True
 
     async def _subscribe_to_task_scheduling(self):
-        base_url = PREFECT_API_URL.value()
+        base_url = SYNTASK_API_URL.value()
         if base_url is None:
             raise ValueError(
-                "`PREFECT_API_URL` must be set to use the task worker. "
+                "`SYNTASK_API_URL` must be set to use the task worker. "
                 "Task workers are not compatible with the ephemeral API."
             )
         task_keys_repr = " | ".join(
@@ -256,7 +256,7 @@ class TaskWorker:
         task = next((t for t in self.tasks if t.task_key == task_run.task_key), None)
 
         if not task:
-            if PREFECT_TASK_SCHEDULING_DELETE_FAILED_SUBMISSIONS:
+            if SYNTASK_TASK_SCHEDULING_DELETE_FAILED_SUBMISSIONS:
                 logger.warning(
                     f"Task {task_run.name!r} not found in task worker registry."
                 )
@@ -286,7 +286,7 @@ class TaskWorker:
                     f"Failed to read parameters for task run {task_run.id!r}",
                     exc_info=exc,
                 )
-                if PREFECT_TASK_SCHEDULING_DELETE_FAILED_SUBMISSIONS.value():
+                if SYNTASK_TASK_SCHEDULING_DELETE_FAILED_SUBMISSIONS.value():
                     logger.info(
                         f"Deleting task run {task_run.id!r} because it failed to submit"
                     )
@@ -405,8 +405,8 @@ async def serve(
 
     Example:
         ```python
-        from prefect import task
-        from prefect.task_worker import serve
+        from syntask import task
+        from syntask.task_worker import serve
 
         @task(log_prints=True)
         def say(message: str):

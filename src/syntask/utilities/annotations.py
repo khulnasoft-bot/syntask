@@ -10,7 +10,7 @@ class BaseAnnotation(
     namedtuple("BaseAnnotation", field_names="value"), ABC, Generic[T]
 ):
     """
-    Base class for Prefect annotation types.
+    Base class for Syntask annotation types.
 
     Inherits from `namedtuple` for unpacking support in another tools.
     """
@@ -49,7 +49,7 @@ class allow_failure(BaseAnnotation[T]):
 
     Indicates that the upstream run for this input can be failed.
 
-    Generally, Prefect will not allow a downstream run to start if any of its inputs
+    Generally, Syntask will not allow a downstream run to start if any of its inputs
     are failed. This annotation allows you to opt into receiving a failed input
     downstream.
 
@@ -61,10 +61,10 @@ class allow_failure(BaseAnnotation[T]):
 class quote(BaseAnnotation[T]):
     """
     Simple wrapper to mark an expression as a different type so it will not be coerced
-    by Prefect. For example, if you want to return a state from a flow without having
+    by Syntask. For example, if you want to return a state from a flow without having
     the flow assume that state.
 
-    quote will also instruct prefect to ignore introspection of the wrapped object
+    quote will also instruct syntask to ignore introspection of the wrapped object
     when passed as flow or task parameter. Parameter introspection can be a
     significant performance hit when the object is a large collection,
     e.g. a large dictionary or DataFrame, and each element needs to be visited. This

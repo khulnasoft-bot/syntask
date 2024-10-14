@@ -20,15 +20,15 @@ except ImportError:
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from typing_extensions import Literal
 
-from prefect.settings import (
-    PREFECT_API_DATABASE_CONNECTION_TIMEOUT,
-    PREFECT_API_DATABASE_ECHO,
-    PREFECT_API_DATABASE_TIMEOUT,
-    PREFECT_SQLALCHEMY_MAX_OVERFLOW,
-    PREFECT_SQLALCHEMY_POOL_SIZE,
-    PREFECT_UNIT_TEST_MODE,
+from syntask.settings import (
+    SYNTASK_API_DATABASE_CONNECTION_TIMEOUT,
+    SYNTASK_API_DATABASE_ECHO,
+    SYNTASK_API_DATABASE_TIMEOUT,
+    SYNTASK_SQLALCHEMY_MAX_OVERFLOW,
+    SYNTASK_SQLALCHEMY_POOL_SIZE,
+    SYNTASK_UNIT_TEST_MODE,
 )
-from prefect.utilities.asyncutils import add_event_loop_shutdown_callback
+from syntask.utilities.asyncutils import add_event_loop_shutdown_callback
 
 SQLITE_BEGIN_MODE: ContextVar[Optional[str]] = ContextVar(  # novm
     "SQLITE_BEGIN_MODE", default=None
@@ -104,9 +104,9 @@ TRACKER: ConnectionTracker = ConnectionTracker()
 
 class BaseDatabaseConfiguration(ABC):
     """
-    Abstract base class used to inject database connection configuration into Prefect.
+    Abstract base class used to inject database connection configuration into Syntask.
 
-    This configuration is responsible for defining how Prefect REST API creates and manages
+    This configuration is responsible for defining how Syntask REST API creates and manages
     database connections and sessions.
     """
 
@@ -120,16 +120,16 @@ class BaseDatabaseConfiguration(ABC):
         sqlalchemy_max_overflow: Optional[int] = None,
     ):
         self.connection_url = connection_url
-        self.echo = echo or PREFECT_API_DATABASE_ECHO.value()
-        self.timeout = timeout or PREFECT_API_DATABASE_TIMEOUT.value()
+        self.echo = echo or SYNTASK_API_DATABASE_ECHO.value()
+        self.timeout = timeout or SYNTASK_API_DATABASE_TIMEOUT.value()
         self.connection_timeout = (
-            connection_timeout or PREFECT_API_DATABASE_CONNECTION_TIMEOUT.value()
+            connection_timeout or SYNTASK_API_DATABASE_CONNECTION_TIMEOUT.value()
         )
         self.sqlalchemy_pool_size = (
-            sqlalchemy_pool_size or PREFECT_SQLALCHEMY_POOL_SIZE.value()
+            sqlalchemy_pool_size or SYNTASK_SQLALCHEMY_POOL_SIZE.value()
         )
         self.sqlalchemy_max_overflow = (
-            sqlalchemy_max_overflow or PREFECT_SQLALCHEMY_MAX_OVERFLOW.value()
+            sqlalchemy_max_overflow or SYNTASK_SQLALCHEMY_MAX_OVERFLOW.value()
         )
 
     def _unique_key(self) -> Tuple[Hashable, ...]:
@@ -313,7 +313,7 @@ class AioSqliteConfiguration(BaseDatabaseConfiguration):
         if sqlite3.sqlite_version_info < self.MIN_SQLITE_VERSION:
             required = ".".join(str(v) for v in self.MIN_SQLITE_VERSION)
             raise RuntimeError(
-                f"Prefect requires sqlite >= {required} but we found version "
+                f"Syntask requires sqlite >= {required} but we found version "
                 f"{sqlite3.sqlite_version}"
             )
 
@@ -335,7 +335,7 @@ class AioSqliteConfiguration(BaseDatabaseConfiguration):
             # use `named` paramstyle for sqlite instead of `qmark` in very rare
             # circumstances, we've seen aiosqlite pass parameters in the wrong
             # order; by using named parameters we avoid this issue
-            # see https://github.com/synopkg/synopkg/pull/6702
+            # see https://github.com/synopkg/syntask/pull/6702
             kwargs["paramstyle"] = "named"
 
             # ensure a long-lasting pool is used with in-memory databases
@@ -421,14 +421,14 @@ class AioSqliteConfiguration(BaseDatabaseConfiguration):
         # before returning and raising an error
         # setting the value very high allows for more 'concurrency'
         # without running into errors, but may result in slow api calls
-        if PREFECT_UNIT_TEST_MODE.value() is True:
+        if SYNTASK_UNIT_TEST_MODE.value() is True:
             cursor.execute("PRAGMA busy_timeout = 5000;")  # 5s
         else:
             cursor.execute("PRAGMA busy_timeout = 60000;")  # 60s
 
         # `PRAGMA temp_store = memory;` moves temporary tables from disk into RAM
         # this supposedly speeds up reads, but it seems to actually
-        # decrease overall performance, see https://github.com/synopkg/synopkg/pull/14812
+        # decrease overall performance, see https://github.com/synopkg/syntask/pull/14812
         # cursor.execute("PRAGMA temp_store = memory;")
 
         cursor.close()

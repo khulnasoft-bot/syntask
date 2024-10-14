@@ -8,25 +8,25 @@ import pendulum
 import pytest
 import sqlalchemy.exc
 
-from prefect.server import models, schemas
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.exceptions import OrchestrationError
-from prefect.server.orchestration.rules import (
+from syntask.server import models, schemas
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.exceptions import OrchestrationError
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     BaseOrchestrationRule,
     BaseUniversalTransform,
     OrchestrationContext,
     TaskOrchestrationContext,
 )
-from prefect.server.schemas import states
-from prefect.server.schemas.responses import (
+from syntask.server.schemas import states
+from syntask.server.schemas.responses import (
     OrchestrationResult,
     SetStateStatus,
     StateAbortDetails,
     StateRejectDetails,
     StateWaitDetails,
 )
-from prefect.testing.utilities import AsyncMock
+from syntask.testing.utilities import AsyncMock
 
 # Convert constant from set to list for deterministic ordering of tests
 ALL_ORCHESTRATION_STATES = list(

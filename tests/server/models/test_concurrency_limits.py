@@ -1,7 +1,7 @@
 import time
 from uuid import uuid4
 
-from prefect.server import models, schemas
+from syntask.server import models, schemas
 
 
 class TestCreatingConcurrencyLimits:

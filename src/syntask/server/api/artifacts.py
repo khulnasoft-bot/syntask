@@ -8,14 +8,14 @@ from uuid import UUID
 import pendulum
 from fastapi import Body, Depends, HTTPException, Path, Response, status
 
-import prefect.server.api.dependencies as dependencies
-from prefect.server import models
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas import actions, core, filters, sorting
-from prefect.server.utilities.server import PrefectRouter
+import syntask.server.api.dependencies as dependencies
+from syntask.server import models
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas import actions, core, filters, sorting
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(
+router = SyntaskRouter(
     prefix="/artifacts",
     tags=["Artifacts"],
 )
@@ -25,7 +25,7 @@ router = PrefectRouter(
 async def create_artifact(
     artifact: actions.ArtifactCreate,
     response: Response,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> core.Artifact:
     artifact = core.Artifact(**artifact.model_dump())
 
@@ -47,7 +47,7 @@ async def read_artifact(
     artifact_id: UUID = Path(
         ..., description="The ID of the artifact to retrieve.", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> core.Artifact:
     """
     Retrieve an artifact from the database.
@@ -68,7 +68,7 @@ async def read_latest_artifact(
         ...,
         description="The key of the artifact to retrieve.",
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> core.Artifact:
     """
     Retrieve the latest artifact from the artifact table.
@@ -91,7 +91,7 @@ async def read_artifacts(
     task_runs: filters.TaskRunFilter = None,
     flows: filters.FlowFilter = None,
     deployments: filters.DeploymentFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[core.Artifact]:
     """
     Retrieve artifacts from the database.
@@ -120,7 +120,7 @@ async def read_latest_artifacts(
     task_runs: filters.TaskRunFilter = None,
     flows: filters.FlowFilter = None,
     deployments: filters.DeploymentFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[core.ArtifactCollection]:
     """
     Retrieve artifacts from the database.
@@ -146,7 +146,7 @@ async def count_artifacts(
     task_runs: filters.TaskRunFilter = None,
     flows: filters.FlowFilter = None,
     deployments: filters.DeploymentFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     """
     Count artifacts from the database.
@@ -169,7 +169,7 @@ async def count_latest_artifacts(
     task_runs: filters.TaskRunFilter = None,
     flows: filters.FlowFilter = None,
     deployments: filters.DeploymentFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     """
     Count artifacts from the database.
@@ -191,7 +191,7 @@ async def update_artifact(
     artifact_id: UUID = Path(
         ..., description="The ID of the artifact to update.", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Update an artifact in the database.
@@ -211,7 +211,7 @@ async def delete_artifact(
     artifact_id: UUID = Path(
         ..., description="The ID of the artifact to delete.", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete an artifact from the database.

@@ -1,6 +1,0 @@
-integrationName: prefect-docker
-author: Prefect
-authorUrl: https://syntask.khulnasoft.com
-documentation: prefect-docker
-iconUrl: /images/integrations/docker.png
-tag: Docker

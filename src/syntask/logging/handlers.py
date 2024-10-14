@@ -14,24 +14,24 @@ from rich.highlighter import Highlighter, NullHighlighter
 from rich.theme import Theme
 from typing_extensions import Self
 
-import prefect.context
-from prefect._internal.concurrency.api import create_call, from_sync
-from prefect._internal.concurrency.event_loop import get_running_loop
-from prefect._internal.concurrency.services import BatchedQueueService
-from prefect._internal.concurrency.threads import in_global_loop
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.actions import LogCreate
-from prefect.exceptions import MissingContextError
-from prefect.logging.highlighters import PrefectConsoleHighlighter
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_LOGGING_COLORS,
-    PREFECT_LOGGING_INTERNAL_LEVEL,
-    PREFECT_LOGGING_MARKUP,
-    PREFECT_LOGGING_TO_API_BATCH_INTERVAL,
-    PREFECT_LOGGING_TO_API_BATCH_SIZE,
-    PREFECT_LOGGING_TO_API_MAX_LOG_SIZE,
-    PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW,
+import syntask.context
+from syntask._internal.concurrency.api import create_call, from_sync
+from syntask._internal.concurrency.event_loop import get_running_loop
+from syntask._internal.concurrency.services import BatchedQueueService
+from syntask._internal.concurrency.threads import in_global_loop
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.actions import LogCreate
+from syntask.exceptions import MissingContextError
+from syntask.logging.highlighters import SyntaskConsoleHighlighter
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_LOGGING_COLORS,
+    SYNTASK_LOGGING_INTERNAL_LEVEL,
+    SYNTASK_LOGGING_MARKUP,
+    SYNTASK_LOGGING_TO_API_BATCH_INTERVAL,
+    SYNTASK_LOGGING_TO_API_BATCH_SIZE,
+    SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE,
+    SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW,
 )
 
 
@@ -39,14 +39,14 @@ class APILogWorker(BatchedQueueService[Dict[str, Any]]):
     @property
     def _max_batch_size(self):
         return max(
-            PREFECT_LOGGING_TO_API_BATCH_SIZE.value()
-            - PREFECT_LOGGING_TO_API_MAX_LOG_SIZE.value(),
-            PREFECT_LOGGING_TO_API_MAX_LOG_SIZE.value(),
+            SYNTASK_LOGGING_TO_API_BATCH_SIZE.value()
+            - SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE.value(),
+            SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE.value(),
         )
 
     @property
     def _min_interval(self):
-        return PREFECT_LOGGING_TO_API_BATCH_INTERVAL.value()
+        return SYNTASK_LOGGING_TO_API_BATCH_INTERVAL.value()
 
     async def _handle_batch(self, items: List):
         try:
@@ -55,7 +55,7 @@ class APILogWorker(BatchedQueueService[Dict[str, Any]]):
             # Roughly replicate the behavior of the stdlib logger error handling
             if logging.raiseExceptions and sys.stderr:
                 sys.stderr.write("--- Error logging to API ---\n")
-                if PREFECT_LOGGING_INTERNAL_LEVEL.value() == "DEBUG":
+                if SYNTASK_LOGGING_INTERNAL_LEVEL.value() == "DEBUG":
                     traceback.print_exc(file=sys.stderr)
                 else:
                     # Only log the exception message in non-DEBUG mode
@@ -69,9 +69,9 @@ class APILogWorker(BatchedQueueService[Dict[str, Any]]):
     @classmethod
     def instance(cls: Type[Self]) -> Self:
         settings = (
-            PREFECT_LOGGING_TO_API_BATCH_SIZE.value(),
-            PREFECT_API_URL.value(),
-            PREFECT_LOGGING_TO_API_MAX_LOG_SIZE.value(),
+            SYNTASK_LOGGING_TO_API_BATCH_SIZE.value(),
+            SYNTASK_API_URL.value(),
+            SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE.value(),
         )
 
         # Ensure a unique worker is retrieved per relevant logging settings
@@ -83,7 +83,7 @@ class APILogWorker(BatchedQueueService[Dict[str, Any]]):
 
 class APILogHandler(logging.Handler):
     """
-    A logging handler that sends logs to the Prefect API.
+    A logging handler that sends logs to the Syntask API.
 
     Sends log records to the `APILogWorker` which manages sending batches of logs in
     the background.
@@ -131,7 +131,7 @@ class APILogHandler(logging.Handler):
         Send a log to the `APILogWorker`
         """
         try:
-            profile = prefect.context.get_settings_context()
+            profile = syntask.context.get_settings_context()
 
             if not profile.settings.logging_to_api_enabled:
                 return  # Respect the global settings toggle
@@ -149,13 +149,13 @@ class APILogHandler(logging.Handler):
 
         if isinstance(exc, MissingContextError):
             log_handling_when_missing_flow = (
-                PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW.value()
+                SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW.value()
             )
             if log_handling_when_missing_flow == "warn":
                 # Warn when a logger is used outside of a run context, the stack level here
                 # gets us to the user logging call
                 warnings.warn(
-                    f"{exc} Set PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW=ignore to suppress this warning.",
+                    f"{exc} Set SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW=ignore to suppress this warning.",
                     stacklevel=8,
                 )
                 return
@@ -183,7 +183,7 @@ class APILogHandler(logging.Handler):
 
         if not flow_run_id:
             try:
-                context = prefect.context.get_run_context()
+                context = syntask.context.get_run_context()
             except MissingContextError:
                 raise MissingContextError(
                     f"Logger {record.name!r} attempted to send logs to the API without"
@@ -224,10 +224,10 @@ class APILogHandler(logging.Handler):
         ).model_dump(mode="json")
 
         log_size = log["__payload_size__"] = self._get_payload_size(log)
-        if log_size > PREFECT_LOGGING_TO_API_MAX_LOG_SIZE.value():
+        if log_size > SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE.value():
             raise ValueError(
                 f"Log of size {log_size} is greater than the max size of "
-                f"{PREFECT_LOGGING_TO_API_MAX_LOG_SIZE.value()}"
+                f"{SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE.value()}"
             )
 
         return log
@@ -236,27 +236,27 @@ class APILogHandler(logging.Handler):
         return len(json.dumps(log).encode())
 
 
-class PrefectConsoleHandler(logging.StreamHandler):
+class SyntaskConsoleHandler(logging.StreamHandler):
     def __init__(
         self,
         stream=None,
-        highlighter: Highlighter = PrefectConsoleHighlighter,
+        highlighter: Highlighter = SyntaskConsoleHighlighter,
         styles: Optional[Dict[str, str]] = None,
         level: Union[int, str] = logging.NOTSET,
     ):
         """
-        The default console handler for Prefect, which highlights log levels,
+        The default console handler for Syntask, which highlights log levels,
         web and file URLs, flow and task (run) names, and state types in the
         local console (terminal).
 
-        Highlighting can be toggled on/off with the PREFECT_LOGGING_COLORS setting.
+        Highlighting can be toggled on/off with the SYNTASK_LOGGING_COLORS setting.
         For finer control, use logging.yml to add or remove styles, and/or
         adjust colors.
         """
         super().__init__(stream=stream)
 
-        styled_console = PREFECT_LOGGING_COLORS.value()
-        markup_console = PREFECT_LOGGING_MARKUP.value()
+        styled_console = SYNTASK_LOGGING_COLORS.value()
+        markup_console = SYNTASK_LOGGING_MARKUP.value()
         if styled_console:
             highlighter = highlighter()
             theme = Theme(styles, inherit=False)

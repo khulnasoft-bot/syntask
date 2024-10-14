@@ -9,16 +9,16 @@ import readchar
 from starlette import status
 from typer import Exit
 
-from prefect.cli.cloud import LoginFailed, LoginSuccess
-from prefect.client.schemas import Workspace
-from prefect.context import get_settings_context, use_profile
-from prefect.logging.configuration import setup_logging
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_CLOUD_UI_URL,
-    PREFECT_PROFILES_PATH,
+from syntask.cli.cloud import LoginFailed, LoginSuccess
+from syntask.client.schemas import Workspace
+from syntask.context import get_settings_context, use_profile
+from syntask.logging.configuration import setup_logging
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_CLOUD_UI_URL,
+    SYNTASK_PROFILES_PATH,
     Profile,
     ProfilesCollection,
     load_current_profile,
@@ -26,7 +26,7 @@ from prefect.settings import (
     save_profiles,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 
 def gen_test_workspace(**kwargs) -> Workspace:
@@ -42,7 +42,7 @@ def gen_test_workspace(**kwargs) -> Workspace:
 
 @pytest.fixture
 def interactive_console(monkeypatch):
-    monkeypatch.setattr("prefect.cli.cloud.is_interactive", lambda: True)
+    monkeypatch.setattr("syntask.cli.cloud.is_interactive", lambda: True)
 
     # `readchar` does not like the fake stdin provided by typer isolation so we provide
     # a version that does not require a fd to be attached
@@ -69,7 +69,7 @@ def restore_logging_setup():
 @pytest.fixture(autouse=True)
 def temporary_profiles_path(tmp_path):
     path = tmp_path / "profiles.toml"
-    with temporary_settings({PREFECT_PROFILES_PATH: path}):
+    with temporary_settings({SYNTASK_PROFILES_PATH: path}):
         # Ensure the test profile is persisted already to simplify assertions
         save_profiles(
             profiles=ProfilesCollection(profiles=[get_settings_context().profile])
@@ -80,7 +80,7 @@ def temporary_profiles_path(tmp_path):
 @pytest.fixture
 def mock_webbrowser(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr("prefect.cli.cloud.webbrowser", mock)
+    monkeypatch.setattr("syntask.cli.cloud.webbrowser", mock)
     yield mock
 
 
@@ -90,29 +90,29 @@ def mock_webbrowser(monkeypatch):
         (
             "pcu_foo",
             (
-                "Unable to authenticate with Prefect Cloud. It looks like you're using"
+                "Unable to authenticate with Syntask Cloud. It looks like you're using"
                 " API key from Cloud 1 (https://cloud.syntask.khulnasoft.com). Make sure that you"
-                " generate API key using Cloud 2 (https://app.prefect.cloud)"
+                " generate API key using Cloud 2 (https://app.syntask.cloud)"
             ),
         ),
         (
             "pnu_foo",
             (
-                "Unable to authenticate with Prefect Cloud. Please ensure your"
+                "Unable to authenticate with Syntask Cloud. Please ensure your"
                 " credentials are correct and unexpired."
             ),
         ),
         (
             "foo",
             (
-                "Unable to authenticate with Prefect Cloud. Your key is not in our"
+                "Unable to authenticate with Syntask Cloud. Your key is not in our"
                 " expected format: 'pnu_' or 'pnb_'."
             ),
         ),
     ],
 )
 def test_login_with_invalid_key(key, expected_output, respx_mock):
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(status.HTTP_403_FORBIDDEN)
     )
     invoke_and_assert(
@@ -129,15 +129,15 @@ def test_login_with_invalid_key(key, expected_output, respx_mock):
         "foo",
     ],
 )
-def test_login_with_prefect_api_key_env_var_different_than_key_exits_with_error(
+def test_login_with_syntask_api_key_env_var_different_than_key_exits_with_error(
     key, monkeypatch
 ):
-    monkeypatch.setenv("PREFECT_API_KEY", "pnu_baz")
+    monkeypatch.setenv("SYNTASK_API_KEY", "pnu_baz")
     invoke_and_assert(
         ["cloud", "login", "--key", key, "--workspace", "foo"],
         expected_code=1,
         expected_output=(
-            "Cannot log in with a key when a different PREFECT_API_KEY is present"
+            "Cannot log in with a key when a different SYNTASK_API_KEY is present"
             " as an environment variable that will override it."
         ),
     )
@@ -150,7 +150,7 @@ def test_login_with_prefect_api_key_env_var_different_than_key_exits_with_error(
             "pnu_foo",
             "pnu_foo",
             (
-                "Unable to authenticate with Prefect Cloud. Please ensure your"
+                "Unable to authenticate with Syntask Cloud. Please ensure your"
                 " credentials are correct and unexpired."
             ),
         ),
@@ -158,19 +158,19 @@ def test_login_with_prefect_api_key_env_var_different_than_key_exits_with_error(
             "foo",
             "foo",
             (
-                "Unable to authenticate with Prefect Cloud. Your key is not in our"
+                "Unable to authenticate with Syntask Cloud. Your key is not in our"
                 " expected format: 'pnu_' or 'pnb_'."
             ),
         ),
     ],
 )
-def test_login_with_prefect_api_key_env_var_equal_to_invalid_key_exits_with_error(
+def test_login_with_syntask_api_key_env_var_equal_to_invalid_key_exits_with_error(
     key, expected_output, env_var_api_key, respx_mock
 ):
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(status.HTTP_403_FORBIDDEN)
     )
-    with temporary_settings({PREFECT_API_KEY: env_var_api_key}):
+    with temporary_settings({SYNTASK_API_KEY: env_var_api_key}):
         invoke_and_assert(
             ["cloud", "login", "--key", key, "--workspace", "test/foo"],
             expected_code=1,
@@ -178,22 +178,22 @@ def test_login_with_prefect_api_key_env_var_equal_to_invalid_key_exits_with_erro
         )
 
 
-def test_login_with_prefect_api_key_env_var_equal_to_valid_key_succeeds(respx_mock):
+def test_login_with_syntask_api_key_env_var_equal_to_valid_key_succeeds(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
         )
     )
 
-    with temporary_settings({PREFECT_API_KEY: "pnu_foo"}):
+    with temporary_settings({SYNTASK_API_KEY: "pnu_foo"}):
         invoke_and_assert(
             ["cloud", "login", "--key", "pnu_foo", "--workspace", "test/foo"],
             expected_code=0,
             expected_output=(
-                "Authenticated with Prefect Cloud! Using workspace 'test/foo'."
+                "Authenticated with Syntask Cloud! Using workspace 'test/foo'."
             ),
         )
 
@@ -202,7 +202,7 @@ def test_login_with_key_and_missing_workspace(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -223,7 +223,7 @@ def test_login_with_key_and_missing_workspace(respx_mock):
 
 
 def test_login_with_key_and_workspace_with_no_workspaces(respx_mock):
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(status.HTTP_200_OK, json=[])
     )
     invoke_and_assert(
@@ -237,7 +237,7 @@ def test_login_with_key_and_workspace(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -250,12 +250,12 @@ def test_login_with_key_and_workspace(respx_mock):
     invoke_and_assert(
         ["cloud", "login", "--key", "foo", "--workspace", "test/foo"],
         expected_code=0,
-        expected_output="Authenticated with Prefect Cloud! Using workspace 'test/foo'.",
+        expected_output="Authenticated with Syntask Cloud! Using workspace 'test/foo'.",
     )
 
     settings = load_current_profile().settings
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
 
 @pytest.mark.parametrize("args", [[], ["--workspace", "test/foo"], ["--key", "key"]])
@@ -274,7 +274,7 @@ def test_login_with_key_and_workspace_overrides_current_workspace(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -288,23 +288,23 @@ def test_login_with_key_and_workspace_overrides_current_workspace(respx_mock):
     profiles = load_profiles()
     profiles.set_active("ephemeral")
     assert profiles.active_profile is not None
-    profiles.active_profile.settings[PREFECT_API_URL] = foo_workspace.api_url()
-    assert profiles.active_profile.settings[PREFECT_API_URL] == foo_workspace.api_url()
+    profiles.active_profile.settings[SYNTASK_API_URL] = foo_workspace.api_url()
+    assert profiles.active_profile.settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
     invoke_and_assert(
         ["cloud", "login", "--key", "new_key", "--workspace", "test/bar"],
         expected_code=0,
-        expected_output="Authenticated with Prefect Cloud! Using workspace 'test/bar'.",
+        expected_output="Authenticated with Syntask Cloud! Using workspace 'test/bar'.",
     )
 
     settings = load_current_profile().settings
-    assert settings[PREFECT_API_KEY] == "new_key"
-    assert settings[PREFECT_API_URL] == bar_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "new_key"
+    assert settings[SYNTASK_API_URL] == bar_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_with_key_and_no_workspaces(respx_mock):
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[],
@@ -316,7 +316,7 @@ def test_login_with_key_and_no_workspaces(respx_mock):
         user_input=readchar.key.ENTER,
         expected_output_contains=[
             "No workspaces found! Create a workspace at"
-            f" {PREFECT_CLOUD_UI_URL.value()} and try again."
+            f" {SYNTASK_CLOUD_UI_URL.value()} and try again."
         ],
     )
 
@@ -325,7 +325,7 @@ def test_login_with_key_and_no_workspaces(respx_mock):
 def test_login_with_key_and_select_first_workspace(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -342,20 +342,20 @@ def test_login_with_key_and_select_first_workspace(respx_mock):
             "? Which workspace would you like to use?",
             "test/foo",
             "test/bar",
-            "Authenticated with Prefect Cloud! Using workspace 'test/foo'.",
+            "Authenticated with Syntask Cloud! Using workspace 'test/foo'.",
         ],
     )
 
     settings = load_current_profile().settings
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_with_key_and_select_second_workspace(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -372,20 +372,20 @@ def test_login_with_key_and_select_second_workspace(respx_mock):
             "? Which workspace would you like to use?",
             "test/foo",
             "test/bar",
-            "Authenticated with Prefect Cloud! Using workspace 'test/bar'.",
+            "Authenticated with Syntask Cloud! Using workspace 'test/bar'.",
         ],
     )
 
     settings = load_current_profile().settings
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == bar_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == bar_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_with_interactive_key_single_workspace(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -404,13 +404,13 @@ def test_login_with_interactive_key_single_workspace(respx_mock):
             "Log in with a web browser",
             "Paste an API key",
             "Paste your API key:",
-            "Authenticated with Prefect Cloud! Using workspace 'test/foo'.",
+            "Authenticated with Syntask Cloud! Using workspace 'test/foo'.",
         ],
     )
 
     settings = load_current_profile().settings
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
@@ -418,7 +418,7 @@ def test_login_with_interactive_key_multiple_workspaces(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -454,15 +454,15 @@ def test_login_with_interactive_key_multiple_workspaces(respx_mock):
     )
 
     settings = load_current_profile().settings
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == bar_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == bar_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_with_browser_single_workspace(respx_mock, mock_webbrowser):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -496,20 +496,20 @@ def test_login_with_browser_single_workspace(respx_mock, mock_webbrowser):
             ),
             "Log in with a web browser",
             "Paste an API key",
-            "Authenticated with Prefect Cloud! Using workspace 'test/foo'.",
+            "Authenticated with Syntask Cloud! Using workspace 'test/foo'.",
         ],
     )
 
     settings = load_current_profile().settings
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_with_browser_failure_in_browser(respx_mock, mock_webbrowser):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -550,15 +550,15 @@ def test_login_with_browser_failure_in_browser(respx_mock, mock_webbrowser):
 
     profile = load_current_profile()
     assert profile is not None
-    assert PREFECT_API_KEY not in profile.settings
-    assert PREFECT_API_URL not in profile.settings
+    assert SYNTASK_API_KEY not in profile.settings
+    assert SYNTASK_API_URL not in profile.settings
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_already_logged_in_to_current_profile_no_reauth(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -571,8 +571,8 @@ def test_login_already_logged_in_to_current_profile_no_reauth(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -588,14 +588,14 @@ def test_login_already_logged_in_to_current_profile_no_reauth(respx_mock):
             expected_output_contains=[
                 "Would you like to reauthenticate? [y/N]",
                 "Using the existing authentication on this profile.",
-                "Authenticated with Prefect Cloud! Using workspace 'test/foo'.",
+                "Authenticated with Syntask Cloud! Using workspace 'test/foo'.",
             ],
         )
 
         settings = load_current_profile().settings
 
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
@@ -603,7 +603,7 @@ def test_login_already_logged_in_to_current_profile_no_reauth_new_workspace(resp
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -619,8 +619,8 @@ def test_login_already_logged_in_to_current_profile_no_reauth_new_workspace(resp
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -650,21 +650,21 @@ def test_login_already_logged_in_to_current_profile_no_reauth_new_workspace(resp
                     "? Which workspace would you like to use? [Use arrows to move;"
                     " enter to select]"
                 ),
-                "Authenticated with Prefect Cloud! Using workspace 'test/bar'.",
+                "Authenticated with Syntask Cloud! Using workspace 'test/bar'.",
             ],
         )
 
         settings = load_current_profile().settings
 
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == bar_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == bar_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_already_logged_in_to_current_profile_yes_reauth(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -677,8 +677,8 @@ def test_login_already_logged_in_to_current_profile_yes_reauth(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -710,14 +710,14 @@ def test_login_already_logged_in_to_current_profile_yes_reauth(respx_mock):
                 "Log in with a web browser",
                 "Paste an API key",
                 "Paste your API key:",
-                "Authenticated with Prefect Cloud! Using workspace 'test/foo'.",
+                "Authenticated with Syntask Cloud! Using workspace 'test/foo'.",
             ],
         )
 
         settings = load_current_profile().settings
 
-    assert settings[PREFECT_API_KEY] == "bar"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "bar"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
@@ -727,7 +727,7 @@ def test_login_already_logged_in_with_invalid_api_url_prompts_workspace_change(
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -743,8 +743,8 @@ def test_login_already_logged_in_with_invalid_api_url_prompts_workspace_change(
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: "oh-no",
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: "oh-no",
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -773,21 +773,21 @@ def test_login_already_logged_in_with_invalid_api_url_prompts_workspace_change(
                 "? Which workspace would you like to use?",
                 "test/foo",
                 "test/bar",
-                "Authenticated with Prefect Cloud! Using workspace 'test/foo'.",
+                "Authenticated with Syntask Cloud! Using workspace 'test/foo'.",
             ],
         )
 
         settings = load_current_profile().settings
 
-    assert settings[PREFECT_API_KEY] == "bar"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "bar"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_already_logged_in_to_another_profile(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -802,8 +802,8 @@ def test_login_already_logged_in_to_another_profile(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 ),
                 current_profile,
@@ -833,19 +833,19 @@ def test_login_already_logged_in_to_another_profile(respx_mock):
     profiles = load_profiles()
     assert profiles.active_name == "logged-in-profile"
     settings = profiles.active_profile.settings
-    assert settings[PREFECT_API_KEY] == "foo"
-    assert settings[PREFECT_API_URL] == foo_workspace.api_url()
+    assert settings[SYNTASK_API_KEY] == "foo"
+    assert settings[SYNTASK_API_URL] == foo_workspace.api_url()
 
     # Current is the test profile active in the context
     previous_profile = load_current_profile()
-    assert PREFECT_API_KEY not in previous_profile.settings
+    assert SYNTASK_API_KEY not in previous_profile.settings
 
 
 @pytest.mark.usefixtures("interactive_console")
 def test_login_already_logged_in_to_another_profile_cancel_during_select(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -860,8 +860,8 @@ def test_login_already_logged_in_to_another_profile_cancel_during_select(respx_m
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 ),
                 current_profile,
@@ -897,11 +897,11 @@ def test_login_already_logged_in_to_another_profile_cancel_during_select(respx_m
 
     # The current profile settings are not mutated
     settings = current_profile.settings
-    assert PREFECT_API_KEY not in settings
-    assert PREFECT_API_URL not in settings
+    assert SYNTASK_API_KEY not in settings
+    assert SYNTASK_API_URL not in settings
 
     # Other profile should not be updated
-    assert PREFECT_API_KEY not in settings
+    assert SYNTASK_API_KEY not in settings
 
 
 def test_logout_current_profile_is_not_logged_in():
@@ -915,12 +915,12 @@ def test_logout_current_profile_is_not_logged_in():
             ["cloud", "logout"],
             expected_code=1,
             expected_output_contains=(
-                "Current profile is not logged into Prefect Cloud."
+                "Current profile is not logged into Syntask Cloud."
             ),
         )
 
 
-def test_logout_reset_prefect_api_key_and_prefect_api_url():
+def test_logout_reset_syntask_api_key_and_syntask_api_url():
     profile = None
     cloud_profile = "cloud-foo"
     save_profiles(
@@ -928,7 +928,7 @@ def test_logout_reset_prefect_api_key_and_prefect_api_url():
             [
                 Profile(
                     name=cloud_profile,
-                    settings={PREFECT_API_URL: "foo", PREFECT_API_KEY: "bar"},
+                    settings={SYNTASK_API_URL: "foo", SYNTASK_API_KEY: "bar"},
                 )
             ],
             active=None,
@@ -939,14 +939,14 @@ def test_logout_reset_prefect_api_key_and_prefect_api_url():
         invoke_and_assert(
             ["cloud", "logout"],
             expected_code=0,
-            expected_output_contains="Logged out from Prefect Cloud.",
+            expected_output_contains="Logged out from Syntask Cloud.",
         )
 
         profile = load_current_profile()
 
     assert profile is not None
-    assert PREFECT_API_URL not in profile.settings
-    assert PREFECT_API_KEY not in profile.settings
+    assert SYNTASK_API_URL not in profile.settings
+    assert SYNTASK_API_KEY not in profile.settings
 
 
 def test_cannot_set_workspace_if_you_are_not_logged_in():
@@ -961,7 +961,7 @@ def test_cannot_set_workspace_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -970,7 +970,7 @@ def test_set_workspace_updates_profile(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -987,8 +987,8 @@ def test_set_workspace_updates_profile(respx_mock):
                 Profile(
                     name=cloud_profile,
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "fake-key",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "fake-key",
                     },
                 )
             ],
@@ -1008,8 +1008,8 @@ def test_set_workspace_updates_profile(respx_mock):
 
     profiles = load_profiles()
     assert profiles[cloud_profile].settings == {
-        PREFECT_API_URL: bar_workspace.api_url(),
-        PREFECT_API_KEY: "fake-key",
+        SYNTASK_API_URL: bar_workspace.api_url(),
+        SYNTASK_API_KEY: "fake-key",
     }
 
 
@@ -1018,7 +1018,7 @@ def test_set_workspace_with_account_selection(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test1", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test2", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -1028,7 +1028,7 @@ def test_set_workspace_with_account_selection(respx_mock):
         )
     )
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/accounts").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/accounts").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -1039,7 +1039,7 @@ def test_set_workspace_with_account_selection(respx_mock):
     )
 
     respx_mock.get(
-        PREFECT_CLOUD_API_URL.value() + "/me/workspaces?account_id=account2"
+        SYNTASK_CLOUD_API_URL.value() + "/me/workspaces?account_id=account2"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -1054,8 +1054,8 @@ def test_set_workspace_with_account_selection(respx_mock):
                 Profile(
                     name=cloud_profile,
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "fake-key",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "fake-key",
                     },
                 )
             ],
@@ -1075,8 +1075,8 @@ def test_set_workspace_with_account_selection(respx_mock):
 
     profiles = load_profiles()
     assert profiles[cloud_profile].settings == {
-        PREFECT_API_URL: bar_workspace.api_url(),
-        PREFECT_API_KEY: "fake-key",
+        SYNTASK_API_URL: bar_workspace.api_url(),
+        SYNTASK_API_KEY: "fake-key",
     }
 
 
@@ -1085,7 +1085,7 @@ def test_set_workspace_with_less_than_10_workspaces(respx_mock):
     foo_workspace = gen_test_workspace(account_handle="test1", workspace_handle="foo")
     bar_workspace = gen_test_workspace(account_handle="test2", workspace_handle="bar")
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[
@@ -1102,8 +1102,8 @@ def test_set_workspace_with_less_than_10_workspaces(respx_mock):
                 Profile(
                     name=cloud_profile,
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "fake-key",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "fake-key",
                     },
                 )
             ],
@@ -1123,6 +1123,6 @@ def test_set_workspace_with_less_than_10_workspaces(respx_mock):
 
     profiles = load_profiles()
     assert profiles[cloud_profile].settings == {
-        PREFECT_API_URL: bar_workspace.api_url(),
-        PREFECT_API_KEY: "fake-key",
+        SYNTASK_API_URL: bar_workspace.api_url(),
+        SYNTASK_API_KEY: "fake-key",
     }

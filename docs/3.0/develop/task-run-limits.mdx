@@ -10,7 +10,7 @@ Task run concurrency limits use [task tags](#tags). You can specify an optional 
 task runs in a `Running` state for tasks with a given tag.
 
 <Tip>
-Tag-based task concurrency is different from [Global concurrency limits](/3.0/develop/global-concurrency-limits), though they can be used to achieve similar outcomes. Global concurrency limits are a more general way to control concurrency for any Python-based operation, whereas tag-based concurrency limits are specific to Prefect tasks.
+Tag-based task concurrency is different from [Global concurrency limits](/3.0/develop/global-concurrency-limits), though they can be used to achieve similar outcomes. Global concurrency limits are a more general way to control concurrency for any Python-based operation, whereas tag-based concurrency limits are specific to Syntask tasks.
 </Tip>
 
 If a task has multiple tags, it will run only if **_all_** tags have available concurrency.
@@ -23,7 +23,7 @@ Task tag limits are checked whenever a task run attempts to enter a [`Running` s
 
 If there are no concurrency slots available for any one of your task's tags, it delays the transition to a `Running` state 
 and instructs the client to try entering a `Running` state again in 30 seconds 
-(or the value specified by the `PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS` setting).
+(or the value specified by the `SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS` setting).
 
 ### Configure concurrency limits
 
@@ -35,16 +35,16 @@ While task run concurrency limits are configured through tags (as shown below), 
 
 You can set concurrency limits on as few or as many tags as you wish. You can set limits through:
 
-- Prefect [CLI](#cli)
-- Prefect API by using `PrefectClient` [Python client](#python-client)
-- Prefect server UI or Prefect Cloud
+- Syntask [CLI](#cli)
+- Syntask API by using `SyntaskClient` [Python client](#python-client)
+- Syntask server UI or Syntask Cloud
 
 #### CLI
 
-You can create, list, and remove concurrency limits with Prefect CLI `concurrency-limit` commands.
+You can create, list, and remove concurrency limits with Syntask CLI `concurrency-limit` commands.
 
 ```bash
-prefect concurrency-limit [command] [arguments]
+syntask concurrency-limit [command] [arguments]
 ```
 
 | Command | Description                                                      |
@@ -57,25 +57,25 @@ prefect concurrency-limit [command] [arguments]
 For example, to set a concurrency limit of 10 on the 'small_instance' tag:
 
 ```bash
-prefect concurrency-limit create small_instance 10
+syntask concurrency-limit create small_instance 10
 ```
 
 To delete the concurrency limit on the 'small_instance' tag:
 
 ```bash
-prefect concurrency-limit delete small_instance
+syntask concurrency-limit delete small_instance
 ```
 
 To view details about the concurrency limit on the 'small_instance' tag:
 
 ```bash
-prefect concurrency-limit inspect small_instance
+syntask concurrency-limit inspect small_instance
 ```
 
 #### Python client
 
 To update your tag concurrency limits programmatically, use 
-[`PrefectClient.orchestration.create_concurrency_limit`](https://prefect-python-sdk-docs.netlify.app//prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.create_concurrency_limit).
+[`SyntaskClient.orchestration.create_concurrency_limit`](https://syntask-python-sdk-docs.netlify.app//syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.create_concurrency_limit).
 
 `create_concurrency_limit` takes two arguments:
 
@@ -85,7 +85,7 @@ To update your tag concurrency limits programmatically, use
 For example, to set a concurrency limit of 10 on the 'small_instance' tag:
 
 ```python
-from prefect import get_client
+from syntask import get_client
 
 async with get_client() as client:
     # set a concurrency limit of 10 on the 'small_instance' tag
@@ -95,7 +95,7 @@ async with get_client() as client:
         )
 ```
 
-To remove all concurrency limits on a tag, use [`PrefectClient.delete_concurrency_limit_by_tag`](https://prefect-python-sdk-docs.netlify.app/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.delete_concurrency_limit_by_tag/), passing the tag:
+To remove all concurrency limits on a tag, use [`SyntaskClient.delete_concurrency_limit_by_tag`](https://syntask-python-sdk-docs.netlify.app/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.delete_concurrency_limit_by_tag/), passing the tag:
 
 ```python
 async with get_client() as client:
@@ -103,9 +103,9 @@ async with get_client() as client:
     await client.delete_concurrency_limit_by_tag(tag="small_instance")
 ```
 
-If you wish to query for the current limit on a tag, use [`PrefectClient.read_concurrency_limit_by_tag`](https://prefect-python-sdk-docs.netlify.app/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.read_concurrency_limit_by_tag), passing the tag:
+If you wish to query for the current limit on a tag, use [`SyntaskClient.read_concurrency_limit_by_tag`](https://syntask-python-sdk-docs.netlify.app/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.read_concurrency_limit_by_tag), passing the tag:
 
-To see _all_ of your limits across all of your tags, use [`PrefectClient.read_concurrency_limits`](https://prefect-python-sdk-docs.netlify.app/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.read_concurrency_limits).
+To see _all_ of your limits across all of your tags, use [`SyntaskClient.read_concurrency_limits`](https://syntask-python-sdk-docs.netlify.app/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.read_concurrency_limits).
 
 ```python
 async with get_client() as client:

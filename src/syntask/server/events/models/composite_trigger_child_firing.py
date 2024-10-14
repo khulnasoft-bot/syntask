@@ -6,17 +6,17 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.schemas.automations import CompositeTrigger, Firing
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.schemas.automations import CompositeTrigger, Firing
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMCompositeTriggerChildFiring
+    from syntask.server.database.orm_models import ORMCompositeTriggerChildFiring
 
 
 @db_injector
 async def upsert_child_firing(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     firing: Firing,
 ):
@@ -64,7 +64,7 @@ async def upsert_child_firing(
 
 @db_injector
 async def get_child_firings(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     trigger: CompositeTrigger,
 ) -> Sequence["ORMCompositeTriggerChildFiring"]:
@@ -83,7 +83,7 @@ async def get_child_firings(
 
 @db_injector
 async def clear_old_child_firings(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     trigger: CompositeTrigger,
     fired_before: pendulum.DateTime,
@@ -99,7 +99,7 @@ async def clear_old_child_firings(
 
 @db_injector
 async def clear_child_firings(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     trigger: CompositeTrigger,
     firing_ids: Sequence[UUID],

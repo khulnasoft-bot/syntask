@@ -22,21 +22,21 @@ from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.database import orm_models
-from prefect.server.exceptions import FlowRunGraphTooLarge, ObjectNotFoundError
-from prefect.server.schemas.graph import Edge, Graph, GraphArtifact, GraphState, Node
-from prefect.server.utilities.database import UUID as UUIDTypeDecorator
-from prefect.server.utilities.database import Timestamp, json_has_any_key
+from syntask.server import models, schemas
+from syntask.server.database import orm_models
+from syntask.server.exceptions import FlowRunGraphTooLarge, ObjectNotFoundError
+from syntask.server.schemas.graph import Edge, Graph, GraphArtifact, GraphState, Node
+from syntask.server.utilities.database import UUID as UUIDTypeDecorator
+from syntask.server.utilities.database import Timestamp, json_has_any_key
 
 if TYPE_CHECKING:
-    from prefect.server.database.interface import PrefectDBInterface
+    from syntask.server.database.interface import SyntaskDBInterface
 
 ONE_HOUR = 60 * 60
 
 
 jinja_env = Environment(
-    loader=PackageLoader("prefect.server.database", package_path="sql"),
+    loader=PackageLoader("syntask.server.database", package_path="sql"),
     autoescape=select_autoescape(),
     trim_blocks=True,
 )
@@ -44,7 +44,7 @@ jinja_env = Environment(
 
 class BaseQueryComponents(ABC):
     """
-    Abstract base class used to inject dialect-specific SQL operations into Prefect.
+    Abstract base class used to inject dialect-specific SQL operations into Syntask.
     """
 
     CONFIGURATION_CACHE = TTLCache(maxsize=100, ttl=ONE_HOUR)
@@ -95,8 +95,7 @@ class BaseQueryComponents(ABC):
         start_time: datetime.datetime,
         end_time: datetime.datetime,
         interval: datetime.timedelta,
-    ):
-        ...
+    ): ...
 
     @abstractmethod
     def set_state_id_on_inserted_flow_runs_statement(
@@ -105,8 +104,7 @@ class BaseQueryComponents(ABC):
         frs_model,
         inserted_flow_run_ids,
         insert_flow_run_states,
-    ):
-        ...
+    ): ...
 
     @abstractmethod
     async def get_flow_run_notifications_from_queue(
@@ -118,7 +116,7 @@ class BaseQueryComponents(ABC):
         self,
         session: sa.orm.session,
         flow_run: Union[schemas.core.FlowRun, orm_models.FlowRun],
-        db: "PrefectDBInterface",
+        db: "SyntaskDBInterface",
     ):
         """Database-specific implementation of queueing notifications for a flow run"""
         # insert a <policy, state> pair into the notification queue
@@ -1006,7 +1004,7 @@ class AioSqliteQueryComponents(BaseQueryComponents):
         end_time: datetime.datetime,
         interval: datetime.timedelta,
     ):
-        from prefect.server.utilities.database import Timestamp
+        from syntask.server.utilities.database import Timestamp
 
         # validate inputs
         start_time = pendulum.instance(start_time)

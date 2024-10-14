@@ -6,14 +6,14 @@ import pydantic
 import pytest
 from fastapi.testclient import TestClient
 
-from prefect import flow
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.client.schemas.objects import FlowRun
-from prefect.runner import Runner
-from prefect.runner.server import build_server
-from prefect.settings import (
-    PREFECT_RUNNER_SERVER_HOST,
-    PREFECT_RUNNER_SERVER_PORT,
+from syntask import flow
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.client.schemas.objects import FlowRun
+from syntask.runner import Runner
+from syntask.runner.server import build_server
+from syntask.settings import (
+    SYNTASK_RUNNER_SERVER_HOST,
+    SYNTASK_RUNNER_SERVER_PORT,
     temporary_settings,
 )
 
@@ -47,8 +47,8 @@ def a_non_flow_function():
 def tmp_runner_settings():
     with temporary_settings(
         updates={
-            PREFECT_RUNNER_SERVER_HOST: "0.0.0.0",
-            PREFECT_RUNNER_SERVER_PORT: 0,
+            SYNTASK_RUNNER_SERVER_HOST: "0.0.0.0",
+            SYNTASK_RUNNER_SERVER_PORT: 0,
         }
     ):
         yield
@@ -71,12 +71,12 @@ class TestWebserverSettings:
     async def test_webserver_settings_are_respected(self, runner: Runner):
         with temporary_settings(
             updates={
-                PREFECT_RUNNER_SERVER_HOST: "127.0.0.1",
-                PREFECT_RUNNER_SERVER_PORT: 4200,
+                SYNTASK_RUNNER_SERVER_HOST: "127.0.0.1",
+                SYNTASK_RUNNER_SERVER_PORT: 4200,
             }
         ):
-            assert PREFECT_RUNNER_SERVER_HOST.value() == "127.0.0.1"
-            assert PREFECT_RUNNER_SERVER_PORT.value() == 4200
+            assert SYNTASK_RUNNER_SERVER_HOST.value() == "127.0.0.1"
+            assert SYNTASK_RUNNER_SERVER_PORT.value() == 4200
 
 
 class TestWebserverDeploymentRoutes:
@@ -140,7 +140,7 @@ class TestWebserverDeploymentRoutes:
     async def test_runners_deployment_run_route_execs_flow_run(self, runner: Runner):
         mock_flow_run_id = str(uuid.uuid4())
 
-        mock_client = mock.create_autospec(PrefectClient, spec_set=True)
+        mock_client = mock.create_autospec(SyntaskClient, spec_set=True)
         mock_client.create_flow_run_from_deployment.return_value.id = mock_flow_run_id
         mock_get_client = mock.create_autospec(get_client, spec_set=True)
         mock_get_client.return_value.__aenter__.return_value = mock_client
@@ -152,7 +152,7 @@ class TestWebserverDeploymentRoutes:
             client = TestClient(webserver)
 
             with mock.patch(
-                "prefect.runner.server.get_client", new=mock_get_client
+                "syntask.runner.server.get_client", new=mock_get_client
             ), mock.patch.object(runner, "execute_in_background"):
                 with client:
                     response = client.post(f"/deployment/{deployment_id}/run")
@@ -204,7 +204,7 @@ class TestWebserverFlowRoutes:
         )
         assert response.status_code == 404, response.status_code
 
-    @mock.patch("prefect.runner.server.load_flow_from_entrypoint")
+    @mock.patch("syntask.runner.server.load_flow_from_entrypoint")
     async def test_flow_router_complains_about_running_unmanaged_flow(
         self, mocked_load: mock.MagicMock, runner: Runner, caplog
     ):
@@ -237,7 +237,7 @@ class TestWebserverFlowRoutes:
                 in caplog.text
             )
 
-    @mock.patch("prefect.runner.server.load_flow_from_entrypoint")
+    @mock.patch("syntask.runner.server.load_flow_from_entrypoint")
     async def test_flow_router_complains_about_flow_with_different_schema(
         self, mocked_load: mock.MagicMock, runner: Runner, caplog
     ):

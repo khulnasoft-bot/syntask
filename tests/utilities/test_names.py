@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.utilities.names import obfuscate, obfuscate_string
+from syntask.utilities.names import obfuscate, obfuscate_string
 
 
 @pytest.mark.parametrize(

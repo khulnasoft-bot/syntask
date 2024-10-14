@@ -7,16 +7,16 @@ import sqlalchemy as sa
 from pendulum.datetime import DateTime
 from sqlalchemy.sql.selectable import Select
 
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.database import json_extract
-from prefect.utilities.collections import AutoEnum
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.database import json_extract
+from syntask.utilities.collections import AutoEnum
 
 if TYPE_CHECKING:
-    from prefect.server.events.filters import EventFilter
+    from syntask.server.events.filters import EventFilter
 
 
-# The earliest possible event.occurred date in any Prefect environment is
+# The earliest possible event.occurred date in any Syntask environment is
 # 2024-04-04, so we use the Monday before that as our pivot date.
 PIVOT_DATETIME = pendulum.DateTime(2024, 4, 1, tzinfo=pendulum.timezone("UTC"))
 
@@ -137,7 +137,7 @@ class TimeUnit(AutoEnum):
         else:
             raise NotImplementedError(f"Dialect {db.dialect.name} is not supported.")
 
-    def database_label_expression(self, db: PrefectDBInterface, time_interval: float):
+    def database_label_expression(self, db: SyntaskDBInterface, time_interval: float):
         """Returns the SQL expression to label a time bucket"""
         time_delta = self.as_timedelta(time_interval)
         if db.dialect.name == "postgresql":
@@ -259,7 +259,7 @@ class Countable(AutoEnum):
 
     def _database_value_expression(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         time_unit: TimeUnit,
         time_interval: float,
     ):
@@ -277,7 +277,7 @@ class Countable(AutoEnum):
 
     def _database_label_expression(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         time_unit: TimeUnit,
         time_interval: float,
     ):
@@ -292,12 +292,12 @@ class Countable(AutoEnum):
             return sa.func.coalesce(
                 json_extract(
                     db.Event.resource,
-                    "prefect.resource.name",
+                    "syntask.resource.name",
                     wrap_quotes=db.dialect.name == "sqlite",
                 ),
                 json_extract(
                     db.Event.resource,
-                    "prefect.name",
+                    "syntask.name",
                     wrap_quotes=db.dialect.name == "sqlite",
                 ),
                 db.Event.resource_id,

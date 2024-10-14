@@ -8,9 +8,9 @@ from pendulum.datetime import DateTime
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -18,11 +18,11 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
-from prefect.server.models import work_queues
-from prefect.server.schemas.actions import WorkQueueCreate, WorkQueueUpdate
-from prefect.server.schemas.core import WorkQueue
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.models import work_queues
+from syntask.server.schemas.actions import WorkQueueCreate, WorkQueueUpdate
+from syntask.server.schemas.core import WorkQueue
+from syntask.utilities.pydantic import parse_obj_as
 
 
 def test_source_determines_if_work_queue_id_is_required_or_allowed():
@@ -81,12 +81,12 @@ def guard_one_got_sick(
         occurred=start_of_test + timedelta(microseconds=2),
         event="guard.sick",
         resource={
-            "prefect.resource.id": "guard-1",
+            "syntask.resource.id": "guard-1",
         },
         related=[
             {
-                "prefect.resource.role": "work-queue",
-                "prefect.resource.id": f"prefect.work-queue.{patrols_queue.id}",
+                "syntask.resource.role": "work-queue",
+                "syntask.resource.id": f"syntask.work-queue.{patrols_queue.id}",
             }
         ],
         id=uuid4(),
@@ -177,12 +177,12 @@ def guard_one_got_well(
         occurred=start_of_test + timedelta(microseconds=2),
         event="guard.well",
         resource={
-            "prefect.resource.id": "guard-1",
+            "syntask.resource.id": "guard-1",
         },
         related=[
             {
-                "prefect.resource.role": "work-queue",
-                "prefect.resource.id": f"prefect.work-queue.{patrols_queue.id}",
+                "syntask.resource.role": "work-queue",
+                "syntask.resource.id": f"syntask.work-queue.{patrols_queue.id}",
             }
         ],
         id=uuid4(),
@@ -404,16 +404,16 @@ async def test_inferring_work_queue_requires_recognizable_resource_id(
         List[RelatedResource],
         [
             {
-                "prefect.resource.role": "work-queue",
-                "prefect.resource.id": "prefect.work-queue.nope",  # not a uuid
+                "syntask.resource.role": "work-queue",
+                "syntask.resource.id": "syntask.work-queue.nope",  # not a uuid
             },
             {
-                "prefect.resource.role": "work-queue",
-                "prefect.resource.id": f"oh.so.close.{uuid4()}",  # not a work-queue
+                "syntask.resource.role": "work-queue",
+                "syntask.resource.id": f"oh.so.close.{uuid4()}",  # not a work-queue
             },
             {
-                "prefect.resource.role": "work-queue",
-                "prefect.resource.id": "nah-ah",  # not a dotted name
+                "syntask.resource.role": "work-queue",
+                "syntask.resource.id": "nah-ah",  # not a dotted name
             },
         ],
     )
@@ -436,12 +436,12 @@ async def test_pausing_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-queue.{patrols_queue.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-queue.{patrols_queue.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -451,12 +451,12 @@ async def test_pausing_success_event(
         "invocation": str(pause_related_patrols.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-queue.{patrols_queue.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-queue.{patrols_queue.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -480,12 +480,12 @@ async def test_resuming_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-queue.{patrols_queue.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-queue.{patrols_queue.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -495,12 +495,12 @@ async def test_resuming_success_event(
         "invocation": str(resume_the_associated_queue.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-queue.{patrols_queue.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.work-queue.{patrols_queue.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]

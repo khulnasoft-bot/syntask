@@ -1,6 +1,6 @@
-import { Can, inject } from '@prefecthq/prefect-ui-library'
-import { Permission, canKey } from '@/utilities/permissions'
+import { Can, WorkspacePermission, canKey, WorkspaceFeatureFlag } from '@/services/can'
+import { inject } from '@/utilities/inject'
 
-export function useCan(): Can<Permission> {
+export function useCan(): Can<WorkspacePermission | WorkspaceFeatureFlag> {
   return inject(canKey)
 }

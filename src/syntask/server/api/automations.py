@@ -6,29 +6,29 @@ from fastapi import Body, Depends, HTTPException, Path, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
-from prefect.server.api.dependencies import LimitBody
-from prefect.server.api.validation import (
+from syntask.server.api.dependencies import LimitBody
+from syntask.server.api.validation import (
     validate_job_variables_for_run_deployment_action,
 )
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import actions
-from prefect.server.events.filters import AutomationFilter, AutomationFilterCreated
-from prefect.server.events.models import automations as automations_models
-from prefect.server.events.schemas.automations import (
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import actions
+from syntask.server.events.filters import AutomationFilter, AutomationFilterCreated
+from syntask.server.events.models import automations as automations_models
+from syntask.server.events.schemas.automations import (
     Automation,
     AutomationCreate,
     AutomationPartialUpdate,
     AutomationSort,
     AutomationUpdate,
 )
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.utilities.server import PrefectRouter
-from prefect.utilities.schema_tools.validation import (
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.utilities.server import SyntaskRouter
+from syntask.utilities.schema_tools.validation import (
     ValidationError as JSONSchemaValidationError,
 )
 
-router = PrefectRouter(
+router = SyntaskRouter(
     prefix="/automations",
     tags=["Automations"],
     dependencies=[],
@@ -38,7 +38,7 @@ router = PrefectRouter(
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_automation(
     automation: AutomationCreate,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> Automation:
     # reset any client-provided IDs on the provided triggers
     automation.trigger.reset_ids()
@@ -91,7 +91,7 @@ async def create_automation(
 async def update_automation(
     automation: AutomationUpdate,
     automation_id: UUID = Path(..., alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     # reset any client-provided IDs on the provided triggers
     automation.trigger.reset_ids()
@@ -134,7 +134,7 @@ async def update_automation(
 async def patch_automation(
     automation: AutomationPartialUpdate,
     automation_id: UUID = Path(..., alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     try:
         async with db.session_context(begin_transaction=True) as session:
@@ -159,7 +159,7 @@ async def patch_automation(
 )
 async def delete_automation(
     automation_id: UUID = Path(..., alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         deleted = await automations_models.delete_automation(
@@ -177,7 +177,7 @@ async def read_automations(
     limit: int = LimitBody(),
     offset: int = Body(0, ge=0),
     automations: Optional[AutomationFilter] = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> Sequence[Automation]:
     async with db.session_context() as session:
         return await automations_models.read_automations_for_workspace(
@@ -191,7 +191,7 @@ async def read_automations(
 
 @router.post("/count")
 async def count_automations(
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     async with db.session_context() as session:
         return await automations_models.count_automations_for_workspace(session=session)
@@ -200,7 +200,7 @@ async def count_automations(
 @router.get("/{id:uuid}")
 async def read_automation(
     automation_id: UUID = Path(..., alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> Automation:
     async with db.session_context() as session:
         automation = await automations_models.read_automation(
@@ -216,7 +216,7 @@ async def read_automation(
 @router.get("/related-to/{resource_id:str}")
 async def read_automations_related_to_resource(
     resource_id: str = Path(..., alias="resource_id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> Sequence[Automation]:
     async with db.session_context() as session:
         return await automations_models.read_automations_related_to_resource(
@@ -228,7 +228,7 @@ async def read_automations_related_to_resource(
 @router.delete("/owned-by/{resource_id:str}", status_code=status.HTTP_202_ACCEPTED)
 async def delete_automations_owned_by_resource(
     resource_id: str = Path(..., alias="resource_id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         await automations_models.delete_automations_owned_by_resource(

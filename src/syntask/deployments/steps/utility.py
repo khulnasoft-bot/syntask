@@ -8,11 +8,11 @@ Example:
         repository and use it as a Docker image tag:
     ```yaml
     build:
-        - prefect.deployments.steps.run_shell_script:
+        - syntask.deployments.steps.run_shell_script:
             id: get-commit-hash
             script: git rev-parse --short HEAD
             stream_output: false
-        - prefect_docker.deployments.steps.build_docker_image:
+        - syntask_docker.deployments.steps.build_docker_image:
             requires: prefect-docker
             image_name: my-image
             image_tag: "{{ get-commit-hash.stdout }}"
@@ -32,7 +32,7 @@ from anyio import create_task_group
 from anyio.streams.text import TextReceiveStream
 from typing_extensions import TypedDict
 
-from prefect.utilities.processutils import (
+from syntask.utilities.processutils import (
     get_sys_executable,
     open_process,
     stream_text,
@@ -103,11 +103,11 @@ async def run_shell_script(
             a Docker image tag:
         ```yaml
         build:
-            - prefect.deployments.steps.run_shell_script:
+            - syntask.deployments.steps.run_shell_script:
                 id: get-commit-hash
                 script: git rev-parse --short HEAD
                 stream_output: false
-            - prefect_docker.deployments.steps.build_docker_image:
+            - syntask_docker.deployments.steps.build_docker_image:
                 requires: prefect-docker
                 image_name: my-image
                 image_tag: "{{ get-commit-hash.stdout }}"
@@ -117,7 +117,7 @@ async def run_shell_script(
         Run a multi-line shell script:
         ```yaml
         build:
-            - prefect.deployments.steps.run_shell_script:
+            - syntask.deployments.steps.run_shell_script:
                 script: |
                     echo "Hello"
                     echo "World"
@@ -126,7 +126,7 @@ async def run_shell_script(
         Run a shell script with environment variables:
         ```yaml
         build:
-            - prefect.deployments.steps.run_shell_script:
+            - syntask.deployments.steps.run_shell_script:
                 script: echo "Hello $NAME"
                 env:
                     NAME: World
@@ -136,7 +136,7 @@ async def run_shell_script(
             from the current environment:
         ```yaml
         pull:
-            - prefect.deployments.steps.run_shell_script:
+            - syntask.deployments.steps.run_shell_script:
                 script: |
                     echo "User: $USER"
                     echo "Home Directory: $HOME"
@@ -147,7 +147,7 @@ async def run_shell_script(
         Run a shell script in a specific directory:
         ```yaml
         build:
-            - prefect.deployments.steps.run_shell_script:
+            - syntask.deployments.steps.run_shell_script:
                 script: echo "Hello"
                 directory: /path/to/directory
         ```
@@ -155,7 +155,7 @@ async def run_shell_script(
         Run a script stored in a file:
         ```yaml
         build:
-            - prefect.deployments.steps.run_shell_script:
+            - syntask.deployments.steps.run_shell_script:
                 script: "bash path/to/script.sh"
         ```
     """
@@ -226,10 +226,10 @@ async def pip_install_requirements(
     Example:
         ```yaml
         pull:
-            - prefect.deployments.steps.git_clone:
+            - syntask.deployments.steps.git_clone:
                 id: clone-step
                 repository: https://github.com/org/repo.git
-            - prefect.deployments.steps.pip_install_requirements:
+            - syntask.deployments.steps.pip_install_requirements:
                 directory: {{ clone-step.directory }}
                 requirements_file: requirements.txt
                 stream_output: False

@@ -1,5 +1,5 @@
 """
-Full schemas of Prefect REST API objects.
+Full schemas of Syntask REST API objects.
 """
 
 import datetime
@@ -17,7 +17,7 @@ from pydantic import (
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import Literal, Self
 
-from prefect._internal.schemas.validators import (
+from syntask._internal.schemas.validators import (
     get_or_create_run_name,
     list_length_50_or_less,
     raise_on_name_alphanumeric_dashes_only,
@@ -31,14 +31,14 @@ from prefect._internal.schemas.validators import (
     validate_parent_and_ref_diff,
     validate_schedule_max_scheduled_runs,
 )
-from prefect.server.schemas import schedules, states
-from prefect.server.schemas.statuses import WorkPoolStatus
-from prefect.server.utilities.schemas.bases import (
+from syntask.server.schemas import schedules, states
+from syntask.server.schemas.statuses import WorkPoolStatus
+from syntask.server.utilities.schemas.bases import (
     ORMBaseModel,
-    PrefectBaseModel,
+    SyntaskBaseModel,
 )
-from prefect.settings import PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS
-from prefect.types import (
+from syntask.settings import SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS
+from syntask.types import (
     MAX_VARIABLE_NAME_LENGTH,
     LaxUrl,
     Name,
@@ -48,16 +48,16 @@ from prefect.types import (
     PositiveInteger,
     StrictVariableValue,
 )
-from prefect.utilities.collections import (
+from syntask.utilities.collections import (
     AutoEnum,
     dict_to_flatdict,
     flatdict_to_dict,
     listrepr,
 )
-from prefect.utilities.names import generate_slug, obfuscate
+from syntask.utilities.names import generate_slug, obfuscate
 
 if TYPE_CHECKING:
-    from prefect.server.database import orm_models
+    from syntask.server.database import orm_models
 
 
 FLOW_RUN_NOTIFICATION_TEMPLATE_KWARGS = [
@@ -90,7 +90,7 @@ class Flow(ORMBaseModel):
     )
 
 
-class FlowRunPolicy(PrefectBaseModel):
+class FlowRunPolicy(SyntaskBaseModel):
     """Defines of how a flow run should retry."""
 
     # TODO: Determine how to separate between infrastructure and within-process level
@@ -323,7 +323,7 @@ class FlowRun(ORMBaseModel):
         return super().__eq__(other)
 
 
-class TaskRunPolicy(PrefectBaseModel):
+class TaskRunPolicy(SyntaskBaseModel):
     """Defines of how a task run should retry."""
 
     max_retries: int = Field(
@@ -366,7 +366,7 @@ class TaskRunPolicy(PrefectBaseModel):
         return validate_not_negative(v)
 
 
-class TaskRunInput(PrefectBaseModel):
+class TaskRunInput(SyntaskBaseModel):
     """
     Base class for classes that represent inputs to task runs, which
     could include, constants, parameters, or other task runs.
@@ -543,7 +543,7 @@ class DeploymentSchedule(ORMBaseModel):
     @classmethod
     def validate_max_scheduled_runs(cls, v):
         return validate_schedule_max_scheduled_runs(
-            v, PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()
+            v, SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()
         )
 
 
@@ -776,7 +776,7 @@ class BlockDocument(ORMBaseModel):
         default=False,
         description=(
             "Whether the block is anonymous (anonymous blocks are usually created by"
-            " Prefect automatically)"
+            " Syntask automatically)"
         ),
     )
 
@@ -863,8 +863,8 @@ class Configuration(ORMBaseModel):
     value: Dict[str, Any] = Field(default=..., description="Account info")
 
 
-class SavedSearchFilter(PrefectBaseModel):
-    """A filter for a saved search model. Intended for use by the Prefect UI."""
+class SavedSearchFilter(SyntaskBaseModel):
+    """A filter for a saved search model. Intended for use by the Syntask UI."""
 
     object: str = Field(default=..., description="The object over which to filter.")
     property: str = Field(
@@ -904,7 +904,7 @@ class Log(ORMBaseModel):
     )
 
 
-class QueueFilter(PrefectBaseModel):
+class QueueFilter(SyntaskBaseModel):
     """Filter criteria definition for a work queue."""
 
     tags: Optional[List[str]] = Field(
@@ -950,7 +950,7 @@ class WorkQueue(ORMBaseModel):
     )
 
 
-class WorkQueueHealthPolicy(PrefectBaseModel):
+class WorkQueueHealthPolicy(SyntaskBaseModel):
     maximum_late_runs: Optional[int] = Field(
         default=0,
         description=(
@@ -997,7 +997,7 @@ class WorkQueueHealthPolicy(PrefectBaseModel):
         return healthy
 
 
-class WorkQueueStatusDetail(PrefectBaseModel):
+class WorkQueueStatusDetail(SyntaskBaseModel):
     healthy: bool = Field(..., description="Whether or not the work queue is healthy.")
     late_runs_count: int = Field(
         default=0, description="The number of late flow runs in the work queue."
@@ -1113,7 +1113,7 @@ class WorkPool(ORMBaseModel):
             obj, strict=strict, from_attributes=from_attributes, context=context
         )
         if from_attributes:
-            if obj.type == "prefect-agent":
+            if obj.type == "syntask-agent":
                 parsed.status = None
         return parsed
 

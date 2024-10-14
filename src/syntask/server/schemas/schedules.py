@@ -13,14 +13,14 @@ from croniter import croniter
 from pydantic import AfterValidator, ConfigDict, Field, field_validator, model_validator
 from pydantic_extra_types.pendulum_dt import DateTime
 
-from prefect._internal.schemas.validators import (
+from syntask._internal.schemas.validators import (
     default_anchor_date,
     default_timezone,
     validate_cron_string,
     validate_rrule_string,
 )
-from prefect.server.utilities.schemas.bases import PrefectBaseModel
-from prefect.types import TimeZone
+from syntask.server.utilities.schemas.bases import SyntaskBaseModel
+from syntask.types import TimeZone
 
 MAX_ITERATIONS = 1000
 
@@ -41,7 +41,7 @@ def _prepare_scheduling_start_and_end(
     return start, end
 
 
-class IntervalSchedule(PrefectBaseModel):
+class IntervalSchedule(SyntaskBaseModel):
     """
     A schedule formed by adding `interval` increments to an `anchor_date`. If no
     `anchor_date` is supplied, the current UTC time is used.  If a
@@ -183,7 +183,7 @@ class IntervalSchedule(PrefectBaseModel):
             next_date = next_date.add(days=interval_days, seconds=interval_seconds)
 
 
-class CronSchedule(PrefectBaseModel):
+class CronSchedule(SyntaskBaseModel):
     """
     Cron schedule
 
@@ -342,7 +342,7 @@ class CronSchedule(PrefectBaseModel):
 DEFAULT_ANCHOR_DATE = pendulum.date(2020, 1, 1)
 
 
-class RRuleSchedule(PrefectBaseModel):
+class RRuleSchedule(SyntaskBaseModel):
     """
     RRule schedule, based on the iCalendar standard
     ([RFC 5545](https://datatracker.ietf.org/doc/html/rfc5545)) as

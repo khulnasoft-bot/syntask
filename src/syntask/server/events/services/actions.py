@@ -1,9 +1,9 @@
 import asyncio
 from typing import Optional
 
-from prefect.logging import get_logger
-from prefect.server.events import actions
-from prefect.server.utilities.messaging import create_consumer
+from syntask.logging import get_logger
+from syntask.server.events import actions
+from syntask.server.utilities.messaging import create_consumer
 
 logger = get_logger(__name__)
 

@@ -4,7 +4,7 @@ from typing import List
 
 import pytest
 
-from prefect._internal.concurrency.inspection import stack_for_threads
+from syntask._internal.concurrency.inspection import stack_for_threads
 
 
 @pytest.fixture(autouse=True)

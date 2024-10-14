@@ -10,43 +10,43 @@ from uuid import UUID, uuid4
 
 import anyio
 
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.client.schemas import FlowRun
-from prefect.client.schemas.objects import (
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.client.schemas import FlowRun
+from syntask.client.schemas.objects import (
     StateType,
 )
-from prefect.client.schemas.responses import SetStateStatus
-from prefect.client.utilities import inject_client
-from prefect.context import (
+from syntask.client.schemas.responses import SetStateStatus
+from syntask.client.utilities import inject_client
+from syntask.context import (
     FlowRunContext,
     TaskRunContext,
 )
-from prefect.exceptions import (
+from syntask.exceptions import (
     Abort,
     FlowPauseTimeout,
     FlowRunWaitTimeout,
     NotPausedError,
     Pause,
 )
-from prefect.input import keyset_from_paused_state
-from prefect.input.run_input import run_input_subclass_from_type
-from prefect.logging import get_logger
-from prefect.logging.loggers import (
+from syntask.input import keyset_from_paused_state
+from syntask.input.run_input import run_input_subclass_from_type
+from syntask.logging import get_logger
+from syntask.logging.loggers import (
     get_run_logger,
 )
-from prefect.states import (
+from syntask.states import (
     Paused,
     Suspended,
 )
-from prefect.utilities.asyncutils import (
+from syntask.utilities.asyncutils import (
     sync_compatible,
 )
-from prefect.utilities.engine import (
+from syntask.utilities.engine import (
     propose_state,
 )
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 @inject_client
@@ -54,11 +54,11 @@ async def wait_for_flow_run(
     flow_run_id: UUID,
     timeout: Optional[int] = 10800,
     poll_interval: int = 5,
-    client: Optional["PrefectClient"] = None,
+    client: Optional["SyntaskClient"] = None,
     log_states: bool = False,
 ) -> FlowRun:
     """
-    Waits for the prefect flow run to finish and returns the FlowRun
+    Waits for the syntask flow run to finish and returns the FlowRun
 
     Args:
         flow_run_id: The flow run ID for the flow run to wait for.
@@ -69,15 +69,15 @@ async def wait_for_flow_run(
         FlowRun: The finished flow run.
 
     Raises:
-        prefect.exceptions.FlowWaitTimeout: If flow run goes over the timeout.
+        syntask.exceptions.FlowWaitTimeout: If flow run goes over the timeout.
 
     Examples:
         Create a flow run for a deployment and wait for it to finish:
             ```python
             import asyncio
 
-            from prefect.client.orchestration import get_client
-            from prefect.flow_runs import wait_for_flow_run
+            from syntask.client.orchestration import get_client
+            from syntask.flow_runs import wait_for_flow_run
 
             async def main():
                 async with get_client() as client:
@@ -94,8 +94,8 @@ async def wait_for_flow_run(
             ```python
             import asyncio
 
-            from prefect.client.orchestration import get_client
-            from prefect.flow_runs import wait_for_flow_run
+            from syntask.client.orchestration import get_client
+            from syntask.flow_runs import wait_for_flow_run
 
             async def main(num_runs: int):
                 async with get_client() as client:
@@ -139,8 +139,7 @@ async def pause_flow_run(
     timeout: int = 3600,
     poll_interval: int = 10,
     key: Optional[str] = None,
-) -> None:
-    ...
+) -> None: ...
 
 
 @overload
@@ -149,8 +148,7 @@ async def pause_flow_run(
     timeout: int = 3600,
     poll_interval: int = 10,
     key: Optional[str] = None,
-) -> T:
-    ...
+) -> T: ...
 
 
 @sync_compatible
@@ -307,9 +305,8 @@ async def suspend_flow_run(
     flow_run_id: Optional[UUID] = None,
     timeout: Optional[int] = 3600,
     key: Optional[str] = None,
-    client: PrefectClient = None,
-) -> None:
-    ...
+    client: SyntaskClient = None,
+) -> None: ...
 
 
 @overload
@@ -318,9 +315,8 @@ async def suspend_flow_run(
     flow_run_id: Optional[UUID] = None,
     timeout: Optional[int] = 3600,
     key: Optional[str] = None,
-    client: PrefectClient = None,
-) -> T:
-    ...
+    client: SyntaskClient = None,
+) -> T: ...
 
 
 @sync_compatible
@@ -330,7 +326,7 @@ async def suspend_flow_run(
     flow_run_id: Optional[UUID] = None,
     timeout: Optional[int] = 3600,
     key: Optional[str] = None,
-    client: PrefectClient = None,
+    client: SyntaskClient = None,
 ) -> Optional[T]:
     """
     Suspends a flow run by stopping code execution until resumed.

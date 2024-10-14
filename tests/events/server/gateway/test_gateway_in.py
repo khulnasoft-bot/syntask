@@ -7,15 +7,15 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from starlette.testclient import WebSocketTestSession
 
-from prefect.server.events import messaging
-from prefect.server.events.schemas.events import Event
-from prefect.server.events.storage import database
+from syntask.server.events import messaging
+from syntask.server.events.schemas.events import Event
+from syntask.server.events.storage import database
 
 
 @pytest.fixture(autouse=True)
 def publish(monkeypatch: pytest.MonkeyPatch) -> mock.AsyncMock:
     mock_publish = mock.AsyncMock()
-    monkeypatch.setattr("prefect.server.events.messaging.publish", mock_publish)
+    monkeypatch.setattr("syntask.server.events.messaging.publish", mock_publish)
     return mock_publish
 
 
@@ -30,7 +30,7 @@ async def stream_publish(
     )
 
     monkeypatch.setattr(
-        "prefect.server.events.messaging.create_event_publisher", mock_create_publisher
+        "syntask.server.events.messaging.create_event_publisher", mock_create_publisher
     )
 
     return mock_publish
@@ -93,12 +93,12 @@ async def test_post_events_ephemeral(
 ):
     pipeline_mock = mock.AsyncMock()
     monkeypatch.setattr(
-        "prefect.server.events.pipeline.EventsPipeline.process_events", pipeline_mock
+        "syntask.server.events.pipeline.EventsPipeline.process_events", pipeline_mock
     )
 
     response = await client.post(
         # need to use the same base_url as the events client
-        "http://ephemeral-prefect/api/events",
+        "http://ephemeral-syntask/api/events",
         json=[
             event1.model_dump(mode="json"),
             event2.model_dump(mode="json"),

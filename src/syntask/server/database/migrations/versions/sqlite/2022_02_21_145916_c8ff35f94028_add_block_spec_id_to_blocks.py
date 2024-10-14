@@ -9,7 +9,7 @@ Create Date: 2022-02-21 14:59:16.180033
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "c8ff35f94028"
@@ -24,7 +24,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "block_spec_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=False,
             )
         )

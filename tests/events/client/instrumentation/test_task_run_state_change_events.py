@@ -1,19 +1,19 @@
 import pendulum
 
-from prefect import flow, task
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.objects import State
-from prefect.events.clients import AssertingEventsClient
-from prefect.events.schemas.events import Resource
-from prefect.events.worker import EventsWorker
-from prefect.filesystems import LocalFileSystem
-from prefect.task_worker import TaskWorker
+from syntask import flow, task
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.objects import State
+from syntask.events.clients import AssertingEventsClient
+from syntask.events.schemas.events import Resource
+from syntask.events.worker import EventsWorker
+from syntask.filesystems import LocalFileSystem
+from syntask.task_worker import TaskWorker
 
 
 async def test_task_state_change_happy_path(
     asserting_events_worker: EventsWorker,
     reset_worker_events: None,
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     events_pipeline,
 ):
     @task
@@ -31,32 +31,32 @@ async def test_task_state_change_happy_path(
     task_state: State[str] = await flow_state.result()
     task_run_id = task_state.state_details.task_run_id
 
-    task_run = await prefect_client.read_task_run(task_run_id)
-    task_run_states = await prefect_client.read_task_run_states(task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_id)
+    task_run_states = await syntask_client.read_task_run_states(task_run_id)
 
     await asserting_events_worker.drain()
     assert isinstance(asserting_events_worker._client, AssertingEventsClient)
     events = [
         event
         for event in asserting_events_worker._client.events
-        if event.event.startswith("prefect.task-run.")
+        if event.event.startswith("syntask.task-run.")
     ]
     assert len(task_run_states) == len(events) == 3
 
     pending, running, completed = events
 
-    assert pending.event == "prefect.task-run.Pending"
+    assert pending.event == "syntask.task-run.Pending"
     assert pending.id == task_run_states[0].id
     assert pending.occurred == task_run_states[0].timestamp
     assert pending.resource == Resource(
         {
-            "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": "",
-            "prefect.state-type": "PENDING",
-            "prefect.state-name": "Pending",
-            "prefect.state-timestamp": task_run_states[0].timestamp.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": "",
+            "syntask.state-type": "PENDING",
+            "syntask.state-name": "Pending",
+            "syntask.state-timestamp": task_run_states[0].timestamp.isoformat(),
+            "syntask.orchestration": "client",
         }
     )
     assert (
@@ -91,18 +91,18 @@ async def test_task_state_change_happy_path(
         },
     }
 
-    assert running.event == "prefect.task-run.Running"
+    assert running.event == "syntask.task-run.Running"
     assert running.id == task_run_states[1].id
     assert running.occurred == task_run_states[1].timestamp
     assert running.resource == Resource(
         {
-            "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": "",
-            "prefect.state-type": "RUNNING",
-            "prefect.state-name": "Running",
-            "prefect.state-timestamp": task_run_states[1].timestamp.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": "",
+            "syntask.state-type": "RUNNING",
+            "syntask.state-name": "Running",
+            "syntask.state-timestamp": task_run_states[1].timestamp.isoformat(),
+            "syntask.orchestration": "client",
         }
     )
     assert (
@@ -146,18 +146,18 @@ async def test_task_state_change_happy_path(
         },
     }
 
-    assert completed.event == "prefect.task-run.Completed"
+    assert completed.event == "syntask.task-run.Completed"
     assert completed.id == task_run_states[2].id
     assert completed.occurred == task_run_states[2].timestamp
     assert completed.resource == Resource(
         {
-            "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": "",
-            "prefect.state-type": "COMPLETED",
-            "prefect.state-name": "Completed",
-            "prefect.state-timestamp": task_run_states[2].timestamp.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": "",
+            "syntask.state-type": "COMPLETED",
+            "syntask.state-name": "Completed",
+            "syntask.state-timestamp": task_run_states[2].timestamp.isoformat(),
+            "syntask.orchestration": "client",
         }
     )
     assert (
@@ -209,7 +209,7 @@ async def test_task_state_change_happy_path(
 async def test_task_state_change_task_failure(
     asserting_events_worker: EventsWorker,
     reset_worker_events,
-    prefect_client,
+    syntask_client,
     events_pipeline,
 ):
     @task
@@ -226,32 +226,32 @@ async def test_task_state_change_task_failure(
     task_state = await flow_state.result(raise_on_failure=False)
     task_run_id = task_state.state_details.task_run_id
 
-    task_run = await prefect_client.read_task_run(task_run_id)
-    task_run_states = await prefect_client.read_task_run_states(task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_id)
+    task_run_states = await syntask_client.read_task_run_states(task_run_id)
 
     await asserting_events_worker.drain()
     assert isinstance(asserting_events_worker._client, AssertingEventsClient)
     events = [
         event
         for event in asserting_events_worker._client.events
-        if event.event.startswith("prefect.task-run.")
+        if event.event.startswith("syntask.task-run.")
     ]
     assert len(task_run_states) == len(events) == 3
 
     pending, running, failed = events
 
-    assert pending.event == "prefect.task-run.Pending"
+    assert pending.event == "syntask.task-run.Pending"
     assert pending.id == task_run_states[0].id
     assert pending.occurred == task_run_states[0].timestamp
     assert pending.resource == Resource(
         {
-            "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": "",
-            "prefect.state-type": "PENDING",
-            "prefect.state-name": "Pending",
-            "prefect.state-timestamp": task_run_states[0].timestamp.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": "",
+            "syntask.state-type": "PENDING",
+            "syntask.state-name": "Pending",
+            "syntask.state-timestamp": task_run_states[0].timestamp.isoformat(),
+            "syntask.orchestration": "client",
         }
     )
     assert (
@@ -286,18 +286,18 @@ async def test_task_state_change_task_failure(
         },
     }
 
-    assert running.event == "prefect.task-run.Running"
+    assert running.event == "syntask.task-run.Running"
     assert running.id == task_run_states[1].id
     assert running.occurred == task_run_states[1].timestamp
     assert running.resource == Resource(
         {
-            "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": "",
-            "prefect.state-type": "RUNNING",
-            "prefect.state-name": "Running",
-            "prefect.state-timestamp": task_run_states[1].timestamp.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": "",
+            "syntask.state-type": "RUNNING",
+            "syntask.state-name": "Running",
+            "syntask.state-timestamp": task_run_states[1].timestamp.isoformat(),
+            "syntask.orchestration": "client",
         }
     )
     assert (
@@ -341,21 +341,21 @@ async def test_task_state_change_task_failure(
         },
     }
 
-    assert failed.event == "prefect.task-run.Failed"
+    assert failed.event == "syntask.task-run.Failed"
     assert failed.id == task_run_states[2].id
     assert failed.occurred == task_run_states[2].timestamp
     assert failed.resource == Resource(
         {
-            "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": (
+            "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": (
                 "Task run encountered an exception ValueError: "
                 "Here's a happy little accident."
             ),
-            "prefect.state-type": "FAILED",
-            "prefect.state-name": "Failed",
-            "prefect.state-timestamp": task_run_states[2].timestamp.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.state-type": "FAILED",
+            "syntask.state-name": "Failed",
+            "syntask.state-timestamp": task_run_states[2].timestamp.isoformat(),
+            "syntask.orchestration": "client",
         }
     )
     assert (
@@ -409,7 +409,7 @@ async def test_task_state_change_task_failure(
 async def test_background_task_state_changes(
     asserting_events_worker: EventsWorker,
     reset_worker_events,
-    prefect_client,
+    syntask_client,
     tmp_path,
     events_pipeline,
 ):
@@ -421,33 +421,33 @@ async def test_background_task_state_changes(
         pass
 
     task_run_future = foo.apply_async()
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
     await TaskWorker(foo).execute_task_run(task_run)
     await events_pipeline.process_events(dequeue_events=False)
 
-    task_run_states = await prefect_client.read_task_run_states(
+    task_run_states = await syntask_client.read_task_run_states(
         task_run_future.task_run_id
     )
 
     await asserting_events_worker.drain()
 
     events = sorted(asserting_events_worker._client.events, key=lambda e: e.occurred)
-    events = [e for e in events if e.event.startswith("prefect.task-run.")]
+    events = [e for e in events if e.event.startswith("syntask.task-run.")]
 
     assert len(task_run_states) == len(events) == 4
 
     assert [e.event for e in events] == [
-        "prefect.task-run.Scheduled",
-        "prefect.task-run.Pending",
-        "prefect.task-run.Running",
-        "prefect.task-run.Completed",
+        "syntask.task-run.Scheduled",
+        "syntask.task-run.Pending",
+        "syntask.task-run.Running",
+        "syntask.task-run.Completed",
     ]
 
     observed = [
         (e.payload["intended"]["from"], e.payload["intended"]["to"])
         for e in events
-        if e.event.startswith("prefect.task-run.")
+        if e.event.startswith("syntask.task-run.")
     ]
     expected = [
         (None, "SCHEDULED"),
@@ -460,7 +460,7 @@ async def test_background_task_state_changes(
 
 async def test_apply_async_emits_scheduled_event(
     asserting_events_worker,
-    prefect_client,
+    syntask_client,
 ):
     @task
     def happy_little_tree():
@@ -475,24 +475,24 @@ async def test_apply_async_emits_scheduled_event(
     assert len(events) == 1
     scheduled = events[0]
 
-    task_run = await prefect_client.read_task_run(task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_id)
     assert task_run
     assert task_run.id == task_run_id
-    task_run_states = await prefect_client.read_task_run_states(task_run_id)
+    task_run_states = await syntask_client.read_task_run_states(task_run_id)
     assert len(task_run_states) == 1
 
-    assert scheduled.event == "prefect.task-run.Scheduled"
+    assert scheduled.event == "syntask.task-run.Scheduled"
     assert scheduled.id == task_run_states[0].id
     assert scheduled.occurred == task_run_states[0].timestamp
     assert scheduled.resource == Resource(
         {
-            "prefect.resource.id": f"prefect.task-run.{task_run_id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": "",
-            "prefect.state-type": "SCHEDULED",
-            "prefect.state-name": "Scheduled",
-            "prefect.state-timestamp": task_run_states[0].timestamp.isoformat(),
-            "prefect.orchestration": "client",
+            "syntask.resource.id": f"syntask.task-run.{task_run_id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": "",
+            "syntask.state-type": "SCHEDULED",
+            "syntask.state-name": "Scheduled",
+            "syntask.state-timestamp": task_run_states[0].timestamp.isoformat(),
+            "syntask.orchestration": "client",
         }
     )
 

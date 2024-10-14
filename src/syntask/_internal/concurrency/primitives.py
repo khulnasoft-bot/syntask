@@ -9,7 +9,7 @@ from typing import TypeVar
 
 from typing_extensions import Literal
 
-from prefect._internal.concurrency.event_loop import call_soon_in_loop
+from syntask._internal.concurrency.event_loop import call_soon_in_loop
 
 T = TypeVar("T")
 

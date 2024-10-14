@@ -1,5 +1,5 @@
 """
-Schemas for defining triggers within a Prefect deployment YAML.  This is a separate
+Schemas for defining triggers within a Syntask deployment YAML.  This is a separate
 parallel hierarchy for representing triggers so that they can also include the
 information necessary to create an automation.
 
@@ -22,7 +22,7 @@ from typing import (
 from pydantic import Field
 from typing_extensions import TypeAlias
 
-from prefect._internal.schemas.bases import PrefectBaseModel
+from syntask._internal.schemas.bases import SyntaskBaseModel
 
 from .automations import (
     CompoundTrigger,
@@ -33,7 +33,7 @@ from .automations import (
 )
 
 
-class BaseDeploymentTrigger(PrefectBaseModel, abc.ABC, extra="ignore"):  # type: ignore[call-arg]
+class BaseDeploymentTrigger(SyntaskBaseModel, abc.ABC, extra="ignore"):  # type: ignore[call-arg]
     """
     Base class describing a set of criteria that must be satisfied in order to trigger
     an automation.

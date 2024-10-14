@@ -2,44 +2,44 @@ from typing import AsyncGenerator, Dict
 
 import pytest
 
-from prefect import flow
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.settings import PREFECT_CLOUD_API_URL
+from syntask import flow
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.settings import SYNTASK_CLOUD_API_URL
 
 
 @pytest.fixture
-async def prefect_client(
+async def syntask_client(
     test_database_connection_url: str,
-) -> AsyncGenerator[PrefectClient, None]:
+) -> AsyncGenerator[SyntaskClient, None]:
     async with get_client() as client:
         yield client
 
 
 @pytest.fixture
-async def in_memory_prefect_client(app) -> AsyncGenerator[PrefectClient, None]:
+async def in_memory_syntask_client(app) -> AsyncGenerator[SyntaskClient, None]:
     """
     Yield a test client that communicates with an in-memory server
     """
     # This was created because we were getting test failures caused by the
     # hosted API fixture using a different DB than the bare DB operations
     # in tests.
-    # TODO: Figure out how to use the `prefect_client` fixture instead for
+    # TODO: Figure out how to use the `syntask_client` fixture instead for
     # tests/fixtures using this fixture.
-    async with PrefectClient(api=app) as client:
+    async with SyntaskClient(api=app) as client:
         yield client
 
 
 @pytest.fixture
-def sync_prefect_client(test_database_connection_url):
+def sync_syntask_client(test_database_connection_url):
     yield get_client(sync_client=True)
 
 
 @pytest.fixture
 async def cloud_client(
-    prefect_client: PrefectClient,
-) -> AsyncGenerator[PrefectClient, None]:
-    async with PrefectClient(PREFECT_CLOUD_API_URL.value()) as cloud_client:
+    syntask_client: SyntaskClient,
+) -> AsyncGenerator[SyntaskClient, None]:
+    async with SyntaskClient(SYNTASK_CLOUD_API_URL.value()) as cloud_client:
         yield cloud_client
 
 

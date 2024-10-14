@@ -7,21 +7,21 @@ from fastapi import Body, Depends
 from pydantic import Field
 from pydantic_extra_types.pendulum_dt import DateTime
 
-import prefect.server.schemas as schemas
-from prefect._internal.schemas.bases import PrefectBaseModel
-from prefect.logging import get_logger
-from prefect.server import models
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.server import PrefectRouter
+import syntask.server.schemas as schemas
+from syntask._internal.schemas.bases import SyntaskBaseModel
+from syntask.logging import get_logger
+from syntask.server import models
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.server import SyntaskRouter
 
 logger = get_logger("server.api.ui.flow_runs")
 
-router = PrefectRouter(prefix="/ui/flow_runs", tags=["Flow Runs", "UI"])
+router = SyntaskRouter(prefix="/ui/flow_runs", tags=["Flow Runs", "UI"])
 
 
-class SimpleFlowRun(PrefectBaseModel):
+class SimpleFlowRun(SyntaskBaseModel):
     id: UUID = Field(default=..., description="The flow run id.")
     state_type: schemas.states.StateType = Field(
         default=..., description="The state type."
@@ -53,7 +53,7 @@ async def read_flow_run_history(
     task_runs: schemas.filters.TaskRunFilter = None,
     deployments: schemas.filters.DeploymentFilter = None,
     work_pools: schemas.filters.WorkPoolFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[SimpleFlowRun]:
     columns = [
         db.FlowRun.id,
@@ -93,7 +93,7 @@ async def read_flow_run_history(
 @router.post("/count-task-runs")
 async def count_task_runs_by_flow_run(
     flow_run_ids: list[UUID] = Body(default=..., embed=True, max_items=200),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> dict[UUID, int]:
     """
     Get task run counts by flow run id.

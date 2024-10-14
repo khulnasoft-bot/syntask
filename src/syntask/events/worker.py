@@ -5,25 +5,25 @@ from uuid import UUID
 
 from typing_extensions import Self
 
-from prefect._internal.concurrency.services import QueueService
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
+from syntask._internal.concurrency.services import QueueService
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
 )
-from prefect.utilities.context import temporary_context
+from syntask.utilities.context import temporary_context
 
 from .clients import (
     EventsClient,
     NullEventsClient,
-    PrefectCloudEventsClient,
-    PrefectEventsClient,
+    SyntaskCloudEventsClient,
+    SyntaskEventsClient,
 )
 from .related import related_resources_from_run_context
 from .schemas.events import Event
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 def should_emit_events() -> bool:
@@ -35,19 +35,19 @@ def should_emit_events() -> bool:
 
 
 def emit_events_to_cloud() -> bool:
-    api_url = PREFECT_API_URL.value()
+    api_url = SYNTASK_API_URL.value()
     return isinstance(api_url, str) and api_url.startswith(
-        PREFECT_CLOUD_API_URL.value()
+        SYNTASK_CLOUD_API_URL.value()
     )
 
 
 def should_emit_events_to_running_server() -> bool:
-    api_url = PREFECT_API_URL.value()
+    api_url = SYNTASK_API_URL.value()
     return isinstance(api_url, str)
 
 
 def should_emit_events_to_ephemeral_server() -> bool:
-    return PREFECT_API_KEY.value() is None
+    return SYNTASK_API_KEY.value() is None
 
 
 class EventsWorker(QueueService[Event]):
@@ -58,13 +58,13 @@ class EventsWorker(QueueService[Event]):
         self.client_type = client_type
         self.client_options = client_options
         self._client: EventsClient
-        self._orchestration_client: "PrefectClient"
+        self._orchestration_client: "SyntaskClient"
         self._context_cache: Dict[UUID, Context] = {}
 
     @asynccontextmanager
     async def _lifespan(self):
         self._client = self.client_type(**{k: v for k, v in self.client_options})
-        from prefect.client.orchestration import get_client
+        from syntask.client.orchestration import get_client
 
         self._orchestration_client = get_client()
         async with self._client:
@@ -97,23 +97,23 @@ class EventsWorker(QueueService[Event]):
         # Select a client type for this worker based on settings
         if client_type is None:
             if emit_events_to_cloud():
-                client_type = PrefectCloudEventsClient
+                client_type = SyntaskCloudEventsClient
                 client_kwargs = {
-                    "api_url": PREFECT_API_URL.value(),
-                    "api_key": PREFECT_API_KEY.value(),
+                    "api_url": SYNTASK_API_URL.value(),
+                    "api_key": SYNTASK_API_KEY.value(),
                 }
             elif should_emit_events_to_running_server():
-                client_type = PrefectEventsClient
+                client_type = SyntaskEventsClient
             elif should_emit_events_to_ephemeral_server():
                 # create an ephemeral API if none was provided
-                from prefect.server.api.server import SubprocessASGIServer
+                from syntask.server.api.server import SubprocessASGIServer
 
                 server = SubprocessASGIServer()
                 server.start()
                 assert server.server_process is not None, "Server process did not start"
 
                 client_kwargs = {"api_url": server.api_url}
-                client_type = PrefectEventsClient
+                client_type = SyntaskEventsClient
             else:
                 client_type = NullEventsClient
 

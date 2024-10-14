@@ -1,6 +1,0 @@
-integrationName: prefect-ray
-author: Prefect
-authorUrl: https://syntask.khulnasoft.com
-documentation: prefect-ray
-iconUrl: /images/integrations/ray.png
-tag: Ray

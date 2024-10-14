@@ -3,8 +3,8 @@ import datetime
 import pendulum
 import pytest
 
-from prefect.server import models
-from prefect.server.orchestration.global_policy import (
+from syntask.server import models
+from syntask.server.orchestration.global_policy import (
     IncrementFlowRunCount,
     IncrementRunTime,
     IncrementTaskRunCount,
@@ -19,8 +19,8 @@ from prefect.server.orchestration.global_policy import (
     UpdateSubflowParentTask,
     UpdateSubflowStateDetails,
 )
-from prefect.server.orchestration.rules import TERMINAL_STATES
-from prefect.server.schemas import core, states
+from syntask.server.orchestration.rules import TERMINAL_STATES
+from syntask.server.schemas import core, states
 
 # Convert constants from sets to lists for deterministic ordering of tests
 TERMINAL_STATES = list(sorted(TERMINAL_STATES))

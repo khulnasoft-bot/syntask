@@ -1,5 +1,5 @@
 """
-Prefect-specific exceptions.
+Syntask-specific exceptions.
 """
 
 import inspect
@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from rich.traceback import Traceback
 from typing_extensions import Self
 
-import prefect
+import syntask
 
 
 def _trim_traceback(
@@ -51,13 +51,13 @@ def exception_traceback(exc: Exception) -> str:
     return "".join(list(tb.format()))
 
 
-class PrefectException(Exception):
+class SyntaskException(Exception):
     """
-    Base exception type for Prefect errors.
+    Base exception type for Syntask errors.
     """
 
 
-class CrashedRun(PrefectException):
+class CrashedRun(SyntaskException):
     """
     Raised when the result from a crashed run is retrieved.
 
@@ -66,7 +66,7 @@ class CrashedRun(PrefectException):
     """
 
 
-class FailedRun(PrefectException):
+class FailedRun(SyntaskException):
     """
     Raised when the result from a failed run is retrieved and an exception is not
     attached.
@@ -76,7 +76,7 @@ class FailedRun(PrefectException):
     """
 
 
-class CancelledRun(PrefectException):
+class CancelledRun(SyntaskException):
     """
     Raised when the result from a cancelled run is retrieved and an exception
     is not attached.
@@ -86,7 +86,7 @@ class CancelledRun(PrefectException):
     """
 
 
-class PausedRun(PrefectException):
+class PausedRun(SyntaskException):
     """
     Raised when the result from a paused run is retrieved.
     """
@@ -96,7 +96,7 @@ class PausedRun(PrefectException):
         self.state = state
 
 
-class UnfinishedRun(PrefectException):
+class UnfinishedRun(SyntaskException):
     """
     Raised when the result from a run that is not finished is retrieved.
 
@@ -104,26 +104,26 @@ class UnfinishedRun(PrefectException):
     """
 
 
-class MissingFlowError(PrefectException):
+class MissingFlowError(SyntaskException):
     """
     Raised when a given flow name is not found in the expected script.
     """
 
 
-class UnspecifiedFlowError(PrefectException):
+class UnspecifiedFlowError(SyntaskException):
     """
     Raised when multiple flows are found in the expected script and no name is given.
     """
 
 
-class MissingResult(PrefectException):
+class MissingResult(SyntaskException):
     """
     Raised when a result is missing from a state; often when result persistence is
     disabled and the state is retrieved from the API.
     """
 
 
-class ScriptError(PrefectException):
+class ScriptError(SyntaskException):
     """
     Raised when a script errors during evaluation while attempting to load data
     """
@@ -140,11 +140,11 @@ class ScriptError(PrefectException):
         # Strip script run information from the traceback
         self.user_exc.__traceback__ = _trim_traceback(
             self.user_exc.__traceback__,
-            remove_modules=[prefect.utilities.importtools],
+            remove_modules=[syntask.utilities.importtools],
         )
 
 
-class FlowScriptError(PrefectException):
+class FlowScriptError(SyntaskException):
     """
     Raised when a script errors during evaluation while attempting to load a flow.
     """
@@ -168,7 +168,7 @@ class FlowScriptError(PrefectException):
         return Traceback(trace, **kwargs)
 
 
-class ParameterTypeError(PrefectException):
+class ParameterTypeError(SyntaskException):
     """
     Raised when a parameter does not pass Pydantic type validation.
     """
@@ -186,7 +186,7 @@ class ParameterTypeError(PrefectException):
         return cls(msg)
 
 
-class ParameterBindError(TypeError, PrefectException):
+class ParameterBindError(TypeError, SyntaskException):
     """
     Raised when args and kwargs cannot be converted to parameters.
     """
@@ -207,7 +207,7 @@ class ParameterBindError(TypeError, PrefectException):
         return cls(msg)
 
 
-class SignatureMismatchError(PrefectException, TypeError):
+class SignatureMismatchError(SyntaskException, TypeError):
     """Raised when parameters passed to a function do not match its signature."""
 
     def __init__(self, msg: str):
@@ -222,7 +222,7 @@ class SignatureMismatchError(PrefectException, TypeError):
         return cls(msg)
 
 
-class ObjectNotFound(PrefectException):
+class ObjectNotFound(SyntaskException):
     """
     Raised when the client receives a 404 (not found) from the API.
     """
@@ -242,7 +242,7 @@ class ObjectNotFound(PrefectException):
         return self.help_message or super().__str__()
 
 
-class ObjectAlreadyExists(PrefectException):
+class ObjectAlreadyExists(SyntaskException):
     """
     Raised when the client receives a 409 (conflict) from the API.
     """
@@ -252,46 +252,46 @@ class ObjectAlreadyExists(PrefectException):
         super().__init__(*args, **kwargs)
 
 
-class UpstreamTaskError(PrefectException):
+class UpstreamTaskError(SyntaskException):
     """
     Raised when a task relies on the result of another task but that task is not
     'COMPLETE'
     """
 
 
-class MissingContextError(PrefectException, RuntimeError):
+class MissingContextError(SyntaskException, RuntimeError):
     """
     Raised when a method is called that requires a task or flow run context to be
     active but one cannot be found.
     """
 
 
-class MissingProfileError(PrefectException, ValueError):
+class MissingProfileError(SyntaskException, ValueError):
     """
     Raised when a profile name does not exist.
     """
 
 
-class ReservedArgumentError(PrefectException, TypeError):
+class ReservedArgumentError(SyntaskException, TypeError):
     """
-    Raised when a function used with Prefect has an argument with a name that is
-    reserved for a Prefect feature
+    Raised when a function used with Syntask has an argument with a name that is
+    reserved for a Syntask feature
     """
 
 
-class InvalidNameError(PrefectException, ValueError):
+class InvalidNameError(SyntaskException, ValueError):
     """
     Raised when a name contains characters that are not permitted.
     """
 
 
-class PrefectSignal(BaseException):
+class SyntaskSignal(BaseException):
     """
     Base type for signal-like exceptions that should never be caught by users.
     """
 
 
-class Abort(PrefectSignal):
+class Abort(SyntaskSignal):
     """
     Raised when the API sends an 'ABORT' instruction during state proposal.
 
@@ -299,7 +299,7 @@ class Abort(PrefectSignal):
     """
 
 
-class Pause(PrefectSignal):
+class Pause(SyntaskSignal):
     """
     Raised when a flow run is PAUSED and needs to exit for resubmission.
     """
@@ -324,7 +324,7 @@ class TerminationSignal(ExternalSignal):
         self.signal = signal
 
 
-class PrefectHTTPStatusError(HTTPStatusError):
+class SyntaskHTTPStatusError(HTTPStatusError):
     """
     Raised when client receives a `Response` that contains an HTTPStatusError.
 
@@ -334,7 +334,7 @@ class PrefectHTTPStatusError(HTTPStatusError):
     @classmethod
     def from_httpx_error(cls: Type[Self], httpx_error: HTTPStatusError) -> Self:
         """
-        Generate a `PrefectHTTPStatusError` from an `httpx.HTTPStatusError`.
+        Generate a `SyntaskHTTPStatusError` from an `httpx.HTTPStatusError`.
         """
         try:
             details = httpx_error.response.json()
@@ -355,88 +355,88 @@ class PrefectHTTPStatusError(HTTPStatusError):
         )
 
 
-class MappingLengthMismatch(PrefectException):
+class MappingLengthMismatch(SyntaskException):
     """
     Raised when attempting to call Task.map with arguments of different lengths.
     """
 
 
-class MappingMissingIterable(PrefectException):
+class MappingMissingIterable(SyntaskException):
     """
     Raised when attempting to call Task.map with all static arguments
     """
 
 
-class BlockMissingCapabilities(PrefectException):
+class BlockMissingCapabilities(SyntaskException):
     """
     Raised when a block does not have required capabilities for a given operation.
     """
 
 
-class ProtectedBlockError(PrefectException):
+class ProtectedBlockError(SyntaskException):
     """
     Raised when an operation is prevented due to block protection.
     """
 
 
-class InvalidRepositoryURLError(PrefectException):
+class InvalidRepositoryURLError(SyntaskException):
     """Raised when an incorrect URL is provided to a GitHub filesystem block."""
 
 
-class InfrastructureError(PrefectException):
+class InfrastructureError(SyntaskException):
     """
     A base class for exceptions related to infrastructure blocks
     """
 
 
-class InfrastructureNotFound(PrefectException):
+class InfrastructureNotFound(SyntaskException):
     """
     Raised when infrastructure is missing, likely because it has exited or been
     deleted.
     """
 
 
-class InfrastructureNotAvailable(PrefectException):
+class InfrastructureNotAvailable(SyntaskException):
     """
     Raised when infrastructure is not accessible from the current machine. For example,
     if a process was spawned on another machine it cannot be managed.
     """
 
 
-class NotPausedError(PrefectException):
+class NotPausedError(SyntaskException):
     """Raised when attempting to unpause a run that isn't paused."""
 
 
-class FlowPauseTimeout(PrefectException):
+class FlowPauseTimeout(SyntaskException):
     """Raised when a flow pause times out"""
 
 
-class FlowRunWaitTimeout(PrefectException):
+class FlowRunWaitTimeout(SyntaskException):
     """Raised when a flow run takes longer than a given timeout"""
 
 
-class PrefectImportError(ImportError):
+class SyntaskImportError(ImportError):
     """
-    An error raised when a Prefect object cannot be imported due to a move or removal.
+    An error raised when a Syntask object cannot be imported due to a move or removal.
     """
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
 
 
-class SerializationError(PrefectException):
+class SerializationError(SyntaskException):
     """
     Raised when an object cannot be serialized.
     """
 
 
-class ConfigurationError(PrefectException):
+class ConfigurationError(SyntaskException):
     """
     Raised when a configuration is invalid.
     """
 
 
-class ProfileSettingsValidationError(PrefectException):
+class ProfileSettingsValidationError(SyntaskException):
     """
     Raised when a profile settings are invalid.
     """

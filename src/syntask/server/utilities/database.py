@@ -1,8 +1,8 @@
 """
-Utilities for interacting with Prefect REST API database and ORM layer.
+Utilities for interacting with Syntask REST API database and ORM layer.
 
-Prefect supports both SQLite and Postgres. Many of these utilities
-allow the Prefect REST API to seamlessly switch between the two.
+Syntask supports both SQLite and Postgres. Many of these utilities
+allow the Syntask REST API to seamlessly switch between the two.
 """
 
 import datetime
@@ -647,15 +647,15 @@ def get_dialect(
     """
     Get the dialect of a session, engine, or connection url.
 
-    Primary use case is figuring out whether the Prefect REST API is communicating with
+    Primary use case is figuring out whether the Syntask REST API is communicating with
     SQLite or Postgres.
 
     Example:
         ```python
-        import prefect.settings
-        from prefect.server.utilities.database import get_dialect
+        import syntask.settings
+        from syntask.server.utilities.database import get_dialect
 
-        dialect = get_dialect(PREFECT_API_DATABASE_CONNECTION_URL.value())
+        dialect = get_dialect(SYNTASK_API_DATABASE_CONNECTION_URL.value())
         if dialect.name == "sqlite":
             print("Using SQLite!")
         else:

@@ -8,16 +8,16 @@ import sqlalchemy as sa
 from httpx._client import AsyncClient
 from starlette import status
 
-from prefect.client.schemas.responses import DeploymentResponse
-from prefect.server import models, schemas
-from prefect.server.database.orm_models import Flow
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.schemas.actions import DeploymentCreate, DeploymentUpdate
-from prefect.server.utilities.database import get_dialect
-from prefect.settings import (
-    PREFECT_API_DATABASE_CONNECTION_URL,
-    PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME,
-    PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS,
+from syntask.client.schemas.responses import DeploymentResponse
+from syntask.server import models, schemas
+from syntask.server.database.orm_models import Flow
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.schemas.actions import DeploymentCreate, DeploymentUpdate
+from syntask.server.utilities.database import get_dialect
+from syntask.settings import (
+    SYNTASK_API_DATABASE_CONNECTION_URL,
+    SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME,
+    SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS,
 )
 
 
@@ -400,7 +400,7 @@ class TestCreateDeployment:
             session=session, deployment_id=deployment.id
         )
         n_runs = await models.flow_runs.count_flow_runs(session)
-        assert n_runs == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert n_runs == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
         # create a run manually to ensure it isn't deleted
         await models.flow_runs.create_flow_run(
@@ -445,7 +445,7 @@ class TestCreateDeployment:
             session=session, deployment_id=deployment.id
         )
         n_runs = await models.flow_runs.count_flow_runs(session)
-        assert n_runs == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert n_runs == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
         # create a run manually to ensure it isn't deleted
         await models.flow_runs.create_flow_run(
@@ -1049,9 +1049,9 @@ class TestCreateDeployment:
         client: AsyncClient,
         flow: Flow,
     ):
-        """Ensure that old prefect clients that don't know about concurrency limits can still use them server-side.
+        """Ensure that old syntask clients that don't know about concurrency limits can still use them server-side.
         This means that if a deployment has a concurrency limit (possibly created through the Cloud UI), but the client
-        is an old version that doesn't know about concurrency limits, then when using `prefect deploy`, the old client
+        is an old version that doesn't know about concurrency limits, then when using `syntask deploy`, the old client
         should not remove the concurrency limit from the existing deployment.
         """
         # Create deployment with a concurrency limit
@@ -1640,7 +1640,7 @@ class TestUpdateDeployment:
             f"/deployments/{deployment_with_parameter_schema.id}",
             json={
                 "parameters": {
-                    "x": {"__prefect_kind": "json", "value": '"str_of_json"'}
+                    "x": {"__syntask_kind": "json", "value": '"str_of_json"'}
                 }
             },
         )
@@ -1660,7 +1660,7 @@ class TestUpdateDeployment:
             f"/deployments/{deployment.id}",
             json={
                 "parameters": {
-                    "x": {"__prefect_kind": "jinja", "template": "{{ 1 + 2 }}"}
+                    "x": {"__syntask_kind": "jinja", "template": "{{ 1 + 2 }}"}
                 }
             },
         )
@@ -1702,7 +1702,7 @@ class TestUpdateDeployment:
             json={
                 "parameters": {
                     "x": {
-                        "__prefect_kind": "workspace_variable",
+                        "__syntask_kind": "workspace_variable",
                         "variable_name": "my_variable",
                     }
                 }
@@ -1860,7 +1860,7 @@ class TestUpdateDeployment:
         # This is a regression test for a bug where pausing a deployment would
         # copy the schedule from the existing deployment to the new one, even
         # if the schedule was not provided in the request.
-        # https://github.com/PrefectHQ/nebula/issues/6994
+        # https://github.com/SynoPKG/nebula/issues/6994
 
         legacy_schedule = schemas.schedules.IntervalSchedule(
             interval=datetime.timedelta(days=1)
@@ -2051,7 +2051,7 @@ class TestGetScheduledFlowRuns:
             str(flow_run.id) for flow_run in flow_runs[:2]
         }
 
-        assert_status_events(deployment_1.name, ["prefect.deployment.ready"])
+        assert_status_events(deployment_1.name, ["syntask.deployment.ready"])
 
     async def test_get_scheduled_runs_for_multiple_deployments(
         self,
@@ -2069,8 +2069,8 @@ class TestGetScheduledFlowRuns:
             str(flow_run.id) for flow_run in flow_runs
         }
 
-        assert_status_events(deployment_1.name, ["prefect.deployment.ready"])
-        assert_status_events(deployment_2.name, ["prefect.deployment.ready"])
+        assert_status_events(deployment_1.name, ["syntask.deployment.ready"])
+        assert_status_events(deployment_2.name, ["syntask.deployment.ready"])
 
     async def test_get_scheduled_runs_respects_limit(
         self,
@@ -2415,7 +2415,7 @@ class TestPauseAndResumeDeployment:
             session=session, deployment_id=deployment.id
         )
         n_runs = await models.flow_runs.count_flow_runs(session)
-        assert n_runs == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert n_runs == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
         # create a run manually
         await models.flow_runs.create_flow_run(
@@ -2455,10 +2455,10 @@ class TestScheduleDeployment:
 
         runs = await models.flow_runs.read_flow_runs(session)
         expected_dates = await deployment_schedule.schedule.get_dates(
-            n=PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
+            n=SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
             start=pendulum.now("UTC"),
             end=pendulum.now("UTC")
-            + PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
+            + SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
         )
         actual_dates = {r.state.state_details.scheduled_time for r in runs}
         assert actual_dates == set(expected_dates)
@@ -2478,7 +2478,7 @@ class TestScheduleDeployment:
             n=5,
             start=pendulum.now("UTC"),
             end=pendulum.now("UTC")
-            + PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
+            + SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
         )
         actual_dates = {r.state.state_details.scheduled_time for r in runs}
         assert actual_dates == set(expected_dates)
@@ -2496,10 +2496,10 @@ class TestScheduleDeployment:
 
         runs = await models.flow_runs.read_flow_runs(session)
         expected_dates = await deployment_schedule.schedule.get_dates(
-            n=PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
+            n=SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
             start=pendulum.now("UTC").add(days=120),
             end=pendulum.now("UTC").add(days=120)
-            + PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
+            + SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
         )
         actual_dates = {r.state.state_details.scheduled_time for r in runs}
         assert actual_dates == set(expected_dates)
@@ -2836,20 +2836,20 @@ class TestCreateFlowRunFromDeployment:
         res = response.json()
         assert res["parameters"] == {"param1": 1, "param2": 2}
 
-    async def test_create_flow_run_none_prefect_kind(
+    async def test_create_flow_run_none_syntask_kind(
         self,
         deployment,
         client,
     ):
         response = await client.post(
             f"/deployments/{deployment.id}/create_flow_run",
-            json={"parameters": {"param": {"__prefect_kind": "none", "value": 5}}},
+            json={"parameters": {"param": {"__syntask_kind": "none", "value": 5}}},
         )
         assert response.status_code == 201
         res = response.json()
         assert res["parameters"] == {"param": 5}
 
-    async def test_create_flow_run_json_prefect_kind(
+    async def test_create_flow_run_json_syntask_kind(
         self,
         deployment,
         client,
@@ -2858,7 +2858,7 @@ class TestCreateFlowRunFromDeployment:
             f"/deployments/{deployment.id}/create_flow_run",
             json={
                 "parameters": {
-                    "x": {"__prefect_kind": "json", "value": '"str_of_json"'}
+                    "x": {"__syntask_kind": "json", "value": '"str_of_json"'}
                 }
             },
         )
@@ -2866,7 +2866,7 @@ class TestCreateFlowRunFromDeployment:
         assert response.status_code == 201
         assert response.json()["parameters"]["x"] == "str_of_json"
 
-    async def test_create_flow_run_jinja_prefect_kind(
+    async def test_create_flow_run_jinja_syntask_kind(
         self,
         deployment,
         client,
@@ -2875,7 +2875,7 @@ class TestCreateFlowRunFromDeployment:
             f"/deployments/{deployment.id}/create_flow_run",
             json={
                 "parameters": {
-                    "param": {"__prefect_kind": "jinja", "template": "{{ 1 + 2 }}"}
+                    "param": {"__syntask_kind": "jinja", "template": "{{ 1 + 2 }}"}
                 }
             },
         )
@@ -2916,7 +2916,7 @@ class TestCreateFlowRunFromDeployment:
             json={
                 "parameters": {
                     "param": {
-                        "__prefect_kind": "workspace_variable",
+                        "__syntask_kind": "workspace_variable",
                         "variable_name": "my_variable",
                     }
                 }
@@ -2935,7 +2935,7 @@ class TestCreateFlowRunFromDeployment:
             f"/deployments/{deployment_with_parameter_schema.id}/create_flow_run",
             json={
                 "parameters": {
-                    "x": {"__prefect_kind": "json", "value": '{"invalid": json}'}
+                    "x": {"__syntask_kind": "json", "value": '{"invalid": json}'}
                 }
             },
         )
@@ -2986,7 +2986,7 @@ class TestGetDeploymentWorkQueueCheck:
         response = await client.get(f"deployments/{deployment.id}/work_queue_check")
         assert response.status_code == status.HTTP_200_OK
 
-        connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+        connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
         dialect = get_dialect(connection_url)
 
         if dialect.name == "postgresql":

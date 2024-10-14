@@ -1,26 +1,26 @@
 from starlette import status
 
-import prefect
-from prefect.server import models
+import syntask
+from syntask.server import models
 
 
 async def test_version(client):
     response = await client.get("/admin/version")
     assert response.status_code == status.HTTP_200_OK
-    assert prefect.__version__
-    assert response.json() == prefect.__version__
+    assert syntask.__version__
+    assert response.json() == syntask.__version__
 
 
 class TestSettings:
     async def test_read_settings(self, client):
-        from prefect.settings import Settings, get_current_settings
+        from syntask.settings import Settings, get_current_settings
 
         response = await client.get("/admin/settings")
         assert response.status_code == status.HTTP_200_OK
         parsed_settings = Settings.model_validate(response.json())
-        prefect_settings = get_current_settings()
+        syntask_settings = get_current_settings()
 
-        assert parsed_settings.model_dump(mode="json") == prefect_settings.model_dump(
+        assert parsed_settings.model_dump(mode="json") == syntask_settings.model_dump(
             mode="json"
         )
 

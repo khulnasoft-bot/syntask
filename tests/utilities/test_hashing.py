@@ -2,7 +2,7 @@ import hashlib
 
 import pytest
 
-from prefect.utilities.hashing import file_hash, stable_hash
+from syntask.utilities.hashing import file_hash, stable_hash
 
 
 @pytest.mark.parametrize(

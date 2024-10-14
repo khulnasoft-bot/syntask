@@ -4,24 +4,24 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from prefect.exceptions import ConfigurationError
-from prefect.filesystems import LocalFileSystem
-from prefect.flows import flow
-from prefect.locking.memory import MemoryLockManager
-from prefect.records.memory import MemoryRecordStore
-from prefect.results import (
+from syntask.exceptions import ConfigurationError
+from syntask.filesystems import LocalFileSystem
+from syntask.flows import flow
+from syntask.locking.memory import MemoryLockManager
+from syntask.records.memory import MemoryRecordStore
+from syntask.results import (
     ResultRecord,
     ResultStore,
     get_default_result_storage,
     get_or_create_default_task_scheduling_storage,
 )
-from prefect.settings import (
-    PREFECT_DEFAULT_RESULT_STORAGE_BLOCK,
-    PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
+from syntask.settings import (
+    SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK,
+    SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
     temporary_settings,
 )
-from prefect.tasks import task
-from prefect.transactions import (
+from syntask.tasks import task
+from syntask.transactions import (
     CommitMode,
     IsolationLevel,
     Transaction,
@@ -88,7 +88,7 @@ class TestGetParent:
 
     def test_get_parent_works_in_rollback_hook_after_success(self):
         """
-        This is a regression test for https://github.com/synopkg/synopkg/issues/15593
+        This is a regression test for https://github.com/synopkg/syntask/issues/15593
         """
         spy = MagicMock()
 
@@ -287,8 +287,8 @@ class TestDefaultTransactionStorage:
         LocalFileSystem(basepath=tmp_path).save(name)
         with temporary_settings(
             {
-                PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
-                PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
             }
         ):
             yield
@@ -387,7 +387,7 @@ class TestDefaultTransactionStorage:
 
 class TestWithMemoryRecordStore:
     @pytest.fixture(autouse=True)
-    def ignore_deprecations(self, ignore_prefect_deprecation_warnings):
+    def ignore_deprecations(self, ignore_syntask_deprecation_warnings):
         """This file will be removed in a future release when MemoryRecordStore is removed."""
 
     @pytest.fixture()
@@ -396,8 +396,8 @@ class TestWithMemoryRecordStore:
         LocalFileSystem(basepath=tmp_path).save(name)
         with temporary_settings(
             {
-                PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
-                PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
             }
         ):
             yield
@@ -498,8 +498,8 @@ class TestWithResultStore:
         LocalFileSystem(basepath=tmp_path).save(name)
         with temporary_settings(
             {
-                PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
-                PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: f"local-file-system/{name}",
+                SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: f"local-file-system/{name}",
             }
         ):
             yield
@@ -582,7 +582,7 @@ class TestWithResultStore:
         assert record.result == {"foo": "bar"}
 
     async def test_can_handle_staged_base_result(
-        self, result_store, ignore_prefect_deprecation_warnings
+        self, result_store, ignore_syntask_deprecation_warnings
     ):
         result_1 = await result_store.create_result(obj={"foo": "bar"})
         with transaction(

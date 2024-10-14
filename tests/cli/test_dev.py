@@ -1,13 +1,13 @@
 import watchfiles
 
-import prefect
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.utilities import AsyncMock, MagicMock
+import syntask
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.utilities import AsyncMock, MagicMock
 
 
 def test_dev_start_runs_all_services(monkeypatch):
     """
-    Test that `prefect dev start` runs all services. This test mocks out the
+    Test that `syntask dev start` runs all services. This test mocks out the
     `run_process` function along with the `watchfiles.arun_process` function
     so the test doesn't actually start any processes; instead, it verifies that
     the command attempts to start all services correctly.
@@ -23,11 +23,11 @@ def test_dev_start_runs_all_services(monkeypatch):
             kwargs["task_status"].started()
 
     mock_run_process.side_effect = mock_run_process_call
-    monkeypatch.setattr(prefect.cli.dev, "run_process", mock_run_process)
+    monkeypatch.setattr(syntask.cli.dev, "run_process", mock_run_process)
 
     # mock `os.kill` since we're not actually running the processes
     mock_kill = MagicMock()
-    monkeypatch.setattr(prefect.cli.dev.os, "kill", mock_kill)
+    monkeypatch.setattr(syntask.cli.dev.os, "kill", mock_kill)
 
     # mock watchfiles.awatch
     mock_awatch = MagicMock()

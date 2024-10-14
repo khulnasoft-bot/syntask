@@ -11,15 +11,15 @@ from typing import AsyncGenerator, List, Optional
 import pendulum
 import sqlalchemy as sa
 
-from prefect.logging import get_logger
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.events.storage.database import write_events
-from prefect.server.utilities.messaging import Message, MessageHandler, create_consumer
-from prefect.settings import (
-    PREFECT_API_SERVICES_EVENT_PERSISTER_BATCH_SIZE,
-    PREFECT_API_SERVICES_EVENT_PERSISTER_FLUSH_INTERVAL,
-    PREFECT_EVENTS_RETENTION_PERIOD,
+from syntask.logging import get_logger
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.storage.database import write_events
+from syntask.server.utilities.messaging import Message, MessageHandler, create_consumer
+from syntask.settings import (
+    SYNTASK_API_SERVICES_EVENT_PERSISTER_BATCH_SIZE,
+    SYNTASK_API_SERVICES_EVENT_PERSISTER_FLUSH_INTERVAL,
+    SYNTASK_EVENTS_RETENTION_PERIOD,
 )
 
 logger = get_logger(__name__)
@@ -50,9 +50,9 @@ class EventPersister:
         self.consumer = create_consumer("events")
 
         async with create_handler(
-            batch_size=PREFECT_API_SERVICES_EVENT_PERSISTER_BATCH_SIZE.value(),
+            batch_size=SYNTASK_API_SERVICES_EVENT_PERSISTER_BATCH_SIZE.value(),
             flush_every=timedelta(
-                seconds=PREFECT_API_SERVICES_EVENT_PERSISTER_FLUSH_INTERVAL.value()
+                seconds=SYNTASK_API_SERVICES_EVENT_PERSISTER_FLUSH_INTERVAL.value()
             ),
         ) as handler:
             self.consumer_task = asyncio.create_task(self.consumer.run(handler))
@@ -112,7 +112,7 @@ async def create_handler(
                 queue.put_nowait(event)
 
     async def trim() -> None:
-        older_than = pendulum.now("UTC") - PREFECT_EVENTS_RETENTION_PERIOD.value()
+        older_than = pendulum.now("UTC") - SYNTASK_EVENTS_RETENTION_PERIOD.value()
 
         try:
             async with db.session_context() as session:
@@ -154,7 +154,7 @@ async def create_handler(
             "Received event: %s with id: %s for resource: %s",
             event.event,
             event.id,
-            event.resource.get("prefect.resource.id"),
+            event.resource.get("syntask.resource.id"),
         )
 
         await queue.put(event)

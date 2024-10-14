@@ -2,24 +2,24 @@
 Bookkeeping logic that fires on every state transition.
 
 For clarity, `GlobalFlowpolicy` and `GlobalTaskPolicy` contain all transition logic
-implemented using [`BaseUniversalTransform`][prefect.server.orchestration.rules.BaseUniversalTransform].
-None of these operations modify state, and regardless of what orchestration Prefect REST API might
-enforce on a transition, the global policies contain Prefect's necessary bookkeeping.
+implemented using [`BaseUniversalTransform`][syntask.server.orchestration.rules.BaseUniversalTransform].
+None of these operations modify state, and regardless of what orchestration Syntask REST API might
+enforce on a transition, the global policies contain Syntask's necessary bookkeeping.
 Because these transforms record information about the validated state committed to the
 state database, they should be the most deeply nested contexts in orchestration loop.
 """
 
 from packaging.version import Version
 
-import prefect.server.models as models
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.orchestration.rules import (
+import syntask.server.models as models
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.orchestration.rules import (
     BaseUniversalTransform,
     FlowOrchestrationContext,
     OrchestrationContext,
     TaskOrchestrationContext,
 )
-from prefect.server.schemas.core import FlowRunPolicy
+from syntask.server.schemas.core import FlowRunPolicy
 
 
 def COMMON_GLOBAL_TRANSFORMS():
@@ -230,7 +230,7 @@ class SetExpectedStartTime(BaseUniversalTransform):
     Estimates the time a state is expected to start running if not set.
 
     For scheduled states, this estimate is simply the scheduled time. For other states,
-    this is set to the time the proposed state was created by Prefect.
+    this is set to the time the proposed state was created by Syntask.
     """
 
     async def before_transition(self, context: OrchestrationContext) -> None:

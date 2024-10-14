@@ -6,7 +6,7 @@ import anyio
 import httpx
 import pendulum
 
-from prefect._internal.compatibility.deprecated import deprecated_parameter
+from syntask._internal.compatibility.deprecated import deprecated_parameter
 
 try:
     from pendulum import Interval
@@ -14,10 +14,10 @@ except ImportError:
     # pendulum < 3
     from pendulum.period import Period as Interval  # type: ignore
 
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.responses import MinimalConcurrencyLimitResponse
-from prefect.logging.loggers import get_run_logger
-from prefect.utilities.asyncutils import sync_compatible
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.responses import MinimalConcurrencyLimitResponse
+from syntask.logging.loggers import get_run_logger
+from syntask.utilities.asyncutils import sync_compatible
 
 from .context import ConcurrencyContext
 from .events import (
@@ -63,7 +63,7 @@ async def concurrency(
     Example:
     A simple example of using the async `concurrency` context manager:
     ```python
-    from prefect.concurrency.asyncio import concurrency
+    from syntask.concurrency.asyncio import concurrency
 
     async def resource_heavy():
         async with concurrency("test", occupy=1):

@@ -1,6 +1,6 @@
 """
 Functions for interacting with flow run notification policy ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 import textwrap
@@ -11,10 +11,10 @@ import sqlalchemy as sa
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.schemas as schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
+import syntask.server.schemas as schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
 
 DEFAULT_MESSAGE_TEMPLATE = textwrap.dedent(
     """
@@ -164,7 +164,7 @@ async def delete_flow_run_notification_policy(
 
 @db_injector
 async def queue_flow_run_notifications(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run: Union[schemas.core.FlowRun, orm_models.FlowRun],
 ) -> None:

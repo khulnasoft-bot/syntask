@@ -3,10 +3,10 @@ from typing import Any, Optional
 
 import pendulum
 
-from prefect._internal.compatibility import deprecated
-from prefect.results import BaseResult, PersistedResult, ResultStore
-from prefect.transactions import IsolationLevel
-from prefect.utilities.asyncutils import run_coro_as_sync
+from syntask._internal.compatibility import deprecated
+from syntask.results import BaseResult, PersistedResult, ResultStore
+from syntask.transactions import IsolationLevel
+from syntask.utilities.asyncutils import run_coro_as_sync
 
 from .base import RecordStore, TransactionRecord
 

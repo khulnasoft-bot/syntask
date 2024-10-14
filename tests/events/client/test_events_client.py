@@ -5,49 +5,49 @@ from unittest import mock
 import pytest
 from websockets.exceptions import ConnectionClosed
 
-from prefect.events import Event, get_events_client
-from prefect.events.clients import (
-    PrefectCloudEventsClient,
-    PrefectEventsClient,
+from syntask.events import Event, get_events_client
+from syntask.events.clients import (
+    SyntaskCloudEventsClient,
+    SyntaskEventsClient,
     get_events_subscriber,
 )
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
     temporary_settings,
 )
-from prefect.testing.fixtures import Puppeteer, Recorder
+from syntask.testing.fixtures import Puppeteer, Recorder
 
 
 @pytest.fixture
 def ephemeral_settings():
     with temporary_settings(
         {
-            PREFECT_API_URL: None,
-            PREFECT_API_KEY: None,
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: True,
+            SYNTASK_API_URL: None,
+            SYNTASK_API_KEY: None,
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: True,
         }
     ):
         yield
 
 
 async def test_constructs_client_when_ephemeral_enabled(ephemeral_settings):
-    assert isinstance(get_events_client(), PrefectEventsClient)
+    assert isinstance(get_events_client(), SyntaskEventsClient)
 
 
 def test_errors_when_missing_api_url_and_ephemeral_disabled():
     with temporary_settings(
         {
-            PREFECT_API_URL: None,
-            PREFECT_API_KEY: None,
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: False,
+            SYNTASK_API_URL: None,
+            SYNTASK_API_KEY: None,
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: False,
         }
     ):
-        with pytest.raises(ValueError, match="PREFECT_API_URL"):
+        with pytest.raises(ValueError, match="SYNTASK_API_URL"):
             get_events_client()
 
 
@@ -55,39 +55,39 @@ def test_errors_when_missing_api_url_and_ephemeral_disabled():
 def server_settings():
     with temporary_settings(
         {
-            PREFECT_API_URL: "https://locally/api",
-            PREFECT_API_KEY: None,
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_API_URL: "https://locally/api",
+            SYNTASK_API_KEY: None,
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
         }
     ):
         yield
 
 
 async def test_constructs_server_client(server_settings):
-    assert isinstance(get_events_client(), PrefectEventsClient)
+    assert isinstance(get_events_client(), SyntaskEventsClient)
 
 
 @pytest.fixture
 def cloud_settings():
     with temporary_settings(
         {
-            PREFECT_API_URL: "https://cloudy/api/accounts/1/workspaces/2",
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
-            PREFECT_API_KEY: "howdy-doody",
+            SYNTASK_API_URL: "https://cloudy/api/accounts/1/workspaces/2",
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_API_KEY: "howdy-doody",
         }
     ):
         yield
 
 
 async def test_constructs_cloud_client(cloud_settings):
-    assert isinstance(get_events_client(), PrefectCloudEventsClient)
+    assert isinstance(get_events_client(), SyntaskCloudEventsClient)
 
 
 async def test_events_client_can_emit_when_ephemeral_enabled(
     example_event_1: Event, monkeypatch: pytest.MonkeyPatch, ephemeral_settings
 ):
-    assert not PREFECT_API_URL.value()
-    assert not PREFECT_API_KEY.value()
+    assert not SYNTASK_API_URL.value()
+    assert not SYNTASK_API_KEY.value()
 
     async with get_events_subscriber() as events_subscriber:
         async with get_events_client() as events_client:
@@ -104,7 +104,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
     if "Client" in fixtures:
         metafunc.parametrize(
             "Client",
-            [PrefectEventsClient, PrefectCloudEventsClient],
+            [SyntaskEventsClient, SyntaskCloudEventsClient],
         )
 
 
@@ -112,8 +112,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
 def api_setup(events_cloud_api_url: str):
     with temporary_settings(
         updates={
-            PREFECT_API_URL: events_cloud_api_url,
-            PREFECT_API_KEY: "my-token",
+            SYNTASK_API_URL: events_cloud_api_url,
+            SYNTASK_API_KEY: "my-token",
         }
     ):
         yield
@@ -122,7 +122,7 @@ def api_setup(events_cloud_api_url: str):
 async def test_events_client_can_connect_and_emit(
     events_api_url: str, example_event_1: Event, recorder: Recorder
 ):
-    async with PrefectEventsClient(events_api_url) as client:
+    async with SyntaskEventsClient(events_api_url) as client:
         await client.emit(example_event_1)
 
     assert recorder.connections == 1
@@ -133,7 +133,7 @@ async def test_events_client_can_connect_and_emit(
 async def test_cloud_client_can_connect_and_emit(
     events_cloud_api_url: str, example_event_1: Event, recorder: Recorder
 ):
-    async with PrefectCloudEventsClient(events_cloud_api_url, "my-token") as client:
+    async with SyntaskCloudEventsClient(events_cloud_api_url, "my-token") as client:
         await client.emit(example_event_1)
 
     assert recorder.connections == 1
@@ -142,7 +142,7 @@ async def test_cloud_client_can_connect_and_emit(
 
 
 async def test_reconnects_and_resends_after_hard_disconnect(
-    Client: Type[PrefectEventsClient],
+    Client: Type[SyntaskEventsClient],
     example_event_1: Event,
     example_event_2: Event,
     example_event_3: Event,
@@ -177,7 +177,7 @@ async def test_reconnects_and_resends_after_hard_disconnect(
 
 @pytest.mark.parametrize("attempts", [4, 1, 0])
 async def test_gives_up_after_a_certain_amount_of_tries(
-    Client: Type[PrefectEventsClient],
+    Client: Type[SyntaskEventsClient],
     example_event_1: Event,
     example_event_2: Event,
     example_event_3: Event,
@@ -209,7 +209,7 @@ async def test_gives_up_after_a_certain_amount_of_tries(
 
 
 async def test_giving_up_after_negative_one_tries_is_a_noop(
-    Client: Type[PrefectEventsClient],
+    Client: Type[SyntaskEventsClient],
     example_event_1: Event,
     example_event_2: Event,
     example_event_3: Event,
@@ -237,13 +237,13 @@ async def test_giving_up_after_negative_one_tries_is_a_noop(
 async def test_handles_api_url_with_trailing_slash(
     events_cloud_api_url: str, example_event_1: Event, recorder: Recorder
 ):
-    # Regression test for https://github.com/synopkg/synopkg/issues/9662
-    # where a configuration that has a trailing slash on the PREFECT_API_URL
+    # Regression test for https://github.com/synopkg/syntask/issues/9662
+    # where a configuration that has a trailing slash on the SYNTASK_API_URL
     # would cause the client to fail to connect with a 403 as the path would
-    # contain a double slash, ie: `wss:api.prefect.cloud/...//events/in`
+    # contain a double slash, ie: `wss:api.syntask.cloud/...//events/in`
 
     events_cloud_api_url += "/"
-    async with PrefectEventsClient(events_cloud_api_url) as client:
+    async with SyntaskEventsClient(events_cloud_api_url) as client:
         await client.emit(example_event_1)
 
     assert recorder.connections == 1
@@ -252,7 +252,7 @@ async def test_handles_api_url_with_trailing_slash(
 
 
 async def test_recovers_from_temporary_error_reconnecting(
-    Client: Type[PrefectEventsClient],
+    Client: Type[SyntaskEventsClient],
     example_event_1: Event,
     example_event_2: Event,
     example_event_3: Event,
@@ -260,7 +260,7 @@ async def test_recovers_from_temporary_error_reconnecting(
     puppeteer: Puppeteer,
 ):
     """Regression test for an error where the client encountered assertion errors in
-    PrefectEventsClient._emit because the websocket was None"""
+    SyntaskEventsClient._emit because the websocket was None"""
     client = Client(checkpoint_every=1, reconnection_attempts=3)
     async with client:
         assert recorder.connections == 1
@@ -298,7 +298,7 @@ async def test_recovers_from_temporary_error_reconnecting(
 
 
 async def test_recovers_from_long_lasting_error_reconnecting(
-    Client: Type[PrefectEventsClient],
+    Client: Type[SyntaskEventsClient],
     example_event_1: Event,
     example_event_2: Event,
     example_event_3: Event,
@@ -306,7 +306,7 @@ async def test_recovers_from_long_lasting_error_reconnecting(
     puppeteer: Puppeteer,
 ):
     """Regression test for an error where the client encountered assertion errors in
-    PrefectEventsClient._emit because the websocket was None"""
+    SyntaskEventsClient._emit because the websocket was None"""
     client = Client(checkpoint_every=1, reconnection_attempts=3)
     async with client:
         assert recorder.connections == 1
@@ -359,11 +359,11 @@ async def test_events_client_warn_if_connect_fails(
     def mock_connect(*args, **kwargs):
         return MockConnect()
 
-    monkeypatch.setattr("prefect.events.clients.connect", mock_connect)
+    monkeypatch.setattr("syntask.events.clients.connect", mock_connect)
 
     with caplog.at_level(logging.WARNING):
         with pytest.raises(Exception, match="Connection failed"):
-            async with PrefectEventsClient("ws://localhost"):
+            async with SyntaskEventsClient("ws://localhost"):
                 pass
 
     assert any(

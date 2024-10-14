@@ -1,5 +1,5 @@
-from prefect import flow, task
-from prefect.blocks.system import Secret
+from syntask import flow, task
+from syntask.blocks.system import Secret
 
 
 @task

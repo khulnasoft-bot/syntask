@@ -2,15 +2,15 @@ import os
 import sys
 from uuid import UUID
 
-from prefect._internal.compatibility.migration import getattr_migration
-from prefect.exceptions import (
+from syntask._internal.compatibility.migration import getattr_migration
+from syntask.exceptions import (
     Abort,
     Pause,
 )
-from prefect.logging.loggers import (
+from syntask.logging.loggers import (
     get_logger,
 )
-from prefect.utilities.asyncutils import (
+from syntask.utilities.asyncutils import (
     run_coro_as_sync,
 )
 
@@ -20,7 +20,7 @@ engine_logger = get_logger("engine")
 if __name__ == "__main__":
     try:
         flow_run_id = UUID(
-            sys.argv[1] if len(sys.argv) > 1 else os.environ.get("PREFECT__FLOW_RUN_ID")
+            sys.argv[1] if len(sys.argv) > 1 else os.environ.get("SYNTASK__FLOW_RUN_ID")
         )
     except Exception:
         engine_logger.error(
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         exit(1)
 
     try:
-        from prefect.flow_engine import (
+        from syntask.flow_engine import (
             load_flow_and_flow_run,
             run_flow,
         )

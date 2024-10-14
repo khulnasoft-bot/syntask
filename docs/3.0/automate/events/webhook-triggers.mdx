@@ -3,46 +3,46 @@ title: Receive events with webhooks
 description: Observe and respond to events from other systems.
 ---
 
-<span class="badge cloud"></span>  Prefect Cloud webhooks can receive, observe, and respond to events
+<span class="badge cloud"></span>  Syntask Cloud webhooks can receive, observe, and respond to events
 from other systems. 
-Each webhook exposes a unique URL endpoint to receive events from other systems and transform them into Prefect
+Each webhook exposes a unique URL endpoint to receive events from other systems and transform them into Syntask
 [events](/3.0/automate/events/) for use in [automations](/3.0/automate/events/automations-triggers/).
 
 Webhooks are defined by two essential components: a unique URL and a template that translates incoming web requests to a 
-Prefect event.
+Syntask event.
 
 ## Configure webhooks
 
-Set up your webhooks through the Prefect Cloud API, Prefect Cloud UI, or Prefect CLI. 
+Set up your webhooks through the Syntask Cloud API, Syntask Cloud UI, or Syntask CLI. 
 
-### Through the Prefect Cloud API
+### Through the Syntask Cloud API
 
 Webhooks are managed through the [Webhooks API
-endpoints](https://app.prefect.cloud/api/docs#tag/Webhooks). This is a Prefect
+endpoints](https://app.syntask.cloud/api/docs#tag/Webhooks). This is a Syntask
 Cloud-only feature. Authenticate API calls using the standard
-[authentication methods](/3.0/manage/cloud/connect-to-cloud#manually-configure-prefect-api-settings) you use with Prefect
+[authentication methods](/3.0/manage/cloud/connect-to-cloud#manually-configure-syntask-api-settings) you use with Syntask
 Cloud.
 
-### Through Prefect Cloud
+### Through Syntask Cloud
 
-You can create and manage webhooks from the Prefect Cloud UI.
+You can create and manage webhooks from the Syntask Cloud UI.
 
-![Managing a webhook in the Prefect Cloud UI.](/3.0/img/ui/webhook.png)
+![Managing a webhook in the Syntask Cloud UI.](/3.0/img/ui/webhook.png)
 
-### Through the Prefect CLI
+### Through the Syntask CLI
 
-You can manage and interact with webhooks through the `prefect cloud webhook` command group.
+You can manage and interact with webhooks through the `syntask cloud webhook` command group.
 
 ```bash
-prefect cloud webhook --help
+syntask cloud webhook --help
 ```
 
 Create your first webhook by invoking `create`:
 
 ```bash
-prefect cloud webhook create your-webhook-name \
+syntask cloud webhook create your-webhook-name \
     --description "Receives webhooks from your system" \
-    --template '{ "event": "your.event.name", "resource": { "prefect.resource.id": "your.resource.id" } }'
+    --template '{ "event": "your.event.name", "resource": { "syntask.resource.id": "your.resource.id" } }'
 ```
 
 Note the template string, discussed in [greater detail below](#webhook-templates).
@@ -52,34 +52,34 @@ all webhooks in your workspace with `ls`:
 
 ```bash
 # get webhook by ID
-prefect cloud webhook get <webhook-id>
+syntask cloud webhook get <webhook-id>
 
 # list all configured webhooks in your workspace
-prefect cloud webhook ls
+syntask cloud webhook ls
 ```
 
 Disable an existing webhook without deleting it using `toggle`:
 
 ```bash
-prefect cloud webhook toggle <webhook-id>
+syntask cloud webhook toggle <webhook-id>
 Webhook is now disabled
 
-prefect cloud webhook toggle <webhook-id>
+syntask cloud webhook toggle <webhook-id>
 Webhook is now enabled
 ```
 
 Use `rotate` to generate a new, random endpoint if you're concerned your webhook endpoint was compromised:
 
 ```bash
-prefect cloud webhook rotate <webhook-url-slug>
+syntask cloud webhook rotate <webhook-url-slug>
 ```
 
 ## Webhook endpoints
 
-The webhook endpoints have randomly generated opaque URLs that do not divulge any information about your Prefect Cloud workspace. 
-They are rooted at `https://api.prefect.cloud/hooks/`. 
-For example: `https://api.prefect.cloud/hooks/AERylZ_uewzpDx-8fcweHQ`.
-Prefect Cloud assigns this URL when you create a webhook; it cannot be set through the API.
+The webhook endpoints have randomly generated opaque URLs that do not divulge any information about your Syntask Cloud workspace. 
+They are rooted at `https://api.syntask.cloud/hooks/`. 
+For example: `https://api.syntask.cloud/hooks/AERylZ_uewzpDx-8fcweHQ`.
+Syntask Cloud assigns this URL when you create a webhook; it cannot be set through the API.
 You may rotate your webhook URL at any time without losing the associated configuration.
 
 All webhooks may accept requests with the most common HTTP methods:
@@ -92,7 +92,7 @@ All webhooks may accept requests with the most common HTTP methods:
   handled](#how-http-request-components-are-handled) for more details on how the body is
   parsed.
 
-Prefect Cloud webhooks are deliberately quiet to the outside world, and only return
+Syntask Cloud webhooks are deliberately quiet to the outside world, and only return
 a `204 No Content` response when they are successful or a `400 Bad Request` error when
 there is any error interpreting the request. For more visibility when your webhooks
 fail, see the [Troubleshooting](#troubleshooting) section below.
@@ -100,7 +100,7 @@ fail, see the [Troubleshooting](#troubleshooting) section below.
 
 ## Webhook authentication
 
-To enhance security, within a Prefect Cloud Pro or Enterprise tier account, you
+To enhance security, within a Syntask Cloud Pro or Enterprise tier account, you
 can assign a service account to a webhook. This feature provides an additional
 layer of security and is highly recommended, especially for enterprise
 environments. 
@@ -132,14 +132,14 @@ An account-level setting is available to enforce authentication on all webhooks.
 ## Webhook templates
 
 The purpose of a webhook is to accept an HTTP request from another system and produce a
-Prefect event from it. You often have little control
-over the format of those requests, so Prefect's webhook system gives you full configuration
+Syntask event from it. You often have little control
+over the format of those requests, so Syntask's webhook system gives you full configuration
 on how you turn those notifications from other systems into meaningful events in your
-Prefect Cloud workspace. The template you define for each webhook determines how
+Syntask Cloud workspace. The template you define for each webhook determines how
 individual components of the incoming HTTP request become the event name and resource
-labels of the resulting Prefect event.
+labels of the resulting Syntask event.
 
-As with the [templates available in Prefect Cloud Automation](/3.0/automate/events/automations-triggers) for
+As with the [templates available in Syntask Cloud Automation](/3.0/automate/events/automations-triggers) for
 defining notifications and other parameters, you write templates in
 [Jinja2](https://jinja.palletsprojects.com/en/3.1.x/templates/). All of the built-in
 Jinja2 blocks and filters are available, as well as the filters from the
@@ -147,7 +147,7 @@ Jinja2 blocks and filters are available, as well as the filters from the
 package](https://pypi.org/project/jinja2-humanize-extension/).
 
 Your goal when defining an event template is to produce a valid JSON object that
-defines (at minimum) the `event` name and the `resource["prefect.resource.id"]`, which
+defines (at minimum) the `event` name and the `resource["syntask.resource.id"]`, which
 are required of all events. The simplest template is one in which these are statically
 defined.
 
@@ -160,10 +160,10 @@ parsed, for example, with `json.loads`.
 
 ### Static webhook events
 
-Here's a static webhook template example that notifies Prefect when your `recommendations`
+Here's a static webhook template example that notifies Syntask when your `recommendations`
 machine learning model has been updated, so you can send a Slack notification to your team and run a few subsequent
 deployments. Those models are produced on a daily schedule by another team that is
-using `cron` for scheduling. They aren't able to use Prefect for their flows yet, but
+using `cron` for scheduling. They aren't able to use Syntask for their flows yet, but
 they are happy to add a `curl` to the end of their daily script to notify you. Because
 this webhook is only used for a single event from a single resource, your template
 can be entirely static:
@@ -172,8 +172,8 @@ can be entirely static:
 {
     "event": "model.refreshed",
     "resource": {
-        "prefect.resource.id": "product.models.recommendations",
-        "prefect.resource.name": "Recommendations [Products]",
+        "syntask.resource.id": "product.models.recommendations",
+        "syntask.resource.name": "Recommendations [Products]",
         "producing-team": "Data Science"
     }
 }
@@ -184,18 +184,18 @@ A webhook with this template may be invoked through _any_ of the HTTP methods, i
 end of their daily script:
 
 ```bash
-curl https://api.prefect.cloud/hooks/AERylZ_uewzpDx-8fcweHQ
+curl https://api.syntask.cloud/hooks/AERylZ_uewzpDx-8fcweHQ
 ```
 
 Each time the script hits the webhook, the webhook produces a single
-Prefect event with that name and resource in your workspace.
+Syntask event with that name and resource in your workspace.
 
-### Event fields that Prefect Cloud populates for you
+### Event fields that Syntask Cloud populates for you
 
 You only had to provide the `event` and `resource` definition, which
-is not a completely fleshed out event. Prefect Cloud sets default values for any
+is not a completely fleshed out event. Syntask Cloud sets default values for any
 missing fields, such as `occurred` and `id`, so you don't need to set them in your
-template. Additionally, Prefect Cloud adds the webhook itself as a related resource
+template. Additionally, Syntask Cloud adds the webhook itself as a related resource
 on all of the events it produces.
 
 If your template does not produce a `payload` field, the `payload` defaults to a
@@ -215,7 +215,7 @@ small body that includes the ID and name of the model that was updated:
 curl \
     -d "model=recommendations" \
     -d "friendly_name=Recommendations%20[Products]" \
-    -X POST https://api.prefect.cloud/hooks/AERylZ_uewzpDx-8fcweHQ
+    -X POST https://api.syntask.cloud/hooks/AERylZ_uewzpDx-8fcweHQ
 ```
 
 This script sends a `POST` request and the body will include a traditional
@@ -227,8 +227,8 @@ template and produce different events for the different models:
 {
     "event": "model.refreshed",
     "resource": {
-        "prefect.resource.id": "product.models.{{ body.model }}",
-        "prefect.resource.name": "{{ body.friendly_name }}",
+        "syntask.resource.id": "product.models.{{ body.model }}",
+        "syntask.resource.name": "{{ body.friendly_name }}",
         "producing-team": "Data Science"
     }
 }
@@ -291,13 +291,13 @@ identifier, so `body.friendly-name` will not work. Use `body['friendly-name']` i
 those cases.
 </Tip>
 
-Prefect Cloud will attempt to parse any other content type (such as `text/plain`) as if it were JSON first.
+Syntask Cloud will attempt to parse any other content type (such as `text/plain`) as if it were JSON first.
 In any case where the body cannot be transformed into JSON, it is made available to your
 templates as a Python `str`.
 
-### Accept Prefect events directly
+### Accept Syntask events directly
 
-In cases where you have more control over the client, your webhook can accept Prefect
+In cases where you have more control over the client, your webhook can accept Syntask
 events directly with a simple pass-through template:
 
 ```jinja2
@@ -305,34 +305,34 @@ events directly with a simple pass-through template:
 ```
 
 This template accepts the incoming body (assuming it was in JSON format) and passes
-it through unmodified. This allows a `POST` of a partial Prefect event as in this
+it through unmodified. This allows a `POST` of a partial Syntask event as in this
 example:
 
 ```
 POST /hooks/AERylZ_uewzpDx-8fcweHQ HTTP/1.1
-Host: api.prefect.cloud
+Host: api.syntask.cloud
 Content-Type: application/json
 Content-Length: 228
 
 {
     "event": "model.refreshed",
     "resource": {
-        "prefect.resource.id": "product.models.recommendations",
-        "prefect.resource.name": "Recommendations [Products]",
+        "syntask.resource.id": "product.models.recommendations",
+        "syntask.resource.name": "Recommendations [Products]",
         "producing-team": "Data Science"
     }
 }
 ```
 
 The resulting event is filled out with the default values for `occurred`, `id`, and
-other fields as described [above](#event-fields-that-prefect-cloud-populates-for-you).
+other fields as described [above](#event-fields-that-syntask-cloud-populates-for-you).
 
 ### Accepting CloudEvents
 
 The [Cloud Native Computing Foundation](https://cncf.io) has standardized
 [CloudEvents](https://cloudevents.io) for use by systems to exchange event information
 in a common format. These events are supported by major cloud providers and a growing
-number of cloud-native systems. Prefect Cloud can interpret a webhook containing
+number of cloud-native systems. Syntask Cloud can interpret a webhook containing
 a CloudEvent natively with the following template:
 
 ```jinja2
@@ -341,7 +341,7 @@ a CloudEvent natively with the following template:
 
 The resulting event uses the CloudEvent's `subject` as the resource (or the `source`
 if no `subject` is available). The CloudEvent's `data` attribute becomes the
-Prefect event's `payload['data']`, and the other CloudEvent metadata will be at
+Syntask event's `payload['data']`, and the other CloudEvent metadata will be at
 `payload['cloudevents']`. To handle CloudEvents in a more specific
 way tailored to your use case, use a dynamic template to interpret the incoming `body`.
 
@@ -351,7 +351,7 @@ The initial configuration of your webhook may require some trial and error as yo
 the sender and your receiving webhook speaking a compatible language. While you are in
 this phase, lean upon the [event feed](/3.0/automate/events/#event-feed) in the UI to see events as they happen.
 
-When Prefect Cloud encounters an error during receipt of a webhook, it produces a
-`prefect-cloud.webhook.failed` event in your workspace. This event includes
+When Syntask Cloud encounters an error during receipt of a webhook, it produces a
+`syntask-cloud.webhook.failed` event in your workspace. This event includes
 critical information about the HTTP method, headers, and body it received, as well as
 what the template rendered. Keep an eye out for these events when something goes wrong.

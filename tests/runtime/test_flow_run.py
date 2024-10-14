@@ -4,13 +4,13 @@ import datetime
 import pendulum
 import pytest
 
-from prefect import flow, states, tags, task
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas import FlowRun, TaskRun
-from prefect.context import FlowRunContext, TaskRunContext
-from prefect.flows import Flow
-from prefect.runtime import flow_run
-from prefect.settings import PREFECT_API_URL, PREFECT_UI_URL
+from syntask import flow, states, tags, task
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas import FlowRun, TaskRun
+from syntask.context import FlowRunContext, TaskRunContext
+from syntask.flows import Flow
+from syntask.runtime import flow_run
+from syntask.settings import SYNTASK_API_URL, SYNTASK_UI_URL
 
 
 class TestAttributeAccessPatterns:
@@ -20,14 +20,14 @@ class TestAttributeAccessPatterns:
 
     async def test_import_unknown_attribute_fails(self):
         with pytest.raises(ImportError, match="boop"):
-            from prefect.runtime.flow_run import boop  # noqa
+            from syntask.runtime.flow_run import boop  # noqa
 
     async def test_known_attributes_autocomplete(self):
         assert "id" in dir(flow_run)
         assert "foo" not in dir(flow_run)
 
     async def test_new_attribute_via_env_var(self, monkeypatch):
-        monkeypatch.setenv(name="PREFECT__RUNTIME__FLOW_RUN__NEW_KEY", value="foobar")
+        monkeypatch.setenv(name="SYNTASK__RUNTIME__FLOW_RUN__NEW_KEY", value="foobar")
         assert flow_run.new_key == "foobar"
 
     @pytest.mark.parametrize(
@@ -53,7 +53,7 @@ class TestAttributeAccessPatterns:
         monkeypatch.setitem(flow_run.FIELDS, attribute_name, lambda: attribute_value)
 
         monkeypatch.setenv(
-            name=f"PREFECT__RUNTIME__FLOW_RUN__{attribute_name.upper()}",
+            name=f"SYNTASK__RUNTIME__FLOW_RUN__{attribute_name.upper()}",
             value=env_value,
         )
         flow_run_attr = getattr(flow_run, attribute_name)
@@ -77,7 +77,7 @@ class TestAttributeAccessPatterns:
         monkeypatch.setitem(flow_run.FIELDS, attribute_name, lambda: attribute_value)
 
         monkeypatch.setenv(
-            name=f"PREFECT__RUNTIME__FLOW_RUN__{attribute_name.upper()}", value="foo"
+            name=f"SYNTASK__RUNTIME__FLOW_RUN__{attribute_name.upper()}", value="foo"
         )
         with pytest.raises(ValueError, match="cannot be mocked"):
             getattr(flow_run, attribute_name)
@@ -97,13 +97,13 @@ class TestID:
         assert flow_run.id is None
 
     async def test_id_uses_env_var_when_set(self, monkeypatch):
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value="foo")
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value="foo")
         assert flow_run.id == "foo"
 
     async def test_id_prioritizes_context_info_over_env_var_dynamically(
         self, monkeypatch
     ):
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value="foo")
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value="foo")
 
         assert flow_run.id == "foo"
 
@@ -142,13 +142,13 @@ class TestTags:
 
         assert flow_run.tags == []
 
-    async def test_tags_pulls_from_api_when_needed(self, monkeypatch, prefect_client):
-        run = await prefect_client.create_flow_run(
+    async def test_tags_pulls_from_api_when_needed(self, monkeypatch, syntask_client):
+        run = await syntask_client.create_flow_run(
             flow=flow(lambda: None, name="test"), tags=["red", "green"]
         )
         assert flow_run.tags == []
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(run.id))
 
         assert set(flow_run.tags) == {"red", "green"}
 
@@ -170,17 +170,17 @@ class TestRunCount:
 
         assert flow_run.run_count == 0
 
-    async def test_run_count_from_api(self, monkeypatch, prefect_client):
-        run = await prefect_client.create_flow_run(
+    async def test_run_count_from_api(self, monkeypatch, syntask_client):
+        run = await syntask_client.create_flow_run(
             flow=flow(lambda: None, name="test", retries=5)
         )
         assert flow_run.run_count == 0
 
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=run.id, state=states.Retrying()
         )
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(run.id))
 
         assert flow_run.run_count == 1
 
@@ -193,16 +193,16 @@ class TestStartTime:
         assert isinstance(flow_run.scheduled_start_time, datetime.datetime)
 
     async def test_scheduled_start_time_pulls_from_api_when_needed(
-        self, monkeypatch, prefect_client
+        self, monkeypatch, syntask_client
     ):
         TIMESTAMP = pendulum.now("utc").add(days=7)
-        run = await prefect_client.create_flow_run(
+        run = await syntask_client.create_flow_run(
             flow=flow(lambda: None, name="test"),
             state=states.Scheduled(scheduled_time=TIMESTAMP),
         )
         assert flow_run.scheduled_start_time != TIMESTAMP
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(run.id))
 
         assert flow_run.scheduled_start_time == TIMESTAMP
 
@@ -224,13 +224,13 @@ class TestName:
 
         assert flow_run.name is None
 
-    async def test_name_pulls_from_api_when_needed(self, monkeypatch, prefect_client):
-        run = await prefect_client.create_flow_run(
+    async def test_name_pulls_from_api_when_needed(self, monkeypatch, syntask_client):
+        run = await syntask_client.create_flow_run(
             flow=flow(lambda: None, name="test"), name="foo"
         )
         assert flow_run.name is None
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(run.id))
 
         assert flow_run.name == "foo"
 
@@ -253,14 +253,14 @@ class TestFlowName:
         assert flow_run.flow_name is None
 
     async def test_flow_name_pulls_from_api_when_needed(
-        self, monkeypatch, prefect_client
+        self, monkeypatch, syntask_client
     ):
-        run = await prefect_client.create_flow_run(
+        run = await syntask_client.create_flow_run(
             flow=flow(lambda: None, name="foo"), name="bar"
         )
         assert flow_run.flow_name is None
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(run.id))
 
         assert flow_run.flow_name == "foo"
 
@@ -279,12 +279,12 @@ class TestParameters:
         ):
             assert flow_run.parameters == {"x": "foo", "y": "bar"}
 
-    async def test_parameters_from_api(self, monkeypatch, prefect_client):
-        run = await prefect_client.create_flow_run(
+    async def test_parameters_from_api(self, monkeypatch, syntask_client):
+        run = await syntask_client.create_flow_run(
             flow=flow(lambda: None, name="foo"), parameters={"x": "foo", "y": "bar"}
         )
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(run.id))
         assert flow_run.parameters == {"x": "foo", "y": "bar"}
 
     async def test_within_flow_run_uses_unserialized_parameters(self):
@@ -313,7 +313,7 @@ class TestParameters:
 
         flow_run_id = my_flow(foo)
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=flow_run_id)
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=flow_run_id)
         assert flow_run.parameters == {"x": {"y": 1}}
 
 
@@ -325,7 +325,7 @@ class TestParentFlowRunId:
         assert flow_run.parent_flow_run_id is None
 
     async def test_parent_flow_run_id_returns_parent_flow_run_id_when_present_dynamically(
-        self, prefect_client
+        self, syntask_client
     ):
         assert flow_run.parent_flow_run_id is None
 
@@ -335,7 +335,7 @@ class TestParentFlowRunId:
         ):
             assert flow_run.parent_flow_run_id is None
 
-        parent_flow_run = await prefect_client.create_flow_run(
+        parent_flow_run = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="foo2"), parameters={"x": "foo", "y": "bar"}
         )
 
@@ -343,7 +343,7 @@ class TestParentFlowRunId:
         def foo():
             return 1
 
-        parent_task_run = await prefect_client.create_task_run(
+        parent_task_run = await syntask_client.create_task_run(
             task=foo, dynamic_key="1", flow_run_id=parent_flow_run.id
         )
 
@@ -360,11 +360,11 @@ class TestParentFlowRunId:
         assert flow_run.parent_flow_run_id is None
 
     async def test_parent_flow_run_id_pulls_from_api_when_needed(
-        self, monkeypatch, prefect_client
+        self, monkeypatch, syntask_client
     ):
         assert flow_run.parent_flow_run_id is None
 
-        parent_flow_run = await prefect_client.create_flow_run(
+        parent_flow_run = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="parent"),
             parameters={"x": "foo", "y": "bar"},
         )
@@ -373,24 +373,24 @@ class TestParentFlowRunId:
         def foo():
             return 1
 
-        parent_task_run = await prefect_client.create_task_run(
+        parent_task_run = await syntask_client.create_task_run(
             task=foo, dynamic_key="1", flow_run_id=parent_flow_run.id
         )
 
-        child_flow_run = await prefect_client.create_flow_run(
+        child_flow_run = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="child"),
             parameters={"x": "foo", "y": "bar"},
             parent_task_run_id=parent_task_run.id,
         )
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(child_flow_run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(child_flow_run.id))
         assert (
             flow_run.parent_flow_run_id
             == str(parent_flow_run.id)
             == str(parent_task_run.flow_run_id)
         )
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(parent_flow_run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(parent_flow_run.id))
         assert flow_run.parent_flow_run_id is None
 
 
@@ -402,7 +402,7 @@ class TestParentDeploymentId:
         assert flow_run.parent_deployment_id is None
 
     async def test_parent_deployment_id_returns_parent_deployment_id_when_present_dynamically(
-        self, prefect_client
+        self, syntask_client
     ):
         assert flow_run.parent_deployment_id is None
 
@@ -414,13 +414,13 @@ class TestParentDeploymentId:
         def foo():
             return 1
 
-        parent_flow_id = await prefect_client.create_flow(parent)
+        parent_flow_id = await syntask_client.create_flow(parent)
 
         # Parent flow run that does not have a deployment
-        parent_flow_run_no_deployment = await prefect_client.create_flow_run(
+        parent_flow_run_no_deployment = await syntask_client.create_flow_run(
             flow=parent,
         )
-        parent_task_run_no_deployment = await prefect_client.create_task_run(
+        parent_task_run_no_deployment = await syntask_client.create_task_run(
             task=foo, dynamic_key="1", flow_run_id=parent_flow_run_no_deployment.id
         )
         with FlowRunContext.model_construct(
@@ -432,16 +432,16 @@ class TestParentDeploymentId:
             assert flow_run.parent_deployment_id is None
 
         # Parent flow run that does have a deployment
-        parent_flow_deployment_id = await prefect_client.create_deployment(
+        parent_flow_deployment_id = await syntask_client.create_deployment(
             flow_id=parent_flow_id,
             name="example",
         )
         parent_flow_run_with_deployment = (
-            await prefect_client.create_flow_run_from_deployment(
+            await syntask_client.create_flow_run_from_deployment(
                 deployment_id=parent_flow_deployment_id,
             )
         )
-        parent_task_run_with_deployment = await prefect_client.create_task_run(
+        parent_task_run_with_deployment = await syntask_client.create_task_run(
             task=foo, dynamic_key="1", flow_run_id=parent_flow_run_with_deployment.id
         )
         with FlowRunContext.model_construct(
@@ -460,7 +460,7 @@ class TestParentDeploymentId:
             assert flow_run.parent_deployment_id is None
 
     async def test_parent_deployment_id_pulls_from_api_when_needed(
-        self, monkeypatch, prefect_client: PrefectClient
+        self, monkeypatch, syntask_client: SyntaskClient
     ):
         assert flow_run.parent_deployment_id is None
 
@@ -472,58 +472,58 @@ class TestParentDeploymentId:
         def foo():
             return 1
 
-        parent_flow_id = await prefect_client.create_flow(parent)
+        parent_flow_id = await syntask_client.create_flow(parent)
 
         # Parent flow run that does not have a deployment
-        parent_flow_run_no_deployment = await prefect_client.create_flow_run(
+        parent_flow_run_no_deployment = await syntask_client.create_flow_run(
             flow=parent,
         )
 
-        parent_task_run_no_deployment = await prefect_client.create_task_run(
+        parent_task_run_no_deployment = await syntask_client.create_task_run(
             task=foo, dynamic_key="1", flow_run_id=parent_flow_run_no_deployment.id
         )
 
-        child_flow_run_no_deployment = await prefect_client.create_flow_run(
+        child_flow_run_no_deployment = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="child-no-deploy"),
             parameters={"x": "foo", "y": "bar"},
             parent_task_run_id=parent_task_run_no_deployment.id,
         )
 
         monkeypatch.setenv(
-            name="PREFECT__FLOW_RUN_ID", value=str(child_flow_run_no_deployment.id)
+            name="SYNTASK__FLOW_RUN_ID", value=str(child_flow_run_no_deployment.id)
         )
         assert flow_run.parent_deployment_id is None
 
         # Parent flow run that does have a deployment
-        parent_flow_deployment_id = await prefect_client.create_deployment(
+        parent_flow_deployment_id = await syntask_client.create_deployment(
             flow_id=parent_flow_id,
             name="example",
         )
 
         parent_flow_run_with_deployment = (
-            await prefect_client.create_flow_run_from_deployment(
+            await syntask_client.create_flow_run_from_deployment(
                 deployment_id=parent_flow_deployment_id,
             )
         )
 
-        parent_task_run_with_deployment = await prefect_client.create_task_run(
+        parent_task_run_with_deployment = await syntask_client.create_task_run(
             task=foo, dynamic_key="1", flow_run_id=parent_flow_run_with_deployment.id
         )
 
-        child_flow_run_with_deployment = await prefect_client.create_flow_run(
+        child_flow_run_with_deployment = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="child-deploy"),
             parameters={"x": "foo", "y": "bar"},
             parent_task_run_id=parent_task_run_with_deployment.id,
         )
 
         monkeypatch.setenv(
-            name="PREFECT__FLOW_RUN_ID", value=str(child_flow_run_with_deployment.id)
+            name="SYNTASK__FLOW_RUN_ID", value=str(child_flow_run_with_deployment.id)
         )
         assert flow_run.parent_deployment_id == str(parent_flow_deployment_id)
 
         # No parent flow run
         monkeypatch.setenv(
-            name="PREFECT__FLOW_RUN_ID", value=str(parent_flow_run_no_deployment.id)
+            name="SYNTASK__FLOW_RUN_ID", value=str(parent_flow_run_no_deployment.id)
         )
         assert flow_run.parent_deployment_id is None
 
@@ -536,11 +536,11 @@ class TestRootFlowRunId:
         assert flow_run.root_flow_run_id is None
 
     async def test_root_flow_run_id_pulls_from_api_when_needed(
-        self, monkeypatch, prefect_client
+        self, monkeypatch, syntask_client
     ):
         assert flow_run.root_flow_run_id is None
 
-        root_flow_run = await prefect_client.create_flow_run(
+        root_flow_run = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="root"),
             parameters={"x": "foo", "y": "bar"},
             parent_task_run_id=None,
@@ -550,13 +550,13 @@ class TestRootFlowRunId:
         def root_task():
             return 1
 
-        root_task_run = await prefect_client.create_task_run(
+        root_task_run = await syntask_client.create_task_run(
             task=root_task,
             dynamic_key="1",
             flow_run_id=root_flow_run.id,
         )
 
-        child_flow_run = await prefect_client.create_flow_run(
+        child_flow_run = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="child"),
             parameters={"x": "foo", "y": "bar"},
             parent_task_run_id=root_task_run.id,
@@ -566,26 +566,26 @@ class TestRootFlowRunId:
         def child_task():
             return 1
 
-        child_task_run = await prefect_client.create_task_run(
+        child_task_run = await syntask_client.create_task_run(
             task=child_task,
             dynamic_key="1",
             flow_run_id=child_flow_run.id,
         )
 
-        deep_flow_run = await prefect_client.create_flow_run(
+        deep_flow_run = await syntask_client.create_flow_run(
             flow=Flow(fn=lambda: None, name="deep"),
             parameters={"x": "foo", "y": "bar"},
             parent_task_run_id=child_task_run.id,
         )
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(deep_flow_run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(deep_flow_run.id))
         assert (
             flow_run.root_flow_run_id
             == str(root_flow_run.id)
             == str(root_task_run.flow_run_id)
         )
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(root_flow_run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(root_flow_run.id))
         assert flow_run.root_flow_run_id == str(root_flow_run.id)
 
 
@@ -608,9 +608,9 @@ class TestURL:
     ):
         test_id = "12345"
         if url_type == "api_url":
-            base_url_value = PREFECT_API_URL.value()
+            base_url_value = SYNTASK_API_URL.value()
         elif url_type == "ui_url":
-            base_url_value = PREFECT_UI_URL.value()
+            base_url_value = SYNTASK_UI_URL.value()
 
         expected_url = f"{base_url_value}/flow-runs/flow-run/{test_id}"
 
@@ -628,20 +628,20 @@ class TestURL:
     async def test_url_pulls_from_api_when_needed(
         self,
         monkeypatch,
-        prefect_client,
+        syntask_client,
         url_type,
     ):
-        run = await prefect_client.create_flow_run(flow=flow(lambda: None, name="test"))
+        run = await syntask_client.create_flow_run(flow=flow(lambda: None, name="test"))
 
         assert not getattr(flow_run, url_type)
 
         if url_type == "api_url":
-            base_url_value = PREFECT_API_URL.value()
+            base_url_value = SYNTASK_API_URL.value()
         elif url_type == "ui_url":
-            base_url_value = PREFECT_UI_URL.value()
+            base_url_value = SYNTASK_UI_URL.value()
 
         expected_url = f"{base_url_value}/flow-runs/flow-run/{str(run.id)}"
 
-        monkeypatch.setenv(name="PREFECT__FLOW_RUN_ID", value=str(run.id))
+        monkeypatch.setenv(name="SYNTASK__FLOW_RUN_ID", value=str(run.id))
 
         assert getattr(flow_run, url_type) == expected_url

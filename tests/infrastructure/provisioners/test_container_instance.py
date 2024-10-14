@@ -5,26 +5,26 @@ from unittest.mock import AsyncMock, MagicMock, call
 import pytest
 from pydantic import Field
 
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.actions import BlockDocumentCreate
-from prefect.infrastructure.provisioners.container_instance import (
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.actions import BlockDocumentCreate
+from syntask.infrastructure.provisioners.container_instance import (
     ContainerInstancePushProvisioner,
 )
-from prefect.types import SecretDict
+from syntask.types import SecretDict
 
 
 @pytest.fixture
-async def existing_credentials_block(prefect_client: PrefectClient):
-    block_type = await prefect_client.read_block_type_by_slug(
+async def existing_credentials_block(syntask_client: SyntaskClient):
+    block_type = await syntask_client.read_block_type_by_slug(
         slug="azure-container-instance-credentials"
     )
-    block_schema = await prefect_client.get_most_recent_block_schema_for_block_type(
+    block_schema = await syntask_client.get_most_recent_block_schema_for_block_type(
         block_type_id=block_type.id
     )
     assert block_schema is not None
 
-    block_document = await prefect_client.create_block_document(
+    block_document = await syntask_client.create_block_document(
         block_document=BlockDocumentCreate(
             name="test-work-pool-push-pool-credentials",
             data={
@@ -39,7 +39,7 @@ async def existing_credentials_block(prefect_client: PrefectClient):
 
     yield block_document.id
 
-    await prefect_client.delete_block_document(block_document_id=block_document.id)
+    await syntask_client.delete_block_document(block_document_id=block_document.id)
 
 
 @pytest.fixture
@@ -155,8 +155,8 @@ def default_base_job_template():
                 "image": {
                     "title": "Image",
                     "description": (
-                        "The image to use for the Prefect container in the task. This"
-                        " value defaults to a Prefect base image matching your local"
+                        "The image to use for the Syntask container in the task. This"
+                        " value defaults to a Syntask base image matching your local"
                         " versions."
                     ),
                     "type": "string",
@@ -164,7 +164,7 @@ def default_base_job_template():
                 "resource_group_name": {
                     "title": "Azure Resource Group Name",
                     "description": (
-                        "The name of the Azure Resource Group in which to run Prefect"
+                        "The name of the Azure Resource Group in which to run Syntask"
                         " ACI tasks."
                     ),
                     "type": "string",
@@ -193,12 +193,12 @@ def default_base_job_template():
                     "title": "Entrypoint",
                     "description": (
                         "The entrypoint of the container you wish you run. This value"
-                        " defaults to the entrypoint used by Prefect images and should"
+                        " defaults to the entrypoint used by Syntask images and should"
                         " only be changed when using a custom image that is not based"
-                        " on an official Prefect image. Any commands set on deployments"
+                        " on an official Syntask image. Any commands set on deployments"
                         " will be passed to the entrypoint as parameters."
                     ),
-                    "default": "/opt/prefect/entrypoint.sh",
+                    "default": "/opt/syntask/entrypoint.sh",
                     "type": "string",
                 },
                 "image_registry": {
@@ -274,7 +274,7 @@ def default_base_job_template():
                 "stream_output": {
                     "title": "Stream Output",
                     "description": (
-                        "If `True`, logs will be streamed from the Prefect container to"
+                        "If `True`, logs will be streamed from the Syntask container to"
                         " the local console."
                     ),
                     "default": True,
@@ -524,19 +524,19 @@ async def test_aci_resource_group_creation_creates_new_group(provisioner):
 
     expected_calls = [
         call(
-            "az group exists --name prefect-aci-push-pool-rg --subscription None",
+            "az group exists --name syntask-aci-push-pool-rg --subscription None",
             return_json=True,
         ),
         call(
             (
-                "az group create --name 'prefect-aci-push-pool-rg' --location 'eastus'"
+                "az group create --name 'syntask-aci-push-pool-rg' --location 'eastus'"
                 " --subscription 'None'"
             ),
             success_message=(
-                "Resource group 'prefect-aci-push-pool-rg' created successfully"
+                "Resource group 'syntask-aci-push-pool-rg' created successfully"
             ),
             failure_message=(
-                "Failed to create resource group 'prefect-aci-push-pool-rg' in"
+                "Failed to create resource group 'syntask-aci-push-pool-rg' in"
                 " subscription 'None'"
             ),
             ignore_if_exists=True,
@@ -552,7 +552,7 @@ async def test_aci_resource_group_creation_handles_existing_group(provisioner):
 
     expected_calls = [
         call(
-            "az group exists --name prefect-aci-push-pool-rg --subscription None",
+            "az group exists --name syntask-aci-push-pool-rg --subscription None",
             return_json=True,
         )
     ]
@@ -573,19 +573,19 @@ async def test_aci_resource_group_creation_handles_errors(provisioner):
 
     expected_calls = [
         call(
-            "az group exists --name prefect-aci-push-pool-rg --subscription None",
+            "az group exists --name syntask-aci-push-pool-rg --subscription None",
             return_json=True,
         ),
         call(
             (
-                "az group create --name 'prefect-aci-push-pool-rg' --location 'eastus'"
+                "az group create --name 'syntask-aci-push-pool-rg' --location 'eastus'"
                 " --subscription 'None'"
             ),
             success_message=(
-                "Resource group 'prefect-aci-push-pool-rg' created successfully"
+                "Resource group 'syntask-aci-push-pool-rg' created successfully"
             ),
             failure_message=(
-                "Failed to create resource group 'prefect-aci-push-pool-rg' in"
+                "Failed to create resource group 'syntask-aci-push-pool-rg' in"
                 " subscription 'None'"
             ),
             ignore_if_exists=True,
@@ -597,8 +597,8 @@ async def test_aci_resource_group_creation_handles_errors(provisioner):
 async def test_aci_app_registration_creates_new_app(provisioner):
     app_registration = {
         "appId": "12345678-1234-1234-1234-123456789012",
-        "displayName": "prefect-aci-push-pool-app",
-        "identifierUris": ["https://prefect-aci-push-pool-app"],
+        "displayName": "syntask-aci-push-pool-app",
+        "identifierUris": ["https://syntask-aci-push-pool-app"],
     }
     provisioner.azure_cli.run_command.side_effect = [
         None,  # App does not exist
@@ -609,16 +609,16 @@ async def test_aci_app_registration_creates_new_app(provisioner):
 
     expected_calls = [
         call(
-            "az ad app list --display-name prefect-aci-push-pool-app --output json",
+            "az ad app list --display-name syntask-aci-push-pool-app --output json",
         ),
         call(
-            "az ad app create --display-name prefect-aci-push-pool-app --output json",
+            "az ad app create --display-name syntask-aci-push-pool-app --output json",
             success_message=(
-                "App registration 'prefect-aci-push-pool-app' created successfully"
+                "App registration 'syntask-aci-push-pool-app' created successfully"
             ),
             failure_message=(
                 "Failed to create app registration with name"
-                " 'prefect-aci-push-pool-app'"
+                " 'syntask-aci-push-pool-app'"
             ),
             ignore_if_exists=True,
         ),
@@ -630,8 +630,8 @@ async def test_aci_app_registration_handles_existing_app(provisioner):
     app_registration = [
         {
             "appId": "12345678-1234-1234-1234-123456789012",
-            "displayName": "prefect-aci-push-pool-app",
-            "identifierUris": ["https://prefect-aci-push-pool-app"],
+            "displayName": "syntask-aci-push-pool-app",
+            "identifierUris": ["https://syntask-aci-push-pool-app"],
         }
     ]
     provisioner.azure_cli.run_command.return_value = app_registration
@@ -640,7 +640,7 @@ async def test_aci_app_registration_handles_existing_app(provisioner):
 
     expected_calls = [
         call(
-            "az ad app list --display-name prefect-aci-push-pool-app --output json",
+            "az ad app list --display-name syntask-aci-push-pool-app --output json",
         ),
     ]
     provisioner.azure_cli.run_command.assert_has_calls(expected_calls)
@@ -661,16 +661,16 @@ async def test_aci_app_registration_handles_errors(provisioner):
 
     expected_calls = [
         call(
-            "az ad app list --display-name prefect-aci-push-pool-app --output json",
+            "az ad app list --display-name syntask-aci-push-pool-app --output json",
         ),
         call(
-            "az ad app create --display-name prefect-aci-push-pool-app --output json",
+            "az ad app create --display-name syntask-aci-push-pool-app --output json",
             success_message=(
-                "App registration 'prefect-aci-push-pool-app' created successfully"
+                "App registration 'syntask-aci-push-pool-app' created successfully"
             ),
             failure_message=(
                 "Failed to create app registration with name"
-                " 'prefect-aci-push-pool-app'"
+                " 'syntask-aci-push-pool-app'"
             ),
             ignore_if_exists=True,
         ),
@@ -685,7 +685,7 @@ async def test_aci_service_principal_creation_creates_new_principal(provisioner)
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -729,7 +729,7 @@ async def test_aci_service_principal_creation_handles_existing_principal(provisi
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -796,7 +796,7 @@ async def test_aci_assign_contributor_role(provisioner):
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -844,13 +844,13 @@ async def test_aci_assign_contributor_role_handles_existing_role(provisioner):
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
 
     role = "Contributor"
-    scope = "/subscriptions/None/resourceGroups/prefect-aci-push-pool-rg"
+    scope = "/subscriptions/None/resourceGroups/syntask-aci-push-pool-rg"
 
     provisioner.azure_cli.run_command.side_effect = [
         [],  # Principal does not exist
@@ -898,7 +898,7 @@ async def test_aci_assign_contributor_role_handles_existing_role(provisioner):
             (
                 "az role assignment list --assignee"
                 " 12345678-1234-1234-1234-123456789012 --role Contributor --scope"
-                " /subscriptions/None/resourceGroups/prefect-aci-push-pool-rg"
+                " /subscriptions/None/resourceGroups/syntask-aci-push-pool-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
@@ -914,7 +914,7 @@ async def test_aci_assign_contributor_role_handles_error(provisioner):
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -985,14 +985,14 @@ async def test_aci_provision_az_not_installed(provisioner):
 
 
 async def test_get_or_create_registry_new_registry(provisioner):
-    registry_name = "prefect-registry"
-    resource_group_name = "prefect-rg"
+    registry_name = "syntask-registry"
+    resource_group_name = "syntask-rg"
     location = "westus"
     subscription_id = "12345678-1234-1234-1234-123456789012"
 
     provisioner.azure_cli.run_command.side_effect = [
         [],  # No existing registry
-        {"name": "prefect-registry"},  # Successful creation
+        {"name": "syntask-registry"},  # Successful creation
     ]
 
     response = await provisioner._get_or_create_registry(
@@ -1002,14 +1002,14 @@ async def test_get_or_create_registry_new_registry(provisioner):
     expected_calls = [
         call(
             (
-                "az acr list --query \"[?starts_with(name, 'prefect')]\" --subscription"
+                "az acr list --query \"[?starts_with(name, 'syntask')]\" --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az acr create --name prefect-registry --resource-group prefect-rg"
+                "az acr create --name syntask-registry --resource-group syntask-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012 --location westus"
                 " --sku Basic"
             ),
@@ -1020,12 +1020,12 @@ async def test_get_or_create_registry_new_registry(provisioner):
     ]
     provisioner.azure_cli.run_command.assert_has_calls(expected_calls)
 
-    assert response == {"name": "prefect-registry"}
+    assert response == {"name": "syntask-registry"}
 
 
 async def test_get_or_create_registry_failed_creation(provisioner):
-    registry_name = "prefect-registry"
-    resource_group_name = "prefect-rg"
+    registry_name = "syntask-registry"
+    resource_group_name = "syntask-rg"
     location = "westus"
     subscription_id = "12345678-1234-1234-1234-123456789012"
 
@@ -1042,14 +1042,14 @@ async def test_get_or_create_registry_failed_creation(provisioner):
     expected_calls = [
         call(
             (
-                "az acr list --query \"[?starts_with(name, 'prefect')]\" --subscription"
+                "az acr list --query \"[?starts_with(name, 'syntask')]\" --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az acr create --name prefect-registry --resource-group prefect-rg"
+                "az acr create --name syntask-registry --resource-group syntask-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012 --location westus"
                 " --sku Basic"
             ),
@@ -1062,13 +1062,13 @@ async def test_get_or_create_registry_failed_creation(provisioner):
 
 
 async def test_get_or_create_registry_existing_registry(provisioner):
-    registry_name = "prefect-registry"
-    resource_group_name = "prefect-rg"
+    registry_name = "syntask-registry"
+    resource_group_name = "syntask-rg"
     location = "westus"
     subscription_id = "12345678-1234-1234-1234-123456789012"
 
     provisioner.azure_cli.run_command.side_effect = [
-        [{"name": "prefect-registry"}],  # Existing registry
+        [{"name": "syntask-registry"}],  # Existing registry
     ]
 
     response = await provisioner._get_or_create_registry(
@@ -1078,7 +1078,7 @@ async def test_get_or_create_registry_existing_registry(provisioner):
     expected_calls = [
         call(
             (
-                "az acr list --query \"[?starts_with(name, 'prefect')]\" --subscription"
+                "az acr list --query \"[?starts_with(name, 'syntask')]\" --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
@@ -1086,7 +1086,7 @@ async def test_get_or_create_registry_existing_registry(provisioner):
     ]
     provisioner.azure_cli.run_command.assert_has_calls(expected_calls)
 
-    assert response == {"name": "prefect-registry"}
+    assert response == {"name": "syntask-registry"}
 
 
 async def test_log_into_registry(provisioner):
@@ -1242,14 +1242,14 @@ async def test_get_or_create_identity_error(provisioner):
 
 async def test_aci_provision_no_existing_credentials_block(
     default_base_job_template,
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     provisioner: ContainerInstancePushProvisioner,
     monkeypatch,
 ):
     monkeypatch.setattr(
         provisioner,
         "_generate_acr_name",
-        lambda *args, **kwargs: "prefectacipushpoolregistry",
+        lambda *args, **kwargs: "syntaskacipushpoolregistry",
     )
 
     subscription_list = [
@@ -1265,8 +1265,8 @@ async def test_aci_provision_no_existing_credentials_block(
 
     app_registration = {
         "appId": "12345678-1234-1234-1234-123456789012",
-        "displayName": "prefect-aci-push-pool-app",
-        "identifierUris": ["https://prefect-aci-push-pool-app"],
+        "displayName": "syntask-aci-push-pool-app",
+        "identifierUris": ["https://syntask-aci-push-pool-app"],
     }
 
     client_secret = {
@@ -1282,7 +1282,7 @@ async def test_aci_provision_no_existing_credentials_block(
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -1292,12 +1292,12 @@ async def test_aci_provision_no_existing_credentials_block(
     }
 
     new_registry = {
-        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/prefectacipushpoolregistry",
-        "loginServer": "prefectacipushpoolregistry.azurecr.io",
+        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/syntaskacipushpoolregistry",
+        "loginServer": "syntaskacipushpoolregistry.azurecr.io",
     }
 
     new_identity = {
-        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity",
+        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity",
         "principalId": "12345678-1234-1234-1234-123456789012",
     }
 
@@ -1350,35 +1350,35 @@ async def test_aci_provision_no_existing_credentials_block(
         # _create_resource_group
         call(
             (
-                "az group exists --name prefect-aci-push-pool-rg --subscription"
+                "az group exists --name syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012"
             ),
             return_json=True,
         ),
         call(
             (
-                "az group create --name 'prefect-aci-push-pool-rg' --location 'westus'"
+                "az group create --name 'syntask-aci-push-pool-rg' --location 'westus'"
                 " --subscription '12345678-1234-1234-1234-123456789012'"
             ),
             success_message=(
-                "Resource group 'prefect-aci-push-pool-rg' created successfully"
+                "Resource group 'syntask-aci-push-pool-rg' created successfully"
             ),
             failure_message=(
-                "Failed to create resource group 'prefect-aci-push-pool-rg' in"
+                "Failed to create resource group 'syntask-aci-push-pool-rg' in"
                 " subscription 'subscription_1'"
             ),
             ignore_if_exists=True,
         ),
         # _create_app_registration
-        call("az ad app list --display-name prefect-aci-push-pool-app --output json"),
+        call("az ad app list --display-name syntask-aci-push-pool-app --output json"),
         call(
-            "az ad app create --display-name prefect-aci-push-pool-app --output json",
+            "az ad app create --display-name syntask-aci-push-pool-app --output json",
             success_message=(
-                "App registration 'prefect-aci-push-pool-app' created successfully"
+                "App registration 'syntask-aci-push-pool-app' created successfully"
             ),
             failure_message=(
                 "Failed to create app registration with name"
-                " 'prefect-aci-push-pool-app'"
+                " 'syntask-aci-push-pool-app'"
             ),
             ignore_if_exists=True,
         ),
@@ -1396,7 +1396,7 @@ async def test_aci_provision_no_existing_credentials_block(
                 "Failed to generate secret for app registration with client ID"
                 " '12345678-1234-1234-1234-123456789012'. If you have already generated"
                 " 2 secrets for this app registration, please delete one from the"
-                " `prefect-aci-push-pool-app` resource and try again."
+                " `syntask-aci-push-pool-app` resource and try again."
             ),
             ignore_if_exists=True,
             return_json=True,
@@ -1436,7 +1436,7 @@ async def test_aci_provision_no_existing_credentials_block(
             (
                 "az role assignment list --assignee"
                 " abf1b3a0-1b1b-4c1c-9c9c-1c1c1c1c1c1c --role Contributor --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
@@ -1445,7 +1445,7 @@ async def test_aci_provision_no_existing_credentials_block(
             (
                 "az role assignment create --role Contributor --assignee-object-id"
                 " abf1b3a0-1b1b-4c1c-9c9c-1c1c1c1c1c1c --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012"
             ),
             success_message=(
@@ -1461,15 +1461,15 @@ async def test_aci_provision_no_existing_credentials_block(
         # _get_or_create_registry
         call(
             (
-                "az acr list --query \"[?starts_with(name, 'prefect')]\" --subscription"
+                "az acr list --query \"[?starts_with(name, 'syntask')]\" --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az acr create --name prefectacipushpoolregistry --resource-group"
-                " prefect-aci-push-pool-rg --subscription"
+                "az acr create --name syntaskacipushpoolregistry --resource-group"
+                " syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --location westus --sku Basic"
             ),
             success_message="Registry created",
@@ -1479,33 +1479,33 @@ async def test_aci_provision_no_existing_credentials_block(
         # _log_into_registry
         call(
             (
-                "az acr login --name prefectacipushpoolregistry.azurecr.io"
+                "az acr login --name syntaskacipushpoolregistry.azurecr.io"
                 " --subscription 12345678-1234-1234-1234-123456789012"
             ),
             success_message=(
-                "Logged into registry prefectacipushpoolregistry.azurecr.io"
+                "Logged into registry syntaskacipushpoolregistry.azurecr.io"
             ),
             failure_message=(
-                "Failed to log into registry prefectacipushpoolregistry.azurecr.io"
+                "Failed to log into registry syntaskacipushpoolregistry.azurecr.io"
             ),
         ),
         # _get_or_create_identity
         call(
             (
-                "az identity list --query \"[?name=='prefect-acr-identity']\""
-                " --resource-group prefect-aci-push-pool-rg --subscription"
+                "az identity list --query \"[?name=='syntask-acr-identity']\""
+                " --resource-group syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az identity create --name prefect-acr-identity --resource-group"
-                " prefect-aci-push-pool-rg --subscription"
+                "az identity create --name syntask-acr-identity --resource-group"
+                " syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
-            success_message="Identity 'prefect-acr-identity' created",
-            failure_message="Failed to create identity 'prefect-acr-identity'",
+            success_message="Identity 'syntask-acr-identity' created",
+            failure_message="Failed to create identity 'syntask-acr-identity'",
             return_json=True,
         ),
         # _assign_acr_pull_role
@@ -1514,7 +1514,7 @@ async def test_aci_provision_no_existing_credentials_block(
                 "az role assignment create --assignee-object-id"
                 " 12345678-1234-1234-1234-123456789012 --assignee-principal-type"
                 " ServicePrincipal --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/prefectacipushpoolregistry"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/syntaskacipushpoolregistry"
                 " --role AcrPull --subscription 12345678-1234-1234-1234-123456789012"
             ),
             ignore_if_exists=True,
@@ -1528,7 +1528,7 @@ async def test_aci_provision_no_existing_credentials_block(
     ]["default"]["$ref"]["block_document_id"]
     assert new_block_doc_id
 
-    block_doc = await prefect_client.read_block_document(new_block_doc_id)
+    block_doc = await syntask_client.read_block_document(new_block_doc_id)
 
     assert block_doc.name == "test-work-pool-push-pool-credentials"
     assert block_doc.data == {
@@ -1537,27 +1537,27 @@ async def test_aci_provision_no_existing_credentials_block(
         "client_secret": "<MY_SECRET>",
     }
 
-    new_base_job_template["variables"]["properties"]["subscription_id"][
-        "default"
-    ] = "12345678-1234-1234-1234-123456789012"
+    new_base_job_template["variables"]["properties"]["subscription_id"]["default"] = (
+        "12345678-1234-1234-1234-123456789012"
+    )
 
     new_base_job_template["variables"]["properties"]["resource_group_name"][
         "default"
-    ] = "prefect-aci-push-pool-rg"
+    ] = "syntask-aci-push-pool-rg"
 
     new_base_job_template["variables"]["properties"]["image_registry"]["default"] = {
-        "registry_url": "prefectacipushpoolregistry.azurecr.io",
-        "identity": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity",
+        "registry_url": "syntaskacipushpoolregistry.azurecr.io",
+        "identity": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity",
     }
 
     new_base_job_template["variables"]["properties"]["identities"]["default"] = [
-        "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity"
+        "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity"
     ]
 
 
 async def test_aci_provision_existing_credentials_block(
     default_base_job_template,
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     existing_credentials_block,
     provisioner: ContainerInstancePushProvisioner,
     monkeypatch,
@@ -1565,7 +1565,7 @@ async def test_aci_provision_existing_credentials_block(
     monkeypatch.setattr(
         provisioner,
         "_generate_acr_name",
-        lambda *args, **kwargs: "prefectacipushpoolregistry",
+        lambda *args, **kwargs: "syntaskacipushpoolregistry",
     )
     subscription_list = [
         {
@@ -1580,8 +1580,8 @@ async def test_aci_provision_existing_credentials_block(
 
     app_registration = {
         "appId": "12345678-1234-1234-1234-123456789012",
-        "displayName": "prefect-aci-push-pool-app",
-        "identifierUris": ["https://prefect-aci-push-pool-app"],
+        "displayName": "syntask-aci-push-pool-app",
+        "identifierUris": ["https://syntask-aci-push-pool-app"],
     }
 
     new_service_principal = [
@@ -1591,7 +1591,7 @@ async def test_aci_provision_existing_credentials_block(
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -1601,12 +1601,12 @@ async def test_aci_provision_existing_credentials_block(
     }
 
     new_registry = {
-        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/prefectacipushpoolregistry",
-        "loginServer": "prefectacipushpoolregistry.azurecr.io",
+        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/syntaskacipushpoolregistry",
+        "loginServer": "syntaskacipushpoolregistry.azurecr.io",
     }
 
     new_identity = {
-        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity",
+        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity",
         "principalId": "12345678-1234-1234-1234-123456789012",
     }
 
@@ -1635,7 +1635,7 @@ async def test_aci_provision_existing_credentials_block(
     new_base_job_template = await provisioner.provision(
         work_pool_name="test-work-pool",
         base_job_template=default_base_job_template,
-        client=prefect_client,
+        client=syntask_client,
     )
 
     assert new_base_job_template
@@ -1666,35 +1666,35 @@ async def test_aci_provision_existing_credentials_block(
         # _create_resource_group
         call(
             (
-                "az group exists --name prefect-aci-push-pool-rg --subscription"
+                "az group exists --name syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012"
             ),
             return_json=True,
         ),
         call(
             (
-                "az group create --name 'prefect-aci-push-pool-rg' --location 'westus'"
+                "az group create --name 'syntask-aci-push-pool-rg' --location 'westus'"
                 " --subscription '12345678-1234-1234-1234-123456789012'"
             ),
             success_message=(
-                "Resource group 'prefect-aci-push-pool-rg' created successfully"
+                "Resource group 'syntask-aci-push-pool-rg' created successfully"
             ),
             failure_message=(
-                "Failed to create resource group 'prefect-aci-push-pool-rg' in"
+                "Failed to create resource group 'syntask-aci-push-pool-rg' in"
                 " subscription 'subscription_1'"
             ),
             ignore_if_exists=True,
         ),
         # _create_app_registration
-        call("az ad app list --display-name prefect-aci-push-pool-app --output json"),
+        call("az ad app list --display-name syntask-aci-push-pool-app --output json"),
         call(
-            "az ad app create --display-name prefect-aci-push-pool-app --output json",
+            "az ad app create --display-name syntask-aci-push-pool-app --output json",
             success_message=(
-                "App registration 'prefect-aci-push-pool-app' created successfully"
+                "App registration 'syntask-aci-push-pool-app' created successfully"
             ),
             failure_message=(
                 "Failed to create app registration with name"
-                " 'prefect-aci-push-pool-app'"
+                " 'syntask-aci-push-pool-app'"
             ),
             ignore_if_exists=True,
         ),
@@ -1733,7 +1733,7 @@ async def test_aci_provision_existing_credentials_block(
             (
                 "az role assignment list --assignee"
                 " abf1b3a0-1b1b-4c1c-9c9c-1c1c1c1c1c1c --role Contributor --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
@@ -1742,7 +1742,7 @@ async def test_aci_provision_existing_credentials_block(
             (
                 "az role assignment create --role Contributor --assignee-object-id"
                 " abf1b3a0-1b1b-4c1c-9c9c-1c1c1c1c1c1c --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012"
             ),
             success_message=(
@@ -1758,15 +1758,15 @@ async def test_aci_provision_existing_credentials_block(
         # _get_or_create_registry
         call(
             (
-                "az acr list --query \"[?starts_with(name, 'prefect')]\" --subscription"
+                "az acr list --query \"[?starts_with(name, 'syntask')]\" --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az acr create --name prefectacipushpoolregistry --resource-group"
-                " prefect-aci-push-pool-rg --subscription"
+                "az acr create --name syntaskacipushpoolregistry --resource-group"
+                " syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --location westus --sku Basic"
             ),
             success_message="Registry created",
@@ -1776,33 +1776,33 @@ async def test_aci_provision_existing_credentials_block(
         # _log_into_registry
         call(
             (
-                "az acr login --name prefectacipushpoolregistry.azurecr.io"
+                "az acr login --name syntaskacipushpoolregistry.azurecr.io"
                 " --subscription 12345678-1234-1234-1234-123456789012"
             ),
             success_message=(
-                "Logged into registry prefectacipushpoolregistry.azurecr.io"
+                "Logged into registry syntaskacipushpoolregistry.azurecr.io"
             ),
             failure_message=(
-                "Failed to log into registry prefectacipushpoolregistry.azurecr.io"
+                "Failed to log into registry syntaskacipushpoolregistry.azurecr.io"
             ),
         ),
         # _get_or_create_identity
         call(
             (
-                "az identity list --query \"[?name=='prefect-acr-identity']\""
-                " --resource-group prefect-aci-push-pool-rg --subscription"
+                "az identity list --query \"[?name=='syntask-acr-identity']\""
+                " --resource-group syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az identity create --name prefect-acr-identity --resource-group"
-                " prefect-aci-push-pool-rg --subscription"
+                "az identity create --name syntask-acr-identity --resource-group"
+                " syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
-            success_message="Identity 'prefect-acr-identity' created",
-            failure_message="Failed to create identity 'prefect-acr-identity'",
+            success_message="Identity 'syntask-acr-identity' created",
+            failure_message="Failed to create identity 'syntask-acr-identity'",
             return_json=True,
         ),
         # _assign_acr_pull_role
@@ -1811,7 +1811,7 @@ async def test_aci_provision_existing_credentials_block(
                 "az role assignment create --assignee-object-id"
                 " 12345678-1234-1234-1234-123456789012 --assignee-principal-type"
                 " ServicePrincipal --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/prefectacipushpoolregistry"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/syntaskacipushpoolregistry"
                 " --role AcrPull --subscription 12345678-1234-1234-1234-123456789012"
             ),
             ignore_if_exists=True,
@@ -1834,7 +1834,7 @@ async def test_aci_provision_existing_credentials_block(
             "Failed to generate secret for app registration with client ID"
             " '12345678-1234-1234-1234-123456789012'. If you have already generated 2"
             " secrets for this app registration, please delete one from the"
-            " `prefect-aci-push-pool-app` resource and try again."
+            " `syntask-aci-push-pool-app` resource and try again."
         ),
         ignore_if_exists=True,
         return_json=True,
@@ -1843,30 +1843,30 @@ async def test_aci_provision_existing_credentials_block(
         unexpected_call not in provisioner.azure_cli.run_command.mock_calls
     ), "Unexpected call made: {call}"
 
-    new_base_job_template["variables"]["properties"]["subscription_id"][
-        "default"
-    ] = "12345678-1234-1234-1234-123456789012"
+    new_base_job_template["variables"]["properties"]["subscription_id"]["default"] = (
+        "12345678-1234-1234-1234-123456789012"
+    )
 
     new_base_job_template["variables"]["properties"]["resource_group_name"][
         "default"
-    ] = "prefect-aci-push-pool-rg"
+    ] = "syntask-aci-push-pool-rg"
 
     new_base_job_template["variables"]["properties"]["aci_credentials"]["default"][
         "block_document_id"
     ] = str(existing_credentials_block)
 
     new_base_job_template["variables"]["properties"]["image_registry"]["default"] = {
-        "registry_url": "prefectacipushpoolregistry.azurecr.io",
-        "identity": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity",
+        "registry_url": "syntaskacipushpoolregistry.azurecr.io",
+        "identity": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity",
     }
 
     new_base_job_template["variables"]["properties"]["identities"]["default"] = [
-        "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity"
+        "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity"
     ]
 
 
 async def test_aci_provision_interactive_default_provisioning(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     monkeypatch,
     default_base_job_template,
     provisioner: ContainerInstancePushProvisioner,
@@ -1884,20 +1884,20 @@ async def test_aci_provision_interactive_default_provisioning(
     )
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.container_instance.prompt_select_from_table",
+        "syntask.infrastructure.provisioners.container_instance.prompt_select_from_table",
         mock_prompt_select_from_table,
     )
 
     mock_confirm = MagicMock(return_value=True)
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.container_instance.Confirm.ask",
+        "syntask.infrastructure.provisioners.container_instance.Confirm.ask",
         mock_confirm,
     )
     monkeypatch.setattr(
         provisioner,
         "_generate_acr_name",
-        lambda *args, **kwargs: "prefectacipushpoolregistry",
+        lambda *args, **kwargs: "syntaskacipushpoolregistry",
     )
     subscription_list = [
         {
@@ -1912,8 +1912,8 @@ async def test_aci_provision_interactive_default_provisioning(
 
     app_registration = {
         "appId": "12345678-1234-1234-1234-123456789012",
-        "displayName": "prefect-aci-push-pool-app",
-        "identifierUris": ["https://prefect-aci-push-pool-app"],
+        "displayName": "syntask-aci-push-pool-app",
+        "identifierUris": ["https://syntask-aci-push-pool-app"],
     }
 
     client_secret = {
@@ -1929,7 +1929,7 @@ async def test_aci_provision_interactive_default_provisioning(
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -1939,12 +1939,12 @@ async def test_aci_provision_interactive_default_provisioning(
     }
 
     new_registry = {
-        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/prefectacipushpoolregistry",
-        "loginServer": "prefectacipushpoolregistry.azurecr.io",
+        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/syntaskacipushpoolregistry",
+        "loginServer": "syntaskacipushpoolregistry.azurecr.io",
     }
 
     new_identity = {
-        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity",
+        "id": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity",
         "principalId": "12345678-1234-1234-1234-123456789012",
     }
 
@@ -1976,7 +1976,7 @@ async def test_aci_provision_interactive_default_provisioning(
     new_base_job_template = await provisioner.provision(
         work_pool_name="test-work-pool",
         base_job_template=default_base_job_template,
-        client=prefect_client,
+        client=syntask_client,
     )
 
     assert new_base_job_template
@@ -2000,35 +2000,35 @@ async def test_aci_provision_interactive_default_provisioning(
         # _create_resource_group
         call(
             (
-                "az group exists --name prefect-aci-push-pool-rg --subscription"
+                "az group exists --name syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012"
             ),
             return_json=True,
         ),
         call(
             (
-                "az group create --name 'prefect-aci-push-pool-rg' --location 'westus'"
+                "az group create --name 'syntask-aci-push-pool-rg' --location 'westus'"
                 " --subscription '12345678-1234-1234-1234-123456789012'"
             ),
             success_message=(
-                "Resource group 'prefect-aci-push-pool-rg' created successfully"
+                "Resource group 'syntask-aci-push-pool-rg' created successfully"
             ),
             failure_message=(
-                "Failed to create resource group 'prefect-aci-push-pool-rg' in"
+                "Failed to create resource group 'syntask-aci-push-pool-rg' in"
                 " subscription 'subscription_1'"
             ),
             ignore_if_exists=True,
         ),
         # _create_app_registration
-        call("az ad app list --display-name prefect-aci-push-pool-app --output json"),
+        call("az ad app list --display-name syntask-aci-push-pool-app --output json"),
         call(
-            "az ad app create --display-name prefect-aci-push-pool-app --output json",
+            "az ad app create --display-name syntask-aci-push-pool-app --output json",
             success_message=(
-                "App registration 'prefect-aci-push-pool-app' created successfully"
+                "App registration 'syntask-aci-push-pool-app' created successfully"
             ),
             failure_message=(
                 "Failed to create app registration with name"
-                " 'prefect-aci-push-pool-app'"
+                " 'syntask-aci-push-pool-app'"
             ),
             ignore_if_exists=True,
         ),
@@ -2046,7 +2046,7 @@ async def test_aci_provision_interactive_default_provisioning(
                 "Failed to generate secret for app registration with client ID"
                 " '12345678-1234-1234-1234-123456789012'. If you have already generated"
                 " 2 secrets for this app registration, please delete one from the"
-                " `prefect-aci-push-pool-app` resource and try again."
+                " `syntask-aci-push-pool-app` resource and try again."
             ),
             ignore_if_exists=True,
             return_json=True,
@@ -2086,7 +2086,7 @@ async def test_aci_provision_interactive_default_provisioning(
             (
                 "az role assignment list --assignee"
                 " abf1b3a0-1b1b-4c1c-9c9c-1c1c1c1c1c1c --role Contributor --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
@@ -2095,7 +2095,7 @@ async def test_aci_provision_interactive_default_provisioning(
             (
                 "az role assignment create --role Contributor --assignee-object-id"
                 " abf1b3a0-1b1b-4c1c-9c9c-1c1c1c1c1c1c --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg"
                 " --subscription 12345678-1234-1234-1234-123456789012"
             ),
             success_message=(
@@ -2111,15 +2111,15 @@ async def test_aci_provision_interactive_default_provisioning(
         # _get_or_create_registry
         call(
             (
-                "az acr list --query \"[?starts_with(name, 'prefect')]\" --subscription"
+                "az acr list --query \"[?starts_with(name, 'syntask')]\" --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az acr create --name prefectacipushpoolregistry --resource-group"
-                " prefect-aci-push-pool-rg --subscription"
+                "az acr create --name syntaskacipushpoolregistry --resource-group"
+                " syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --location westus --sku Basic"
             ),
             success_message="Registry created",
@@ -2129,33 +2129,33 @@ async def test_aci_provision_interactive_default_provisioning(
         # _log_into_registry
         call(
             (
-                "az acr login --name prefectacipushpoolregistry.azurecr.io"
+                "az acr login --name syntaskacipushpoolregistry.azurecr.io"
                 " --subscription 12345678-1234-1234-1234-123456789012"
             ),
             success_message=(
-                "Logged into registry prefectacipushpoolregistry.azurecr.io"
+                "Logged into registry syntaskacipushpoolregistry.azurecr.io"
             ),
             failure_message=(
-                "Failed to log into registry prefectacipushpoolregistry.azurecr.io"
+                "Failed to log into registry syntaskacipushpoolregistry.azurecr.io"
             ),
         ),
         # _get_or_create_identity
         call(
             (
-                "az identity list --query \"[?name=='prefect-acr-identity']\""
-                " --resource-group prefect-aci-push-pool-rg --subscription"
+                "az identity list --query \"[?name=='syntask-acr-identity']\""
+                " --resource-group syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
             return_json=True,
         ),
         call(
             (
-                "az identity create --name prefect-acr-identity --resource-group"
-                " prefect-aci-push-pool-rg --subscription"
+                "az identity create --name syntask-acr-identity --resource-group"
+                " syntask-aci-push-pool-rg --subscription"
                 " 12345678-1234-1234-1234-123456789012 --output json"
             ),
-            success_message="Identity 'prefect-acr-identity' created",
-            failure_message="Failed to create identity 'prefect-acr-identity'",
+            success_message="Identity 'syntask-acr-identity' created",
+            failure_message="Failed to create identity 'syntask-acr-identity'",
             return_json=True,
         ),
         # _assign_acr_pull_role
@@ -2164,7 +2164,7 @@ async def test_aci_provision_interactive_default_provisioning(
                 "az role assignment create --assignee-object-id"
                 " 12345678-1234-1234-1234-123456789012 --assignee-principal-type"
                 " ServicePrincipal --scope"
-                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/prefectacipushpoolregistry"
+                " /subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ContainerRegistry/registries/syntaskacipushpoolregistry"
                 " --role AcrPull --subscription 12345678-1234-1234-1234-123456789012"
             ),
             ignore_if_exists=True,
@@ -2179,7 +2179,7 @@ async def test_aci_provision_interactive_default_provisioning(
 
     assert new_block_doc_id
 
-    block_doc = await prefect_client.read_block_document(new_block_doc_id)
+    block_doc = await syntask_client.read_block_document(new_block_doc_id)
 
     assert block_doc.name == "test-work-pool-push-pool-credentials"
 
@@ -2189,26 +2189,26 @@ async def test_aci_provision_interactive_default_provisioning(
         "client_secret": "<MY_SECRET>",
     }
 
-    new_base_job_template["variables"]["properties"]["subscription_id"][
-        "default"
-    ] = "12345678-1234-1234-1234-123456789012"
+    new_base_job_template["variables"]["properties"]["subscription_id"]["default"] = (
+        "12345678-1234-1234-1234-123456789012"
+    )
 
     new_base_job_template["variables"]["properties"]["resource_group_name"][
         "default"
-    ] = "prefect-aci-push-pool-rg"
+    ] = "syntask-aci-push-pool-rg"
 
     new_base_job_template["variables"]["properties"]["image_registry"]["default"] = {
-        "registry_url": "prefectacipushpoolregistry.azurecr.io",
-        "identity": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity",
+        "registry_url": "syntaskacipushpoolregistry.azurecr.io",
+        "identity": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity",
     }
 
     new_base_job_template["variables"]["properties"]["identities"]["default"] = [
-        "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/prefect-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/prefect-aci-push-pool-identity"
+        "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/syntask-aci-push-pool-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/syntask-aci-push-pool-identity"
     ]
 
 
 async def test_aci_provision_interactive_custom_resource_names(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     monkeypatch,
     default_base_job_template,
     provisioner: ContainerInstancePushProvisioner,
@@ -2228,7 +2228,7 @@ async def test_aci_provision_interactive_custom_resource_names(
     mock_prompt = MagicMock(side_effect=prompt_mocks)
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.container_instance.prompt", mock_prompt
+        "syntask.infrastructure.provisioners.container_instance.prompt", mock_prompt
     )
 
     mock_prompt_select_from_table = MagicMock(
@@ -2239,14 +2239,14 @@ async def test_aci_provision_interactive_custom_resource_names(
     )
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.container_instance.prompt_select_from_table",
+        "syntask.infrastructure.provisioners.container_instance.prompt_select_from_table",
         mock_prompt_select_from_table,
     )
 
     mock_confirm = MagicMock(return_value=True)
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.container_instance.Confirm.ask",
+        "syntask.infrastructure.provisioners.container_instance.Confirm.ask",
         mock_confirm,
     )
 
@@ -2263,8 +2263,8 @@ async def test_aci_provision_interactive_custom_resource_names(
 
     app_registration = {
         "appId": "12345678-1234-1234-1234-123456789012",
-        "displayName": "prefect-aci-push-pool-app",
-        "identifierUris": ["https://prefect-aci-push-pool-app"],
+        "displayName": "syntask-aci-push-pool-app",
+        "identifierUris": ["https://syntask-aci-push-pool-app"],
     }
 
     client_secret = {
@@ -2280,7 +2280,7 @@ async def test_aci_provision_interactive_custom_resource_names(
             "addIns": [],
             "alternativeNames": [],
             "appDescription": None,
-            "appDisplayName": "prefect-aci-push-pool-app",
+            "appDisplayName": "syntask-aci-push-pool-app",
             "appId": "bcbeb824-fc3a-41f7-afc0-fc00297c1355",
         }
     ]
@@ -2333,7 +2333,7 @@ async def test_aci_provision_interactive_custom_resource_names(
     new_base_job_template = await provisioner.provision(
         work_pool_name="test-work-pool",
         base_job_template=default_base_job_template,
-        client=prefect_client,
+        client=syntask_client,
     )
 
     assert new_base_job_template
@@ -2527,7 +2527,7 @@ async def test_aci_provision_interactive_custom_resource_names(
 
     assert new_block_doc_id
 
-    block_doc = await prefect_client.read_block_document(new_block_doc_id)
+    block_doc = await syntask_client.read_block_document(new_block_doc_id)
 
     assert block_doc.name == "custom-credentials-name"
 
@@ -2537,9 +2537,9 @@ async def test_aci_provision_interactive_custom_resource_names(
         "client_secret": "<MY_SECRET>",
     }
 
-    new_base_job_template["variables"]["properties"]["subscription_id"][
-        "default"
-    ] = "12345678-1234-1234-1234-123456789012"
+    new_base_job_template["variables"]["properties"]["subscription_id"]["default"] = (
+        "12345678-1234-1234-1234-123456789012"
+    )
 
     new_base_job_template["variables"]["properties"]["resource_group_name"][
         "default"
@@ -2556,7 +2556,7 @@ async def test_aci_provision_interactive_custom_resource_names(
 
 
 async def test_aci_provision_interactive_reject_provisioning(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     monkeypatch,
     default_base_job_template,
     provisioner: ContainerInstancePushProvisioner,
@@ -2571,12 +2571,12 @@ async def test_aci_provision_interactive_reject_provisioning(
     mock_confirm = MagicMock(return_value=False)
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.container_instance.prompt_select_from_table",
+        "syntask.infrastructure.provisioners.container_instance.prompt_select_from_table",
         mock_prompt_select_from_table,
     )
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.container_instance.Confirm.ask",
+        "syntask.infrastructure.provisioners.container_instance.Confirm.ask",
         mock_confirm,
     )
 
@@ -2592,7 +2592,7 @@ async def test_aci_provision_interactive_reject_provisioning(
     unchanged_base_job_template = await provisioner.provision(
         work_pool_name="test-work-pool",
         base_job_template=default_base_job_template,
-        client=prefect_client,
+        client=syntask_client,
     )
 
     assert unchanged_base_job_template == default_base_job_template

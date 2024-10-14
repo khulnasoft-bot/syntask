@@ -8,16 +8,16 @@ The simplest way to create a [deployment](/3.0/deploy/infrastructure-examples/do
 ## Serve a flow
 
 The serve method creates a deployment for the flow and starts a long-running process 
-that monitors for work from the Prefect server.
+that monitors for work from the Syntask server.
 When work is found, it is executed within its own isolated subprocess.
 
 ```python hello_world.py
-from prefect import flow
+from syntask import flow
 
 
 @flow(log_prints=True)
 def hello_world(name: str = "world", goodbye: bool = False):
-    print(f"Hello {name} from Prefect! 🤗")
+    print(f"Hello {name} from Syntask! 🤗")
 
     if goodbye:
         print(f"Goodbye {name}!")
@@ -103,7 +103,7 @@ Serve multiple flows with the same process using the `serve` utility along with 
 
 ```python serve_two_flows.py
 import time
-from prefect import flow, serve
+from syntask import flow, serve
 
 
 @flow
@@ -142,8 +142,8 @@ A few optional steps for exploration include:
 <Tip>
 **Hybrid execution option**
 
-Prefect's deployment interface allows you to choose a hybrid execution model.
-Whether you use Prefect Cloud or self-host Prefect server, you can run workflows in the 
+Syntask's deployment interface allows you to choose a hybrid execution model.
+Whether you use Syntask Cloud or self-host Syntask server, you can run workflows in the 
 environments best suited to their execution.
 This model enables efficient use of your infrastructure resources while maintaining the privacy 
 of your code and data.
@@ -159,11 +159,11 @@ You can retrieve flows from remote storage with the `flow.from_source` method.
 `flow.from_source` can accept a git repository URL and an entrypoint pointing to the flow to load from the repository:
 
 ```python load_from_url.py
-from prefect import flow
+from syntask import flow
 
 
 my_flow = flow.from_source(
-    source="https://github.com/synopkg/synopkg.git",
+    source="https://github.com/synopkg/syntask.git",
     entrypoint="flows/hello_world.py:hello"
 )
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 ```
 
 ```bash
-16:40:33.818 | INFO    | prefect.engine - Created flow run 'muscular-perch' for flow 'hello'
+16:40:33.818 | INFO    | syntask.engine - Created flow run 'muscular-perch' for flow 'hello'
 16:40:34.048 | INFO    | Flow run 'muscular-perch' - Hello world!
 16:40:34.706 | INFO    | Flow run 'muscular-perch' - Finished in state Completed()
 ```
@@ -188,7 +188,7 @@ For more ways to store and access flow code, see the [Retrieve code from storage
 You can serve a flow loaded from remote storage with the same [`serve`](#serve-a-flow) method as a local flow:
 
 ```python serve_loaded_flow.py
-from prefect import flow
+from syntask import flow
 
 
 if __name__ == "__main__":

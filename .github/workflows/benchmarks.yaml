@@ -8,7 +8,7 @@ on:
     paths:
       - .github/workflows/benchmarks.yaml
       - .github/workflows/python-tests.yaml
-      - "src/prefect/**/*.py"
+      - "src/syntask/**/*.py"
       - requirements.txt
       - requirements-dev.txt
       - setup.cfg
@@ -79,11 +79,11 @@ jobs:
 
       - name: Start server
         run: |
-          PREFECT_HOME=$(pwd) prefect server start&
-          PREFECT_API_URL="http://127.0.0.1:4200/api" ./scripts/wait-for-server.py
+          SYNTASK_HOME=$(pwd) syntask server start&
+          SYNTASK_API_URL="http://127.0.0.1:4200/api" ./scripts/wait-for-server.py
 
           # TODO: Replace `wait-for-server` with dedicated command
-          #       https://github.com/synopkg/synopkg/issues/6990
+          #       https://github.com/synopkg/syntask/issues/6990
 
       - name: Run benchmarks
         env:
@@ -105,7 +105,7 @@ jobs:
           # characters with an underscore
           sanitized_uniquename="${uniquename//[^a-zA-Z0-9_\-]/_}"
 
-          PREFECT_API_URL="http://127.0.0.1:4200/api" \
+          SYNTASK_API_URL="http://127.0.0.1:4200/api" \
           python -m benches \
           --ignore=benches/bench_import.py \
           --timeout=180 \

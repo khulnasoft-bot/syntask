@@ -1,6 +1,6 @@
 """
 Functions for interacting with log ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 from typing import Generator, List, Optional, Sequence, Tuple
@@ -8,13 +8,13 @@ from typing import Generator, List, Optional, Sequence, Tuple
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.schemas as schemas
-from prefect.logging import get_logger
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas.actions import LogCreate
-from prefect.utilities.collections import batched_iterable
+import syntask.server.schemas as schemas
+from syntask.logging import get_logger
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas.actions import LogCreate
+from syntask.utilities.collections import batched_iterable
 
 # We have a limit of 32,767 parameters at a time for a single query...
 MAXIMUM_QUERY_PARAMETERS = 32_767
@@ -37,7 +37,7 @@ def split_logs_into_batches(
 
 @db_injector
 async def create_logs(
-    db: PrefectDBInterface, session: AsyncSession, logs: List[schemas.core.Log]
+    db: SyntaskDBInterface, session: AsyncSession, logs: List[schemas.core.Log]
 ) -> None:
     """
     Creates new logs

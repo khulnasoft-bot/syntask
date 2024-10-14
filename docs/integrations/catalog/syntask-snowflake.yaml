@@ -1,0 +1,6 @@
+integrationName: syntask-snowflake
+author: Syntask
+authorUrl: https://syntask.khulnasoft.com
+documentation: syntask-snowflake
+iconUrl: /images/integrations/snowflake.png
+tag: Snowflake

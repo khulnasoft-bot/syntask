@@ -1,5 +1,5 @@
 """
-Module containing the base workflow class and decorator - for most use cases, using the [`@flow` decorator][prefect.flows.flow] is preferred.
+Module containing the base workflow class and decorator - for most use cases, using the [`@flow` decorator][syntask.flows.flow] is preferred.
 """
 
 # This file requires type-checking with pyright because mypy does not yet support PEP612
@@ -47,16 +47,16 @@ from pydantic.v1.errors import ConfigError  # TODO
 from rich.console import Console
 from typing_extensions import Literal, ParamSpec, Self
 
-from prefect._internal.concurrency.api import create_call, from_async
-from prefect.blocks.core import Block
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.objects import ConcurrencyLimitConfig, FlowRun
-from prefect.client.schemas.objects import Flow as FlowSchema
-from prefect.client.utilities import client_injector
-from prefect.docker.docker_image import DockerImage
-from prefect.events import DeploymentTriggerTypes, TriggerTypes
-from prefect.exceptions import (
+from syntask._internal.concurrency.api import create_call, from_async
+from syntask.blocks.core import Block
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.objects import ConcurrencyLimitConfig, FlowRun
+from syntask.client.schemas.objects import Flow as FlowSchema
+from syntask.client.utilities import client_injector
+from syntask.docker.docker_image import DockerImage
+from syntask.events import DeploymentTriggerTypes, TriggerTypes
+from syntask.exceptions import (
     InvalidNameError,
     MissingFlowError,
     ObjectNotFound,
@@ -65,37 +65,37 @@ from prefect.exceptions import (
     TerminationSignal,
     UnspecifiedFlowError,
 )
-from prefect.filesystems import LocalFileSystem, ReadableDeploymentStorage
-from prefect.futures import PrefectFuture
-from prefect.logging import get_logger
-from prefect.logging.loggers import flow_run_logger
-from prefect.results import ResultSerializer, ResultStorage
-from prefect.settings import (
-    PREFECT_DEFAULT_WORK_POOL_NAME,
-    PREFECT_FLOW_DEFAULT_RETRIES,
-    PREFECT_FLOW_DEFAULT_RETRY_DELAY_SECONDS,
-    PREFECT_UI_URL,
-    PREFECT_UNIT_TEST_MODE,
+from syntask.filesystems import LocalFileSystem, ReadableDeploymentStorage
+from syntask.futures import SyntaskFuture
+from syntask.logging import get_logger
+from syntask.logging.loggers import flow_run_logger
+from syntask.results import ResultSerializer, ResultStorage
+from syntask.settings import (
+    SYNTASK_DEFAULT_WORK_POOL_NAME,
+    SYNTASK_FLOW_DEFAULT_RETRIES,
+    SYNTASK_FLOW_DEFAULT_RETRY_DELAY_SECONDS,
+    SYNTASK_UI_URL,
+    SYNTASK_UNIT_TEST_MODE,
 )
-from prefect.states import State
-from prefect.task_runners import TaskRunner, ThreadPoolTaskRunner
-from prefect.types import BANNED_CHARACTERS, WITHOUT_BANNED_CHARACTERS
-from prefect.types.entrypoint import EntrypointType
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.asyncutils import (
+from syntask.states import State
+from syntask.task_runners import TaskRunner, ThreadPoolTaskRunner
+from syntask.types import BANNED_CHARACTERS, WITHOUT_BANNED_CHARACTERS
+from syntask.types.entrypoint import EntrypointType
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.asyncutils import (
     run_sync_in_worker_thread,
     sync_compatible,
 )
-from prefect.utilities.callables import (
+from syntask.utilities.callables import (
     get_call_parameters,
     parameter_schema,
     parameters_to_args_kwargs,
     raise_for_reserved_arguments,
 )
-from prefect.utilities.collections import listrepr, visit_collection
-from prefect.utilities.filesystem import relative_path_to_current_platform
-from prefect.utilities.hashing import file_hash
-from prefect.utilities.importtools import import_object, safe_load_namespace
+from syntask.utilities.collections import listrepr, visit_collection
+from syntask.utilities.filesystem import relative_path_to_current_platform
+from syntask.utilities.hashing import file_hash
+from syntask.utilities.importtools import import_object, safe_load_namespace
 
 from ._internal.pydantic.v2_schema import is_v2_type
 from ._internal.pydantic.v2_validated_func import V2ValidatedFunction
@@ -111,21 +111,21 @@ F = TypeVar("F", bound="Flow")  # The type of the flow
 logger = get_logger("flows")
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
-    from prefect.client.types.flexible_schedule_list import FlexibleScheduleList
-    from prefect.deployments.runner import RunnerDeployment
-    from prefect.flows import FlowRun
-    from prefect.runner.storage import RunnerStorage
+    from syntask.client.orchestration import SyntaskClient
+    from syntask.client.types.flexible_schedule_list import FlexibleScheduleList
+    from syntask.deployments.runner import RunnerDeployment
+    from syntask.flows import FlowRun
+    from syntask.runner.storage import RunnerStorage
 
 
 class Flow(Generic[P, R]):
     """
-    A Prefect workflow definition.
+    A Syntask workflow definition.
 
     !!! note
-        We recommend using the [`@flow` decorator][prefect.flows.flow] for most use-cases.
+        We recommend using the [`@flow` decorator][syntask.flows.flow] for most use-cases.
 
-    Wraps a function with an entrypoint to the Prefect engine. To preserve the input
+    Wraps a function with an entrypoint to the Syntask engine. To preserve the input
     and output types, we use the generic type variables `P` and `R` for "Parameters" and
     "Returns" respectively.
 
@@ -157,7 +157,7 @@ class Flow(Generic[P, R]):
             flow after failure. This is only applicable if `retries` is nonzero.
         persist_result: An optional toggle indicating whether the result of this flow
             should be persisted to result storage. Defaults to `None`, which indicates
-            that Prefect should choose whether the result should be persisted depending on
+            that Syntask should choose whether the result should be persisted depending on
             the features being used.
         result_storage: An optional block to use to persist the result of this flow.
             This value will be used as the default for any tasks in this flow.
@@ -165,7 +165,7 @@ class Flow(Generic[P, R]):
             a subflow, at which point the default will be loaded from the parent flow.
         result_serializer: An optional serializer to use to serialize the result of this
             flow for persistence. This value will be used as the default for any tasks
-            in this flow. If not provided, the value of `PREFECT_RESULTS_DEFAULT_SERIALIZER`
+            in this flow. If not provided, the value of `SYNTASK_RESULTS_DEFAULT_SERIALIZER`
             will be used unless called as a subflow, at which point the default will be
             loaded from the parent flow.
         on_failure: An optional list of callables to run when the flow enters a failed state.
@@ -260,7 +260,7 @@ class Flow(Generic[P, R]):
 
         self.name = name or fn.__name__.replace("_", "-").replace(
             "<lambda>",
-            "unknown-lambda",  # prefect API will not accept "<" or ">" in flow names
+            "unknown-lambda",  # syntask API will not accept "<" or ">" in flow names
         )
         _raise_on_name_with_banned_characters(self.name)
 
@@ -313,13 +313,13 @@ class Flow(Generic[P, R]):
         # TODO: We can instantiate a `FlowRunPolicy` and add Pydantic bound checks to
         #       validate that the user passes positive numbers here
         self.retries = (
-            retries if retries is not None else PREFECT_FLOW_DEFAULT_RETRIES.value()
+            retries if retries is not None else SYNTASK_FLOW_DEFAULT_RETRIES.value()
         )
 
         self.retry_delay_seconds = (
             retry_delay_seconds
             if retry_delay_seconds is not None
-            else PREFECT_FLOW_DEFAULT_RETRY_DELAY_SECONDS.value()
+            else SYNTASK_FLOW_DEFAULT_RETRY_DELAY_SECONDS.value()
         )
 
         self.parameters = parameter_schema(self.fn)
@@ -364,7 +364,7 @@ class Flow(Generic[P, R]):
         self._entrypoint: Optional[str] = None
 
         module = fn.__module__
-        if module in ("__main__", "__prefect_loader__"):
+        if module in ("__main__", "__syntask_loader__"):
             module_name = inspect.getfile(fn)
             module = module_name if module_name != "__main__" else module
 
@@ -372,7 +372,7 @@ class Flow(Generic[P, R]):
 
     @property
     def ismethod(self) -> bool:
-        return hasattr(self.fn, "__prefect_self__")
+        return hasattr(self.fn, "__syntask_self__")
 
     def __get__(self, instance, owner):
         """
@@ -385,11 +385,11 @@ class Flow(Generic[P, R]):
         if instance is None:
             return self
 
-        # if the flow is being accessed on an instance, bind the instance to the __prefect_self__ attribute
+        # if the flow is being accessed on an instance, bind the instance to the __syntask_self__ attribute
         # of the flow's function. This will allow it to be automatically added to the flow's parameters
         else:
             bound_flow = copy(self)
-            bound_flow.fn.__prefect_self__ = instance
+            bound_flow.fn.__syntask_self__ = instance
             return bound_flow
 
     def with_options(
@@ -464,7 +464,7 @@ class Flow(Generic[P, R]):
             Create a new flow from an existing flow, update the task runner, and call
             it without an intermediate variable:
 
-            >>> from prefect.task_runners import ThreadPoolTaskRunner
+            >>> from syntask.task_runners import ThreadPoolTaskRunner
             >>>
             >>> @flow
             >>> def my_flow(x, y):
@@ -609,10 +609,10 @@ class Flow(Generic[P, R]):
         serialized_parameters = {}
         for key, value in parameters.items():
             # do not serialize the bound self object
-            if self.ismethod and value is self.fn.__prefect_self__:
+            if self.ismethod and value is self.fn.__syntask_self__:
                 continue
-            if isinstance(value, (PrefectFuture, State)):
-                # Don't call jsonable_encoder() on a PrefectFuture or State to
+            if isinstance(value, (SyntaskFuture, State)):
+                # Don't call jsonable_encoder() on a SyntaskFuture or State to
                 # avoid triggering a __getitem__ call
                 serialized_parameters[key] = f"<{type(value).__name__}>"
                 continue
@@ -675,7 +675,7 @@ class Flow(Generic[P, R]):
             tags: A list of tags to associate with the created deployment for organizational
                 purposes.
             version: A version for the created deployment. Defaults to the flow's version.
-            enforce_parameter_schema: Whether or not the Prefect API should enforce the
+            enforce_parameter_schema: Whether or not the Syntask API should enforce the
                 parameter schema for the created deployment.
             work_pool_name: The name of the work pool to use for this deployment.
             work_queue_name: The name of the work queue to use for this deployment's scheduled runs.
@@ -689,7 +689,7 @@ class Flow(Generic[P, R]):
             Prepare two deployments and serve them:
 
             ```python
-            from prefect import flow, serve
+            from syntask import flow, serve
 
             @flow
             def my_flow(name):
@@ -705,7 +705,7 @@ class Flow(Generic[P, R]):
                 serve(hello_deploy, bye_deploy)
             ```
         """
-        from prefect.deployments.runner import RunnerDeployment
+        from syntask.deployments.runner import RunnerDeployment
 
         if not name.endswith(".py"):
             _raise_on_name_with_banned_characters(name)
@@ -836,7 +836,7 @@ class Flow(Generic[P, R]):
             tags: A list of tags to associate with the created deployment for organizational
                 purposes.
             version: A version for the created deployment. Defaults to the flow's version.
-            enforce_parameter_schema: Whether or not the Prefect API should enforce the
+            enforce_parameter_schema: Whether or not the Syntask API should enforce the
                 parameter schema for the created deployment.
             pause_on_shutdown: If True, provided schedule will be paused when the serve function is stopped.
                 If False, the schedules will continue running.
@@ -850,7 +850,7 @@ class Flow(Generic[P, R]):
             Serve a flow:
 
             ```python
-            from prefect import flow
+            from syntask import flow
 
             @flow
             def my_flow(name):
@@ -863,7 +863,7 @@ class Flow(Generic[P, R]):
             Serve a flow and run it every hour:
 
             ```python
-            from prefect import flow
+            from syntask import flow
 
             @flow
             def my_flow(name):
@@ -873,7 +873,7 @@ class Flow(Generic[P, R]):
                 my_flow.serve("example-deployment", interval=3600)
             ```
         """
-        from prefect.runner import Runner
+        from syntask.runner import Runner
 
         if not name:
             name = self.name
@@ -905,13 +905,13 @@ class Flow(Generic[P, R]):
             help_message = (
                 f"[green]Your flow {self.name!r} is being served and polling for"
                 " scheduled runs!\n[/]\nTo trigger a run for this flow, use the"
-                " following command:\n[blue]\n\t$ prefect deployment run"
+                " following command:\n[blue]\n\t$ syntask deployment run"
                 f" '{self.name}/{name}'\n[/]"
             )
-            if PREFECT_UI_URL:
+            if SYNTASK_UI_URL:
                 help_message += (
-                    "\nYou can also run your flow via the Prefect UI:"
-                    f" [blue]{PREFECT_UI_URL.value()}/deployments/deployment/{deployment_id}[/]\n"
+                    "\nYou can also run your flow via the Syntask UI:"
+                    f" [blue]{SYNTASK_UI_URL.value()}/deployments/deployment/{deployment_id}[/]\n"
                 )
 
             console = Console()
@@ -958,9 +958,9 @@ class Flow(Generic[P, R]):
 
 
             ```python
-            from prefect import flow
-            from prefect.runner.storage import GitRepository
-            from prefect.blocks.system import Secret
+            from syntask import flow
+            from syntask.runner.storage import GitRepository
+            from syntask.blocks.system import Secret
 
             my_flow = flow.from_source(
                 source="https://github.com/org/repo.git",
@@ -973,9 +973,9 @@ class Flow(Generic[P, R]):
             Load a flow from a private git repository using an access token stored in a `Secret` block:
 
             ```python
-            from prefect import flow
-            from prefect.runner.storage import GitRepository
-            from prefect.blocks.system import Secret
+            from syntask import flow
+            from syntask.runner.storage import GitRepository
+            from syntask.blocks.system import Secret
 
             my_flow = flow.from_source(
                 source=GitRepository(
@@ -994,7 +994,7 @@ class Flow(Generic[P, R]):
             # from_local_source.py
 
             from pathlib import Path
-            from prefect import flow
+            from syntask import flow
 
             @flow(log_prints=True)
             def my_flow(name: str = "world"):
@@ -1012,7 +1012,7 @@ class Flow(Generic[P, R]):
             ```
         """
 
-        from prefect.runner.storage import (
+        from syntask.runner.storage import (
             BlockStorageAdapter,
             LocalStorage,
             RunnerStorage,
@@ -1076,7 +1076,7 @@ class Flow(Generic[P, R]):
         Deploys a flow to run on dynamic infrastructure via a work pool.
 
         By default, calling this method will build a Docker image for the flow, push it to a registry,
-        and create a deployment via the Prefect API that will run the flow on the given schedule.
+        and create a deployment via the Syntask API that will run the flow on the given schedule.
 
         If you want to use an existing image, you can pass `build=False` to skip building and pushing
         an image.
@@ -1084,7 +1084,7 @@ class Flow(Generic[P, R]):
         Args:
             name: The name to give the created deployment.
             work_pool_name: The name of the work pool to use for this deployment. Defaults to
-                the value of `PREFECT_DEFAULT_WORK_POOL_NAME`.
+                the value of `SYNTASK_DEFAULT_WORK_POOL_NAME`.
             image: The name of the Docker image to build, including the registry and
                 repository. Pass a DockerImage instance to customize the Dockerfile used
                 and build arguments.
@@ -1115,7 +1115,7 @@ class Flow(Generic[P, R]):
             tags: A list of tags to associate with the created deployment for organizational
                 purposes.
             version: A version for the created deployment. Defaults to the flow's version.
-            enforce_parameter_schema: Whether or not the Prefect API should enforce the
+            enforce_parameter_schema: Whether or not the Syntask API should enforce the
                 parameter schema for the created deployment.
             entrypoint_type: Type of entrypoint to use for the deployment. When using a module path
                 entrypoint, ensure that the module will be importable in the execution environment.
@@ -1130,7 +1130,7 @@ class Flow(Generic[P, R]):
             Deploy a local flow to a work pool:
 
             ```python
-            from prefect import flow
+            from syntask import flow
 
             @flow
             def my_flow(name):
@@ -1147,7 +1147,7 @@ class Flow(Generic[P, R]):
             Deploy a remotely stored flow to a work pool:
 
             ```python
-            from prefect import flow
+            from syntask import flow
 
             if __name__ == "__main__":
                 flow.from_source(
@@ -1161,11 +1161,11 @@ class Flow(Generic[P, R]):
             ```
         """
         if not (
-            work_pool_name := work_pool_name or PREFECT_DEFAULT_WORK_POOL_NAME.value()
+            work_pool_name := work_pool_name or SYNTASK_DEFAULT_WORK_POOL_NAME.value()
         ):
             raise ValueError(
                 "No work pool name provided. Please provide a `work_pool_name` or set the"
-                " `PREFECT_DEFAULT_WORK_POOL_NAME` environment variable."
+                " `SYNTASK_DEFAULT_WORK_POOL_NAME` environment variable."
             )
 
         try:
@@ -1196,7 +1196,7 @@ class Flow(Generic[P, R]):
             entrypoint_type=entrypoint_type,
         )
 
-        from prefect.deployments.runner import deploy
+        from syntask.deployments.runner import deploy
 
         deployment_ids = await deploy(
             deployment,
@@ -1217,20 +1217,20 @@ class Flow(Generic[P, R]):
                     f" {work_pool_name!r} work pool:"
                 )
                 console.print(
-                    f"\n\t$ prefect worker start --pool {work_pool_name!r}",
+                    f"\n\t$ syntask worker start --pool {work_pool_name!r}",
                     style="blue",
                 )
             console.print(
                 "\nTo schedule a run for this deployment, use the following command:"
             )
             console.print(
-                f"\n\t$ prefect deployment run '{self.name}/{name}'\n",
+                f"\n\t$ syntask deployment run '{self.name}/{name}'\n",
                 style="blue",
             )
-            if PREFECT_UI_URL:
+            if SYNTASK_UI_URL:
                 message = (
-                    "\nYou can also run your flow via the Prefect UI:"
-                    f" [blue]{PREFECT_UI_URL.value()}/deployments/deployment/{deployment_ids[0]}[/]\n"
+                    "\nYou can also run your flow via the Syntask UI:"
+                    f" [blue]{SYNTASK_UI_URL.value()}/deployments/deployment/{deployment_ids[0]}[/]\n"
                 )
                 console.print(message, soft_wrap=True)
 
@@ -1245,16 +1245,14 @@ class Flow(Generic[P, R]):
     @overload
     def __call__(
         self: "Flow[P, Coroutine[Any, Any, T]]", *args: P.args, **kwargs: P.kwargs
-    ) -> Awaitable[T]:
-        ...
+    ) -> Awaitable[T]: ...
 
     @overload
     def __call__(
         self: "Flow[P, T]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> T:
-        ...
+    ) -> T: ...
 
     @overload
     def __call__(
@@ -1262,8 +1260,7 @@ class Flow(Generic[P, R]):
         *args: P.args,
         return_state: Literal[True],
         **kwargs: P.kwargs,
-    ) -> Awaitable[State[T]]:
-        ...
+    ) -> Awaitable[State[T]]: ...
 
     @overload
     def __call__(
@@ -1271,14 +1268,13 @@ class Flow(Generic[P, R]):
         *args: P.args,
         return_state: Literal[True],
         **kwargs: P.kwargs,
-    ) -> State[T]:
-        ...
+    ) -> State[T]: ...
 
     def __call__(
         self,
         *args: "P.args",
         return_state: bool = False,
-        wait_for: Optional[Iterable[PrefectFuture]] = None,
+        wait_for: Optional[Iterable[SyntaskFuture]] = None,
         **kwargs: "P.kwargs",
     ):
         """
@@ -1293,7 +1289,7 @@ class Flow(Generic[P, R]):
 
         Args:
             *args: Arguments to run the flow with.
-            return_state: Return a Prefect State containing the result of the
+            return_state: Return a Syntask State containing the result of the
                 flow run.
             wait_for: Upstream task futures to wait for before starting the flow if called as a subflow
             **kwargs: Keyword arguments to run the flow with.
@@ -1301,7 +1297,7 @@ class Flow(Generic[P, R]):
         Returns:
             If `return_state` is False, returns the result of the flow run.
             If `return_state` is True, returns the result of the flow run
-                wrapped in a Prefect State which provides error handling.
+                wrapped in a Syntask State which provides error handling.
 
         Examples:
 
@@ -1320,11 +1316,11 @@ class Flow(Generic[P, R]):
 
             Run a flow with additional tags
 
-            >>> from prefect import tags
+            >>> from syntask import tags
             >>> with tags("db", "blue"):
             >>>     my_flow("foo")
         """
-        from prefect.utilities.visualization import (
+        from syntask.utilities.visualization import (
             get_task_viz_tracker,
             track_viz_task,
         )
@@ -1340,7 +1336,7 @@ class Flow(Generic[P, R]):
             # we can add support for exploring subflows for tasks in the future.
             return track_viz_task(self.isasync, self.name, parameters)
 
-        from prefect.flow_engine import run_flow
+        from syntask.flow_engine import run_flow
 
         return run_flow(
             flow=self,
@@ -1360,7 +1356,7 @@ class Flow(Generic[P, R]):
             - GraphvizExecutableNotFoundError: If the `dot` executable isn't found.
             - FlowVisualizationError: If the flow can't be visualized for any other reason.
         """
-        from prefect.utilities.visualization import (
+        from syntask.utilities.visualization import (
             FlowVisualizationError,
             GraphvizExecutableNotFoundError,
             GraphvizImportError,
@@ -1370,7 +1366,7 @@ class Flow(Generic[P, R]):
             visualize_task_dependencies,
         )
 
-        if not PREFECT_UNIT_TEST_MODE:
+        if not SYNTASK_UNIT_TEST_MODE:
             warnings.warn(
                 "`flow.visualize()` will execute code inside of your flow that is not"
                 " decorated with `@task` or `@flow`."
@@ -1410,8 +1406,7 @@ class Flow(Generic[P, R]):
 
 
 @overload
-def flow(__fn: Callable[P, R]) -> Flow[P, R]:
-    ...
+def flow(__fn: Callable[P, R]) -> Flow[P, R]: ...
 
 
 @overload
@@ -1442,8 +1437,7 @@ def flow(
     ] = None,
     on_crashed: Optional[List[Callable[[FlowSchema, FlowRun, State], None]]] = None,
     on_running: Optional[List[Callable[[FlowSchema, FlowRun, State], None]]] = None,
-) -> Callable[[Callable[P, R]], Flow[P, R]]:
-    ...
+) -> Callable[[Callable[P, R]], Flow[P, R]]: ...
 
 
 def flow(
@@ -1476,7 +1470,7 @@ def flow(
     on_running: Optional[List[Callable[[FlowSchema, FlowRun, State], None]]] = None,
 ):
     """
-    Decorator to designate a function as a Prefect workflow.
+    Decorator to designate a function as a Syntask workflow.
 
     This decorator may be used for asynchronous or synchronous functions.
 
@@ -1509,7 +1503,7 @@ def flow(
             performed on flow parameters.
         persist_result: An optional toggle indicating whether the result of this flow
             should be persisted to result storage. Defaults to `None`, which indicates
-            that Prefect should choose whether the result should be persisted depending on
+            that Syntask should choose whether the result should be persisted depending on
             the features being used.
         result_storage: An optional block to use to persist the result of this flow.
             This value will be used as the default for any tasks in this flow.
@@ -1517,15 +1511,15 @@ def flow(
             a subflow, at which point the default will be loaded from the parent flow.
         result_serializer: An optional serializer to use to serialize the result of this
             flow for persistence. This value will be used as the default for any tasks
-            in this flow. If not provided, the value of `PREFECT_RESULTS_DEFAULT_SERIALIZER`
+            in this flow. If not provided, the value of `SYNTASK_RESULTS_DEFAULT_SERIALIZER`
             will be used unless called as a subflow, at which point the default will be
             loaded from the parent flow.
         cache_result_in_memory: An optional toggle indicating whether the cached result of
             a running the flow should be stored in memory. Defaults to `True`.
         log_prints: If set, `print` statements in the flow will be redirected to the
-            Prefect logger for the flow run. Defaults to `None`, which indicates that
+            Syntask logger for the flow run. Defaults to `None`, which indicates that
             the value from the parent flow should be used. If this is a parent flow,
-            the default is pulled from the `PREFECT_LOGGING_LOG_PRINTS` setting.
+            the default is pulled from the `SYNTASK_LOGGING_LOG_PRINTS` setting.
         on_completion: An optional list of functions to call when the flow run is
             completed. Each function should accept three arguments: the flow, the flow
             run, and the final state of the flow run.
@@ -1547,7 +1541,7 @@ def flow(
     Examples:
         Define a simple flow
 
-        >>> from prefect import flow
+        >>> from syntask import flow
         >>> @flow
         >>> def add(x, y):
         >>>     return x + y
@@ -1572,7 +1566,7 @@ def flow(
 
         Define a flow that submits its tasks to dask
 
-        >>> from prefect_dask.task_runners import DaskTaskRunner
+        >>> from syntask_dask.task_runners import DaskTaskRunner
         >>>
         >>> @flow(task_runner=DaskTaskRunner)
         >>> def my_flow():
@@ -1778,7 +1772,7 @@ def serve(
         ```python
         import datetime
 
-        from prefect import flow, serve
+        from syntask import flow, serve
 
         @flow
         def my_flow(name):
@@ -1805,7 +1799,7 @@ def serve(
     from rich.console import Console, Group
     from rich.table import Table
 
-    from prefect.runner import Runner
+    from syntask.runner import Runner
 
     runner = Runner(pause_on_shutdown=pause_on_shutdown, limit=limit, **kwargs)
     for deployment in args:
@@ -1826,13 +1820,13 @@ def serve(
 
         help_message_bottom = (
             "\nTo trigger any of these deployments, use the"
-            " following command:\n[blue]\n\t$ prefect deployment run"
+            " following command:\n[blue]\n\t$ syntask deployment run"
             " [DEPLOYMENT_NAME]\n[/]"
         )
-        if PREFECT_UI_URL:
+        if SYNTASK_UI_URL:
             help_message_bottom += (
-                "\nYou can also trigger your deployments via the Prefect UI:"
-                f" [blue]{PREFECT_UI_URL.value()}/deployments[/]\n"
+                "\nYou can also trigger your deployments via the Syntask UI:"
+                f" [blue]{SYNTASK_UI_URL.value()}/deployments[/]\n"
             )
 
         console = Console()
@@ -1856,7 +1850,7 @@ def serve(
 
 @client_injector
 async def load_flow_from_flow_run(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     flow_run: "FlowRun",
     ignore_storage: bool = False,
     storage_base_path: Optional[str] = None,
@@ -1878,7 +1872,7 @@ async def load_flow_from_flow_run(
     run_logger = flow_run_logger(flow_run)
 
     runner_storage_base_path = storage_base_path or os.environ.get(
-        "PREFECT__STORAGE_BASE_PATH"
+        "SYNTASK__STORAGE_BASE_PATH"
     )
 
     # If there's no colon, assume it's a module path
@@ -1921,7 +1915,7 @@ async def load_flow_from_flow_run(
             f"Running {len(deployment.pull_steps)} deployment pull step(s)"
         )
 
-        from prefect.deployments.steps.core import run_steps
+        from syntask.deployments.steps.core import run_steps
 
         output = await run_steps(deployment.pull_steps)
         if output.get("directory"):

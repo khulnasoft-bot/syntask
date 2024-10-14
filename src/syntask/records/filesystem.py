@@ -6,11 +6,11 @@ from typing import Dict, Optional
 import pendulum
 from typing_extensions import TypedDict
 
-from prefect._internal.compatibility import deprecated
-from prefect.logging.loggers import get_logger
-from prefect.records.base import RecordStore, TransactionRecord
-from prefect.results import BaseResult
-from prefect.transactions import IsolationLevel
+from syntask._internal.compatibility import deprecated
+from syntask.logging.loggers import get_logger
+from syntask.records.base import RecordStore, TransactionRecord
+from syntask.results import BaseResult
+from syntask.transactions import IsolationLevel
 
 logger = get_logger(__name__)
 
@@ -44,7 +44,7 @@ class FileSystemRecordStore(RecordStore):
 
     Attributes:
         records_directory: the directory where records are stored; defaults to
-            `{PREFECT_HOME}/records`
+            `{SYNTASK_HOME}/records`
     """
 
     def __init__(self, records_directory: Path):

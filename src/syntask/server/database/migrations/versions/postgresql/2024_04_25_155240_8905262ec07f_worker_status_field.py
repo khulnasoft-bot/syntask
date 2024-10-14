@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-from prefect.server.utilities.database import UUID, Timestamp
+from syntask.server.utilities.database import UUID, Timestamp
 
 # revision identifiers, used by Alembic.
 revision = "8905262ec07f"

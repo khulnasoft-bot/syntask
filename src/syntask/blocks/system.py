@@ -11,8 +11,8 @@ from pydantic import (
 from pydantic import Secret as PydanticSecret
 from pydantic_extra_types.pendulum_dt import DateTime as PydanticDateTime
 
-from prefect._internal.compatibility.deprecated import deprecated_class
-from prefect.blocks.core import Block
+from syntask._internal.compatibility.deprecated import deprecated_class
+from syntask.blocks.core import Block
 
 _SecretValueType = Union[
     Annotated[StrictStr, Field(title="string")],
@@ -37,7 +37,7 @@ class JSON(Block):
     Example:
         Load a stored JSON value:
         ```python
-        from prefect.blocks.system import JSON
+        from syntask.blocks.system import JSON
 
         json_block = JSON.load("BLOCK_NAME")
         ```
@@ -64,7 +64,7 @@ class String(Block):
     Example:
         Load a stored string value:
         ```python
-        from prefect.blocks.system import String
+        from syntask.blocks.system import String
 
         string_block = String.load("BLOCK_NAME")
         ```
@@ -91,7 +91,7 @@ class DateTime(Block):
     Example:
         Load a stored JSON value:
         ```python
-        from prefect.blocks.system import DateTime
+        from syntask.blocks.system import DateTime
 
         data_time_block = DateTime.load("BLOCK_NAME")
         ```
@@ -117,7 +117,7 @@ class Secret(Block, Generic[T]):
 
     Example:
         ```python
-        from prefect.blocks.system import Secret
+        from syntask.blocks.system import Secret
 
         Secret(value="sk-1234567890").save("BLOCK_NAME", overwrite=True)
 

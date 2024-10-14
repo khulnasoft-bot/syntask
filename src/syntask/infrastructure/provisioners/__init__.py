@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, Type
 
-from prefect.infrastructure.provisioners.modal import ModalPushProvisioner
+from syntask.infrastructure.provisioners.modal import ModalPushProvisioner
 from .cloud_run import CloudRunPushProvisioner
 from .container_instance import ContainerInstancePushProvisioner
 from .ecs import ElasticContainerServicePushProvisioner
 import rich.console
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 _provisioners = {
     "cloud-run:push": CloudRunPushProvisioner,
@@ -20,20 +20,17 @@ _provisioners = {
 
 class Provisioner(Protocol):
     @property
-    def console(self) -> rich.console.Console:
-        ...
+    def console(self) -> rich.console.Console: ...
 
     @console.setter
-    def console(self, value: rich.console.Console) -> None:
-        ...
+    def console(self, value: rich.console.Console) -> None: ...
 
     async def provision(
         self,
         work_pool_name: str,
         base_job_template: Dict[str, Any],
-        client: Optional["PrefectClient"] = None,
-    ) -> Dict[str, Any]:
-        ...
+        client: Optional["SyntaskClient"] = None,
+    ) -> Dict[str, Any]: ...
 
 
 def get_infrastructure_provisioner_for_work_pool_type(

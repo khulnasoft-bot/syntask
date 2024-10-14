@@ -1,37 +1,37 @@
 """
-Routes for admin-level interactions with the Prefect REST API.
+Routes for admin-level interactions with the Syntask REST API.
 """
 
 from fastapi import Body, Depends, Response, status
 
-import prefect
-import prefect.settings
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.server import PrefectRouter
+import syntask
+import syntask.settings
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="/admin", tags=["Admin"])
+router = SyntaskRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.get("/settings")
-async def read_settings() -> prefect.settings.Settings:
+async def read_settings() -> syntask.settings.Settings:
     """
-    Get the current Prefect REST API settings.
+    Get the current Syntask REST API settings.
 
     Secret setting values will be obfuscated.
     """
-    return prefect.settings.get_current_settings()
+    return syntask.settings.get_current_settings()
 
 
 @router.get("/version")
 async def read_version() -> str:
-    """Returns the Prefect version number"""
-    return prefect.__version__
+    """Returns the Syntask version number"""
+    return syntask.__version__
 
 
 @router.post("/database/clear", status_code=status.HTTP_204_NO_CONTENT)
 async def clear_database(
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
     confirm: bool = Body(
         False,
         embed=True,
@@ -52,7 +52,7 @@ async def clear_database(
 
 @router.post("/database/drop", status_code=status.HTTP_204_NO_CONTENT)
 async def drop_database(
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
     confirm: bool = Body(
         False,
         embed=True,
@@ -70,7 +70,7 @@ async def drop_database(
 
 @router.post("/database/create", status_code=status.HTTP_204_NO_CONTENT)
 async def create_database(
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
     confirm: bool = Body(
         False,
         embed=True,

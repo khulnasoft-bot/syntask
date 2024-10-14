@@ -1,6 +1,6 @@
 """
 Functions for interacting with worker ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 import datetime
@@ -20,15 +20,15 @@ import sqlalchemy as sa
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.schemas as schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.clients import PrefectServerEventsClient
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.models.events import work_pool_status_event
-from prefect.server.schemas.statuses import WorkQueueStatus
-from prefect.server.utilities.database import UUID as PrefectUUID
+import syntask.server.schemas as schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.clients import SyntaskServerEventsClient
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.models.events import work_pool_status_event
+from syntask.server.schemas.statuses import WorkQueueStatus
+from syntask.server.utilities.database import UUID as SyntaskUUID
 
 DEFAULT_AGENT_WORK_POOL_NAME = "default-agent-pool"
 
@@ -61,7 +61,7 @@ async def create_work_pool(
 
     pool = orm_models.WorkPool(**work_pool.model_dump())
 
-    if pool.type != "prefect-agent":
+    if pool.type != "syntask-agent":
         if pool.is_paused:
             pool.status = schemas.statuses.WorkPoolStatus.PAUSED
         else:
@@ -217,7 +217,7 @@ async def update_work_pool(
     # update it; this will give us something to compare against when emitting events
     session.expunge(current_work_pool)
 
-    if current_work_pool.type != "prefect-agent":
+    if current_work_pool.type != "syntask-agent":
         if update_data.get("is_paused"):
             update_data["status"] = schemas.statuses.WorkPoolStatus.PAUSED
 
@@ -287,7 +287,7 @@ async def delete_work_pool(session: AsyncSession, work_pool_id: UUID) -> bool:
 
 @db_injector
 async def get_scheduled_flow_runs(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     work_pool_ids: Optional[List[UUID]] = None,
     work_queue_ids: Optional[List[UUID]] = None,
@@ -497,7 +497,7 @@ async def read_work_queues(
 
 async def read_work_queue(
     session: AsyncSession,
-    work_queue_id: Union[UUID, PrefectUUID],
+    work_queue_id: Union[UUID, SyntaskUUID],
 ) -> Optional[orm_models.WorkQueue]:
     """
     Read a specific work pool queue.
@@ -568,7 +568,7 @@ async def update_work_queue(
         bool: whether or not the WorkQueue was updated
 
     """
-    from prefect.server.models.work_queues import is_last_polled_recent
+    from syntask.server.models.work_queues import is_last_polled_recent
 
     update_values = work_queue.model_dump_for_orm(exclude_unset=True)
 
@@ -702,7 +702,7 @@ async def read_workers(
 
 @db_injector
 async def worker_heartbeat(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     work_pool_id: UUID,
     worker_name: str,
@@ -752,7 +752,7 @@ async def worker_heartbeat(
 
 @db_injector
 async def delete_worker(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     work_pool_id: UUID,
     worker_name: str,
@@ -788,7 +788,7 @@ async def emit_work_pool_status_event(
     if not work_pool.status:
         return
 
-    async with PrefectServerEventsClient() as events_client:
+    async with SyntaskServerEventsClient() as events_client:
         await events_client.emit(
             await work_pool_status_event(
                 event_id=event_id,

@@ -6,16 +6,16 @@ import pendulum
 import pytest
 from pydantic import ValidationError
 
-from prefect.server.events import (
+from syntask.server.events import (
     Event,
     LabelDiver,
     RelatedResource,
     Resource,
     ResourceSpecification,
 )
-from prefect.settings import (
-    PREFECT_EVENTS_MAXIMUM_LABELS_PER_RESOURCE,
-    PREFECT_EVENTS_MAXIMUM_RELATED_RESOURCES,
+from syntask.settings import (
+    SYNTASK_EVENTS_MAXIMUM_LABELS_PER_RESOURCE,
+    SYNTASK_EVENTS_MAXIMUM_RELATED_RESOURCES,
     temporary_settings,
 )
 
@@ -69,7 +69,7 @@ def test_resource_requires_resource_id(resource_class: Type[Resource]) -> None:
     with pytest.raises(ValidationError) as error:
         resource_class.model_validate(
             {
-                "prefect.resource.role": "any-role",
+                "syntask.resource.role": "any-role",
             }
         )
 
@@ -77,7 +77,7 @@ def test_resource_requires_resource_id(resource_class: Type[Resource]) -> None:
     (error,) = error.value.errors()
     assert (
         error["msg"]
-        == "Value error, Resources must include the prefect.resource.id label"
+        == "Value error, Resources must include the syntask.resource.id label"
     )
     assert error["type"] == "value_error"
 
@@ -86,7 +86,7 @@ def test_related_resources_require_role() -> None:
     with pytest.raises(ValidationError) as error:
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "my.unique.resource",
+                "syntask.resource.id": "my.unique.resource",
             }
         )
 
@@ -94,7 +94,7 @@ def test_related_resources_require_role() -> None:
     (error,) = error.value.errors()
     assert (
         error["msg"]
-        == "Value error, Related Resources must include the prefect.resource.role label"
+        == "Value error, Related Resources must include the syntask.resource.role label"
     )
     assert error["type"] == "value_error"
 
@@ -103,8 +103,8 @@ def test_related_resources_require_non_empty_role() -> None:
     with pytest.raises(ValidationError) as error:
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "my.unique.resource",
-                "prefect.resource.role": None,
+                "syntask.resource.id": "my.unique.resource",
+                "syntask.resource.role": None,
             }
         )
 
@@ -121,8 +121,8 @@ def test_resource_requires_non_empty_resource_id(
     with pytest.raises(ValidationError) as error:
         resource_class.model_validate(
             {
-                "prefect.resource.id": None,
-                "prefect.resource.role": "any-role",
+                "syntask.resource.id": None,
+                "syntask.resource.role": "any-role",
             }
         )
 
@@ -135,14 +135,14 @@ def test_resource_requires_non_empty_resource_id(
 def test_empty_resource_specification_allowed_and_includes_all_resources() -> None:
     specification = ResourceSpecification.model_validate({})
     assert specification.includes(
-        [Resource.model_validate({"prefect.resource.id": "any.thing", "any": "thing"})]
+        [Resource.model_validate({"syntask.resource.id": "any.thing", "any": "thing"})]
     )
     assert specification.includes(
         [
             Resource.model_validate(
                 {
-                    "prefect.resource.id": "this.too",
-                    "prefect.resource.role": "also",
+                    "syntask.resource.id": "this.too",
+                    "syntask.resource.role": "also",
                     "this": "too",
                 }
             )
@@ -155,8 +155,8 @@ def test_resource_disallows_none_values(resource_class: Type[Resource]) -> None:
     with pytest.raises(ValidationError) as error:
         resource_class.model_validate(
             {
-                "prefect.resource.id": "my.unique.resource",
-                "prefect.resource.role": "any-role",
+                "syntask.resource.id": "my.unique.resource",
+                "syntask.resource.role": "any-role",
                 "another.thing": None,
             }
         )
@@ -172,8 +172,8 @@ def test_resource_disallows_none_values(resource_class: Type[Resource]) -> None:
 def test_resources_support_indexing(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "this.thing": "hello",
             "that.thing": "world",
         }
@@ -193,8 +193,8 @@ def test_resources_support_indexing(resource_class: Type[Resource]) -> None:
 def test_resources_support_contains(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "this.thing": "hello",
             "that.thing": "world",
         }
@@ -207,8 +207,8 @@ def test_resources_support_contains(resource_class: Type[Resource]) -> None:
 def test_resource_id_shortcut(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
         }
     )
     assert resource.id == "my.unique.resource"
@@ -217,8 +217,8 @@ def test_resource_id_shortcut(resource_class: Type[Resource]) -> None:
 def test_resource_role_shortcut() -> None:
     resource = RelatedResource.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
         }
     )
     assert resource.role == "any-role"
@@ -228,15 +228,15 @@ def test_resource_role_shortcut() -> None:
 def test_resource_labels_are_iterable(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "hello": "world",
             "goodbye": "moon",
         }
     )
     assert set(resource.keys()) == {
-        "prefect.resource.id",
-        "prefect.resource.role",
+        "syntask.resource.id",
+        "syntask.resource.role",
         "hello",
         "goodbye",
     }
@@ -246,15 +246,15 @@ def test_resource_labels_are_iterable(resource_class: Type[Resource]) -> None:
 def test_resource_label_pairs_are_iterable(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "hello": "world",
             "goodbye": "moon",
         }
     )
     assert set(resource.items()) == {
-        ("prefect.resource.id", "my.unique.resource"),
-        ("prefect.resource.role", "any-role"),
+        ("syntask.resource.id", "my.unique.resource"),
+        ("syntask.resource.role", "any-role"),
         ("hello", "world"),
         ("goodbye", "moon"),
     }
@@ -264,15 +264,15 @@ def test_resource_label_pairs_are_iterable(resource_class: Type[Resource]) -> No
 def test_resources_export_to_simple_dicts(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "hello": "world",
             "goodbye": "moon",
         }
     )
     assert json.loads(resource.model_dump_json()) == {
-        "prefect.resource.id": "my.unique.resource",
-        "prefect.resource.role": "any-role",
+        "syntask.resource.id": "my.unique.resource",
+        "syntask.resource.role": "any-role",
         "hello": "world",
         "goodbye": "moon",
     }
@@ -282,15 +282,15 @@ def test_resources_export_to_simple_dicts(resource_class: Type[Resource]) -> Non
 def test_resources_export_label_value_arrays(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "hello": "world",
             "goodbye": "moon",
         }
     )
     assert resource.as_label_value_array() == [
-        {"label": "prefect.resource.id", "value": "my.unique.resource"},
-        {"label": "prefect.resource.role", "value": "any-role"},
+        {"label": "syntask.resource.id", "value": "my.unique.resource"},
+        {"label": "syntask.resource.role", "value": "any-role"},
         {"label": "hello", "value": "world"},
         {"label": "goodbye", "value": "moon"},
     ]
@@ -300,8 +300,8 @@ def test_resources_export_label_value_arrays(resource_class: Type[Resource]) -> 
 def test_resources_can_test_for_labels(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "hello": "world",
             "goodbye": "moon",
         }
@@ -315,8 +315,8 @@ def test_resources_can_test_for_labels(resource_class: Type[Resource]) -> None:
 def test_resources_provide_label_divers(resource_class: Type[Resource]) -> None:
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "my.unique.resource",
-            "prefect.resource.role": "any-role",
+            "syntask.resource.id": "my.unique.resource",
+            "syntask.resource.role": "any-role",
             "hello": "world",
             "goodbye": "moon",
         }
@@ -392,27 +392,27 @@ def test_label_diving():
 
 
 def test_limit_on_labels():
-    with temporary_settings(updates={PREFECT_EVENTS_MAXIMUM_LABELS_PER_RESOURCE: 10}):
+    with temporary_settings(updates={SYNTASK_EVENTS_MAXIMUM_LABELS_PER_RESOURCE: 10}):
         with pytest.raises(ValidationError):
             Resource.model_validate(
                 {
-                    "prefect.resource.id": "the.thing",
+                    "syntask.resource.id": "the.thing",
                     **{str(i): str(i) for i in range(10)},
                 }
             )
 
 
 def test_limit_on_related_resources():
-    with temporary_settings(updates={PREFECT_EVENTS_MAXIMUM_RELATED_RESOURCES: 10}):
+    with temporary_settings(updates={SYNTASK_EVENTS_MAXIMUM_RELATED_RESOURCES: 10}):
         with pytest.raises(ValidationError):
             Event(
                 occurred=pendulum.now("UTC"),
                 event="anything",
-                resource={"prefect.resource.id": "the.thing"},
+                resource={"syntask.resource.id": "the.thing"},
                 related=[
                     {
-                        "prefect.resource.id": f"another.thing.{i}",
-                        "prefect.resource.role": "related",
+                        "syntask.resource.id": f"another.thing.{i}",
+                        "syntask.resource.role": "related",
                     }
                     for i in range(11)
                 ],
@@ -436,8 +436,8 @@ def test_resource_specification_matches_resource(
 
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "anything",
-            "prefect.resource.role": "anyhoo",
+            "syntask.resource.id": "anything",
+            "syntask.resource.role": "anyhoo",
             **example,
         }
     )
@@ -467,8 +467,8 @@ def test_resource_specification_wildcard_matches_resource(
 
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "anything",
-            "prefect.resource.role": "anyhoo",
+            "syntask.resource.id": "anything",
+            "syntask.resource.role": "anyhoo",
             **example,
         }
     )
@@ -494,8 +494,8 @@ def test_resource_specification_does_not_match_resource(
 
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "anything",
-            "prefect.resource.role": "anyhoo",
+            "syntask.resource.id": "anything",
+            "syntask.resource.role": "anyhoo",
             **example,
         }
     )
@@ -523,8 +523,8 @@ def test_resource_specification_wildcard_does_not_match_resource(
 
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "anything",
-            "prefect.resource.role": "anyhoo",
+            "syntask.resource.id": "anything",
+            "syntask.resource.role": "anyhoo",
             **example,
         }
     )
@@ -542,8 +542,8 @@ def test_resource_specification_matches_every_resource(resource_class: Type[Reso
 
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "anything",
-            "prefect.resource.role": "anyhoo",
+            "syntask.resource.id": "anything",
+            "syntask.resource.role": "anyhoo",
         }
     )
     assert specification.matches(resource)
@@ -555,7 +555,7 @@ def test_resource_specification_matches_every_resource_of_kind(
     resource_class: Type[Resource],
 ):
     specification = ResourceSpecification.model_validate(
-        {"prefect.resource.id": "any.old.*"}
+        {"syntask.resource.id": "any.old.*"}
     )
     assert not specification.matches_every_resource()
     assert specification.matches_every_resource_of_kind("any.old")
@@ -563,8 +563,8 @@ def test_resource_specification_matches_every_resource_of_kind(
 
     resource = resource_class.model_validate(
         {
-            "prefect.resource.id": "any.old.thing",
-            "prefect.resource.role": "anyhoo",
+            "syntask.resource.id": "any.old.thing",
+            "syntask.resource.role": "anyhoo",
         }
     )
     assert specification.matches(resource)
@@ -573,7 +573,7 @@ def test_resource_specification_matches_every_resource_of_kind(
 
 def test_resource_specification_does_not_match_every_resource_of_kind():
     specification = ResourceSpecification.model_validate(
-        {"prefect.resource.id": "any.old.*", "but-also": "another-thing"}
+        {"syntask.resource.id": "any.old.*", "but-also": "another-thing"}
     )
     assert not specification.matches_every_resource()
     assert not specification.matches_every_resource_of_kind("any.old")
@@ -586,7 +586,7 @@ def test_resource_specification_does_not_match_every_resource_of_kind():
 def test_resource_specification_is_dictlike():
     specification = ResourceSpecification.model_validate(
         {
-            "prefect.resource.id": "any.old.*",
+            "syntask.resource.id": "any.old.*",
             "but-also": ["another-thing", "or-this"],
             "": ["is kinda weird"],
             "also": "kinda weird",
@@ -594,7 +594,7 @@ def test_resource_specification_is_dictlike():
         }
     )
 
-    assert specification["prefect.resource.id"] == ["any.old.*"]
+    assert specification["syntask.resource.id"] == ["any.old.*"]
     assert specification["but-also"] == ["another-thing", "or-this"]
     assert specification[""] == ["is kinda weird"]
     assert specification["also"] == ["kinda weird"]
@@ -602,7 +602,7 @@ def test_resource_specification_is_dictlike():
     with pytest.raises(KeyError):
         assert specification["not-here"]
 
-    assert specification.get("prefect.resource.id") == ["any.old.*"]
+    assert specification.get("syntask.resource.id") == ["any.old.*"]
     assert specification.get("but-also") == ["another-thing", "or-this"]
     assert specification.get("") == ["is kinda weird"]
     assert specification.get("also") == ["kinda weird"]
@@ -610,9 +610,9 @@ def test_resource_specification_is_dictlike():
     assert specification.get("not-here") == []
     assert specification.get("not-here", "foo") == ["foo"]
 
-    assert "prefect.resource.id" in specification
-    assert specification.pop("prefect.resource.id") == ["any.old.*"]
-    assert "prefect.resource.id" not in specification
+    assert "syntask.resource.id" in specification
+    assert specification.pop("syntask.resource.id") == ["any.old.*"]
+    assert "syntask.resource.id" not in specification
 
     assert "but-also" in specification
     assert specification.pop("but-also") == ["another-thing", "or-this"]
@@ -627,14 +627,14 @@ def test_resource_specification_is_dictlike():
 def test_resource_specification_deepcopy():
     specification = ResourceSpecification.model_validate(
         {
-            "prefect.resource.id": "any.old.*",
+            "syntask.resource.id": "any.old.*",
             "but-also": ["another-thing", "or-this"],
         }
     )
     copy = specification.deepcopy()
     assert specification == copy
     assert specification is not copy
-    assert specification["prefect.resource.id"] == copy["prefect.resource.id"]
+    assert specification["syntask.resource.id"] == copy["syntask.resource.id"]
     assert specification["but-also"] == copy["but-also"]
     assert specification["but-also"] is not copy["but-also"]
 
@@ -652,19 +652,19 @@ def specification_with_single_label():
     "resource_labels",
     [
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "yes",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "woohoo!",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "!nah",  # it's not not wrong
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "nah, chief",  # it's not not wrong
         },
     ],
@@ -681,11 +681,11 @@ def test_resource_specification_single_negative_label_values_includes(
     "resource_labels",
     [
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "nah",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "does-not-have-the-label": "this ain't it, chief",
         },
     ],
@@ -711,19 +711,19 @@ def specification_with_negated_wildcard():
     "resource_labels",
     [
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "yes",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "woohoo!",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "!nah",  # it's not not wrong
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "is it? nah",
         },
     ],
@@ -740,19 +740,19 @@ def test_resource_specification_single_negated_wildcard_includes(
     "resource_labels",
     [
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "nah",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "nah, chief",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "only-a-negative": "nah, pal",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "does-not-have-the-label": "this ain't it, chief",
         },
     ],
@@ -780,19 +780,19 @@ def specification_with_multiple_labels():
     "resource_labels",
     [
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "some-label": "this-value",
             "another-label": "yes",
             "only-a-negative": "yes",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "some-label": "other-value",
             "another-label": "maybe",
             "only-a-negative": "woohoo!",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "totally-other": "no",  # forbidden value, but in a different label
             "some-label": "this-value",
             "another-label": "yes",
@@ -812,25 +812,25 @@ def test_resource_specification_multiple_negative_label_values_includes(
     "resource_labels",
     [
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "some-label": "that-value",  # forbidden
             "another-label": "yes",
             "only-a-negative": "yes",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "some-label": "that-value",  # forbidden
             "another-label": "maybe",
             "only-a-negative": "yes",
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "some-label": "this-value",
             "another-label": "yes",
             "only-a-negative": "nah",  # forbidden
         },
         {
-            "prefect.resource.id": "anything",
+            "syntask.resource.id": "anything",
             "some-label": "that-value",  # forbidden
             "another-label": "no",  # forbidden
             "only-a-negative": "nah",  # forbidden

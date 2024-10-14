@@ -10,14 +10,14 @@ from pydantic import Field, PrivateAttr
 from pydantic_extra_types.pendulum_dt import DateTime
 from sqlalchemy.sql import Select
 
-from prefect._internal.schemas.bases import PrefectBaseModel
-from prefect.server.database import orm_models
-from prefect.server.schemas.filters import (
-    PrefectFilterBaseModel,
-    PrefectOperatorFilterBaseModel,
+from syntask._internal.schemas.bases import SyntaskBaseModel
+from syntask.server.database import orm_models
+from syntask.server.schemas.filters import (
+    SyntaskFilterBaseModel,
+    SyntaskOperatorFilterBaseModel,
 )
-from prefect.server.utilities.database import json_extract
-from prefect.utilities.collections import AutoEnum
+from syntask.server.utilities.database import json_extract
+from syntask.utilities.collections import AutoEnum
 
 from .schemas.events import Event, Resource, ResourceSpecification
 
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from sqlalchemy.sql.expression import ColumnElement, ColumnExpressionArgument
 
 
-class AutomationFilterCreated(PrefectFilterBaseModel):
+class AutomationFilterCreated(SyntaskFilterBaseModel):
     """Filter by `Automation.created`."""
 
     before_: Optional[DateTime] = Field(
@@ -40,7 +40,7 @@ class AutomationFilterCreated(PrefectFilterBaseModel):
         return filters
 
 
-class AutomationFilterName(PrefectFilterBaseModel):
+class AutomationFilterName(SyntaskFilterBaseModel):
     """Filter by `Automation.created`."""
 
     any_: Optional[List[str]] = Field(
@@ -55,7 +55,7 @@ class AutomationFilterName(PrefectFilterBaseModel):
         return filters
 
 
-class AutomationFilter(PrefectOperatorFilterBaseModel):
+class AutomationFilter(SyntaskOperatorFilterBaseModel):
     name: Optional[AutomationFilterName] = Field(
         default=None, description="Filter criteria for `Automation.name`"
     )
@@ -74,7 +74,7 @@ class AutomationFilter(PrefectOperatorFilterBaseModel):
         return filters
 
 
-class EventDataFilter(PrefectBaseModel, extra="forbid"):
+class EventDataFilter(SyntaskBaseModel, extra="forbid"):
     """A base class for filtering event data."""
 
     _top_level_filter: Optional["EventFilter"] = PrivateAttr(None)
@@ -291,7 +291,7 @@ class EventResourceFilter(EventDataFilter):
 
             # On the event_resources table, resource_id is unpacked
             # into a column, so we should search for it there
-            if resource_ids := labels.pop("prefect.resource.id", None):
+            if resource_ids := labels.pop("syntask.resource.id", None):
                 label_ops = LabelOperations(resource_ids)
 
                 resource_id_column = orm_models.EventResource.resource_id
@@ -383,7 +383,7 @@ class EventRelatedFilter(EventDataFilter):
 
             # On the event_resources table, resource_id and resource_role are unpacked
             # into columns, so we should search there for them
-            if resource_ids := labels.pop("prefect.resource.id", None):
+            if resource_ids := labels.pop("syntask.resource.id", None):
                 label_ops = LabelOperations(resource_ids)
 
                 resource_id_column = orm_models.EventResource.resource_id
@@ -397,7 +397,7 @@ class EventRelatedFilter(EventDataFilter):
                 for prefix in label_ops.negative.prefixes:
                     label_filters.append(sa.not_(resource_id_column.startswith(prefix)))
 
-            if roles := labels.pop("prefect.resource.role", None):
+            if roles := labels.pop("syntask.resource.role", None):
                 label_filters.append(orm_models.EventResource.resource_role.in_(roles))
 
             if labels:
@@ -497,7 +497,7 @@ class EventAnyResourceFilter(EventDataFilter):
 
             # On the event_resources table, resource_id and resource_role are unpacked
             # into columns, so we should search there for them
-            if resource_ids := labels.pop("prefect.resource.id", None):
+            if resource_ids := labels.pop("syntask.resource.id", None):
                 label_ops = LabelOperations(resource_ids)
 
                 resource_id_column = orm_models.EventResource.resource_id
@@ -511,7 +511,7 @@ class EventAnyResourceFilter(EventDataFilter):
                 for prefix in label_ops.negative.prefixes:
                     label_filters.append(sa.not_(resource_id_column.startswith(prefix)))
 
-            if roles := labels.pop("prefect.resource.role", None):
+            if roles := labels.pop("syntask.resource.role", None):
                 label_filters.append(orm_models.EventResource.resource_role.in_(roles))
 
             if labels:

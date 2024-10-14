@@ -32,7 +32,7 @@ and starting it using the [run_deployment](/3.0/deploy/index)
 function.
 </Warning>
 
-Cancellation is resilient to restarts of Prefect workers.
+Cancellation is resilient to restarts of Syntask workers.
 To enable this, we attach metadata about the created infrastructure to the flow run.
 Internally, this is referred to as the `infrastructure_pid` or infrastructure identifier.
 Generally, this is composed of two parts:
@@ -44,7 +44,7 @@ Generally, this is composed of two parts:
 <!-- vale off -->
 */}
 
-The scope ensures that Prefect does not kill the wrong infrastructure.
+The scope ensures that Syntask does not kill the wrong infrastructure.
 For example, workers running on multiple machines may have overlapping process IDs but should not have a matching scope.
 
 {/*
@@ -70,17 +70,17 @@ depending on where the error occurred. The worker will try again to cancel the f
 ### Cancel through the CLI
 
 From the command line in your execution environment, you can cancel a flow run by using the 
-`prefect flow-run cancel` CLI command, passing the ID of the flow run.
+`syntask flow-run cancel` CLI command, passing the ID of the flow run.
 
 ```bash
-prefect flow-run cancel 'a55a4804-9e3c-4042-8b59-b3b6b7618736'
+syntask flow-run cancel 'a55a4804-9e3c-4042-8b59-b3b6b7618736'
 ```
 
 ### Cancel through the UI
 
 Navigate to the flow run's detail page and click `Cancel` in the upper right corner.
 
-![Prefect UI](/3.0/img/ui/flow-run-cancellation-ui.png)
+![Syntask UI](/3.0/img/ui/flow-run-cancellation-ui.png)
 
 ## Timeouts
 
@@ -91,7 +91,7 @@ In the UI, the flow is visibly designated as `TimedOut`.
 Timeout durations are specified using the `timeout_seconds` keyword argument.
 
 ```python
-from prefect import flow
+from syntask import flow
 import time
 
 @flow(timeout_seconds=1, log_prints=True)

@@ -10,13 +10,13 @@ import pendulum
 import sqlalchemy as sa
 from sqlalchemy.sql.expression import or_
 
-import prefect.server.models as models
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas import filters, states
-from prefect.server.services.loop_service import LoopService
-from prefect.settings import PREFECT_API_SERVICES_CANCELLATION_CLEANUP_LOOP_SECONDS
+import syntask.server.models as models
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas import filters, states
+from syntask.server.services.loop_service import LoopService
+from syntask.settings import SYNTASK_API_SERVICES_CANCELLATION_CLEANUP_LOOP_SECONDS
 
 NON_TERMINAL_STATES = list(set(states.StateType) - states.TERMINAL_STATES)
 
@@ -30,7 +30,7 @@ class CancellationCleanup(LoopService):
     def __init__(self, loop_seconds: Optional[float] = None, **kwargs):
         super().__init__(
             loop_seconds=loop_seconds
-            or PREFECT_API_SERVICES_CANCELLATION_CLEANUP_LOOP_SECONDS.value(),
+            or SYNTASK_API_SERVICES_CANCELLATION_CLEANUP_LOOP_SECONDS.value(),
             **kwargs,
         )
 
@@ -38,7 +38,7 @@ class CancellationCleanup(LoopService):
         self.batch_size = 200
 
     @inject_db
-    async def run_once(self, db: PrefectDBInterface):
+    async def run_once(self, db: SyntaskDBInterface):
         """
         - cancels active tasks belonging to recently cancelled flow runs
         - cancels any active subflow that belongs to a cancelled flow
@@ -108,7 +108,7 @@ class CancellationCleanup(LoopService):
                 break
 
     async def _cancel_child_runs(
-        self, db: PrefectDBInterface, flow_run: orm_models.FlowRun
+        self, db: SyntaskDBInterface, flow_run: orm_models.FlowRun
     ) -> None:
         async with db.session_context() as session:
             child_task_runs = await models.task_runs.read_task_runs(
@@ -132,7 +132,7 @@ class CancellationCleanup(LoopService):
                 )
 
     async def _cancel_subflow(
-        self, db: PrefectDBInterface, flow_run: orm_models.FlowRun
+        self, db: SyntaskDBInterface, flow_run: orm_models.FlowRun
     ) -> Optional[bool]:
         if not flow_run.parent_task_run_id:
             return False

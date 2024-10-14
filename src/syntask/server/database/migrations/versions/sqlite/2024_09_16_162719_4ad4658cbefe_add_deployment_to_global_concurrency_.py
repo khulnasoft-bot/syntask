@@ -5,10 +5,11 @@ Revises: 7d6350aea855
 Create Date: 2024-09-16 16:27:19.451150
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "4ad4658cbefe"
@@ -22,7 +23,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "concurrency_limit_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )

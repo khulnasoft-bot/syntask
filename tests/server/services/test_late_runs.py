@@ -6,16 +6,16 @@ import pendulum
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.services.late_runs import MarkLateRuns
-from prefect.settings import (
-    PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS,
+from syntask.server import models, schemas
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.services.late_runs import MarkLateRuns
+from syntask.settings import (
+    SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS,
     temporary_settings,
 )
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMFlowRun
+    from syntask.server.database.orm_models import ORMFlowRun
 
 
 @pytest.fixture
@@ -106,7 +106,7 @@ async def test_marks_late_run_at_buffer(session, late_run):
         late_run.next_scheduled_start_time == st
     ), "Next scheduled time is set by orchestration rules correctly"
 
-    with temporary_settings(updates={PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 60}):
+    with temporary_settings(updates={SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 60}):
         await MarkLateRuns().start(loops=1)
 
     await session.refresh(late_run)
@@ -122,7 +122,7 @@ async def test_does_not_mark_run_late_if_within_buffer(session, late_run):
         late_run.next_scheduled_start_time == st
     ), "Next scheduled time is set by orchestration rules correctly"
 
-    with temporary_settings(updates={PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 61}):
+    with temporary_settings(updates={SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 61}):
         await MarkLateRuns().start(loops=1)
 
     await session.refresh(late_run)
@@ -240,9 +240,9 @@ async def test_mark_late_runs_fires_flow_run_state_change_events(
     assert len(AssertingEventsClient.last.events) == 1
     (event,) = AssertingEventsClient.last.events
 
-    assert event.resource.id == f"prefect.flow-run.{late_run.id}"
-    assert event.event == "prefect.flow-run.Late"
-    assert event.resource["prefect.state-type"] == "SCHEDULED"
+    assert event.resource.id == f"syntask.flow-run.{late_run.id}"
+    assert event.event == "syntask.flow-run.Late"
+    assert event.resource["syntask.state-type"] == "SCHEDULED"
     assert event.payload == {
         "intended": {"from": "SCHEDULED", "to": "SCHEDULED"},
         "initial_state": {"type": "SCHEDULED", "name": "Scheduled"},
@@ -255,10 +255,10 @@ async def test_mark_late_runs_fires_flow_run_state_change_events(
 
 
 async def test_mark_late_runs_ignores_missing_runs(late_run: "ORMFlowRun"):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/2846"""
+    """Regression test for https://github.com/SynoPKG/nebula/issues/2846"""
     # Simulate another process deleting the flow run in the middle of the service loop
     # Before the fix, this would have raised the ObjectNotFoundError
-    with mock.patch("prefect.server.models.flow_runs.read_flow_run", return_value=None):
+    with mock.patch("syntask.server.models.flow_runs.read_flow_run", return_value=None):
         service = MarkLateRuns()
         await service._on_start()
         try:

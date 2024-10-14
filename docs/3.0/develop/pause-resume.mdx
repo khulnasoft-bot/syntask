@@ -3,15 +3,15 @@ title: Pause and resume flow runs
 description: Learn the different ways to pause, suspend, and resume a flow run.
 ---
 
-Prefect allows you to halt a flow run with two functions that are similar, but slightly different.
+Syntask allows you to halt a flow run with two functions that are similar, but slightly different.
 When a flow run is paused, code execution is stopped and the process continues to run.
 When a flow run is suspended, code execution is stopped and so is the process.
 
 ### Pause a flow run
 
-Prefect enables pausing an in-progress flow run for manual approval.
-Prefect exposes this capability with the [`pause_flow_run`](https://prefect-python-sdk-docs.netlify.app/prefect/engine/#prefect.engine.pause_flow_run)
-and [`resume_flow_run`](https://prefect-python-sdk-docs.netlify.app/prefect/engine/#prefect.engine.resume_flow_run) functions.
+Syntask enables pausing an in-progress flow run for manual approval.
+Syntask exposes this capability with the [`pause_flow_run`](https://syntask-python-sdk-docs.netlify.app/syntask/engine/#syntask.engine.pause_flow_run)
+and [`resume_flow_run`](https://syntask-python-sdk-docs.netlify.app/syntask/engine/#syntask.engine.resume_flow_run) functions.
 
 <Note>
 **Timeouts**
@@ -24,7 +24,7 @@ Specify a different timeout period in seconds using the `timeout` parameter.
 You can call `pause_flow_run` inside a flow:
 
 ```python
-from prefect import task, flow, pause_flow_run, resume_flow_run
+from syntask import task, flow, pause_flow_run, resume_flow_run
 
 @task
 async def marvin_setup():
@@ -46,7 +46,7 @@ async def inspiring_joke():
 You can also implement conditional pauses:
 
 ```python
-from prefect import task, flow, pause_flow_run
+from syntask import task, flow, pause_flow_run
 
 @task
 def task_one():
@@ -71,12 +71,12 @@ await inspiring_joke()
 > "a raft of ducks walk into a bar..."
 ```
 
-Resume paused flow runs by clicking **Resume** in the Prefect UI or
+Resume paused flow runs by clicking **Resume** in the Syntask UI or
 calling the `resume_flow_run` utility through client code.
 
 {/* pmd-metadata: notest */}
 ```python
-from prefect import resume_flow_run
+from syntask import resume_flow_run
 
 resume_flow_run(FLOW_RUN_ID)
 ```
@@ -89,7 +89,7 @@ The paused flow run then finishes.
 
 ### Suspend a flow run
 
-Similar to pausing a flow run, Prefect enables suspending an in-progress flow run.
+Similar to pausing a flow run, Syntask enables suspending an in-progress flow run.
 
 <Note>
 **The difference between pausing and suspending a flow run**
@@ -104,8 +104,8 @@ This means you can suspend flow runs to save costs instead of paying for long-ru
 However, when the flow run resumes, the flow code will execute again from the beginning of the flow.
 We recommend using [tasks](/3.0/develop/write-tasks/) and [task caching](/3.0/develop/task-caching) to avoid recomputing expensive operations.
 
-Prefect exposes this capability through the [`suspend_flow_run`](https://prefect-python-sdk-docs.netlify.app/prefect/engine/#prefect.engine.suspend_flow_run) and
-[`resume_flow_run`](https://prefect-python-sdk-docs.netlify.app/prefect/engine/#prefect.engine.resume_flow_run) functions, as well as the Prefect UI.
+Syntask exposes this capability through the [`suspend_flow_run`](https://syntask-python-sdk-docs.netlify.app/syntask/engine/#syntask.engine.suspend_flow_run) and
+[`resume_flow_run`](https://syntask-python-sdk-docs.netlify.app/syntask/engine/#syntask.engine.resume_flow_run) functions, as well as the Syntask UI.
 
 When called inside of a flow, `suspend_flow_run` immediately suspends execution of the flow run.
 The flow run is marked as `Suspended` and will not resume until `resume_flow_run` is called.
@@ -123,7 +123,7 @@ This flow exits after one task, and is rescheduled upon resuming.
 The stored result of the first task is retrieved instead of rerunning.
 
 ```python
-from prefect import flow, pause_flow_run, task
+from syntask import flow, pause_flow_run, task
 
 @task(persist_result=True)
 def foo():
@@ -140,13 +140,13 @@ def noblock_pausing():
 ```
 
 You can suspend flow runs out-of-process by calling `suspend_flow_run(flow_run_id=<ID>)` or
-selecting the **Suspend** button in the Prefect UI or Prefect Cloud.
+selecting the **Suspend** button in the Syntask UI or Syntask Cloud.
 
-Resume suspended flow runs can by clicking **Resume** in the Prefect UI or calling the `resume_flow_run` utility through client code.
+Resume suspended flow runs can by clicking **Resume** in the Syntask UI or calling the `resume_flow_run` utility through client code.
 
 {/* pmd-metadata: notest */}
 ```python
-from prefect import resume_flow_run
+from syntask import resume_flow_run
 
 resume_flow_run(FLOW_RUN_ID)
 ```
@@ -176,8 +176,8 @@ If you encounter any issues, please let us know in Slack or with a GitHub issue.
 </Warning>
 
 When pausing or suspending a flow run you may want to wait for input from a user.
-Prefect provides a way to do this by using the `pause_flow_run` and `suspend_flow_run` functions.
-These functions accept a `wait_for_input` argument, which should be a subclass of `prefect.input.RunInput`(a Pydantic model).
+Syntask provides a way to do this by using the `pause_flow_run` and `suspend_flow_run` functions.
+These functions accept a `wait_for_input` argument, which should be a subclass of `syntask.input.RunInput`(a Pydantic model).
 When resuming the flow run, users are required to provide data for this model. After successful validation,
 the flow run resumes, and the return value of the `pause_flow_run` or `suspend_flow_run`
 is an instance of the model containing the provided data.
@@ -185,8 +185,8 @@ is an instance of the model containing the provided data.
 Here is an example of a flow that pauses and waits for input from a user:
 
 ```python
-from prefect import flow, pause_flow_run
-from prefect.input import RunInput
+from syntask import flow, pause_flow_run
+from syntask.input import RunInput
 
 
 class UserNameInput(RunInput):

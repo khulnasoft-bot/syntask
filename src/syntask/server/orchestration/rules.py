@@ -1,16 +1,16 @@
 """
-Prefect's flow and task-run orchestration machinery.
+Syntask's flow and task-run orchestration machinery.
 
-This module contains all the core concepts necessary to implement Prefect's state
+This module contains all the core concepts necessary to implement Syntask's state
 orchestration engine. These states correspond to intuitive descriptions of all the
-points that a Prefect flow or task can observe executing user code and intervene, if
+points that a Syntask flow or task can observe executing user code and intervene, if
 necessary. A detailed description of states can be found in our concept
 [documentation](/concepts/states).
 
-Prefect's orchestration engine operates under the assumption that no governed user code
-will execute without first requesting Prefect REST API validate a change in state and record
+Syntask's orchestration engine operates under the assumption that no governed user code
+will execute without first requesting Syntask REST API validate a change in state and record
 metadata about the run. With all attempts to run user code being checked against a
-Prefect instance, the Prefect REST API database becomes the unambiguous source of truth for managing
+Syntask instance, the Syntask REST API database becomes the unambiguous source of truth for managing
 the execution of complex interacting workflows. Orchestration rules can be implemented
 as discrete units of logic that operate against each state transition and can be fully
 observable, extensible, and customizable -- all without needing to store or parse a
@@ -25,13 +25,13 @@ import sqlalchemy as sa
 from pydantic import ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.logging import get_logger
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import OrchestrationError
-from prefect.server.models import artifacts, flow_runs
-from prefect.server.schemas import core, states
-from prefect.server.schemas.responses import (
+from syntask.logging import get_logger
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import OrchestrationError
+from syntask.server.models import artifacts, flow_runs
+from syntask.server.schemas import core, states
+from syntask.server.schemas.responses import (
     SetStateStatus,
     StateAbortDetails,
     StateAcceptDetails,
@@ -39,7 +39,7 @@ from prefect.server.schemas.responses import (
     StateResponseDetails,
     StateWaitDetails,
 )
-from prefect.server.utilities.schemas import PrefectBaseModel
+from syntask.server.utilities.schemas import SyntaskBaseModel
 
 # all valid state types in the context of a task- or flow- run transition
 ALL_ORCHESTRATION_STATES = {*states.StateType, None}
@@ -50,7 +50,7 @@ TERMINAL_STATES = states.TERMINAL_STATES
 logger = get_logger("server")
 
 
-class OrchestrationContext(PrefectBaseModel):
+class OrchestrationContext(SyntaskBaseModel):
     """
     A container for a state transition, governed by orchestration rules.
 
@@ -59,7 +59,7 @@ class OrchestrationContext(PrefectBaseModel):
         use the flow- or task- specific subclasses, `FlowOrchestrationContext` and
         `TaskOrchestrationContext`.
 
-    When a flow- or task- run attempts to change state, Prefect REST API has an opportunity
+    When a flow- or task- run attempts to change state, Syntask REST API has an opportunity
     to decide whether this transition can proceed. All the relevant information
     associated with the state transition is stored in an `OrchestrationContext`,
     which is subsequently governed by nested orchestration rules implemented using
@@ -178,7 +178,7 @@ class FlowOrchestrationContext(OrchestrationContext):
     """
     A container for a flow run state transition, governed by orchestration rules.
 
-    When a flow- run attempts to change state, Prefect REST API has an opportunity
+    When a flow- run attempts to change state, Syntask REST API has an opportunity
     to decide whether this transition can proceed. All the relevant information
     associated with the state transition is stored in an `OrchestrationContext`,
     which is subsequently governed by nested orchestration rules implemented using
@@ -216,7 +216,7 @@ class FlowOrchestrationContext(OrchestrationContext):
     @inject_db
     async def validate_proposed_state(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
     ):
         """
         Validates a proposed state by committing it to the database.
@@ -233,7 +233,7 @@ class FlowOrchestrationContext(OrchestrationContext):
             None
         """
         # (circular import)
-        from prefect.server.api.server import is_client_retryable_exception
+        from syntask.server.api.server import is_client_retryable_exception
 
         try:
             await self._validate_proposed_state()
@@ -254,7 +254,7 @@ class FlowOrchestrationContext(OrchestrationContext):
     @inject_db
     async def _validate_proposed_state(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
     ):
         if self.proposed_state is None:
             validated_orm_state = self.run.state
@@ -332,7 +332,7 @@ class TaskOrchestrationContext(OrchestrationContext):
     """
     A container for a task run state transition, governed by orchestration rules.
 
-    When a task- run attempts to change state, Prefect REST API has an opportunity
+    When a task- run attempts to change state, Syntask REST API has an opportunity
     to decide whether this transition can proceed. All the relevant information
     associated with the state transition is stored in an `OrchestrationContext`,
     which is subsequently governed by nested orchestration rules implemented using
@@ -370,7 +370,7 @@ class TaskOrchestrationContext(OrchestrationContext):
     @inject_db
     async def validate_proposed_state(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
     ):
         """
         Validates a proposed state by committing it to the database.
@@ -387,7 +387,7 @@ class TaskOrchestrationContext(OrchestrationContext):
             None
         """
         # (circular import)
-        from prefect.server.api.server import is_client_retryable_exception
+        from syntask.server.api.server import is_client_retryable_exception
 
         try:
             await self._validate_proposed_state()
@@ -408,7 +408,7 @@ class TaskOrchestrationContext(OrchestrationContext):
     @inject_db
     async def _validate_proposed_state(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
     ):
         if self.proposed_state is None:
             validated_orm_state = self.run.state
@@ -504,7 +504,7 @@ class BaseOrchestrationRule(contextlib.AbstractAsyncContextManager):
     before it is validated or by producing a side-effect.
 
     A state transition occurs whenever a flow- or task- run changes state, prompting
-    Prefect REST API to decide whether or not this transition can proceed. The current state of
+    Syntask REST API to decide whether or not this transition can proceed. The current state of
     the run is referred to as the "initial state", and the state a run is
     attempting to transition into is the "proposed state". Together, the initial state
     transitioning into the proposed state is the intended transition that is governed

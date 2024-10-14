@@ -6,7 +6,7 @@ from urllib.request import urlopen
 import pytest
 from PIL import Image
 
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 
 class BlockStandardTestSuite(ABC):

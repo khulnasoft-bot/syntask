@@ -7,5 +7,5 @@
 # documentation
 /docs                                @discdiver @cicdw @desertaxle @zzstoatzz
 # imports
-/src/prefect/__init__.py              @aaazzam @chrisguidry @cicdw @desertaxle @zzstoatzz
-/src/prefect/main.py                  @aaazzam @chrisguidry @cicdw @desertaxle @zzstoatzz
+/src/syntask/__init__.py              @aaazzam @chrisguidry @cicdw @desertaxle @zzstoatzz
+/src/syntask/main.py                  @aaazzam @chrisguidry @cicdw @desertaxle @zzstoatzz

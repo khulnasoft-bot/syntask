@@ -1,6 +1,6 @@
 """
 Functions for interacting with block schema ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 import json
@@ -12,19 +12,19 @@ import sqlalchemy as sa
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models.block_types import read_block_type_by_slug
-from prefect.server.schemas.actions import BlockSchemaCreate
-from prefect.server.schemas.core import BlockSchema, BlockSchemaReference
+from syntask.server import schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models.block_types import read_block_type_by_slug
+from syntask.server.schemas.actions import BlockSchemaCreate
+from syntask.server.schemas.core import BlockSchema, BlockSchemaReference
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.actions import (
+    from syntask.client.schemas.actions import (
         BlockSchemaCreate as ClientBlockSchemaCreate,
     )
-    from prefect.client.schemas.objects import BlockSchema as ClientBlockSchema
+    from syntask.client.schemas.objects import BlockSchema as ClientBlockSchema
 
 
 class MissingBlockTypeException(Exception):
@@ -33,7 +33,7 @@ class MissingBlockTypeException(Exception):
 
 @db_injector
 async def create_block_schema(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     block_schema: Union[
         schemas.actions.BlockSchemaCreate,
@@ -56,7 +56,7 @@ async def create_block_schema(
     Returns:
         block_schema: an ORM block schema model
     """
-    from prefect.blocks.core import Block, _get_non_block_reference_definitions
+    from syntask.blocks.core import Block, _get_non_block_reference_definitions
 
     # We take a shortcut in many unit tests and in block registration to pass client
     # models directly to this function.  We will support this by converting them to
@@ -99,10 +99,10 @@ async def create_block_schema(
             insert_values["fields"], definitions
         )
         if non_block_definitions:
-            insert_values["fields"][
-                "definitions"
-            ] = _get_non_block_reference_definitions(
-                insert_values["fields"], definitions
+            insert_values["fields"]["definitions"] = (
+                _get_non_block_reference_definitions(
+                    insert_values["fields"], definitions
+                )
             )
         else:
             # Prevent storing definitions for blocks. Those are reconstructed on read.
@@ -253,7 +253,7 @@ def _get_fields_for_child_schema(
     dictionary based on the information extracted from `base_fields` using the `reference_name`. `reference_block_type`
     is used to disambiguate fields that have a union type.
     """
-    from prefect.blocks.core import _collect_nested_reference_strings
+    from syntask.blocks.core import _collect_nested_reference_strings
 
     spec_reference = base_fields["properties"][reference_name]
     sub_block_schema_fields = None
@@ -554,9 +554,9 @@ def _construct_block_schema_fields_with_block_references(
             }
             # A block reference for this key does not yet exist
             if name not in block_schema_fields_copy["block_schema_references"]:
-                block_schema_fields_copy["block_schema_references"][
-                    name
-                ] = new_block_schema_reference
+                block_schema_fields_copy["block_schema_references"][name] = (
+                    new_block_schema_reference
+                )
             else:
                 # List of block references for this key already exist and the block
                 # reference that we are attempting add isn't present
@@ -776,7 +776,7 @@ async def read_block_schema_by_checksum(
 
 @db_injector
 async def read_available_block_capabilities(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
 ) -> List[str]:
     """
@@ -799,7 +799,7 @@ async def read_available_block_capabilities(
 
 @db_injector
 async def create_block_schema_reference(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     block_schema_reference: schemas.core.BlockSchemaReference,
 ) -> Union[orm_models.BlockSchemaReference, None]:

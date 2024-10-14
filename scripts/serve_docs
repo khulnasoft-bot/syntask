@@ -23,7 +23,7 @@ if ! command_exists uv; then
   curl -LsSf https://astral.sh/uv/install.sh | sh
 fi
 
-# Navigate to the parent directory containing the prefect package
+# Navigate to the parent directory containing the syntask package
 cd "$(dirname "$0")/.."
 
 # Create a temporary virtual environment using uv

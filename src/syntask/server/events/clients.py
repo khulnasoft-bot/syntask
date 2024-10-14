@@ -7,10 +7,10 @@ from uuid import UUID
 import httpx
 from typing_extensions import Self, TypeAlias
 
-from prefect.client.base import PrefectHttpxAsyncClient
-from prefect.logging import get_logger
-from prefect.server.events import messaging
-from prefect.server.events.schemas.events import (
+from syntask.client.base import SyntaskHttpxAsyncClient
+from syntask.logging import get_logger
+from syntask.server.events import messaging
+from syntask.server.events.schemas.events import (
     Event,
     ReceivedEvent,
     ResourceSpecification,
@@ -22,11 +22,10 @@ LabelValue: TypeAlias = Union[str, List[str]]
 
 
 class EventsClient(abc.ABC):
-    """The abstract interface for a Prefect Events client"""
+    """The abstract interface for a Syntask Events client"""
 
     @abc.abstractmethod
-    async def emit(self, event: Event) -> Optional[Event]:
-        ...
+    async def emit(self, event: Event) -> Optional[Event]: ...
 
     async def __aenter__(self) -> Self:
         return self
@@ -41,14 +40,14 @@ class EventsClient(abc.ABC):
 
 
 class NullEventsClient(EventsClient):
-    """A no-op implementation of the Prefect Events client for testing"""
+    """A no-op implementation of the Syntask Events client for testing"""
 
     async def emit(self, event: Event) -> None:
         pass
 
 
 class AssertingEventsClient(EventsClient):
-    """An implementation of the Prefect Events client that records all events sent
+    """An implementation of the Syntask Events client that records all events sent
     to it for inspection during tests."""
 
     last: ClassVar[Optional["AssertingEventsClient"]] = None
@@ -194,7 +193,7 @@ class AssertingEventsClient(EventsClient):
             assert False, "An event was emitted matching the given criteria"
 
 
-class PrefectServerEventsClient(EventsClient):
+class SyntaskServerEventsClient(EventsClient):
     _publisher: messaging.EventPublisher
 
     async def __aenter__(self) -> Self:
@@ -222,20 +221,20 @@ class PrefectServerEventsClient(EventsClient):
         return received_event
 
 
-class PrefectServerEventsAPIClient:
-    _http_client: PrefectHttpxAsyncClient
+class SyntaskServerEventsAPIClient:
+    _http_client: SyntaskHttpxAsyncClient
 
     def __init__(self, additional_headers: Dict[str, str] = {}):
-        from prefect.server.api.server import create_app
+        from syntask.server.api.server import create_app
 
         # create_app caches application instances, and invoking it with no arguments
         # will point it to the the currently running server instance
         api_app = create_app()
 
-        self._http_client = PrefectHttpxAsyncClient(
+        self._http_client = SyntaskHttpxAsyncClient(
             transport=httpx.ASGITransport(app=api_app, raise_app_exceptions=False),
             headers={**additional_headers},
-            base_url="http://prefect-in-memory/api",
+            base_url="http://syntask-in-memory/api",
             enable_csrf_support=False,
             raise_on_all_errors=False,
         )

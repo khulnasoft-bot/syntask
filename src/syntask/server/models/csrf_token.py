@@ -5,16 +5,16 @@ from typing import Optional
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect import settings
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas import core
+from syntask import settings
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas import core
 
 
 @db_injector
 async def create_or_update_csrf_token(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     client: str,
 ) -> core.CsrfToken:
@@ -31,7 +31,7 @@ async def create_or_update_csrf_token(
 
     expiration = (
         datetime.now(timezone.utc)
-        + settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+        + settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
     )
     token = secrets.token_hex(32)
 

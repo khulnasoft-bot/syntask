@@ -14,10 +14,10 @@ import pendulum
 import pytest
 from sqlalchemy.orm.exc import FlushError
 
-from prefect.server import models
-from prefect.server.schemas.actions import LogCreate
-from prefect.server.schemas.core import Log
-from prefect.server.schemas.filters import LogFilter
+from syntask.server import models
+from syntask.server.schemas.actions import LogCreate
+from syntask.server.schemas.core import Log
+from syntask.server.schemas.filters import LogFilter
 
 NOW = pendulum.now("UTC")
 CREATE_LOGS_URL = "/logs/"
@@ -38,14 +38,14 @@ def task_run_id():
 def log_data(client, flow_run_id, task_run_id):
     yield [
         LogCreate(
-            name="prefect.flow_run",
+            name="syntask.flow_run",
             level=20,
             message="Ahoy, captain",
             timestamp=NOW,
             flow_run_id=flow_run_id,
         ).model_dump(mode="json"),
         LogCreate(
-            name="prefect.task_run",
+            name="syntask.task_run",
             level=50,
             message="Black flag ahead, captain!",
             timestamp=(NOW + timedelta(hours=1)),
@@ -94,7 +94,7 @@ class TestCreateLogs:
     async def test_database_failure(
         self, client_without_exceptions, session, flow_run_id, task_run_id, log_data
     ):
-        with mock.patch("prefect.server.models.logs.create_logs") as mock_create_logs:
+        with mock.patch("syntask.server.models.logs.create_logs") as mock_create_logs:
 
             def raise_error(*args, **kwargs):
                 raise FlushError
@@ -115,7 +115,7 @@ class TestReadLogs:
     async def single_flow_run_log(self, client):
         flow_run_logs = [
             LogCreate(
-                name="prefect.flow_run",
+                name="syntask.flow_run",
                 level=80,
                 message="Full speed ahead!",
                 timestamp=NOW,
@@ -129,7 +129,7 @@ class TestReadLogs:
     async def single_task_run_log(self, client):
         flow_run_logs = [
             LogCreate(
-                name="prefect.flow_run",
+                name="syntask.flow_run",
                 level=80,
                 message="Full speed ahead!",
                 timestamp=NOW,

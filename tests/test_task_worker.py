@@ -9,16 +9,16 @@ import anyio
 import pytest
 from pydantic import BaseModel
 
-from prefect import flow, task
-from prefect.filesystems import LocalFileSystem
-from prefect.futures import PrefectDistributedFuture
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_UI_URL,
+from syntask import flow, task
+from syntask.filesystems import LocalFileSystem
+from syntask.futures import SyntaskDistributedFuture
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_UI_URL,
     temporary_settings,
 )
-from prefect.task_worker import TaskWorker, serve
-from prefect.tasks import task_input_hash
+from syntask.task_worker import TaskWorker, serve
+from syntask.tasks import task_input_hash
 
 pytestmark = pytest.mark.usefixtures("use_hosted_api_server")
 
@@ -65,7 +65,7 @@ def bar_task():
 @pytest.fixture
 def mock_task_worker_start(monkeypatch):
     monkeypatch.setattr(
-        "prefect.task_worker.TaskWorker.start", mock_start := AsyncMock()
+        "syntask.task_worker.TaskWorker.start", mock_start := AsyncMock()
     )
     return mock_start
 
@@ -73,7 +73,7 @@ def mock_task_worker_start(monkeypatch):
 @pytest.fixture
 def mock_create_subscription(monkeypatch):
     monkeypatch.setattr(
-        "prefect.task_worker.TaskWorker._subscribe_to_task_scheduling",
+        "syntask.task_worker.TaskWorker._subscribe_to_task_scheduling",
         create_subscription := AsyncMock(),
     )
     return create_subscription
@@ -82,14 +82,14 @@ def mock_create_subscription(monkeypatch):
 @pytest.fixture
 def mock_subscription(monkeypatch):
     monkeypatch.setattr(
-        "prefect.task_worker.Subscription", mock_subscription := MagicMock()
+        "syntask.task_worker.Subscription", mock_subscription := MagicMock()
     )
     return mock_subscription
 
 
 async def test_task_worker_does_not_run_against_ephemeral_api():
     with pytest.raises(ValueError):
-        with temporary_settings({PREFECT_API_URL: None}):
+        with temporary_settings({SYNTASK_API_URL: None}):
             await TaskWorker(...)._subscribe_to_task_scheduling()
 
 
@@ -130,7 +130,7 @@ async def test_task_worker_client_id_is_set():
 
 
 async def test_task_worker_stays_running_on_errors(monkeypatch):
-    # regression test for https://github.com/synopkg/synopkg/issues/13911
+    # regression test for https://github.com/synopkg/syntask/issues/13911
     # previously any error with submitting the task run would be raised
     # and uncaught, causing the task worker to stop and this test to fail
 
@@ -142,7 +142,7 @@ async def test_task_worker_stays_running_on_errors(monkeypatch):
     def always_error(*args, **kwargs):
         raise ValueError("oops")
 
-    monkeypatch.setattr("prefect.task_engine.SyncTaskRunEngine.start", always_error)
+    monkeypatch.setattr("syntask.task_engine.SyncTaskRunEngine.start", always_error)
 
     task_worker = TaskWorker(empty_task)
 
@@ -153,14 +153,14 @@ async def test_task_worker_stays_running_on_errors(monkeypatch):
 
 
 async def test_task_worker_emits_run_ui_url_upon_submission(
-    foo_task, prefect_client, caplog
+    foo_task, syntask_client, caplog
 ):
     task_worker = TaskWorker(foo_task)
 
     task_run_future = foo_task.apply_async((42,))
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
-    with temporary_settings({PREFECT_UI_URL: "http://test/api"}):
+    with temporary_settings({SYNTASK_UI_URL: "http://test/api"}):
         await task_worker.execute_task_run(task_run)
 
     assert "in the UI: http://test/api/runs/task-run/" in caplog.text
@@ -174,7 +174,7 @@ class TestServe:
 
         task_run_future = foo_task.apply_async((42,))
 
-        assert isinstance(task_run_future, PrefectDistributedFuture)
+        assert isinstance(task_run_future, SyntaskDistributedFuture)
 
         assert task_run_future.state.is_scheduled()
 
@@ -184,24 +184,24 @@ class TestServe:
 
         task_run_future = async_foo_task.apply_async((42,))
 
-        assert isinstance(task_run_future, PrefectDistributedFuture)
+        assert isinstance(task_run_future, SyntaskDistributedFuture)
 
         assert task_run_future.state.is_scheduled()
 
 
 async def test_task_worker_can_execute_a_single_async_single_task_run(
-    async_foo_task, prefect_client, events_pipeline
+    async_foo_task, syntask_client, events_pipeline
 ):
     task_worker = TaskWorker(async_foo_task)
 
     task_run_future = async_foo_task.apply_async((42,))
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
     await task_worker.execute_task_run(task_run)
 
     await events_pipeline.process_events()
 
-    updated_task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    updated_task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
     assert updated_task_run.state.is_completed()
 
@@ -209,18 +209,18 @@ async def test_task_worker_can_execute_a_single_async_single_task_run(
 
 
 async def test_task_worker_can_execute_a_single_sync_single_task_run(
-    foo_task, prefect_client, events_pipeline
+    foo_task, syntask_client, events_pipeline
 ):
     task_worker = TaskWorker(foo_task)
 
     task_run_future = foo_task.apply_async((42,))
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
     await task_worker.execute_task_run(task_run)
 
     await events_pipeline.process_events()
 
-    updated_task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    updated_task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
     assert updated_task_run.state.is_completed()
 
@@ -229,7 +229,7 @@ async def test_task_worker_can_execute_a_single_sync_single_task_run(
 
 class TestTaskWorkerTaskRunRetries:
     async def test_task_run_via_task_worker_respects_retry_policy(
-        self, prefect_client, events_pipeline
+        self, syntask_client, events_pipeline
     ):
         count = 0
 
@@ -245,12 +245,12 @@ class TestTaskWorkerTaskRunRetries:
         task_worker = TaskWorker(task_with_retry)
 
         task_run_future = task_with_retry.apply_async()
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -266,7 +266,7 @@ class TestTaskWorkerTaskRunRetries:
         ids=["will_retry", "wont_retry"],
     )
     async def test_task_run_via_task_worker_respects_retry_condition_fn(
-        self, should_retry, prefect_client, events_pipeline
+        self, should_retry, syntask_client, events_pipeline
     ):
         count = 0
 
@@ -288,12 +288,12 @@ class TestTaskWorkerTaskRunRetries:
         task_worker = TaskWorker(task_with_retry_condition_fn)
 
         task_run_future = task_with_retry_condition_fn.apply_async()
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -304,7 +304,7 @@ class TestTaskWorkerTaskRunRetries:
 
 class TestTaskWorkerTaskResults:
     async def test_task_run_via_task_worker_persists_result(
-        self, prefect_client, events_pipeline
+        self, syntask_client, events_pipeline
     ):
         @task
         def some_task():
@@ -313,12 +313,12 @@ class TestTaskWorkerTaskResults:
         task_worker = TaskWorker(some_task)
 
         task_run_future = some_task.apply_async()
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -332,7 +332,7 @@ class TestTaskWorkerTaskResults:
         ids=["static", "dynamic"],
     )
     async def test_task_run_via_task_worker_respects_result_storage_key(
-        self, storage_key, prefect_client, events_pipeline
+        self, storage_key, syntask_client, events_pipeline
     ):
         if "foo" in storage_key:
             x = storage_key
@@ -346,12 +346,12 @@ class TestTaskWorkerTaskResults:
         task_worker = TaskWorker(some_task)
 
         task_run_future = some_task.apply_async(kwargs={"x": x})
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -365,7 +365,7 @@ class TestTaskWorkerTaskResults:
             assert Path(updated_task_run.state.data.storage_key).name == x
 
     async def test_task_run_via_task_worker_with_complex_result_type(
-        self, prefect_client, events_pipeline
+        self, syntask_client, events_pipeline
     ):
         @task(persist_result=True)
         def americas_third_largest_city() -> City:
@@ -380,11 +380,11 @@ class TestTaskWorkerTaskResults:
         task_worker = TaskWorker(americas_third_largest_city)
 
         task_run_future = americas_third_largest_city.apply_async()
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -401,7 +401,7 @@ class TestTaskWorkerTaskResults:
     async def test_task_run_via_task_worker_respects_caching(
         self,
         async_foo_task,
-        prefect_client,
+        syntask_client,
         caplog,
         events_pipeline,
     ):
@@ -416,12 +416,12 @@ class TestTaskWorkerTaskResults:
         task_worker = TaskWorker(task_with_cache)
 
         task_run_future = task_with_cache.apply_async((42,))
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -430,13 +430,13 @@ class TestTaskWorkerTaskResults:
         assert await updated_task_run.state.result() == 1
 
         new_task_run_future = task_with_cache.apply_async((42,))
-        task_run = await prefect_client.read_task_run(new_task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(new_task_run_future.task_run_id)
 
         with caplog.at_level("INFO"):
             await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        new_updated_task_run = await prefect_client.read_task_run(
+        new_updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -447,7 +447,7 @@ class TestTaskWorkerTaskResults:
         assert count == 1
 
     async def test_task_run_via_task_worker_receives_result_of_task_dependency(
-        self, prefect_client, foo_task, bar_task, events_pipeline
+        self, syntask_client, foo_task, bar_task, events_pipeline
     ):
         """
         A regression test for #13512
@@ -458,11 +458,11 @@ class TestTaskWorkerTaskResults:
         task_worker = TaskWorker(foo, bar)
 
         foo_task_run_future = foo.apply_async((42,))
-        foo_task_run = await prefect_client.read_task_run(
+        foo_task_run = await syntask_client.read_task_run(
             foo_task_run_future.task_run_id
         )
         bar_task_run_future = bar.apply_async((foo_task_run_future,))
-        bar_task_run = await prefect_client.read_task_run(
+        bar_task_run = await syntask_client.read_task_run(
             bar_task_run_future.task_run_id
         )
 
@@ -475,7 +475,7 @@ class TestTaskWorkerTaskResults:
         assert bar_task_run_future.result() == 43
 
     async def test_task_run_via_task_worker_handles_mix_of_args_and_task_dependencies(
-        self, foo_task, bar_task, prefect_client, events_pipeline
+        self, foo_task, bar_task, syntask_client, events_pipeline
     ):
         foo = foo_task.with_options(persist_result=True)
         bar = bar_task.with_options(persist_result=True)
@@ -483,11 +483,11 @@ class TestTaskWorkerTaskResults:
         task_worker = TaskWorker(foo, bar)
 
         foo_task_run_future = foo.apply_async((42,))
-        foo_task_run = await prefect_client.read_task_run(
+        foo_task_run = await syntask_client.read_task_run(
             foo_task_run_future.task_run_id
         )
         bar_task_run_future = bar.apply_async(kwargs={"x": foo_task_run_future, "y": 5})
-        bar_task_run = await prefect_client.read_task_run(
+        bar_task_run = await syntask_client.read_task_run(
             bar_task_run_future.task_run_id
         )
 
@@ -502,7 +502,7 @@ class TestTaskWorkerTaskResults:
 
 class TestTaskWorkerTaskTags:
     async def test_task_run_via_task_worker_respects_tags(
-        self, async_foo_task, prefect_client, events_pipeline
+        self, async_foo_task, syntask_client, events_pipeline
     ):
         @task(tags=["foo", "bar"])
         async def task_with_tags(x):
@@ -511,12 +511,12 @@ class TestTaskWorkerTaskTags:
         task_worker = TaskWorker(task_with_tags)
 
         task_run_future = task_with_tags.apply_async((42,))
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -527,7 +527,7 @@ class TestTaskWorkerTaskTags:
 
 class TestTaskWorkerCustomTaskRunName:
     async def test_task_run_via_task_worker_respects_custom_task_run_name(
-        self, async_foo_task, prefect_client, events_pipeline
+        self, async_foo_task, syntask_client, events_pipeline
     ):
         async_foo_task_with_custom_name = async_foo_task.with_options(
             task_run_name="{x}"
@@ -536,12 +536,12 @@ class TestTaskWorkerCustomTaskRunName:
         task_worker = TaskWorker(async_foo_task_with_custom_name)
 
         task_run_future = async_foo_task_with_custom_name.apply_async((42,))
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -552,7 +552,7 @@ class TestTaskWorkerCustomTaskRunName:
 
 class TestTaskWorkerTaskStateHooks:
     async def test_task_run_via_task_worker_runs_on_completion_hook(
-        self, async_foo_task, prefect_client, events_pipeline, capsys
+        self, async_foo_task, syntask_client, events_pipeline, capsys
     ):
         async_foo_task_with_on_completion_hook = async_foo_task.with_options(
             on_completion=[
@@ -563,12 +563,12 @@ class TestTaskWorkerTaskStateHooks:
         task_worker = TaskWorker(async_foo_task_with_on_completion_hook)
 
         task_run_future = async_foo_task_with_on_completion_hook.apply_async((42,))
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -577,7 +577,7 @@ class TestTaskWorkerTaskStateHooks:
         assert "Running on_completion hook" in capsys.readouterr().out
 
     async def test_task_run_via_task_worker_runs_on_failure_hook(
-        self, prefect_client, events_pipeline, capsys
+        self, syntask_client, events_pipeline, capsys
     ):
         @task(
             on_failure=[lambda task, task_run, state: print("Running on_failure hook")]
@@ -588,12 +588,12 @@ class TestTaskWorkerTaskStateHooks:
         task_worker = TaskWorker(task_that_fails)
 
         task_run_future = task_that_fails.apply_async()
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -604,7 +604,7 @@ class TestTaskWorkerTaskStateHooks:
 
 class TestTaskWorkerNestedTasks:
     async def test_nested_task_run_via_task_worker(
-        self, prefect_client, events_pipeline
+        self, syntask_client, events_pipeline
     ):
         @task
         def inner_task(x):
@@ -617,11 +617,11 @@ class TestTaskWorkerNestedTasks:
         task_worker = TaskWorker(outer_task)
 
         task_run_future = outer_task.apply_async((42,))
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -630,7 +630,7 @@ class TestTaskWorkerNestedTasks:
         assert await updated_task_run.state.result() == 42
 
     async def test_nested_flow_run_via_task_worker(
-        self, prefect_client, events_pipeline
+        self, syntask_client, events_pipeline
     ):
         @flow
         def inner_flow(x):
@@ -643,12 +643,12 @@ class TestTaskWorkerNestedTasks:
         task_worker = TaskWorker(background_task)
 
         task_run_future = background_task.apply_async((42,))
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         await task_worker.execute_task_run(task_run)
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(
+        updated_task_run = await syntask_client.read_task_run(
             task_run_future.task_run_id
         )
 
@@ -664,7 +664,7 @@ class TestTaskWorkerLimit:
         await LocalFileSystem.register_type_and_schema()
 
     async def test_task_worker_limiter_gracefully_handles_same_task_run(
-        self, prefect_client, events_pipeline
+        self, syntask_client, events_pipeline
     ):
         @task
         def slow_task():
@@ -675,7 +675,7 @@ class TestTaskWorkerLimit:
         task_worker = TaskWorker(slow_task, limit=1)
 
         task_run_future = slow_task.apply_async()
-        task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+        task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
         try:
             with anyio.move_on_after(1):
@@ -692,11 +692,11 @@ class TestTaskWorkerLimit:
 
         await events_pipeline.process_events()
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
         assert updated_task_run.state.is_completed()
 
     async def test_task_worker_respects_limit(
-        self, mock_subscription, prefect_client, events_pipeline
+        self, mock_subscription, syntask_client, events_pipeline
     ):
         @task
         def slow_task():
@@ -707,9 +707,9 @@ class TestTaskWorkerLimit:
         task_worker = TaskWorker(slow_task, limit=1)
 
         task_run_future_1 = slow_task.apply_async()
-        task_run_1 = await prefect_client.read_task_run(task_run_future_1.task_run_id)
+        task_run_1 = await syntask_client.read_task_run(task_run_future_1.task_run_id)
         task_run_future_2 = slow_task.apply_async()
-        task_run_2 = await prefect_client.read_task_run(task_run_future_2.task_run_id)
+        task_run_2 = await syntask_client.read_task_run(task_run_future_2.task_run_id)
 
         async def mock_iter():
             yield task_run_1
@@ -726,14 +726,14 @@ class TestTaskWorkerLimit:
 
         await events_pipeline.process_events()
 
-        updated_task_run_1 = await prefect_client.read_task_run(task_run_1.id)
-        updated_task_run_2 = await prefect_client.read_task_run(task_run_2.id)
+        updated_task_run_1 = await syntask_client.read_task_run(task_run_1.id)
+        updated_task_run_2 = await syntask_client.read_task_run(task_run_2.id)
 
         assert updated_task_run_1.state.is_completed()
         assert updated_task_run_2.state.is_scheduled()
 
     async def test_tasks_execute_when_limit_is_none(
-        self, mock_subscription, prefect_client, events_pipeline
+        self, mock_subscription, syntask_client, events_pipeline
     ):
         @task
         def slow_task():
@@ -744,9 +744,9 @@ class TestTaskWorkerLimit:
         task_worker = TaskWorker(slow_task, limit=None)
 
         task_run_future_1 = slow_task.apply_async()
-        task_run_1 = await prefect_client.read_task_run(task_run_future_1.task_run_id)
+        task_run_1 = await syntask_client.read_task_run(task_run_future_1.task_run_id)
         task_run_future_2 = slow_task.apply_async()
-        task_run_2 = await prefect_client.read_task_run(task_run_future_2.task_run_id)
+        task_run_2 = await syntask_client.read_task_run(task_run_future_2.task_run_id)
 
         async def mock_iter():
             yield task_run_1
@@ -763,14 +763,14 @@ class TestTaskWorkerLimit:
 
         await events_pipeline.process_events()
 
-        updated_task_run_1 = await prefect_client.read_task_run(task_run_1.id)
-        updated_task_run_2 = await prefect_client.read_task_run(task_run_2.id)
+        updated_task_run_1 = await syntask_client.read_task_run(task_run_1.id)
+        updated_task_run_2 = await syntask_client.read_task_run(task_run_2.id)
 
         assert updated_task_run_1.state.is_completed()
         assert updated_task_run_2.state.is_completed()
 
     async def test_tasks_execute_when_capacity_frees_up(
-        self, mock_subscription, prefect_client, events_pipeline
+        self, mock_subscription, syntask_client, events_pipeline
     ):
         execution_order = []
 
@@ -783,9 +783,9 @@ class TestTaskWorkerLimit:
         task_worker = TaskWorker(slow_task, limit=1)
 
         task_run_future_1 = slow_task.apply_async(("task1",))
-        task_run_1 = await prefect_client.read_task_run(task_run_future_1.task_run_id)
+        task_run_1 = await syntask_client.read_task_run(task_run_future_1.task_run_id)
         task_run_future_2 = slow_task.apply_async(("task2",))
-        task_run_2 = await prefect_client.read_task_run(task_run_future_2.task_run_id)
+        task_run_2 = await syntask_client.read_task_run(task_run_future_2.task_run_id)
 
         async def mock_iter():
             yield task_run_1
@@ -812,8 +812,8 @@ class TestTaskWorkerLimit:
             ], "Tasks should execute sequentially"
 
             # Verify the states of both tasks
-            updated_task_run_1 = await prefect_client.read_task_run(task_run_1.id)
-            updated_task_run_2 = await prefect_client.read_task_run(task_run_2.id)
+            updated_task_run_1 = await syntask_client.read_task_run(task_run_1.id)
+            updated_task_run_2 = await syntask_client.read_task_run(task_run_2.id)
 
             assert updated_task_run_1.state.is_completed()
             assert updated_task_run_2.state.is_completed()
@@ -826,7 +826,7 @@ class TestTaskWorkerLimit:
                 pass
 
     async def test_execute_task_run_respects_limit(
-        self, prefect_client, events_pipeline
+        self, syntask_client, events_pipeline
     ):
         @task
         def slow_task():
@@ -837,9 +837,9 @@ class TestTaskWorkerLimit:
         task_worker = TaskWorker(slow_task, limit=1)
 
         task_run_future_1 = slow_task.apply_async()
-        task_run_1 = await prefect_client.read_task_run(task_run_future_1.task_run_id)
+        task_run_1 = await syntask_client.read_task_run(task_run_future_1.task_run_id)
         task_run_future_2 = slow_task.apply_async()
-        task_run_2 = await prefect_client.read_task_run(task_run_future_2.task_run_id)
+        task_run_2 = await syntask_client.read_task_run(task_run_future_2.task_run_id)
 
         try:
             with anyio.move_on_after(1):
@@ -855,14 +855,14 @@ class TestTaskWorkerLimit:
 
         await events_pipeline.process_events()
 
-        updated_task_run_1 = await prefect_client.read_task_run(task_run_1.id)
-        updated_task_run_2 = await prefect_client.read_task_run(task_run_2.id)
+        updated_task_run_1 = await syntask_client.read_task_run(task_run_1.id)
+        updated_task_run_2 = await syntask_client.read_task_run(task_run_2.id)
 
         assert updated_task_run_1.state.is_completed()
         assert updated_task_run_2.state.is_scheduled()
 
     async def test_serve_respects_limit(
-        self, prefect_client, mock_subscription, events_pipeline
+        self, syntask_client, mock_subscription, events_pipeline
     ):
         @task
         def slow_task():
@@ -871,9 +871,9 @@ class TestTaskWorkerLimit:
             time.sleep(1)
 
         task_run_future_1 = slow_task.apply_async()
-        task_run_1 = await prefect_client.read_task_run(task_run_future_1.task_run_id)
+        task_run_1 = await syntask_client.read_task_run(task_run_future_1.task_run_id)
         task_run_future_2 = slow_task.apply_async()
-        task_run_2 = await prefect_client.read_task_run(task_run_future_2.task_run_id)
+        task_run_2 = await syntask_client.read_task_run(task_run_future_2.task_run_id)
 
         async def mock_iter():
             yield task_run_1
@@ -890,8 +890,8 @@ class TestTaskWorkerLimit:
 
         await events_pipeline.process_events()
 
-        updated_task_run_1 = await prefect_client.read_task_run(task_run_1.id)
-        updated_task_run_2 = await prefect_client.read_task_run(task_run_2.id)
+        updated_task_run_1 = await syntask_client.read_task_run(task_run_1.id)
+        updated_task_run_2 = await syntask_client.read_task_run(task_run_2.id)
 
         assert updated_task_run_1.state.is_completed()
         assert updated_task_run_2.state.is_scheduled()

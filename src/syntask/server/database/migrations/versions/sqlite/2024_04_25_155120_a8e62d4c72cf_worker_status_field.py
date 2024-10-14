@@ -9,7 +9,7 @@ Create Date: 2024-04-25 15:51:20.234353
 import sqlalchemy as sa
 from alembic import op
 
-from prefect.server.utilities.database import UUID, Timestamp
+from syntask.server.utilities.database import UUID, Timestamp
 
 # revision identifiers, used by Alembic.
 revision = "a8e62d4c72cf"

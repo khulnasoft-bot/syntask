@@ -12,7 +12,7 @@ sdist/
 .benchmarks/
 .coverage
 .coverage.*.*
-.prefect-results
+.syntask-results
 .pytest_cache/
 
 # Type checking artifacts
@@ -43,8 +43,8 @@ site/
 src/mkdocs-material
 
 # UI artifacts
-src/prefect/server/ui/*
-src/prefect/server/ui_build/*
+src/syntask/server/ui/*
+src/syntask/server/ui_build/*
 **/node_modules
 
 # Databases
@@ -64,11 +64,11 @@ dask-worker-space/
 .vscode/
 !ui/.vscode/
 
-# Prefect files
-prefect.yaml
+# Syntask files
+syntask.yaml
 
 # Deployment recipes
-!src/prefect/deployments/recipes/*/**
+!src/syntask/deployments/recipes/*/**
 
 # For development doc server if link
 libcairo.2.dylib

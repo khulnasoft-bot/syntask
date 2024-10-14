@@ -9,7 +9,7 @@ Create Date: 2024-01-22 12:02:14.583544
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "265eb1a2da4c"
@@ -23,7 +23,7 @@ def upgrade():
         "deployment_schedule",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4)))\n        || '-'\n       "
                 " || lower(hex(randomblob(2)))\n        || '-4'\n        ||"
@@ -36,26 +36,26 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "schedule",
-            prefect.server.utilities.database.Pydantic(
-                prefect.server.schemas.schedules.SCHEDULE_TYPES
+            syntask.server.utilities.database.Pydantic(
+                syntask.server.schemas.schedules.SCHEDULE_TYPES
             ),
             nullable=False,
         ),
         sa.Column("active", sa.Boolean(), nullable=False),
         sa.Column(
-            "deployment_id", prefect.server.utilities.database.UUID(), nullable=False
+            "deployment_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["deployment_id"],

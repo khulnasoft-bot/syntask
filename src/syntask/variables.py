@@ -2,12 +2,12 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from prefect._internal.compatibility.migration import getattr_migration
-from prefect.client.schemas.actions import VariableCreate, VariableUpdate
-from prefect.client.utilities import get_or_create_client
-from prefect.exceptions import ObjectNotFound
-from prefect.types import MAX_VARIABLE_NAME_LENGTH, StrictVariableValue
-from prefect.utilities.asyncutils import sync_compatible
+from syntask._internal.compatibility.migration import getattr_migration
+from syntask.client.schemas.actions import VariableCreate, VariableUpdate
+from syntask.client.utilities import get_or_create_client
+from syntask.exceptions import ObjectNotFound
+from syntask.types import MAX_VARIABLE_NAME_LENGTH, StrictVariableValue
+from syntask.utilities.asyncutils import sync_compatible
 
 
 class Variable(BaseModel):
@@ -57,7 +57,7 @@ class Variable(BaseModel):
             Set a new variable and overwrite it if it already exists.
 
             ```
-            from prefect.variables import Variable
+            from syntask.variables import Variable
 
             @flow
             def my_flow():
@@ -104,8 +104,8 @@ class Variable(BaseModel):
         Example:
             Get a variable's value by name.
             ```python
-            from prefect import flow
-            from prefect.variables import Variable
+            from syntask import flow
+            from syntask.variables import Variable
 
             @flow
             def my_flow():
@@ -131,8 +131,8 @@ class Variable(BaseModel):
         Example:
             Unset a variable by name.
             ```python
-            from prefect import flow
-            from prefect.variables import Variable
+            from syntask import flow
+            from syntask.variables import Variable
 
             @flow
             def my_flow():

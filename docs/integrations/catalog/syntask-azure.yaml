@@ -1,0 +1,6 @@
+integrationName: syntask-azure
+author: Syntask
+authorUrl: https://syntask.khulnasoft.com
+documentation: syntask-azure
+iconUrl: /images/integrations/azure.png
+tag: Azure

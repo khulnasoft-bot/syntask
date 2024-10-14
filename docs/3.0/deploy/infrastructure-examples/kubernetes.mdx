@@ -5,17 +5,17 @@ description: Learn how to run flows on Kubernetes using containers.
 
 This guide explains how to run flows on Kubernetes.
 Though much of the guide is general to any Kubernetes cluster, it focuses on 
-Amazon Elastic Kubernetes Service (EKS). Prefect is tested against 
+Amazon Elastic Kubernetes Service (EKS). Syntask is tested against 
 Kubernetes 1.26.0 and newer minor versions.
 
 ## Prerequisites
 
-1. A Prefect Cloud account
+1. A Syntask Cloud account
 2. A cloud provider (AWS, GCP, or Azure) account
-3. Python and Prefect [installed](/3.0/get-started/install/)
+3. Python and Syntask [installed](/3.0/get-started/install/)
 4. Helm [installed](https://helm.sh/docs/intro/install/) 
 5. Kubernetes CLI (kubectl)[installed](https://kubernetes.io/docs/tasks/tools/install-kubectl/) 
-6. Admin access for Prefect Cloud and your cloud provider. You can downgrade it after this setup.
+6. Admin access for Syntask Cloud and your cloud provider. You can downgrade it after this setup.
 
 ## Create a cluster
 
@@ -189,8 +189,8 @@ This section shows you how to configure the default values for your
 Kubernetes base job template.
 These values can be overridden by individual deployments.
 
-Switch to the Prefect Cloud UI to create a new Kubernetes work pool. 
-(Alternatively, you could use the Prefect CLI to create a work pool.)
+Switch to the Syntask Cloud UI to create a new Kubernetes work pool. 
+(Alternatively, you could use the Syntask CLI to create a work pool.)
 
 1. Click on the **Work Pools** tab on the left sidebar
 1. Click the **+** button at the top of the page
@@ -204,23 +204,23 @@ Here are some popular configuration options.
 **Environment Variables**
 
 Add environment variables to set when starting a flow run.
-If you are using a Prefect-maintained image and haven't overwritten the image's 
+If you are using a Syntask-maintained image and haven't overwritten the image's 
 entrypoint, you can specify Python packages to install at runtime with `{"EXTRA_PIP_PACKAGES":"my_package"}`.
 For example `{"EXTRA_PIP_PACKAGES":"pandas==1.2.3"}` installs pandas version 1.2.3.
 Alternatively, you can specify package installation in a custom Dockerfile, which  
 allows you to use image caching.
-As shown below, Prefect can help create a Dockerfile with your flow code and the 
+As shown below, Syntask can help create a Dockerfile with your flow code and the 
 packages specified in a `requirements.txt` file baked in.
 
 **Namespace**
 
-Set the Kubernetes namespace to create jobs within, such as `prefect`. By default, set 
+Set the Kubernetes namespace to create jobs within, such as `syntask`. By default, set 
 to **default**.
 
 **Image**
 
 Specify the Docker container image for created jobs.
-If not set, the latest Prefect 3 image is used (for example, `prefecthq/prefect:3-latest`).
+If not set, the latest Syntask 3 image is used (for example, `synopkg/syntask:3-latest`).
 You can override this on each deployment through `job_variables`.
 
 **Image Pull Policy**
@@ -294,16 +294,16 @@ Give the work pool a name and save.
 
 Your new Kubernetes work pool should appear in the list of work pools.
 
-## Create a Prefect Cloud API key
+## Create a Syntask Cloud API key
 
-If you already have a Prefect Cloud API key, you can skip these steps.
+If you already have a Syntask Cloud API key, you can skip these steps.
 
-To create a Prefect Cloud API key:
+To create a Syntask Cloud API key:
 
-1. Log in to the Prefect Cloud UI.
+1. Log in to the Syntask Cloud UI.
 1. Click on your profile avatar picture in the top right corner.
 1. Click on your name to go to your profile settings.
-1. In the left sidebar, click on [API Keys](https://app.prefect.cloud/my/api-keys).
+1. In the left sidebar, click on [API Keys](https://app.syntask.cloud/my/api-keys).
 1. Click the **+** button to create a new API key.
 1. Securely store the API key, ideally using a password manager.
 
@@ -311,35 +311,35 @@ To create a Prefect Cloud API key:
 
 After you create a cluster and work pool, the next step is to deploy a worker. 
 The worker sets up the necessary Kubernetes infrastructure to run your flows. 
-The recommended method for deploying a worker is with the [Prefect Helm Chart](https://github.com/synopkg/synopkg-helm/tree/main/charts/prefect-worker).
+The recommended method for deploying a worker is with the [Syntask Helm Chart](https://github.com/synopkg/syntask-helm/tree/main/charts/syntask-worker).
 
-### Add the Prefect Helm repository
+### Add the Syntask Helm repository
 
-Add the Prefect Helm repository to your Helm client:
+Add the Syntask Helm repository to your Helm client:
 
 ```bash
-helm repo add prefect https://prefecthq.github.io/prefect-helm
+helm repo add syntask https://synopkg.github.io/syntask-helm
 helm repo update
 ```
 
 ### Create a namespace
 
-Create a new namespace in your Kubernetes cluster to deploy the Prefect worker:
+Create a new namespace in your Kubernetes cluster to deploy the Syntask worker:
 
 ```bash
-kubectl create namespace prefect
+kubectl create namespace syntask
 ```
 
-### Create a Kubernetes secret for the Prefect API key
+### Create a Kubernetes secret for the Syntask API key
 
 ```bash
-kubectl create secret generic prefect-api-key \
---namespace=prefect --from-literal=key=your-prefect-cloud-api-key
+kubectl create secret generic syntask-api-key \
+--namespace=syntask --from-literal=key=your-syntask-cloud-api-key
 ```
 
 ### Configure Helm chart values
 
-Create a `values.yaml` file to customize the Prefect worker configuration.
+Create a `values.yaml` file to customize the Syntask worker configuration.
 Add the following contents to the file:
 
 ```yaml
@@ -354,25 +354,25 @@ worker:
 These settings ensure that the worker connects to the proper account, workspace, 
 and work pool.
 
-View your Account ID and Workspace ID in your browser URL when logged into Prefect Cloud.
-For example: \<https://app.prefect.cloud/account/abc-my-account-id-is-here/workspaces/123-my-workspace-id-is-here>.
+View your Account ID and Workspace ID in your browser URL when logged into Syntask Cloud.
+For example: \<https://app.syntask.cloud/account/abc-my-account-id-is-here/workspaces/123-my-workspace-id-is-here>.
 
 ### Create a Helm release
 
-Install the Prefect worker using the Helm chart with your custom `values.yaml` file:
+Install the Syntask worker using the Helm chart with your custom `values.yaml` file:
 
 ```bash
-helm install prefect-worker prefect/prefect-worker \
-  --namespace=prefect \
+helm install syntask-worker syntask/syntask-worker \
+  --namespace=syntask \
   -f values.yaml
 ```
 
 ### Verify deployment
 
-Check the status of your Prefect worker deployment:
+Check the status of your Syntask worker deployment:
 
 ```bash
-kubectl get pods -n prefect
+kubectl get pods -n syntask
 ```
 
 ## Define a flow
@@ -381,8 +381,8 @@ Start simple with a flow that just logs a message.
 In a directory named `flows`, create a file named `hello.py` with the following contents:
 
 ```python
-from prefect import flow, tags
-from prefect.logging import get_run_logger
+from syntask import flow, tags
+from syntask.logging import get_run_logger
 
 @flow
 def hello(name: str = "Marvin"):
@@ -398,40 +398,40 @@ Run the flow locally with `python hello.py` to verify that it works.
 Use the `tags` context manager to tag the flow run as `local`.
 This step is not required, but does add some helpful metadata.
 
-## Define a Prefect deployment
+## Define a Syntask deployment
 
-Prefect has two recommended options for creating a deployment with dynamic infrastructure.
+Syntask has two recommended options for creating a deployment with dynamic infrastructure.
 You can define a deployment in a Python script using the `flow.deploy` mechanics or in a 
-`prefect.yaml` definition file.
-The `prefect.yaml` file currently allows for more customization in terms of push and pull 
+`syntask.yaml` definition file.
+The `syntask.yaml` file currently allows for more customization in terms of push and pull 
 steps.
 
 To learn about the Python deployment creation method with `flow.deploy` see 
 [Workers](/3.0/deploy/infrastructure-examples/docker/).
 
-The [`prefect.yaml`](/3.0/deploy/infrastructure-concepts/prefect-yaml/#managing-deployments) file is used 
-by the `prefect deploy` command to deploy your flows.
+The [`syntask.yaml`](/3.0/deploy/infrastructure-concepts/syntask-yaml/#managing-deployments) file is used 
+by the `syntask deploy` command to deploy your flows.
 As a part of that process it also builds and pushes your image.
-Create a new file named `prefect.yaml` with the following contents:
+Create a new file named `syntask.yaml` with the following contents:
 
 ```yaml
 # Generic metadata about this project
 name: flows
-prefect-version: 3.0.0
+syntask-version: 3.0.0
 
 # build section allows you to manage and build docker images
 build:
-- prefect_docker.deployments.steps.build_docker_image:
+- syntask_docker.deployments.steps.build_docker_image:
     id: build-image
     requires: prefect-docker>=0.4.0
-    image_name: "{{ $PREFECT_IMAGE_NAME }}"
+    image_name: "{{ $SYNTASK_IMAGE_NAME }}"
     tag: latest
     dockerfile: auto
     platform: "linux/amd64"
 
 # push section allows you to manage if and how this project is uploaded to remote locations
 push:
-- prefect_docker.deployments.steps.push_docker_image:
+- syntask_docker.deployments.steps.push_docker_image:
     requires: prefect-docker>=0.4.0
     image_name: "{{ build-image.image_name }}"
     tag: "{{ build-image.tag }}"
@@ -439,8 +439,8 @@ push:
 # pull section allows you to provide instructions for cloning this project in remote 
 locations
 pull:
-- prefect.deployments.steps.set_working_directory:
-    directory: /opt/prefect/flows
+- syntask.deployments.steps.set_working_directory:
+    directory: /opt/syntask/flows
 
 # the definitions section allows you to define reusable components for your deployments
 definitions:
@@ -469,7 +469,7 @@ deployments:
 ```
 
 We define two deployments of the `hello` flow: `default` and `arthur`.
-By specifying `dockerfile: auto`, Prefect automatically creates a dockerfile 
+By specifying `dockerfile: auto`, Syntask automatically creates a dockerfile 
 that installs any `requirements.txt` and copies over the current directory.
 
 You can pass a custom Dockerfile instead with `dockerfile: Dockerfile` or 
@@ -489,16 +489,16 @@ but run on cloud provider instances.
 Define your requirements in a `requirements.txt` file:
 
 ```
-prefect>=3.0.0
+syntask>=3.0.0
 prefect-docker>=0.4.0
-prefect-kubernetes>=0.3.1
+syntask-kubernetes>=0.3.1
 ```
 
 The directory should now look something like this:
 
 ```
 .
-├── prefect.yaml
+├── syntask.yaml
 └── flows
     ├── requirements.txt
     └── hello.py
@@ -508,7 +508,7 @@ The directory should now look something like this:
 
 If your code is stored in a GitHub repository, it's good practice to tag your images
 with the Git SHA of the code used to build it.
-Do this in the `prefect.yaml` file with a few minor modifications, since it's not yet 
+Do this in the `syntask.yaml` file with a few minor modifications, since it's not yet 
 an option with the Python deployment creation method.
 
 Use the `run_shell_script` command to grab the SHA and pass it to the `tag` 
@@ -516,14 +516,14 @@ parameter of `build_docker_image`:
 
 ```yaml
 build:
-- prefect.deployments.steps.run_shell_script:
+- syntask.deployments.steps.run_shell_script:
     id: get-commit-hash
     script: git rev-parse --short HEAD
     stream_output: false
-- prefect_docker.deployments.steps.build_docker_image:
+- syntask_docker.deployments.steps.build_docker_image:
     id: build-image
     requires: prefect-docker>=0.4.0
-    image_name: "{{ $PREFECT_IMAGE_NAME }}"
+    image_name: "{{ $SYNTASK_IMAGE_NAME }}"
     tag: "{{ get-commit-hash.stdout }}"
     dockerfile: auto
     platform: "linux/amd64"
@@ -542,65 +542,65 @@ definitions:
       image: "{{ build-image.image }}"
 ```
 
-## Authenticate to Prefect
+## Authenticate to Syntask
 
-Before deploying the flows to Prefect, you need to authenticate through the Prefect CLI.
+Before deploying the flows to Syntask, you need to authenticate through the Syntask CLI.
 You also need to ensure that all of your flow's dependencies are present at `deploy` time.
 
 This example uses a virtual environment to ensure consistency across environments.
 
 ```bash
 # Create a virtualenv & activate it
-virtualenv prefect-demo
-source prefect-demo/bin/activate
+virtualenv syntask-demo
+source syntask-demo/bin/activate
 
 # Install dependencies of your flow
-prefect-demo/bin/pip install -r requirements.txt
+syntask-demo/bin/pip install -r requirements/requirements.txt
 
-# Authenticate to Prefect & select the appropriate
+# Authenticate to Syntask & select the appropriate
 # workspace to deploy your flows to
-prefect-demo/bin/prefect cloud login
+syntask-demo/bin/syntask cloud login
 ```
 
 ## Deploy the flows
 
 You're ready to deploy your flows to build your images.
 The image name determines its registry.
-You have configured our `prefect.yaml` file to get the image name from the 
-`PREFECT_IMAGE_NAME` environment variable, so set that first:
+You have configured our `syntask.yaml` file to get the image name from the 
+`SYNTASK_IMAGE_NAME` environment variable, so set that first:
 
 <Tabs>
   <Tab title="AWS">
 
     ```bash
-    export PREFECT_IMAGE_NAME=<AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/<IMAGE-NAME>
+    export SYNTASK_IMAGE_NAME=<AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/<IMAGE-NAME>
     ```
   </Tab>
   <Tab title="GCP">
 
     ```bash
-    export PREFECT_IMAGE_NAME=us-docker.pkg.dev/<GCP-PROJECT-NAME>/<REPOSITORY-NAME>/<IMAGE-NAME>
+    export SYNTASK_IMAGE_NAME=us-docker.pkg.dev/<GCP-PROJECT-NAME>/<REPOSITORY-NAME>/<IMAGE-NAME>
     ```
   </Tab>
 <Tab title="Azure">
 
     ```bash
-    export PREFECT_IMAGE_NAME=<REPOSITORY-NAME>.azurecr.io/<IMAGE-NAME>
+    export SYNTASK_IMAGE_NAME=<REPOSITORY-NAME>.azurecr.io/<IMAGE-NAME>
     ```
   </Tab>
 </Tabs>
 
 To deploy your flows, ensure your Docker daemon is running. Deploy all the 
-flows with `prefect deploy --all` or deploy them individually by name: `prefect deploy 
--n hello/default` or `prefect deploy -n hello/arthur`.
+flows with `syntask deploy --all` or deploy them individually by name: `syntask deploy 
+-n hello/default` or `syntask deploy -n hello/arthur`.
 
 ## Run the flows
 
 Once the deployments are successfully created, you can run them from the UI or the CLI:
 
 ```bash
-prefect deployment run hello/default
-prefect deployment run hello/arthur
+syntask deployment run hello/default
+syntask deployment run hello/arthur
 ```
 
 You can now check the status of your two deployments in the UI.

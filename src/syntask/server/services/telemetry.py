@@ -11,19 +11,19 @@ from uuid import uuid4
 import httpx
 import pendulum
 
-import prefect
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models import configuration
-from prefect.server.schemas.core import Configuration
-from prefect.server.services.loop_service import LoopService
-from prefect.settings import PREFECT_DEBUG_MODE
+import syntask
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models import configuration
+from syntask.server.schemas.core import Configuration
+from syntask.server.services.loop_service import LoopService
+from syntask.settings import SYNTASK_DEBUG_MODE
 
 
 class Telemetry(LoopService):
     """
-    This service sends anonymous data (e.g. count of flow runs) to Prefect to help us
-    improve. It can be toggled off with the PREFECT_SERVER_ANALYTICS_ENABLED setting.
+    This service sends anonymous data (e.g. count of flow runs) to Syntask to help us
+    improve. It can be toggled off with the SYNTASK_SERVER_ANALYTICS_ENABLED setting.
     """
 
     loop_seconds: int = 600
@@ -31,11 +31,11 @@ class Telemetry(LoopService):
     def __init__(self, loop_seconds: Optional[int] = None, **kwargs):
         super().__init__(loop_seconds=loop_seconds, **kwargs)
         self.telemetry_environment = os.environ.get(
-            "PREFECT_API_TELEMETRY_ENVIRONMENT", "production"
+            "SYNTASK_API_TELEMETRY_ENVIRONMENT", "production"
         )
 
     @inject_db
-    async def _fetch_or_set_telemetry_session(self, db: PrefectDBInterface):
+    async def _fetch_or_set_telemetry_session(self, db: SyntaskDBInterface):
         """
         This method looks for a telemetry session in the configuration table. If there
         isn't one, it sets one. It then sets `self.session_id` and
@@ -80,13 +80,13 @@ class Telemetry(LoopService):
         """
         Sends a heartbeat to the sens-o-matic
         """
-        from prefect.client.constants import SERVER_API_VERSION
+        from syntask.client.constants import SERVER_API_VERSION
 
         if not hasattr(self, "session_id"):
             await self._fetch_or_set_telemetry_session()
 
         heartbeat = {
-            "source": "prefect_server",
+            "source": "syntask_server",
             "type": "heartbeat",
             "payload": {
                 "platform": platform.system(),
@@ -95,7 +95,7 @@ class Telemetry(LoopService):
                 "python_implementation": platform.python_implementation(),
                 "environment": self.telemetry_environment,
                 "api_version": SERVER_API_VERSION,
-                "prefect_version": prefect.__version__,
+                "syntask_version": syntask.__version__,
                 "session_id": self.session_id,
                 "session_start_timestamp": self.session_start_timestamp,
             },
@@ -106,7 +106,7 @@ class Telemetry(LoopService):
                 result = await client.post(
                     "https://sens-o-matic.syntask.khulnasoft.com/",
                     json=heartbeat,
-                    headers={"x-prefect-event": "prefect_server"},
+                    headers={"x-syntask-event": "syntask_server"},
                 )
             result.raise_for_status()
         except Exception as exc:
@@ -114,7 +114,7 @@ class Telemetry(LoopService):
                 f"Failed to send telemetry: {exc}\nShutting down telemetry service...",
                 # The traceback is only needed if doing deeper debugging, otherwise
                 # this looks like an impactful server error
-                exc_info=PREFECT_DEBUG_MODE.value(),
+                exc_info=SYNTASK_DEBUG_MODE.value(),
             )
             await self.stop(block=False)
 

@@ -14,8 +14,8 @@ from pydantic import Field
 from pydantic.types import SecretStr
 from typing_extensions import Self
 
-from prefect.filesystems import WritableFileSystem
-from prefect.utilities.asyncutils import sync_compatible
+from syntask.filesystems import WritableFileSystem
+from syntask.utilities.asyncutils import sync_compatible
 
 
 class RedisStorageContainer(WritableFileSystem):
@@ -33,7 +33,7 @@ class RedisStorageContainer(WritableFileSystem):
     Example:
         Create a new block from hostname, username and password:
         ```python
-        from prefect.blocks.redis import RedisStorageContainer
+        from syntask.blocks.redis import RedisStorageContainer
 
         block = RedisStorageContainer.from_host(
             host="myredishost.com", username="redis", password="SuperSecret")
@@ -42,7 +42,7 @@ class RedisStorageContainer(WritableFileSystem):
 
         Create a new block from a connection string
         ```python
-        from prefect.blocks.redis import RedisStorageContainer
+        from syntask.blocks.redis import RedisStorageContainer
         block = RedisStorageContainer.from_url(""redis://redis:SuperSecret@myredishost.com:6379")
         block.save("BLOCK_NAME")
         ```

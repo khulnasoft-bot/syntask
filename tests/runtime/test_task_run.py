@@ -1,9 +1,9 @@
 import pytest
 
-from prefect.client.schemas import TaskRun
-from prefect.context import TaskRunContext
-from prefect.runtime import task_run
-from prefect.tasks import Task
+from syntask.client.schemas import TaskRun
+from syntask.context import TaskRunContext
+from syntask.runtime import task_run
+from syntask.tasks import Task
 
 
 class TestAttributeAccessPatterns:
@@ -13,14 +13,14 @@ class TestAttributeAccessPatterns:
 
     async def test_import_unknown_attribute_fails(self):
         with pytest.raises(ImportError, match="boop"):
-            from prefect.runtime.task_run import boop  # noqa
+            from syntask.runtime.task_run import boop  # noqa
 
     async def test_known_attributes_autocomplete(self):
         assert "id" in dir(task_run)
         assert "foo" not in dir(task_run)
 
     async def test_new_attribute_via_env_var(self, monkeypatch):
-        monkeypatch.setenv(name="PREFECT__RUNTIME__TASK_RUN__NEW_KEY", value="foobar")
+        monkeypatch.setenv(name="SYNTASK__RUNTIME__TASK_RUN__NEW_KEY", value="foobar")
         assert task_run.new_key == "foobar"
 
     @pytest.mark.parametrize(
@@ -40,7 +40,7 @@ class TestAttributeAccessPatterns:
         monkeypatch.setitem(task_run.FIELDS, attribute_name, lambda: attribute_value)
 
         monkeypatch.setenv(
-            name=f"PREFECT__RUNTIME__TASK_RUN__{attribute_name.upper()}",
+            name=f"SYNTASK__RUNTIME__TASK_RUN__{attribute_name.upper()}",
             value=env_value,
         )
         tasks_run_attr = getattr(task_run, attribute_name)
@@ -64,7 +64,7 @@ class TestAttributeAccessPatterns:
         monkeypatch.setitem(task_run.FIELDS, attribute_name, lambda: attribute_value)
 
         monkeypatch.setenv(
-            name=f"PREFECT__RUNTIME__TASK_RUN__{attribute_name.upper()}", value="foo"
+            name=f"SYNTASK__RUNTIME__TASK_RUN__{attribute_name.upper()}", value="foo"
         )
         with pytest.raises(ValueError, match="cannot be mocked"):
             getattr(task_run, attribute_name)

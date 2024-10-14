@@ -2,13 +2,13 @@ from typing import List
 
 import typer
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error
-from prefect.cli.root import app
-from prefect.task_worker import serve as task_serve
-from prefect.utilities.importtools import import_object
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error
+from syntask.cli.root import app
+from syntask.task_worker import serve as task_serve
+from syntask.utilities.importtools import import_object
 
-task_app = PrefectTyper(name="task", help="Work with task scheduling.")
+task_app = SyntaskTyper(name="task", help="Work with task scheduling.")
 app.add_typer(task_app, aliases=["task"])
 
 

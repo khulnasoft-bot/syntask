@@ -2,10 +2,10 @@ from copy import deepcopy
 from logging import getLogger
 from typing import Any, Dict, List, Optional
 
-from prefect.client.collections import get_collections_metadata_client
-from prefect.logging.loggers import get_logger
-from prefect.settings import PREFECT_DEBUG_MODE
-from prefect.workers.base import BaseWorker
+from syntask.client.collections import get_collections_metadata_client
+from syntask.logging.loggers import get_logger
+from syntask.settings import SYNTASK_DEBUG_MODE
+from syntask.workers.base import BaseWorker
 
 
 async def get_available_work_pool_types() -> List[str]:
@@ -20,7 +20,7 @@ async def get_available_work_pool_types() -> List[str]:
         except Exception:
             # Return only work pool types from the local type registry if
             # the request to the collections registry fails.
-            if PREFECT_DEBUG_MODE:
+            if SYNTASK_DEBUG_MODE:
                 getLogger().warning(
                     "Unable to get worker metadata from the collections registry",
                     exc_info=True,
@@ -48,7 +48,7 @@ async def get_default_base_job_template_for_infrastructure_type(
                     if worker.get("type") == infra_type:
                         return worker.get("default_base_job_configuration")
         except Exception:
-            if PREFECT_DEBUG_MODE:
+            if SYNTASK_DEBUG_MODE:
                 get_logger().warning(
                     (
                         "Unable to get default base job template for"

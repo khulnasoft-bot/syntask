@@ -9,7 +9,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/python-tests.yaml
-      - "src/prefect/**/*.py"
+      - "src/syntask/**/*.py"
       - "tests/**/*.py"
       - requirements.txt
       - requirements-client.txt
@@ -21,7 +21,7 @@ on:
       - main
     paths:
       - .github/workflows/python-tests.yaml
-      - "src/prefect/**/*.py"
+      - "src/syntask/**/*.py"
       - "tests/**/*.py"
       - requirements.txt
       - requirements-client.txt
@@ -117,9 +117,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -130,7 +130,7 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
       - name: Start redis
         run: >
@@ -146,7 +146,7 @@ jobs:
         # maxprocesses 6 is based on empirical testing; higher than 6 sees diminishing returns
       - name: Run tests
         env:
-          PREFECT_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS: "1"
+          SYNTASK_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS: "1"
         run: >
           pytest ${{ matrix.test-type.modules }}
           --numprocesses auto
@@ -243,14 +243,14 @@ jobs:
           context: .
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
-            PREFECT_EXTRAS=[dev]
-          tags: prefecthq/prefect-dev:${{ steps.get_image_tag.outputs.image_tag }}
+            SYNTASK_EXTRAS=[dev]
+          tags: synopkg/syntask-dev:${{ steps.get_image_tag.outputs.image_tag }}
           outputs: type=docker,dest=/tmp/image.tar
 
       - name: Test Docker image
         run: |
           docker load --input /tmp/image.tar
-          docker run --rm prefecthq/prefect-dev:${{ steps.get_image_tag.outputs.image_tag }} prefect version
+          docker run --rm synopkg/syntask-dev:${{ steps.get_image_tag.outputs.image_tag }} syntask version
 
       - name: Install packages
         run: |
@@ -269,9 +269,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -282,12 +282,12 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
       - name: Start docker registry
         run: >
           docker run
-          --name "prefect-test-registry"
+          --name "syntask-test-registry"
           --detach
           --publish 5555:5000
           registry:2
@@ -306,7 +306,7 @@ jobs:
         # maxprocesses 6 is based on empirical testing; higher than 6 sees diminishing returns
       - name: Run tests
         env:
-          PREFECT_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS: "1"
+          SYNTASK_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS: "1"
         run: >
           pytest tests
           --numprocesses auto

@@ -1,17 +1,17 @@
 """
-Orchestration rules related to instrumenting the orchestration engine for Prefect
+Orchestration rules related to instrumenting the orchestration engine for Syntask
 Observability
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events.clients import PrefectServerEventsClient
-from prefect.server.models.events import (
+from syntask.server.events.clients import SyntaskServerEventsClient
+from syntask.server.models.events import (
     TRUNCATE_STATE_MESSAGES_AT,
     flow_run_state_change_event,
     truncated_to,
 )
-from prefect.server.orchestration.rules import (
+from syntask.server.orchestration.rules import (
     BaseUniversalTransform,
     FlowOrchestrationContext,
     OrchestrationContext,
@@ -19,7 +19,7 @@ from prefect.server.orchestration.rules import (
 
 
 class InstrumentFlowRunStateTransitions(BaseUniversalTransform):
-    """When a Flow Run changes states, fire a Prefect Event for the state change"""
+    """When a Flow Run changes states, fire a Syntask Event for the state change"""
 
     async def after_transition(self, context: OrchestrationContext) -> None:
         if not context.proposed_state or not context.validated_state:
@@ -47,7 +47,7 @@ class InstrumentFlowRunStateTransitions(BaseUniversalTransform):
 
         assert isinstance(context.session, AsyncSession)
 
-        async with PrefectServerEventsClient() as events:
+        async with SyntaskServerEventsClient() as events:
             await events.emit(
                 await flow_run_state_change_event(
                     session=context.session,

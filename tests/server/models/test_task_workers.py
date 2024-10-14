@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.server.models.task_workers import InMemoryTaskWorkerTracker
+from syntask.server.models.task_workers import InMemoryTaskWorkerTracker
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ Access attributes of the current flow run dynamically.
 Note that if a flow run cannot be discovered, all attributes will return empty values.
 
 You can mock the runtime attributes for testing purposes by setting environment variables
-prefixed with `PREFECT__RUNTIME__FLOW_RUN`.
+prefixed with `SYNTASK__RUNTIME__FLOW_RUN`.
 
 Available attributes:
     - `id`: the flow run's unique ID
@@ -25,10 +25,10 @@ from typing import Any, Dict, List, Optional
 
 import pendulum
 
-from prefect._internal.concurrency.api import create_call, from_sync
-from prefect.client.orchestration import get_client
-from prefect.context import FlowRunContext, TaskRunContext
-from prefect.settings import PREFECT_API_URL, PREFECT_UI_URL
+from syntask._internal.concurrency.api import create_call, from_sync
+from syntask.client.orchestration import get_client
+from syntask.context import FlowRunContext, TaskRunContext
+from syntask.settings import SYNTASK_API_URL, SYNTASK_UI_URL
 
 __all__ = [
     "id",
@@ -70,14 +70,14 @@ def __getattr__(name: str) -> Any:
     """
     Attribute accessor for this submodule; note that imports also work with this:
 
-        from prefect.runtime.flow_run import id
+        from syntask.runtime.flow_run import id
     """
 
     func = FIELDS.get(name)
 
     # if `name` is an attribute but it is mocked through environment variable, the mocked type will be str,
     # which might be different from original one. For consistency, cast env var to the same type
-    env_key = f"PREFECT__RUNTIME__FLOW_RUN__{name.upper()}"
+    env_key = f"SYNTASK__RUNTIME__FLOW_RUN__{name.upper()}"
 
     if func is None:
         if env_key in os.environ:
@@ -129,7 +129,7 @@ def get_id() -> Optional[str]:
     if task_run_ctx is not None:
         return str(task_run_ctx.task_run.flow_run_id)
     else:
-        return os.getenv("PREFECT__FLOW_RUN_ID")
+        return os.getenv("SYNTASK__FLOW_RUN_ID")
 
 
 def get_tags() -> List[str]:
@@ -307,14 +307,14 @@ def get_flow_run_api_url() -> Optional[str]:
     flow_run_id = get_id()
     if flow_run_id is None:
         return None
-    return f"{PREFECT_API_URL.value()}/flow-runs/flow-run/{flow_run_id}"
+    return f"{SYNTASK_API_URL.value()}/flow-runs/flow-run/{flow_run_id}"
 
 
 def get_flow_run_ui_url() -> Optional[str]:
     flow_run_id = get_id()
     if flow_run_id is None:
         return None
-    return f"{PREFECT_UI_URL.value()}/flow-runs/flow-run/{flow_run_id}"
+    return f"{SYNTASK_UI_URL.value()}/flow-runs/flow-run/{flow_run_id}"
 
 
 FIELDS = {

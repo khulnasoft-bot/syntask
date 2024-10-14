@@ -19,22 +19,22 @@ from sqlalchemy.orm import (
 from sqlalchemy.sql.expression import ColumnElement
 from sqlalchemy.sql.functions import coalesce
 
-import prefect
-import prefect.server.schemas as schemas
-from prefect.server.events.actions import ServerActionTypes
-from prefect.server.events.schemas.automations import (
+import syntask
+import syntask.server.schemas as schemas
+from syntask.server.events.actions import ServerActionTypes
+from syntask.server.events.schemas.automations import (
     AutomationSort,
     Firing,
     ServerTriggerTypes,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.schemas.statuses import (
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.schemas.statuses import (
     DeploymentStatus,
     WorkerStatus,
     WorkPoolStatus,
     WorkQueueStatus,
 )
-from prefect.server.utilities.database import (
+from syntask.server.utilities.database import (
     JSON,
     UUID,
     GenerateUUID,
@@ -45,8 +45,8 @@ from prefect.server.utilities.database import (
     interval_add,
     now,
 )
-from prefect.server.utilities.encryption import decrypt_fernet, encrypt_fernet
-from prefect.utilities.names import generate_slug
+from syntask.server.utilities.encryption import decrypt_fernet, encrypt_fernet
+from syntask.utilities.names import generate_slug
 
 
 class Base(DeclarativeBase):
@@ -886,18 +886,18 @@ class Deployment(Base):
         sa.ForeignKey("concurrency_limit_v2.id", ondelete="SET NULL"),
         nullable=True,
     )
-    global_concurrency_limit: Mapped[
-        Union["ConcurrencyLimitV2", None]
-    ] = sa.orm.relationship(
-        lazy="selectin",
+    global_concurrency_limit: Mapped[Union["ConcurrencyLimitV2", None]] = (
+        sa.orm.relationship(
+            lazy="selectin",
+        )
     )
-    concurrency_options: Mapped[
-        Union[schemas.core.ConcurrencyOptions, None]
-    ] = mapped_column(
-        Pydantic(schemas.core.ConcurrencyOptions),
-        server_default=None,
-        nullable=True,
-        default=None,
+    concurrency_options: Mapped[Union[schemas.core.ConcurrencyOptions, None]] = (
+        mapped_column(
+            Pydantic(schemas.core.ConcurrencyOptions),
+            server_default=None,
+            nullable=True,
+            default=None,
+        )
     )
 
     tags: Mapped[List[str]] = mapped_column(
@@ -1574,9 +1574,9 @@ ORMEventResource = EventResource
 
 class BaseORMConfiguration(ABC):
     """
-    Abstract base class used to inject database-specific ORM configuration into Prefect.
+    Abstract base class used to inject database-specific ORM configuration into Syntask.
 
-    Modifications to core Prefect REST API data structures can have unintended consequences.
+    Modifications to core Syntask REST API data structures can have unintended consequences.
     Use with caution.
     """
 
@@ -1654,7 +1654,7 @@ class AsyncPostgresORMConfiguration(BaseORMConfiguration):
     def versions_dir(self) -> Path:
         """Directory containing migrations"""
         return (
-            Path(prefect.server.database.__file__).parent
+            Path(syntask.server.database.__file__).parent
             / "migrations"
             / "versions"
             / "postgresql"
@@ -1668,7 +1668,7 @@ class AioSqliteORMConfiguration(BaseORMConfiguration):
     def versions_dir(self) -> Path:
         """Directory containing migrations"""
         return (
-            Path(prefect.server.database.__file__).parent
+            Path(syntask.server.database.__file__).parent
             / "migrations"
             / "versions"
             / "sqlite"

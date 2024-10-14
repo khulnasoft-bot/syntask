@@ -1,7 +1,7 @@
 ---
 Title: Use integrations
 
-description: Prefect integrations are PyPI packages you can install to help you build integrate your workflows with third parties.
+description: Syntask integrations are PyPI packages you can install to help you build integrate your workflows with third parties.
 ---
 
 ## Install an integration package
@@ -17,19 +17,19 @@ pip install prefect-aws
 
 - install the corresponding extra:
 ```bash
-pip install 'prefect[aws]'
+pip install 'syntask[aws]'
 ```
 
-See [the `setup.py`](https://github.com/synopkg/synopkg/blob/main/setup.py) for the full list of extras and the versions they specify.
+See [the `setup.py`](https://github.com/synopkg/syntask/blob/main/setup.py) for the full list of extras and the versions they specify.
 
 ## Register blocks from an integration
 
-Once the packages is installed, [register the blocks](/3.0/develop/blocks/#registering-blocks-for-use-in-the-prefect-ui) within the integration to view them in the Prefect Cloud UI:
+Once the packages is installed, [register the blocks](/3.0/develop/blocks/#registering-blocks-for-use-in-the-syntask-ui) within the integration to view them in the Syntask Cloud UI:
 
 For example, to register the blocks available in `prefect-aws`:
 
 ```bash
-prefect block register -m prefect_aws
+syntask block register -m prefect_aws
 ```
 
 To use a block's `load` method, you must have a block [saved](/3.0/develop/blocks/#saving-blocks). [Learn more about blocks](/3.0/develop/blocks).
@@ -41,7 +41,7 @@ Integrations may contain pre-built tasks and flows that can be imported and call
 For example, read a secret from AWS Secrets Manager with the `read_secret` task with the following code:
 
 ```python
-from prefect import flow
+from syntask import flow
 from prefect_aws import AwsCredentials
 from prefect_aws.secrets_manager import read_secret
 
@@ -61,9 +61,9 @@ def connect_to_database():
 To customize pre-configured tasks or flows use `with_options`. For example, configure retries for dbt Cloud jobs:
     
 ```python
-from prefect import flow
-from prefect_dbt.cloud import DbtCloudCredentials
-from prefect_dbt.cloud.jobs import trigger_dbt_cloud_job_run_and_wait_for_completion
+from syntask import flow
+from syntask_dbt.cloud import DbtCloudCredentials
+from syntask_dbt.cloud.jobs import trigger_dbt_cloud_job_run_and_wait_for_completion
 
 
 custom_run_dbt_cloud_job = trigger_dbt_cloud_job_run_and_wait_for_completion.with_options(

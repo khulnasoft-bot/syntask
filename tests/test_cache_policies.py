@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from prefect.cache_policies import (
+from syntask.cache_policies import (
     DEFAULT,
     CachePolicy,
     CompoundCachePolicy,
@@ -14,7 +14,7 @@ from prefect.cache_policies import (
     TaskSource,
     _None,
 )
-from prefect.context import TaskRunContext
+from syntask.context import TaskRunContext
 
 
 class TestBaseClass:

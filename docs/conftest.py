@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from prefect.server.database.orm_models import Mapped, Run, mapped_column, sa
+from syntask.server.database.orm_models import Mapped, Run, mapped_column, sa
 
 SKIP_FILES = {
     "docs/3.0/deploy/index.mdx": "Needs database fixtures",
@@ -19,27 +19,27 @@ SKIP_FILES = {
     "docs/3.0/manage/interact-with-api.mdx": "Async function outside of async context",
     "docs/3.0/resources/big-data.mdx": "Needs block cleanup handling",
     "docs/contribute/dev-contribute.mdx": "SQLAlchemy model modifications can't be safely tested without affecting the global database schema",
-    "docs/integrations/prefect-azure/index.mdx": "Makes live network calls which should be mocked",
+    "docs/integrations/syntask-azure/index.mdx": "Makes live network calls which should be mocked",
     "docs/integrations/prefect-bitbucket/index.mdx": "Needs block cleanup handling",
     "docs/integrations/prefect-dask/index.mdx": "Needs a `dask_cloudprovider` harness",
     "docs/integrations/prefect-dask/usage_guide.mdx": "Attempts to start a dask cluster",
     "docs/integrations/prefect-databricks/index.mdx": "Pydantic failures",
     "docs/integrations/prefect-dbt/index.mdx": "Needs block cleanup handling, and prefect-dbt installed",
-    "docs/integrations/prefect-email/index.mdx": "Needs block cleanup handling",
-    "docs/integrations/prefect-gcp/index.mdx": "Needs block cleanup handling",
-    "docs/integrations/prefect-github/index.mdx": "Needs block cleanup handling",
-    "docs/integrations/prefect-gitlab/index.mdx": "Needs block cleanup handling",
-    "docs/integrations/prefect-kubernetes/index.mdx": "Needs block cleanup handling",
-    "docs/integrations/prefect-slack/index.mdx": "Needs block cleanup handling",
-    "docs/integrations/prefect-snowflake/index.mdx": "Needs block cleanup handling",
-    "docs/integrations/prefect-sqlalchemy/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-email/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-gcp/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-github/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-gitlab/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-kubernetes/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-slack/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-snowflake/index.mdx": "Needs block cleanup handling",
+    "docs/integrations/syntask-sqlalchemy/index.mdx": "Needs block cleanup handling",
     "docs/integrations/use-integrations.mdx": "Pydantic failures",
     # --- Below this line are files that haven't been debugged yet. ---
     "docs/3.0/resources/upgrade-agents-to-workers.mdx": "Needs Debugging",
-    "docs/3.0/resources/upgrade-to-prefect-3.mdx": "Needs Debugging",
+    "docs/3.0/resources/upgrade-to-syntask-3.mdx": "Needs Debugging",
     "docs/contribute/develop-a-new-worker-type.mdx": "Needs Debugging",
     "docs/integrations/prefect-aws/index.mdx": "Needs Debugging",
-    "docs/integrations/prefect-shell/index.mdx": "Needs Debugging",
+    "docs/integrations/syntask-shell/index.mdx": "Needs Debugging",
     # --- Below this line are files that pass locally but fail in CI ---
     "docs/3.0/api-ref/rest-api/index.mdx": "Needs Debugging in CI",
     "docs/3.0/automate/add-schedules.mdx": "Needs Debugging in CI",
@@ -63,7 +63,7 @@ def pytest_collection_modifyitems(items):
 
 @pytest.fixture(autouse=True)
 def mock_runner_start():
-    with mock.patch("prefect.cli.flow.Runner.start", new_callable=mock.AsyncMock):
+    with mock.patch("syntask.cli.flow.Runner.start", new_callable=mock.AsyncMock):
         yield
 
 

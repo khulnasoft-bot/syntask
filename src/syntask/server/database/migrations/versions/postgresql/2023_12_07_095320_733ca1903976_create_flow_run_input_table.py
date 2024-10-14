@@ -9,7 +9,7 @@ Create Date: 2023-12-07 09:53:20.009178
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "733ca1903976"
@@ -24,26 +24,26 @@ def upgrade():
         "flow_run_input",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column("key", sa.String(), nullable=False),
         sa.Column("value", sa.Text(), nullable=False),
         sa.Column(
-            "flow_run_id", prefect.server.utilities.database.UUID(), nullable=False
+            "flow_run_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_flow_run_input")),
         sa.UniqueConstraint(

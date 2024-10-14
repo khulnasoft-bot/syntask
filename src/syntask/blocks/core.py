@@ -40,31 +40,31 @@ from pydantic import (
 from pydantic.json_schema import GenerateJsonSchema
 from typing_extensions import Literal, ParamSpec, Self, get_args
 
-import prefect.exceptions
-from prefect.client.schemas import (
+import syntask.exceptions
+from syntask.client.schemas import (
     DEFAULT_BLOCK_SCHEMA_VERSION,
     BlockDocument,
     BlockSchema,
     BlockType,
     BlockTypeUpdate,
 )
-from prefect.client.utilities import inject_client
-from prefect.events import emit_event
-from prefect.logging.loggers import disable_logger
-from prefect.plugins import load_prefect_collections
-from prefect.types import SecretDict
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.collections import listrepr, remove_nested_keys, visit_collection
-from prefect.utilities.dispatch import lookup_type, register_base_type
-from prefect.utilities.hashing import hash_objects
-from prefect.utilities.importtools import to_qualified_name
-from prefect.utilities.pydantic import handle_secret_render
-from prefect.utilities.slugify import slugify
+from syntask.client.utilities import inject_client
+from syntask.events import emit_event
+from syntask.logging.loggers import disable_logger
+from syntask.plugins import load_syntask_collections
+from syntask.types import SecretDict
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.collections import listrepr, remove_nested_keys, visit_collection
+from syntask.utilities.dispatch import lookup_type, register_base_type
+from syntask.utilities.hashing import hash_objects
+from syntask.utilities.importtools import to_qualified_name
+from syntask.utilities.pydantic import handle_secret_render
+from syntask.utilities.slugify import slugify
 
 if TYPE_CHECKING:
     from pydantic.main import IncEx
 
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 R = TypeVar("R")
 P = ParamSpec("P")
@@ -265,10 +265,10 @@ class Block(BaseModel, ABC):
     This class can be defined with an arbitrary set of fields and methods, and
     couples business logic with data contained in an block document.
     `_block_document_name`, `_block_document_id`, `_block_schema_id`, and
-    `_block_type_id` are reserved by Prefect as Block metadata fields, but
+    `_block_type_id` are reserved by Syntask as Block metadata fields, but
     otherwise a Block can implement arbitrary logic. Blocks can be instantiated
     without populating these metadata fields, but can only be used interactively,
-    not with the Prefect API.
+    not with the Syntask API.
 
     Instead of the __init__ method, a block implementation allows the
     definition of a `block_initialization` method that is called after
@@ -488,7 +488,7 @@ class Block(BaseModel, ABC):
 
         # The keys passed to `include` must NOT be aliases, else some items will be missed
         # i.e. must do `self.schema_` vs `self.schema` to get a `schema_ = Field(alias="schema")`
-        # reported from https://github.com/synopkg/synopkg-dbt/issues/54
+        # reported from https://github.com/synopkg/prefect-dbt/issues/54
         data_keys = self.model_json_schema(by_alias=False)["properties"].keys()
 
         # `block_document_data`` must return the aliased version for it to show in the UI
@@ -704,7 +704,7 @@ class Block(BaseModel, ABC):
         return block
 
     def _event_kind(self) -> str:
-        return f"prefect.block.{self.get_block_type_slug()}"
+        return f"syntask.block.{self.get_block_type_slug()}"
 
     def _event_method_called_resources(self) -> Optional[ResourceTuple]:
         if not (self._block_document_id and self._block_document_name):
@@ -712,17 +712,17 @@ class Block(BaseModel, ABC):
 
         return (
             {
-                "prefect.resource.id": (
-                    f"prefect.block-document.{self._block_document_id}"
+                "syntask.resource.id": (
+                    f"syntask.block-document.{self._block_document_id}"
                 ),
-                "prefect.resource.name": self._block_document_name,
+                "syntask.resource.name": self._block_document_name,
             },
             [
                 {
-                    "prefect.resource.id": (
-                        f"prefect.block-type.{self.get_block_type_slug()}"
+                    "syntask.resource.id": (
+                        f"syntask.block-type.{self.get_block_type_slug()}"
                     ),
-                    "prefect.resource.role": "block-type",
+                    "syntask.resource.role": "block-type",
                 }
             ],
         )
@@ -742,7 +742,7 @@ class Block(BaseModel, ABC):
 
         # Ensure collections are imported and have the opportunity to register types
         # before looking up the block class, but only do this once
-        load_prefect_collections()
+        load_syntask_collections()
 
         return lookup_type(cls, key)
 
@@ -779,7 +779,7 @@ class Block(BaseModel, ABC):
     async def _get_block_document(
         cls,
         name: str,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ):
         if cls.__name__ == "Block":
             block_type_slug, block_document_name = name.split("/", 1)
@@ -791,7 +791,7 @@ class Block(BaseModel, ABC):
             block_document = await client.read_block_document_by_name(
                 name=block_document_name, block_type_slug=block_type_slug
             )
-        except prefect.exceptions.ObjectNotFound as e:
+        except syntask.exceptions.ObjectNotFound as e:
             raise ValueError(
                 f"Unable to find block document named {block_document_name} for block"
                 f" type {block_type_slug}"
@@ -805,7 +805,7 @@ class Block(BaseModel, ABC):
     async def _get_block_document_by_id(
         cls,
         block_document_id: Union[str, uuid.UUID],
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ):
         if isinstance(block_document_id, str):
             try:
@@ -819,7 +819,7 @@ class Block(BaseModel, ABC):
             block_document = await client.read_block_document(
                 block_document_id=block_document_id
             )
-        except prefect.exceptions.ObjectNotFound:
+        except syntask.exceptions.ObjectNotFound:
             raise ValueError(
                 f"Unable to find block document with ID {block_document_id!r}"
             )
@@ -833,7 +833,7 @@ class Block(BaseModel, ABC):
         cls,
         name: str,
         validate: bool = True,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ) -> "Self":
         """
         Retrieves data from the block document with the given name for the block type
@@ -923,7 +923,7 @@ class Block(BaseModel, ABC):
         cls,
         ref: Union[str, UUID, Dict[str, Any]],
         validate: bool = True,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ) -> "Self":
         """
         Retrieves data from the block document by given reference for the block type
@@ -1054,14 +1054,14 @@ class Block(BaseModel, ABC):
     @classmethod
     @sync_compatible
     @inject_client
-    async def register_type_and_schema(cls, client: Optional["PrefectClient"] = None):
+    async def register_type_and_schema(cls, client: Optional["SyntaskClient"] = None):
         """
-        Makes block available for configuration with current Prefect API.
+        Makes block available for configuration with current Syntask API.
         Recursively registers all nested blocks. Registration is idempotent.
 
         Args:
             client: Optional client to use for registering type and schema with the
-                Prefect API. A new client will be created and used if one is not
+                Syntask API. A new client will be created and used if one is not
                 provided.
         """
         if cls.__name__ == "Block":
@@ -1100,7 +1100,7 @@ class Block(BaseModel, ABC):
                 await client.update_block_type(
                     block_type_id=block_type.id, block_type=local_block_type
                 )
-        except prefect.exceptions.ObjectNotFound:
+        except syntask.exceptions.ObjectNotFound:
             block_type = await client.create_block_type(block_type=cls._to_block_type())
             cls._block_type_id = block_type.id
 
@@ -1109,7 +1109,7 @@ class Block(BaseModel, ABC):
                 checksum=cls._calculate_schema_checksum(),
                 version=cls.get_block_schema_version(),
             )
-        except prefect.exceptions.ObjectNotFound:
+        except syntask.exceptions.ObjectNotFound:
             block_schema = await client.create_block_schema(
                 block_schema=cls._to_block_schema(block_type_id=block_type.id)
             )
@@ -1122,7 +1122,7 @@ class Block(BaseModel, ABC):
         name: Optional[str] = None,
         is_anonymous: bool = False,
         overwrite: bool = False,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ):
         """
         Saves the values of a block as a block document with an option to save as an
@@ -1160,7 +1160,7 @@ class Block(BaseModel, ABC):
             block_document = await client.create_block_document(
                 block_document=self._to_block_document(name=name)
             )
-        except prefect.exceptions.ObjectAlreadyExists as err:
+        except syntask.exceptions.ObjectAlreadyExists as err:
             if overwrite:
                 block_document_id = self._block_document_id
                 if block_document_id is None:
@@ -1194,7 +1194,7 @@ class Block(BaseModel, ABC):
         self,
         name: Optional[str] = None,
         overwrite: bool = False,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ):
         """
         Saves the values of a block as a block document.
@@ -1216,7 +1216,7 @@ class Block(BaseModel, ABC):
     async def delete(
         cls,
         name: str,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ):
         block_document, block_document_name = await cls._get_block_document(name)
 
@@ -1241,7 +1241,7 @@ class Block(BaseModel, ABC):
 
         Returns:
             str: The block placeholder for the current block in the format
-                `prefect.blocks.{block_type_name}.{block_document_name}`
+                `syntask.blocks.{block_type_name}.{block_document_name}`
 
         Raises:
             BlockNotSavedError: Raised if the block has not been saved.
@@ -1254,7 +1254,7 @@ class Block(BaseModel, ABC):
                 "Could not generate block placeholder for unsaved block."
             )
 
-        return f"prefect.blocks.{self.get_block_type_slug()}.{block_document_name}"
+        return f"syntask.blocks.{self.get_block_type_slug()}.{block_document_name}"
 
     @classmethod
     def model_json_schema(

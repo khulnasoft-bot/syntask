@@ -5,7 +5,7 @@ either `flow.serve` or the `serve` utility.
 Example:
     ```python
     import time
-    from prefect import flow, serve
+    from syntask import flow, serve
 
 
     @flow
@@ -51,72 +51,72 @@ import anyio
 import anyio.abc
 import pendulum
 
-from prefect._internal.concurrency.api import (
+from syntask._internal.concurrency.api import (
     create_call,
     from_async,
     from_sync,
 )
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.filters import (
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.filters import (
     FlowRunFilter,
     FlowRunFilterId,
     FlowRunFilterState,
     FlowRunFilterStateName,
     FlowRunFilterStateType,
 )
-from prefect.client.schemas.objects import (
+from syntask.client.schemas.objects import (
     ConcurrencyLimitConfig,
     FlowRun,
     State,
     StateType,
 )
-from prefect.client.schemas.objects import Flow as APIFlow
-from prefect.concurrency.asyncio import (
+from syntask.client.schemas.objects import Flow as APIFlow
+from syntask.concurrency.asyncio import (
     AcquireConcurrencySlotTimeoutError,
     ConcurrencySlotAcquisitionError,
 )
-from prefect.events import DeploymentTriggerTypes, TriggerTypes
-from prefect.events.related import tags_as_related_resources
-from prefect.events.schemas.events import RelatedResource
-from prefect.events.utilities import emit_event
-from prefect.exceptions import Abort, ObjectNotFound
-from prefect.flows import Flow, load_flow_from_flow_run
-from prefect.logging.loggers import PrefectLogAdapter, flow_run_logger, get_logger
-from prefect.runner.storage import RunnerStorage
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_RUNNER_POLL_FREQUENCY,
-    PREFECT_RUNNER_PROCESS_LIMIT,
-    PREFECT_RUNNER_SERVER_ENABLE,
+from syntask.events import DeploymentTriggerTypes, TriggerTypes
+from syntask.events.related import tags_as_related_resources
+from syntask.events.schemas.events import RelatedResource
+from syntask.events.utilities import emit_event
+from syntask.exceptions import Abort, ObjectNotFound
+from syntask.flows import Flow, load_flow_from_flow_run
+from syntask.logging.loggers import SyntaskLogAdapter, flow_run_logger, get_logger
+from syntask.runner.storage import RunnerStorage
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_RUNNER_POLL_FREQUENCY,
+    SYNTASK_RUNNER_PROCESS_LIMIT,
+    SYNTASK_RUNNER_SERVER_ENABLE,
     get_current_settings,
 )
-from prefect.states import (
+from syntask.states import (
     Crashed,
     Pending,
     exception_to_failed_state,
 )
-from prefect.types.entrypoint import EntrypointType
-from prefect.utilities.asyncutils import (
+from syntask.types.entrypoint import EntrypointType
+from syntask.utilities.asyncutils import (
     asyncnullcontext,
     is_async_fn,
     sync_compatible,
 )
-from prefect.utilities.engine import propose_state
-from prefect.utilities.processutils import (
+from syntask.utilities.engine import propose_state
+from syntask.utilities.processutils import (
     _register_signal,
     get_sys_executable,
     run_process,
 )
-from prefect.utilities.services import (
+from syntask.utilities.services import (
     critical_service_loop,
     start_client_metrics_server,
 )
-from prefect.utilities.slugify import slugify
+from syntask.utilities.slugify import slugify
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.objects import Deployment
-    from prefect.client.types.flexible_schedule_list import FlexibleScheduleList
-    from prefect.deployments.runner import RunnerDeployment
+    from syntask.client.schemas.objects import Deployment
+    from syntask.client.types.flexible_schedule_list import FlexibleScheduleList
+    from syntask.deployments.runner import RunnerDeployment
 
 __all__ = ["Runner"]
 
@@ -138,7 +138,7 @@ class Runner:
             name: The name of the runner. If not provided, a random one
                 will be generated. If provided, it cannot contain '/' or '%'.
             query_seconds: The number of seconds to wait between querying for
-                scheduled flow runs; defaults to `PREFECT_RUNNER_POLL_FREQUENCY`
+                scheduled flow runs; defaults to `SYNTASK_RUNNER_POLL_FREQUENCY`
             prefetch_seconds: The number of seconds to prefetch flow runs for.
             limit: The maximum number of flow runs this runner should be running at
             pause_on_shutdown: A boolean for whether or not to automatically pause
@@ -149,7 +149,7 @@ class Runner:
             Set up a Runner to manage the execute of scheduled flow runs for two flows:
                 ```python
                 import asyncio
-                from prefect import flow, Runner
+                from syntask import flow, Runner
 
                 @flow
                 def hello_flow(name):
@@ -179,10 +179,10 @@ class Runner:
         self.started = False
         self.stopping = False
         self.pause_on_shutdown = pause_on_shutdown
-        self.limit = limit or PREFECT_RUNNER_PROCESS_LIMIT.value()
+        self.limit = limit or SYNTASK_RUNNER_PROCESS_LIMIT.value()
         self.webserver = webserver
 
-        self.query_seconds = query_seconds or PREFECT_RUNNER_POLL_FREQUENCY.value()
+        self.query_seconds = query_seconds or SYNTASK_RUNNER_POLL_FREQUENCY.value()
         self._prefetch_seconds = prefetch_seconds
 
         self._limiter: Optional[anyio.CapacityLimiter] = None
@@ -207,7 +207,7 @@ class Runner:
         deployment: "RunnerDeployment",
     ) -> UUID:
         """
-        Registers the deployment with the Prefect API and will monitor for work once
+        Registers the deployment with the Syntask API and will monitor for work once
         the runner is started.
 
         Args:
@@ -276,10 +276,10 @@ class Runner:
             entrypoint_type: Type of entrypoint to use for the deployment. When using a module path
                 entrypoint, ensure that the module will be importable in the execution environment.
         """
-        api = PREFECT_API_URL.value()
+        api = SYNTASK_API_URL.value()
         if any([interval, cron, rrule]) and not api:
             self._logger.warning(
-                "Cannot schedule flows on an ephemeral server; run `prefect server"
+                "Cannot schedule flows on an ephemeral server; run `syntask server"
                 " start` to start the scheduler."
             )
         name = self.name if name is None else name
@@ -354,7 +354,7 @@ class Runner:
 
             ```python
             import asyncio
-            from prefect import flow, Runner
+            from syntask import flow, Runner
 
             @flow
             def hello_flow(name):
@@ -376,13 +376,13 @@ class Runner:
                 asyncio.run(runner.start())
             ```
         """
-        from prefect.runner.server import start_webserver
+        from syntask.runner.server import start_webserver
 
         _register_signal(signal.SIGTERM, self.handle_sigterm)
 
         webserver = webserver if webserver is not None else self.webserver
 
-        if webserver or PREFECT_RUNNER_SERVER_ENABLE.value():
+        if webserver or SYNTASK_RUNNER_SERVER_ENABLE.value():
             # we'll start the ASGI server in a separate thread so that
             # uvicorn does not block the main thread
             server_thread = threading.Thread(
@@ -524,7 +524,7 @@ class Runner:
                         )
                     )
 
-    def _get_flow_run_logger(self, flow_run: "FlowRun") -> PrefectLogAdapter:
+    def _get_flow_run_logger(self, flow_run: "FlowRun") -> SyntaskLogAdapter:
         return flow_run_logger(flow_run=flow_run).getChild(
             "runner",
             extra={
@@ -543,13 +543,13 @@ class Runner:
 
         Args:
             flow_run: Flow run to execute via process. The ID of this flow run
-                is stored in the PREFECT__FLOW_RUN_ID environment variable to
+                is stored in the SYNTASK__FLOW_RUN_ID environment variable to
                 allow the engine to retrieve the corresponding flow's code and
                 begin execution.
             task_status: anyio task status used to send a message to the caller
                 than the flow run process has started.
         """
-        command = [get_sys_executable(), "-m", "prefect.engine"]
+        command = [get_sys_executable(), "-m", "syntask.engine"]
 
         flow_run_logger = self._get_flow_run_logger(flow_run)
 
@@ -566,11 +566,11 @@ class Runner:
         env.update(
             {
                 **{
-                    "PREFECT__FLOW_RUN_ID": str(flow_run.id),
-                    "PREFECT__STORAGE_BASE_PATH": str(self._tmp_dir),
-                    "PREFECT__ENABLE_CANCELLATION_AND_CRASHED_HOOKS": "false",
+                    "SYNTASK__FLOW_RUN_ID": str(flow_run.id),
+                    "SYNTASK__STORAGE_BASE_PATH": str(self._tmp_dir),
+                    "SYNTASK__ENABLE_CANCELLATION_AND_CRASHED_HOOKS": "false",
                 },
-                **({"PREFECT__FLOW_ENTRYPOINT": entrypoint} if entrypoint else {}),
+                **({"SYNTASK__FLOW_ENTRYPOINT": entrypoint} if entrypoint else {}),
             }
         )
         env.update(**os.environ)  # is this really necessary??
@@ -847,12 +847,12 @@ class Runner:
             run_logger.info(f"Cancelled flow run '{flow_run.name}'!")
 
     def _event_resource(self):
-        from prefect import __version__
+        from syntask import __version__
 
         return {
-            "prefect.resource.id": f"prefect.runner.{slugify(self.name)}",
-            "prefect.resource.name": self.name,
-            "prefect.version": __version__,
+            "syntask.resource.id": f"syntask.runner.{slugify(self.name)}",
+            "syntask.resource.name": self.name,
+            "syntask.version": __version__,
         }
 
     def _emit_flow_run_cancelled_event(
@@ -866,25 +866,25 @@ class Runner:
         if deployment:
             related.append(
                 {
-                    "prefect.resource.id": f"prefect.deployment.{deployment.id}",
-                    "prefect.resource.role": "deployment",
-                    "prefect.resource.name": deployment.name,
+                    "syntask.resource.id": f"syntask.deployment.{deployment.id}",
+                    "syntask.resource.role": "deployment",
+                    "syntask.resource.name": deployment.name,
                 }
             )
             tags.extend(deployment.tags)
         if flow:
             related.append(
                 {
-                    "prefect.resource.id": f"prefect.flow.{flow.id}",
-                    "prefect.resource.role": "flow",
-                    "prefect.resource.name": flow.name,
+                    "syntask.resource.id": f"syntask.flow.{flow.id}",
+                    "syntask.resource.role": "flow",
+                    "syntask.resource.name": flow.name,
                 }
             )
         related.append(
             {
-                "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-                "prefect.resource.role": "flow-run",
-                "prefect.resource.name": flow_run.name,
+                "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+                "syntask.resource.role": "flow-run",
+                "syntask.resource.name": flow_run.name,
             }
         )
         tags.extend(flow_run.tags)
@@ -893,7 +893,7 @@ class Runner:
         related += tags_as_related_resources(set(tags))
 
         emit_event(
-            event="prefect.runner.cancelled-flow-run",
+            event="syntask.runner.cancelled-flow-run",
             resource=self._event_resource(),
             related=related,
         )
@@ -955,7 +955,7 @@ class Runner:
             self._logger.info(
                 f"Flow run limit reached; {self._limiter.borrowed_tokens} flow runs"
                 " in progress. You can control this limit by passing a `limit` value"
-                " to `serve` or adjusting the PREFECT_RUNNER_PROCESS_LIMIT setting."
+                " to `serve` or adjusting the SYNTASK_RUNNER_PROCESS_LIMIT setting."
             )
             return False
 

@@ -5,14 +5,14 @@ import pytest
 import respx
 from httpx import Response
 
-from prefect.cli.profile import show_profile_changes
-from prefect.context import use_profile
-from prefect.settings import (
+from syntask.cli.profile import show_profile_changes
+from syntask.context import use_profile
+from syntask.settings import (
     DEFAULT_PROFILES_PATH,
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_DEBUG_MODE,
-    PREFECT_PROFILES_PATH,
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_DEBUG_MODE,
+    SYNTASK_PROFILES_PATH,
     Profile,
     ProfilesCollection,
     _read_profiles_from,
@@ -20,13 +20,13 @@ from prefect.settings import (
     save_profiles,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 
 @pytest.fixture(autouse=True)
 def temporary_profiles_path(tmp_path):
     path = tmp_path / "profiles.toml"
-    with temporary_settings({PREFECT_PROFILES_PATH: path}):
+    with temporary_settings({SYNTASK_PROFILES_PATH: path}):
         yield path
 
 
@@ -41,37 +41,37 @@ def test_use_profile_unknown_key():
 class TestChangingProfileAndCheckingServerConnection:
     @pytest.fixture
     def profiles(self):
-        prefect_cloud_api_url = "https://mock-cloud.syntask.khulnasoft.com/api"
-        prefect_cloud_server_api_url = (
-            f"{prefect_cloud_api_url}/accounts/{uuid4()}/workspaces/{uuid4()}"
+        syntask_cloud_api_url = "https://mock-cloud.syntask.khulnasoft.com/api"
+        syntask_cloud_server_api_url = (
+            f"{syntask_cloud_api_url}/accounts/{uuid4()}/workspaces/{uuid4()}"
         )
         hosted_server_api_url = "https://hosted-server.syntask.khulnasoft.com/api"
 
         return ProfilesCollection(
             profiles=[
                 Profile(
-                    name="prefect-cloud",
+                    name="syntask-cloud",
                     settings={
-                        "PREFECT_API_URL": prefect_cloud_server_api_url,
-                        "PREFECT_API_KEY": "a working cloud api key",
+                        "SYNTASK_API_URL": syntask_cloud_server_api_url,
+                        "SYNTASK_API_KEY": "a working cloud api key",
                     },
                 ),
                 Profile(
-                    name="prefect-cloud-with-invalid-key",
+                    name="syntask-cloud-with-invalid-key",
                     settings={
-                        "PREFECT_API_URL": prefect_cloud_server_api_url,
-                        "PREFECT_API_KEY": "a broken cloud api key",
+                        "SYNTASK_API_URL": syntask_cloud_server_api_url,
+                        "SYNTASK_API_KEY": "a broken cloud api key",
                     },
                 ),
                 Profile(
                     name="hosted-server",
                     settings={
-                        "PREFECT_API_URL": hosted_server_api_url,
+                        "SYNTASK_API_URL": hosted_server_api_url,
                     },
                 ),
                 Profile(
                     name="ephemeral",
-                    settings={"PREFECT_SERVER_ALLOW_EPHEMERAL_MODE": True},
+                    settings={"SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE": True},
                 ),
             ],
             active=None,
@@ -80,7 +80,7 @@ class TestChangingProfileAndCheckingServerConnection:
     @pytest.fixture
     def authorized_cloud(self):
         # attempts to reach the Cloud 2 workspaces endpoint implies a good connection
-        # to Prefect Cloud as opposed to a hosted Prefect server instance
+        # to Syntask Cloud as opposed to a hosted Syntask server instance
         with respx.mock:
             authorized = respx.get(
                 "https://mock-cloud.syntask.khulnasoft.com/api/me/workspaces",
@@ -110,7 +110,7 @@ class TestChangingProfileAndCheckingServerConnection:
 
     @pytest.fixture
     def hosted_server_has_no_cloud_api(self):
-        # if the API URL points to a hosted Prefect server instance, no Cloud API will be found
+        # if the API URL points to a hosted Syntask server instance, no Cloud API will be found
         with respx.mock:
             hosted = respx.get(
                 "https://hosted-server.syntask.khulnasoft.com/api/me/workspaces",
@@ -142,40 +142,40 @@ class TestChangingProfileAndCheckingServerConnection:
     def test_authorized_cloud_connection(self, authorized_cloud, profiles):
         save_profiles(profiles)
         invoke_and_assert(
-            ["profile", "use", "prefect-cloud"],
+            ["profile", "use", "syntask-cloud"],
             expected_output_contains=(
-                "Connected to Prefect Cloud using profile 'prefect-cloud'"
+                "Connected to Syntask Cloud using profile 'syntask-cloud'"
             ),
             expected_code=0,
         )
 
         profiles = load_profiles()
-        assert profiles.active_name == "prefect-cloud"
+        assert profiles.active_name == "syntask-cloud"
 
     def test_unauthorized_cloud_connection(self, unauthorized_cloud, profiles):
         save_profiles(profiles)
         invoke_and_assert(
-            ["profile", "use", "prefect-cloud-with-invalid-key"],
+            ["profile", "use", "syntask-cloud-with-invalid-key"],
             expected_output_contains=(
-                "Error authenticating with Prefect Cloud using profile"
-                " 'prefect-cloud-with-invalid-key'"
+                "Error authenticating with Syntask Cloud using profile"
+                " 'syntask-cloud-with-invalid-key'"
             ),
             expected_code=1,
         )
 
         profiles = load_profiles()
-        assert profiles.active_name == "prefect-cloud-with-invalid-key"
+        assert profiles.active_name == "syntask-cloud-with-invalid-key"
 
     def test_unhealthy_cloud_connection(self, unhealthy_cloud, profiles):
         save_profiles(profiles)
         invoke_and_assert(
-            ["profile", "use", "prefect-cloud"],
-            expected_output_contains="Error connecting to Prefect Cloud",
+            ["profile", "use", "syntask-cloud"],
+            expected_output_contains="Error connecting to Syntask Cloud",
             expected_code=1,
         )
 
         profiles = load_profiles()
-        assert profiles.active_name == "prefect-cloud"
+        assert profiles.active_name == "syntask-cloud"
 
     def test_using_hosted_server(
         self, hosted_server_has_no_cloud_api, healthy_hosted_server, profiles
@@ -184,7 +184,7 @@ class TestChangingProfileAndCheckingServerConnection:
         invoke_and_assert(
             ["profile", "use", "hosted-server"],
             expected_output_contains=(
-                "Connected to Prefect server using profile 'hosted-server'"
+                "Connected to Syntask server using profile 'hosted-server'"
             ),
             expected_code=0,
         )
@@ -198,7 +198,7 @@ class TestChangingProfileAndCheckingServerConnection:
         save_profiles(profiles)
         invoke_and_assert(
             ["profile", "use", "hosted-server"],
-            expected_output_contains="Error connecting to Prefect server",
+            expected_output_contains="Error connecting to Syntask server",
             expected_code=1,
         )
 
@@ -210,7 +210,7 @@ class TestChangingProfileAndCheckingServerConnection:
         invoke_and_assert(
             ["profile", "use", "ephemeral"],
             expected_output_contains=(
-                "No Prefect server specified using profile 'ephemeral'"
+                "No Syntask server specified using profile 'ephemeral'"
             ),
             expected_code=0,
         )
@@ -288,16 +288,16 @@ def test_create_profile():
                 from name - None
 
             Use created profile for future, subsequent commands:
-                prefect profile use 'foo'
+                syntask profile use 'foo'
 
             Use created profile temporarily for a single command:
-                prefect -p 'foo' config view
+                syntask -p 'foo' config view
             """,
     )
 
     profiles = load_profiles()
     assert profiles["foo"] == Profile(
-        name="foo", settings={}, source=PREFECT_PROFILES_PATH.value()
+        name="foo", settings={}, source=SYNTASK_PROFILES_PATH.value()
     )
 
 
@@ -305,7 +305,7 @@ def test_create_profile_from_existing():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
@@ -319,19 +319,19 @@ def test_create_profile_from_existing():
                 from name - foo
 
             Use created profile for future, subsequent commands:
-                prefect profile use 'bar'
+                syntask profile use 'bar'
 
             Use created profile temporarily for a single command:
-                prefect -p 'bar' config view
+                syntask -p 'bar' config view
             """,
     )
 
     profiles = load_profiles()
-    assert profiles["foo"].settings == {PREFECT_API_KEY: "foo"}, "Foo is unchanged"
+    assert profiles["foo"].settings == {SYNTASK_API_KEY: "foo"}, "Foo is unchanged"
     assert profiles["bar"] == Profile(
         name="bar",
-        settings={PREFECT_API_KEY: "foo"},
-        source=PREFECT_PROFILES_PATH.value(),
+        settings={SYNTASK_API_KEY: "foo"},
+        source=SYNTASK_PROFILES_PATH.value(),
     )
 
 
@@ -350,7 +350,7 @@ def test_create_profile_with_existing_profile():
             Profile 'ephemeral' already exists.
             To create a new profile, remove the existing profile first:
 
-                prefect profile delete 'ephemeral'
+                syntask profile delete 'ephemeral'
             """,
         expected_code=1,
     )
@@ -360,8 +360,8 @@ def test_delete_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
-                Profile(name="bar", settings={PREFECT_API_KEY: "bar"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
+                Profile(name="bar", settings={SYNTASK_API_KEY: "bar"}),
             ],
             active=None,
         )
@@ -390,7 +390,7 @@ def test_delete_profile_cannot_target_active_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
@@ -437,7 +437,7 @@ def test_rename_profile_renames_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
@@ -452,7 +452,7 @@ def test_rename_profile_renames_profile():
     profiles = load_profiles()
     assert "foo" not in profiles, "The original profile should not exist anymore"
     assert profiles["bar"].settings == {
-        PREFECT_API_KEY: "foo"
+        SYNTASK_API_KEY: "foo"
     }, "Settings should be retained"
     assert profiles.active_name != "bar", "The active profile should not be changed"
 
@@ -461,7 +461,7 @@ def test_rename_profile_changes_active_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active="foo",
         )
@@ -481,18 +481,18 @@ def test_rename_profile_warns_on_environment_variable_active_profile(monkeypatch
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
     )
 
-    monkeypatch.setenv("PREFECT_PROFILE", "foo")
+    monkeypatch.setenv("SYNTASK_PROFILE", "foo")
 
     invoke_and_assert(
         ["profile", "rename", "foo", "bar"],
         expected_output_contains=(
-            "You have set your current profile to 'foo' with the PREFECT_PROFILE "
+            "You have set your current profile to 'foo' with the SYNTASK_PROFILE "
             "environment variable. You must update this variable to 'bar' "
             "to continue using the profile."
         ),
@@ -519,7 +519,7 @@ def test_inspect_profile():
             profiles=[
                 Profile(
                     name="foo",
-                    settings={PREFECT_API_KEY: "foo", PREFECT_DEBUG_MODE: True},
+                    settings={SYNTASK_API_KEY: "foo", SYNTASK_DEBUG_MODE: True},
                 ),
             ],
             active=None,
@@ -529,8 +529,8 @@ def test_inspect_profile():
     invoke_and_assert(
         ["profile", "inspect", "foo"],
         expected_output="""
-            PREFECT_API_KEY='foo'
-            PREFECT_DEBUG_MODE='True'
+            SYNTASK_API_KEY='foo'
+            SYNTASK_DEBUG_MODE='True'
             """,
     )
 
@@ -567,7 +567,7 @@ class TestProfilesPopulateDefaults:
                 "Add 'cloud'",
                 "Add 'test'",
                 f"Profiles updated in {temporary_profiles_path}",
-                "Use with prefect profile use [PROFILE-NAME]",
+                "Use with syntask profile use [PROFILE-NAME]",
             ],
         )
 
@@ -585,7 +585,7 @@ class TestProfilesPopulateDefaults:
 
     def test_populate_defaults_with_existing_profiles(self, temporary_profiles_path):
         existing_profiles = ProfilesCollection(
-            profiles=[Profile(name="existing", settings={PREFECT_API_KEY: "test_key"})],
+            profiles=[Profile(name="existing", settings={SYNTASK_API_KEY: "test_key"})],
             active="existing",
         )
         save_profiles(existing_profiles)
@@ -613,7 +613,7 @@ class TestProfilesPopulateDefaults:
             temporary_profiles_path.with_suffix(".toml.bak")
         )
         assert "existing" in backup_profiles.names
-        assert backup_profiles["existing"].settings == {PREFECT_API_KEY: "test_key"}
+        assert backup_profiles["existing"].settings == {SYNTASK_API_KEY: "test_key"}
 
     def test_populate_defaults_no_changes_needed(self, temporary_profiles_path):
         shutil.copy(DEFAULT_PROFILES_PATH, temporary_profiles_path)
@@ -633,21 +633,21 @@ class TestProfilesPopulateDefaults:
             profiles=[
                 Profile(
                     name="ephemeral",
-                    settings={PREFECT_API_URL: "https://api.syntask.khulnasoft.com"},
+                    settings={SYNTASK_API_URL: "https://api.syntask.khulnasoft.com"},
                 ),
                 Profile(
-                    name="local", settings={PREFECT_API_URL: "http://localhost:4200"}
+                    name="local", settings={SYNTASK_API_URL: "http://localhost:4200"}
                 ),
                 Profile(
                     name="cloud",
-                    settings={PREFECT_API_URL: "https://api.prefect.cloud"},
+                    settings={SYNTASK_API_URL: "https://api.syntask.cloud"},
                 ),
             ]
         )
         user_profiles = ProfilesCollection(
             profiles=[
-                Profile(name="default", settings={PREFECT_API_KEY: "test_key"}),
-                Profile(name="custom", settings={PREFECT_API_KEY: "custom_key"}),
+                Profile(name="default", settings={SYNTASK_API_KEY: "test_key"}),
+                Profile(name="custom", settings={SYNTASK_API_KEY: "custom_key"}),
             ]
         )
 

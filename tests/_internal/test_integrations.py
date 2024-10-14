@@ -1,7 +1,7 @@
 import re
 
-import prefect
-from prefect._internal.integrations import KNOWN_EXTRAS_FOR_PACKAGES
+import syntask
+from syntask._internal.integrations import KNOWN_EXTRAS_FOR_PACKAGES
 
 
 def extract_extras_require(setup_py_content):
@@ -32,7 +32,7 @@ def extract_extras_require(setup_py_content):
 
 
 def test_known_extras_for_packages():
-    setup_py_contents = (prefect.__development_base_path__ / "setup.py").read_text()
+    setup_py_contents = (syntask.__development_base_path__ / "setup.py").read_text()
 
     # Extract the extras_require dictionary
     extras_require = extract_extras_require(setup_py_contents)

@@ -5,15 +5,15 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-import prefect.server.schemas as schemas
-from prefect._internal.compatibility.deprecated import deprecated_parameter
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
+import syntask.server.schemas as schemas
+from syntask._internal.compatibility.deprecated import deprecated_parameter
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
 
 
 def greatest(
-    db: PrefectDBInterface, clamped_value: int, sql_value: ColumnElement
+    db: SyntaskDBInterface, clamped_value: int, sql_value: ColumnElement
 ) -> ColumnElement:
     # Determine the greatest value based on the database type
     if db.dialect.name == "sqlite":
@@ -24,7 +24,7 @@ def greatest(
         return sa.func.greatest(clamped_value, sql_value)
 
 
-def seconds_ago(db: PrefectDBInterface, field: ColumnElement) -> ColumnElement:
+def seconds_ago(db: SyntaskDBInterface, field: ColumnElement) -> ColumnElement:
     if db.dialect.name == "sqlite":
         # `sa.func.timezone` isn't available in SQLite, fallback to using
         # `julianday` .
@@ -36,7 +36,7 @@ def seconds_ago(db: PrefectDBInterface, field: ColumnElement) -> ColumnElement:
         ).cast(sa.Float)
 
 
-def active_slots_after_decay(db: PrefectDBInterface) -> ColumnElement[float]:
+def active_slots_after_decay(db: SyntaskDBInterface) -> ColumnElement[float]:
     # Active slots will decay at a rate of `slot_decay_per_second` per second.
     return greatest(
         db,
@@ -49,7 +49,7 @@ def active_slots_after_decay(db: PrefectDBInterface) -> ColumnElement[float]:
     )
 
 
-def denied_slots_after_decay(db: PrefectDBInterface) -> ColumnElement[float]:
+def denied_slots_after_decay(db: SyntaskDBInterface) -> ColumnElement[float]:
     # Denied slots decay at a rate of `slot_decay_per_second` per second if it's
     # greater than 0, otherwise it decays at a rate of `avg_slot_occupancy_seconds`.
     # The combination of `denied_slots` and `slot_decay_per_second` /
@@ -227,7 +227,7 @@ async def bulk_read_or_create_concurrency_limits(
 
 @db_injector
 async def bulk_increment_active_slots(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     concurrency_limit_ids: List[UUID],
     slots: int,
@@ -256,7 +256,7 @@ async def bulk_increment_active_slots(
 
 @db_injector
 async def bulk_decrement_active_slots(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     concurrency_limit_ids: List[UUID],
     slots: int,
@@ -307,7 +307,7 @@ async def bulk_decrement_active_slots(
 
 @db_injector
 async def bulk_update_denied_slots(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     concurrency_limit_ids: List[UUID],
     slots: int,

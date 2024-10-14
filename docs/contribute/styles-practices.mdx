@@ -3,7 +3,7 @@ title: Code and development style guide
 ---
 
 Generally, we follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
-This document covers Prefect-specific styles and practices.
+This document covers Syntask-specific styles and practices.
 
 ## Imports
 
@@ -30,7 +30,7 @@ from .flows import flow
 
 ```python
 # Wrong
-from prefect.flows import flow
+from syntask.flows import flow
 
 ```
 
@@ -44,7 +44,7 @@ For example, we do this for our schema and model modules. This is because it's i
 schema or database model—both of which may have similar names.
 
 ```python
-import prefect.server.schemas as schemas
+import syntask.server.schemas as schemas
 
 # The full module is accessible now
 schemas.core.FlowRun
@@ -64,7 +64,7 @@ from . import flows
 
 ```python
 # Wrong
-import prefect.flows
+import syntask.flows
 
 ```
 
@@ -76,8 +76,8 @@ Another use case for importing submodules is to perform global side-effects that
 Often, global side-effects on import are a dangerous pattern. But there are a couple acceptable
 use cases for this:
 
-*   To register dispatchable types, for example, `prefect.serializers`.
-*   To extend a CLI app, for example, `prefect.cli`.
+*   To register dispatchable types, for example, `syntask.serializers`.
+*   To extend a CLI app, for example, `syntask.cli`.
 
 ### Imports in modules
 
@@ -88,15 +88,15 @@ with the `from` syntax.
 
 ```python
 # Correct
-import prefect.server.schemas  # use with the full name
-import prefect.server.schemas as schemas  # use the shorter name
+import syntask.server.schemas  # use with the full name
+import syntask.server.schemas as schemas  # use the shorter name
 
 ```
 
 
 ```python
 # Wrong
-from prefect.server import schemas
+from syntask.server import schemas
 
 ```
 
@@ -106,7 +106,7 @@ You should not use relative imports unless it's in an `__init__.py` file.
 {/* pmd-metadata: notest */}
 ```python
 # Correct
-from prefect.utilities.foo import bar
+from syntask.utilities.foo import bar
 ```
 
 
@@ -137,7 +137,7 @@ Sometimes, you must defer an import and perform it _within_ a function to avoid 
 ## This function in `settings.py` requires a method from the global `context` but the context
 ## uses settings
 def from_context():
-    from prefect.context import get_profile_context
+    from syntask.context import get_profile_context
 
     ...
 
@@ -155,7 +155,7 @@ If you are just using the imported object for a type signature, use the `TYPE_CH
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from prefect.server.schemas.states import State
+    from syntask.server.schemas.states import State
 
 def foo(state: "State"):
     pass
@@ -171,7 +171,7 @@ We do not have a best practice for this yet. See the `kubernetes`, `docker`, and
 
 #### Delaying expensive imports
 
-Sometimes imports are slow, but it's important to keep the `prefect` module import times fast. In these cases, lazily
+Sometimes imports are slow, but it's important to keep the `syntask` module import times fast. In these cases, lazily
 import the slow module by deferring import to the relevant function body. For modules consumed by many functions,
 use the optional requirements pattern instead.
 
@@ -188,7 +188,7 @@ When executing a command that creates an object, the output message should offer
 Output Example:
 
 ```js
-$ prefect work-queue create testing
+$ syntask work-queue create testing
 
 Created work queue with properties:
     name - 'abcde'
@@ -197,10 +197,10 @@ Created work queue with properties:
     deployment_ids - None
 
 Start an agent to pick up flows from the created work queue:
-    prefect agent start -q 'abcde'
+    syntask agent start -q 'abcde'
 
 Inspect the created work queue:
-    prefect work-queue inspect 'abcde'
+    syntask work-queue inspect 'abcde'
 
 ```
 
@@ -217,7 +217,7 @@ Placeholder Example:
 
 ```
 Create a work queue with tags:
-    prefect work-queue create '<WORK QUEUE NAME>' -t '<OPTIONAL TAG 1>' -t '<OPTIONAL TAG 2>'
+    syntask work-queue create '<WORK QUEUE NAME>' -t '<OPTIONAL TAG 1>' -t '<OPTIONAL TAG 2>'
 
 ```
 
@@ -237,10 +237,10 @@ output_msg = dedent(
         deployment_ids - {deployment_ids or None}
 
     Start an agent to pick up flows from the created work queue:
-        prefect agent start -q {name!r}
+        syntask agent start -q {name!r}
 
     Inspect the created work queue:
-        prefect work-queue inspect {name!r}
+        syntask work-queue inspect {name!r}
     """
 )
 
@@ -251,26 +251,26 @@ output_msg = dedent(
 
 ### Client and server communication
 
-You can run the Prefect client separately from Prefect server, and communicate entirely through an API.
-The Prefect client includes anything that runs task or flow code, (for example, agents and the Python client);
-or any consumer of Prefect metadata (for example, the Prefect UI and CLI).
+You can run the Syntask client separately from Syntask server, and communicate entirely through an API.
+The Syntask client includes anything that runs task or flow code, (for example, agents and the Python client);
+or any consumer of Syntask metadata (for example, the Syntask UI and CLI).
 
-Prefect server stores this metadata and serves it through the REST API.
+Syntask server stores this metadata and serves it through the REST API.
 
 ### API version header
 
-Sometimes, we have to make breaking changes to the API. To check a Prefect client's compatibility
+Sometimes, we have to make breaking changes to the API. To check a Syntask client's compatibility
 with the API it's making requests to, every API call the client makes includes a three-component `API_VERSION` header with major,
 minor, and patch versions.
 
-For example, a request with the `X-PREFECT-API-VERSION=3.2.1` header has a major version of `3`, minor version `2`, and patch
+For example, a request with the `X-SYNTASK-API-VERSION=3.2.1` header has a major version of `3`, minor version `2`, and patch
 version `1`.
 
-Change this version header by modifying the `API_VERSION` constant in `prefect.server.api.server`.
+Change this version header by modifying the `API_VERSION` constant in `syntask.server.api.server`.
 
 ### Breaking changes to the API
 
-A breaking change means that your code needs to change to use a new version of Prefect. We avoid breaking
+A breaking change means that your code needs to change to use a new version of Syntask. We avoid breaking
 changes whenever possible.
 
 When making a breaking change to the API, we consider if the change is _backwards compatible for clients_.
@@ -293,17 +293,17 @@ opt into for testing and experimentation prior to a generally available release.
 Each release will increase one of the version numbers. If we increase a number other than the patch version, the versions to the
 right of it reset to zero.
 
-## Prefect's versioning scheme
+## Syntask's versioning scheme
 
-Prefect increases the major version when significant and widespread changes are made to the core product.
+Syntask increases the major version when significant and widespread changes are made to the core product.
 
-Prefect increases the minor version when:
+Syntask increases the minor version when:
 
-*   Introducing a new concept that changes how to use Prefect
+*   Introducing a new concept that changes how to use Syntask
 *   Changing an existing concept in a way that fundamentally alters its usage
 *   Removing a deprecated feature
 
-Prefect increases the patch version when:
+Syntask increases the patch version when:
 
 *   Making enhancements to existing features
 *   Fixing behavior in existing features
@@ -312,16 +312,16 @@ Prefect increases the patch version when:
 
 ## Deprecation
 
-At times, Prefect will deprecate a feature. A feature is deprecated when it will no longer be maintained. Frequently,
+At times, Syntask will deprecate a feature. A feature is deprecated when it will no longer be maintained. Frequently,
 a deprecated feature will have a new and improved alternative. Deprecated features will be retained for at least **3** minor
 version increases or **6 months**, whichever is longer. We may retain deprecated features longer than this time period.
 
-Prefect will sometimes include changes to behavior to fix a bug. These changes are not categorized as breaking changes.
+Syntask will sometimes include changes to behavior to fix a bug. These changes are not categorized as breaking changes.
 
-## Client compatibility with Prefect
+## Client compatibility with Syntask
 
-When running a Prefect server, you are in charge of ensuring the version is compatible with those of the clients that are
-using the server. Prefect aims to maintain backwards compatibility with old clients for each server release. In contrast,
+When running a Syntask server, you are in charge of ensuring the version is compatible with those of the clients that are
+using the server. Syntask aims to maintain backwards compatibility with old clients for each server release. In contrast,
 sometimes you cannot use new clients with an old server. The new client may expect the server to support capabilities that
 it does not yet include. For this reason, we recommend that all clients are the same version as the server or older.
 
@@ -329,5 +329,5 @@ For example, you can use a client on 2.1.0 with a server on 2.5.0. You cannot us
 
 ## Client compatibility with Cloud
 
-Prefect Cloud targets compatibility with all versions of Prefect clients. If you encounter a compatibility issue, please
-[file a bug report](https://github.com/prefectHQ/prefect/issues/new/choose).
+Syntask Cloud targets compatibility with all versions of Syntask clients. If you encounter a compatibility issue, please
+[file a bug report](https://github.com/synoPKG/syntask/issues/new/choose).

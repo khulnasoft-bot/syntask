@@ -2,7 +2,7 @@
 Orchestration logic that fires on state transitions.
 
 `CoreFlowPolicy` and `CoreTaskPolicy` contain all default orchestration rules that
-Prefect enforces on a state transition.
+Syntask enforces on a state transition.
 """
 
 from typing import Optional
@@ -13,14 +13,14 @@ import sqlalchemy as sa
 from packaging.version import Version
 from sqlalchemy import select
 
-from prefect.logging import get_logger
-from prefect.server import models
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.models import concurrency_limits, concurrency_limits_v2, deployments
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.orchestration.rules import (
+from syntask.logging import get_logger
+from syntask.server import models
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.models import concurrency_limits, concurrency_limits_v2, deployments
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     TERMINAL_STATES,
     BaseOrchestrationRule,
@@ -29,14 +29,14 @@ from prefect.server.orchestration.rules import (
     OrchestrationContext,
     TaskOrchestrationContext,
 )
-from prefect.server.schemas import core, filters, states
-from prefect.server.schemas.states import StateType
-from prefect.server.task_queue import TaskQueue
-from prefect.settings import (
-    PREFECT_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS,
-    PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS,
+from syntask.server.schemas import core, filters, states
+from syntask.server.schemas.states import StateType
+from syntask.server.task_queue import TaskQueue
+from syntask.settings import (
+    SYNTASK_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS,
+    SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS,
 )
-from prefect.utilities.math import clamped_poisson_interval
+from syntask.utilities.math import clamped_poisson_interval
 
 from .instrumentation_policies import InstrumentFlowRunStateTransitions
 
@@ -192,7 +192,7 @@ class SecureTaskConcurrencySlots(BaseOrchestrationRule):
     TaskRun. If so, a concurrency slot will be secured against each concurrency limit
     before being allowed to transition into a running state. If a concurrency limit has
     been reached, the client will be instructed to delay the transition for the duration
-    specified by the "PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS" setting
+    specified by the "SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS" setting
     before trying again. If the concurrency limit set on a tag is 0, the transition will
     be aborted to prevent deadlocks.
     """
@@ -238,7 +238,7 @@ class SecureTaskConcurrencySlots(BaseOrchestrationRule):
                     stale_limit.active_slots = list(active_slots)
 
                 await self.delay_transition(
-                    PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS.value(),
+                    SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS.value(),
                     f"Concurrency limit for the {tag} tag has been reached",
                 )
             else:
@@ -360,7 +360,7 @@ class SecureFlowConcurrencySlots(BaseOrchestrationRule):
                     state=states.Scheduled(
                         name="AwaitingConcurrencySlot",
                         scheduled_time=pendulum.now("UTC").add(
-                            seconds=PREFECT_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
+                            seconds=SYNTASK_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
                         ),
                     ),
                     reason="Deployment concurrency limit reached.",
@@ -476,7 +476,7 @@ class CacheInsertion(BaseOrchestrationRule):
         initial_state: Optional[states.State],
         validated_state: Optional[states.State],
         context: TaskOrchestrationContext,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
     ) -> None:
         if not validated_state or not context.session:
             return
@@ -509,7 +509,7 @@ class CacheRetrieval(BaseOrchestrationRule):
         initial_state: Optional[states.State],
         proposed_state: Optional[states.State],
         context: TaskOrchestrationContext,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
     ) -> None:
         cache_key = proposed_state.state_details.cache_key
         if cache_key and not proposed_state.state_details.refresh_cache:
@@ -739,7 +739,7 @@ class WaitForScheduledTime(BaseOrchestrationRule):
     Prevents transitions to running states from happening too early.
 
     This rule enforces that all scheduled states will only start with the machine clock
-    used by the Prefect REST API instance. This rule will identify transitions from scheduled
+    used by the Syntask REST API instance. This rule will identify transitions from scheduled
     states that are too early and nullify them. Instead, no state will be written to the
     database and the client will be sent an instruction to wait for `delay_seconds`
     before attempting the transition again.

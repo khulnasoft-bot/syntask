@@ -4,13 +4,13 @@ from typing import Generator
 import httpx
 import pytest
 
-from prefect.settings import (
-    PREFECT_CLIENT_ENABLE_METRICS,
-    PREFECT_CLIENT_METRICS_PORT,
+from syntask.settings import (
+    SYNTASK_CLIENT_ENABLE_METRICS,
+    SYNTASK_CLIENT_METRICS_PORT,
     temporary_settings,
 )
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.services import (
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.services import (
     critical_service_loop,
     start_client_metrics_server,
     stop_client_metrics_server,
@@ -138,7 +138,7 @@ async def test_consistent_sleeps_between_loops(monkeypatch):
     )
     sleeper = AsyncMock()
 
-    monkeypatch.setattr("prefect.utilities.services.anyio.sleep", sleeper)
+    monkeypatch.setattr("syntask.utilities.services.anyio.sleep", sleeper)
 
     with pytest.raises(UncapturedException):
         await critical_service_loop(workload, 0.0)
@@ -168,7 +168,7 @@ async def test_jittered_sleeps_between_loops(monkeypatch):
     )
     sleeper = AsyncMock()
 
-    monkeypatch.setattr("prefect.utilities.services.anyio.sleep", sleeper)
+    monkeypatch.setattr("syntask.utilities.services.anyio.sleep", sleeper)
 
     with pytest.raises(UncapturedException):
         await critical_service_loop(workload, 42, jitter_range=0.3)
@@ -375,8 +375,8 @@ async def test_sleeps_for_interval(capsys: pytest.CaptureFixture, mock_anyio_sle
 def metrics_server_url(unused_tcp_port: int) -> Generator[str, None, None]:
     with temporary_settings(
         updates={
-            PREFECT_CLIENT_ENABLE_METRICS: True,
-            PREFECT_CLIENT_METRICS_PORT: unused_tcp_port,
+            SYNTASK_CLIENT_ENABLE_METRICS: True,
+            SYNTASK_CLIENT_METRICS_PORT: unused_tcp_port,
         }
     ):
         stop_client_metrics_server()

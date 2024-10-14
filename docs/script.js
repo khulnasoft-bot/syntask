@@ -56,7 +56,7 @@ function loadAmplitude() {
     }
 
     const urls = [
-        'https://app.prefect.cloud',
+        'https://app.syntask.cloud',
     ]
 
     const selector = urls.map((url) => `a[href^="${url}"]`).join(',')

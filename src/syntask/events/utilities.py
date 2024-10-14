@@ -8,8 +8,8 @@ from pydantic_extra_types.pendulum_dt import DateTime
 from .clients import (
     AssertingEventsClient,
     AssertingPassthroughEventsClient,
-    PrefectCloudEventsClient,
-    PrefectEventsClient,
+    SyntaskCloudEventsClient,
+    SyntaskEventsClient,
 )
 from .schemas.events import Event, RelatedResource
 from .worker import EventsWorker, should_emit_events
@@ -27,7 +27,7 @@ def emit_event(
     follows: Optional[Event] = None,
 ) -> Optional[Event]:
     """
-    Send an event to Prefect Cloud.
+    Send an event to Syntask Cloud.
 
     Args:
         event: The name of the event that happened.
@@ -52,8 +52,8 @@ def emit_event(
     operational_clients = [
         AssertingPassthroughEventsClient,
         AssertingEventsClient,
-        PrefectCloudEventsClient,
-        PrefectEventsClient,
+        SyntaskCloudEventsClient,
+        SyntaskEventsClient,
     ]
     worker_instance = EventsWorker.instance()
 

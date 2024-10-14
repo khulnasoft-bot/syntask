@@ -4,9 +4,9 @@ from typing import Optional
 import pendulum
 import rich
 
-from prefect.logging import get_logger
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.utilities.messaging import Message, create_consumer
+from syntask.logging import get_logger
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.utilities.messaging import Message, create_consumer
 
 logger = get_logger(__name__)
 

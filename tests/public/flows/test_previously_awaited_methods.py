@@ -1,6 +1,6 @@
 import pytest
 
-from prefect import flow, task
+from syntask import flow, task
 
 
 @pytest.mark.parametrize(

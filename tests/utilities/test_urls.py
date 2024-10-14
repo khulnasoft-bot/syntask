@@ -6,18 +6,18 @@ from typing import Literal
 import pendulum
 import pytest
 
-from prefect.blocks.webhook import Webhook
-from prefect.events.schemas.automations import Automation, EventTrigger, Posture
-from prefect.events.schemas.events import ReceivedEvent, Resource
-from prefect.futures import PrefectConcurrentFuture, PrefectDistributedFuture
-from prefect.server.schemas.core import FlowRun, TaskRun
-from prefect.server.schemas.states import State
-from prefect.settings import PREFECT_API_URL, PREFECT_UI_URL, temporary_settings
-from prefect.utilities.urls import url_for, validate_restricted_url
-from prefect.variables import Variable
+from syntask.blocks.webhook import Webhook
+from syntask.events.schemas.automations import Automation, EventTrigger, Posture
+from syntask.events.schemas.events import ReceivedEvent, Resource
+from syntask.futures import SyntaskConcurrentFuture, SyntaskDistributedFuture
+from syntask.server.schemas.core import FlowRun, TaskRun
+from syntask.server.schemas.states import State
+from syntask.settings import SYNTASK_API_URL, SYNTASK_UI_URL, temporary_settings
+from syntask.utilities.urls import url_for, validate_restricted_url
+from syntask.variables import Variable
 
-MOCK_PREFECT_UI_URL = "https://ui.syntask.khulnasoft.com"
-MOCK_PREFECT_API_URL = "https://api.syntask.khulnasoft.com"
+MOCK_SYNTASK_UI_URL = "https://ui.syntask.khulnasoft.com"
+MOCK_SYNTASK_API_URL = "https://api.syntask.khulnasoft.com"
 
 RESTRICTED_URLS = [
     ("", ""),
@@ -81,16 +81,16 @@ def task_run():
 
 
 @pytest.fixture
-def prefect_concurrent_future(task_run):
-    return PrefectConcurrentFuture(
+def syntask_concurrent_future(task_run):
+    return SyntaskConcurrentFuture(
         task_run_id=task_run.id,
         wrapped_future=concurrent.futures.Future(),
     )
 
 
 @pytest.fixture
-def prefect_distributed_future(task_run):
-    return PrefectDistributedFuture(task_run_id=task_run.id)
+def syntask_distributed_future(task_run):
+    return SyntaskDistributedFuture(task_run_id=task_run.id)
 
 
 @pytest.fixture
@@ -110,7 +110,7 @@ async def automation() -> Automation:
         trigger=EventTrigger(
             expect={"animal.ingested"},
             match_related={
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "genus": "Hemerocallis",
                 "species": "fulva",
             },
@@ -129,7 +129,7 @@ def received_event():
         received=pendulum.now("UTC"),
         event="was.tubular",
         resource=Resource.model_validate(
-            {"prefect.resource.id": f"prefect.flow-run.{uuid.uuid4()}"}
+            {"syntask.resource.id": f"syntask.flow-run.{uuid.uuid4()}"}
         ),
         payload={"goodbye": "yellow brick road"},
         id=uuid.uuid4(),
@@ -138,7 +138,7 @@ def received_event():
 
 @pytest.fixture
 def resource():
-    return Resource({"prefect.resource.id": f"prefect.flow-run.{uuid.uuid4()}"})
+    return Resource({"syntask.resource.id": f"syntask.flow-run.{uuid.uuid4()}"})
 
 
 @pytest.mark.parametrize("value, reason", RESTRICTED_URLS)
@@ -150,12 +150,12 @@ def test_validate_restricted_url_validates(value: str, reason: str):
 @pytest.mark.parametrize("url_type", ["ui", "api"])
 def test_url_for_flow_run(flow_run, url_type: Literal["ui", "api"]):
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/runs/flow-run/{flow_run.id}"
+        f"{MOCK_SYNTASK_UI_URL}/runs/flow-run/{flow_run.id}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/flow_runs/{flow_run.id}"
+        else f"{MOCK_SYNTASK_API_URL}/flow_runs/{flow_run.id}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
         assert url_for(obj=flow_run, url_type=url_type) == expected_url
 
@@ -163,45 +163,45 @@ def test_url_for_flow_run(flow_run, url_type: Literal["ui", "api"]):
 @pytest.mark.parametrize("url_type", ["ui", "api"])
 def test_url_for_task_run(task_run, url_type: Literal["ui", "api"]):
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/runs/task-run/{task_run.id}"
+        f"{MOCK_SYNTASK_UI_URL}/runs/task-run/{task_run.id}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/task_runs/{task_run.id}"
+        else f"{MOCK_SYNTASK_API_URL}/task_runs/{task_run.id}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
         assert url_for(obj=task_run, url_type=url_type) == expected_url
 
 
 @pytest.mark.parametrize(
-    "prefect_future_fixture",
-    ["prefect_concurrent_future", "prefect_distributed_future"],
+    "syntask_future_fixture",
+    ["syntask_concurrent_future", "syntask_distributed_future"],
 )
 @pytest.mark.parametrize("url_type", ["ui", "api"])
-def test_url_for_prefect_future(
-    prefect_future_fixture, url_type: Literal["ui", "api"], request, task_run
+def test_url_for_syntask_future(
+    syntask_future_fixture, url_type: Literal["ui", "api"], request, task_run
 ):
-    prefect_future = request.getfixturevalue(prefect_future_fixture)
+    syntask_future = request.getfixturevalue(syntask_future_fixture)
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/runs/task-run/{task_run.id}"
+        f"{MOCK_SYNTASK_UI_URL}/runs/task-run/{task_run.id}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/task_runs/{task_run.id}"
+        else f"{MOCK_SYNTASK_API_URL}/task_runs/{task_run.id}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
-        assert url_for(obj=prefect_future, url_type=url_type) == expected_url
+        assert url_for(obj=syntask_future, url_type=url_type) == expected_url
 
 
 @pytest.mark.parametrize("url_type", ["ui", "api"])
 def test_url_for_block(block, url_type: Literal["ui", "api"]):
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/blocks/block/{block._block_document_id}"
+        f"{MOCK_SYNTASK_UI_URL}/blocks/block/{block._block_document_id}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/blocks/{block._block_document_id}"
+        else f"{MOCK_SYNTASK_API_URL}/blocks/{block._block_document_id}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
         assert url_for(obj=block, url_type=url_type) == expected_url
 
@@ -209,62 +209,62 @@ def test_url_for_block(block, url_type: Literal["ui", "api"]):
 @pytest.mark.parametrize("url_type", ["ui", "api"])
 def test_url_for_work_pool(work_pool, url_type: Literal["ui", "api"]):
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/work-pools/work-pool/{work_pool.name}"
+        f"{MOCK_SYNTASK_UI_URL}/work-pools/work-pool/{work_pool.name}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/work_pools/{work_pool.name}"
+        else f"{MOCK_SYNTASK_API_URL}/work_pools/{work_pool.name}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
         assert url_for(obj=work_pool, url_type=url_type) == expected_url
 
 
 def test_api_url_for_variable(variable):
-    expected_url = f"{MOCK_PREFECT_API_URL}/variables/name/{variable.name}"
-    with temporary_settings({PREFECT_API_URL: MOCK_PREFECT_API_URL}):
+    expected_url = f"{MOCK_SYNTASK_API_URL}/variables/name/{variable.name}"
+    with temporary_settings({SYNTASK_API_URL: MOCK_SYNTASK_API_URL}):
         assert url_for(obj=variable, url_type="api") == expected_url
 
 
 def test_no_ui_url_for_variable(variable):
-    with temporary_settings({PREFECT_UI_URL: MOCK_PREFECT_UI_URL}):
+    with temporary_settings({SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL}):
         assert url_for(obj=variable, url_type="ui") is None
 
 
 @pytest.mark.parametrize("url_type", ["ui", "api"])
 def test_url_for_automation(automation, url_type: Literal["ui", "api"]):
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/automations/automation/{automation.id}"
+        f"{MOCK_SYNTASK_UI_URL}/automations/automation/{automation.id}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/automations/{automation.id}"
+        else f"{MOCK_SYNTASK_API_URL}/automations/{automation.id}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
         assert url_for(obj=automation, url_type=url_type) == expected_url
 
 
 def test_url_for_received_event_ui(received_event):
-    expected_url = f"{MOCK_PREFECT_UI_URL}/events/event/{received_event.occurred.strftime('%Y-%m-%d')}/{received_event.id}"
-    with temporary_settings({PREFECT_UI_URL: MOCK_PREFECT_UI_URL}):
+    expected_url = f"{MOCK_SYNTASK_UI_URL}/events/event/{received_event.occurred.strftime('%Y-%m-%d')}/{received_event.id}"
+    with temporary_settings({SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL}):
         assert url_for(obj=received_event, url_type="ui") == expected_url
 
 
 def test_url_for_resource_ui(resource):
     resource_id_part = resource.id.rpartition(".")[2]
-    expected_url = f"{MOCK_PREFECT_UI_URL}/runs/flow-run/{resource_id_part}"
-    with temporary_settings({PREFECT_UI_URL: MOCK_PREFECT_UI_URL}):
+    expected_url = f"{MOCK_SYNTASK_UI_URL}/runs/flow-run/{resource_id_part}"
+    with temporary_settings({SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL}):
         assert url_for(obj=resource, url_type="ui") == expected_url
 
 
 @pytest.mark.parametrize("url_type", ["ui", "api"])
 def test_url_for_flow_run_with_id(flow_run, url_type: Literal["ui", "api"]):
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/runs/flow-run/{flow_run.id}"
+        f"{MOCK_SYNTASK_UI_URL}/runs/flow-run/{flow_run.id}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/flow_runs/{flow_run.id}"
+        else f"{MOCK_SYNTASK_API_URL}/flow_runs/{flow_run.id}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
         assert (
             url_for(
@@ -279,12 +279,12 @@ def test_url_for_flow_run_with_id(flow_run, url_type: Literal["ui", "api"]):
 @pytest.mark.parametrize("url_type", ["ui", "api"])
 def test_url_for_task_run_with_id(task_run, url_type: Literal["ui", "api"]):
     expected_url = (
-        f"{MOCK_PREFECT_UI_URL}/runs/task-run/{task_run.id}"
+        f"{MOCK_SYNTASK_UI_URL}/runs/task-run/{task_run.id}"
         if url_type == "ui"
-        else f"{MOCK_PREFECT_API_URL}/task_runs/{task_run.id}"
+        else f"{MOCK_SYNTASK_API_URL}/task_runs/{task_run.id}"
     )
     with temporary_settings(
-        {PREFECT_UI_URL: MOCK_PREFECT_UI_URL, PREFECT_API_URL: MOCK_PREFECT_API_URL}
+        {SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL, SYNTASK_API_URL: MOCK_SYNTASK_API_URL}
     ):
         assert (
             url_for(
@@ -297,7 +297,7 @@ def test_url_for_task_run_with_id(task_run, url_type: Literal["ui", "api"]):
 
 
 def test_url_for_missing_url(flow_run):
-    with temporary_settings({PREFECT_UI_URL: None, PREFECT_API_URL: None}):
+    with temporary_settings({SYNTASK_UI_URL: None, SYNTASK_API_URL: None}):
         assert (
             url_for(
                 obj="flow-run",
@@ -353,7 +353,7 @@ def test_url_for_with_default_base_url_with_path_fragment_and_slash(
 
 
 def test_url_for_invalid_obj_name_api():
-    with temporary_settings({PREFECT_API_URL: MOCK_PREFECT_API_URL}):
+    with temporary_settings({SYNTASK_API_URL: MOCK_SYNTASK_API_URL}):
         assert (
             url_for(
                 obj="some-obj",
@@ -363,7 +363,7 @@ def test_url_for_invalid_obj_name_api():
 
 
 def test_url_for_invalid_obj_name_ui():
-    with temporary_settings({PREFECT_UI_URL: MOCK_PREFECT_UI_URL}):
+    with temporary_settings({SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL}):
         assert (
             url_for(
                 obj="some-obj",
@@ -378,7 +378,7 @@ def test_url_for_unsupported_obj_type_api():
 
     unsupported_obj = UnsupportedType()
 
-    with temporary_settings({PREFECT_API_URL: MOCK_PREFECT_API_URL}):
+    with temporary_settings({SYNTASK_API_URL: MOCK_SYNTASK_API_URL}):
         assert url_for(obj=unsupported_obj) is None  # type: ignore
 
 
@@ -388,5 +388,5 @@ def test_url_for_unsupported_obj_type_ui():
 
     unsupported_obj = UnsupportedType()
 
-    with temporary_settings({PREFECT_UI_URL: MOCK_PREFECT_UI_URL}):
+    with temporary_settings({SYNTASK_UI_URL: MOCK_SYNTASK_UI_URL}):
         assert url_for(obj=unsupported_obj) is None  # type: ignore

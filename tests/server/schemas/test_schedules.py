@@ -11,8 +11,8 @@ from packaging import version
 from pendulum import datetime, now
 from pydantic import ValidationError
 
-from prefect._internal.schemas.validators import MAX_RRULE_LENGTH
-from prefect.server.schemas.schedules import (
+from syntask._internal.schemas.validators import MAX_RRULE_LENGTH
+from syntask.server.schemas.schedules import (
     MAX_ITERATIONS,
     CronSchedule,
     IntervalSchedule,
@@ -183,7 +183,7 @@ class TestIntervalSchedule:
         ]
 
     async def test_get_dates_from_offset_naive_anchor(self):
-        # Regression test for https://github.com/PrefectHQ/orion/issues/2466
+        # Regression test for https://github.com/SynoPKG/orion/issues/2466
         clock = IntervalSchedule(
             interval=timedelta(days=1),
             anchor_date=datetime(2022, 1, 1, tz=None),
@@ -196,7 +196,7 @@ class TestIntervalSchedule:
         ]
 
     async def test_get_dates_from_offset_naive_start(self):
-        # Regression test for https://github.com/PrefectHQ/orion/issues/2466
+        # Regression test for https://github.com/SynoPKG/orion/issues/2466
         clock = IntervalSchedule(
             interval=timedelta(days=1),
             anchor_date=datetime(2022, 1, 1),
@@ -212,7 +212,7 @@ class TestIntervalSchedule:
         ]
 
     async def test_get_dates_from_offset_naive_end(self):
-        # Regression test for https://github.com/PrefectHQ/orion/issues/2466
+        # Regression test for https://github.com/SynoPKG/orion/issues/2466
         clock = IntervalSchedule(
             interval=timedelta(days=1),
             anchor_date=datetime(2022, 1, 1),
@@ -456,7 +456,7 @@ class TestCronScheduleDaylightSavingsTime:
         assert [d.in_tz("America/New_York").hour for d in dates] == [23, 0, 1, 2, 3]
 
         # pendulum fixed a UTC-offset issue in 3.0
-        # https://github.com/synopkg/synopkg/issues/11619
+        # https://github.com/synopkg/syntask/issues/11619
         if version.parse(pendulum.__version__) >= version.parse("3.0"):
             assert [d.in_tz("UTC").hour for d in dates] == [3, 4, 5, 7, 8]
         else:
@@ -493,7 +493,7 @@ class TestCronScheduleDaylightSavingsTime:
 
     async def test_cron_schedule_handles_scheduling_near_dst_boundary(self):
         """
-        Regression test for  https://github.com/PrefectHQ/nebula/issues/4048
+        Regression test for  https://github.com/SynoPKG/nebula/issues/4048
         `croniter` does not generate expected schedules when given a start
         time on the day DST occurs but before the time shift actually happens.
         Daylight savings occurs at 2023-03-12T02:00:00-05:00 and clocks jump
@@ -998,7 +998,7 @@ async def weekly_on_friday() -> RRuleSchedule:
 async def test_unanchored_rrule_schedules_are_idempotent(
     weekly_on_friday: RRuleSchedule,
 ):
-    """Regression test for an issue discovered in Prefect Cloud, where a schedule with
+    """Regression test for an issue discovered in Syntask Cloud, where a schedule with
     an RRULE that didn't anchor to a specific time was being rescheduled every time the
     scheduler loop picked it up.  This is because when a user does not provide a DTSTART
     in their rule, then the current time is assumed to be the DTSTART.
@@ -1048,7 +1048,7 @@ async def weekly_at_1pm_fridays() -> RRuleSchedule:
 async def test_rrule_schedules_can_have_embedded_anchors(
     weekly_at_1pm_fridays: RRuleSchedule,
 ):
-    """Regression test for an issue discovered in Prefect Cloud, where a schedule with
+    """Regression test for an issue discovered in Syntask Cloud, where a schedule with
     an RRULE that didn't anchor to a specific time was being rescheduled every time the
     scheduler loop picked it up.  This is because when a user does not provide a DTSTART
     in their rule, then the current time is assumed to be the DTSTART.

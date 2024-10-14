@@ -9,9 +9,9 @@ from httpx import Response
 from packaging import version
 from pydantic import TypeAdapter
 
-from prefect.server import models
-from prefect.server.schemas import actions, core, responses, states
-from prefect.server.schemas.states import StateType
+from syntask.server import models
+from syntask.server.schemas import actions, core, responses, states
+from syntask.server.schemas.states import StateType
 
 dt = pendulum.datetime(2021, 7, 1)
 
@@ -121,7 +121,7 @@ async def data(db, work_queue):
 
         # Pendulum renamed 'period' method to 'interval' in 3.0
         # and changed weeks to start on Mondays
-        # https://github.com/synopkg/synopkg/issues/11619
+        # https://github.com/synopkg/syntask/issues/11619
         if version.parse(pendulum.__version__) >= version.parse("3.0"):
             pendulum_interval = pendulum.interval
             weekend_days = (5, 6)

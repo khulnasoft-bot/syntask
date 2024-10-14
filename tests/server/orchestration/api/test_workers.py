@@ -6,35 +6,35 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-import prefect
-import prefect.server
-from prefect.client.schemas.actions import WorkPoolCreate
-from prefect.client.schemas.objects import WorkPool, WorkQueue
-from prefect.server import models, schemas
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.schemas.statuses import DeploymentStatus, WorkQueueStatus
-from prefect.utilities.pydantic import parse_obj_as
+import syntask
+import syntask.server
+from syntask.client.schemas.actions import WorkPoolCreate
+from syntask.client.schemas.objects import WorkPool, WorkQueue
+from syntask.server import models, schemas
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.schemas.statuses import DeploymentStatus, WorkQueueStatus
+from syntask.utilities.pydantic import parse_obj_as
 
 RESERVED_POOL_NAMES = [
-    "Prefect",
-    "Prefect Pool",
-    "PrefectPool",
-    "Prefect-Pool",
-    "prefect",
-    "prefect pool",
-    "prefectpool",
-    "prefect-pool",
+    "Syntask",
+    "Syntask Pool",
+    "SyntaskPool",
+    "Syntask-Pool",
+    "syntask",
+    "syntask pool",
+    "syntaskpool",
+    "syntask-pool",
 ]
 
 
 @pytest.fixture(autouse=True)
 def patch_events_client(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "prefect.server.models.work_queues.PrefectServerEventsClient",
+        "syntask.server.models.work_queues.SyntaskServerEventsClient",
         AssertingEventsClient,
     )
     monkeypatch.setattr(
-        "prefect.server.models.workers.PrefectServerEventsClient",
+        "syntask.server.models.workers.SyntaskServerEventsClient",
         AssertingEventsClient,
     )
 
@@ -95,7 +95,7 @@ class TestCreateWorkPool:
         )
         assert model.name == "Pool 1"
 
-        assert_status_events("Pool 1", ["prefect.work-pool.not-ready"])
+        assert_status_events("Pool 1", ["syntask.work-pool.not-ready"])
 
     async def test_create_work_pool_with_options(self, client):
         response = await client.post(
@@ -379,7 +379,7 @@ class TestUpdateWorkPool:
         assert result.is_paused is True
         assert result.concurrency_limit == 5
 
-        assert_status_events(work_pool.name, ["prefect.work-pool.paused"])
+        assert_status_events(work_pool.name, ["syntask.work-pool.paused"])
 
     async def test_update_work_pool_with_no_workers(self, client, work_pool):
         assert work_pool.is_paused is False
@@ -416,7 +416,7 @@ class TestUpdateWorkPool:
         )
 
         assert_status_events(
-            work_pool.name, ["prefect.work-pool.paused", "prefect.work-pool.not-ready"]
+            work_pool.name, ["syntask.work-pool.paused", "syntask.work-pool.not-ready"]
         )
 
     async def test_unpause_work_pool_with_online_workers(self, client, work_pool):
@@ -471,9 +471,9 @@ class TestUpdateWorkPool:
         assert_status_events(
             work_pool.name,
             [
-                "prefect.work-pool.ready",
-                "prefect.work-pool.paused",
-                "prefect.work-pool.ready",
+                "syntask.work-pool.ready",
+                "syntask.work-pool.paused",
+                "syntask.work-pool.ready",
             ],
         )
 
@@ -938,7 +938,7 @@ class TestUpdateWorkQueue:
         assert response.json()["concurrency_limit"] == 3
         assert response.json()["status"] == "PAUSED"
 
-        assert_status_events(work_queue_1.name, ["prefect.work-queue.paused"])
+        assert_status_events(work_queue_1.name, ["syntask.work-queue.paused"])
 
     async def test_update_work_queue_to_paused_sets_paused_status(
         self,
@@ -972,7 +972,7 @@ class TestUpdateWorkQueue:
         assert work_queue_response.status_code == 200
         assert work_queue_response.json()["status"] == "PAUSED"
 
-        assert_status_events(work_queue_1.name, ["prefect.work-queue.paused"])
+        assert_status_events(work_queue_1.name, ["syntask.work-queue.paused"])
 
     async def test_update_work_queue_to_paused_when_already_paused_does_not_emit_event(
         self,
@@ -1055,17 +1055,17 @@ class TestUpdateWorkQueue:
         assert paused_work_queue_response["last_polled"] is None
 
         AssertingEventsClient.assert_emitted_event_with(
-            event="prefect.work-queue.paused",
+            event="syntask.work-queue.paused",
             resource={
-                "prefect.resource.id": f"prefect.work-queue.{work_queue_1.id}",
-                "prefect.resource.name": work_queue_1.name,
+                "syntask.resource.id": f"syntask.work-queue.{work_queue_1.id}",
+                "syntask.resource.name": work_queue_1.name,
             },
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.work-pool.type": work_pool.type,
-                    "prefect.resource.role": "work-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.work-pool.type": work_pool.type,
+                    "syntask.resource.role": "work-pool",
                 }
             ],
         )
@@ -1088,17 +1088,17 @@ class TestUpdateWorkQueue:
         assert unpaused_data_response.json()["last_polled"] is None
 
         AssertingEventsClient.assert_emitted_event_with(
-            event="prefect.work-queue.not-ready",
+            event="syntask.work-queue.not-ready",
             resource={
-                "prefect.resource.id": f"prefect.work-queue.{work_queue_1.id}",
-                "prefect.resource.name": work_queue_1.name,
+                "syntask.resource.id": f"syntask.work-queue.{work_queue_1.id}",
+                "syntask.resource.name": work_queue_1.name,
             },
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.work-pool.type": work_pool.type,
-                    "prefect.resource.role": "work-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.work-pool.type": work_pool.type,
+                    "syntask.resource.role": "work-pool",
                 }
             ],
         )
@@ -1128,17 +1128,17 @@ class TestUpdateWorkQueue:
         assert paused_work_queue_response["last_polled"] is not None
 
         AssertingEventsClient.assert_emitted_event_with(
-            event="prefect.work-queue.paused",
+            event="syntask.work-queue.paused",
             resource={
-                "prefect.resource.id": f"prefect.work-queue.{work_queue_1.id}",
-                "prefect.resource.name": work_queue_1.name,
+                "syntask.resource.id": f"syntask.work-queue.{work_queue_1.id}",
+                "syntask.resource.name": work_queue_1.name,
             },
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.work-pool.type": work_pool.type,
-                    "prefect.resource.role": "work-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.work-pool.type": work_pool.type,
+                    "syntask.resource.role": "work-pool",
                 }
             ],
         )
@@ -1160,17 +1160,17 @@ class TestUpdateWorkQueue:
         assert unpaused_data_response.json()["status"] == "NOT_READY"
 
         AssertingEventsClient.assert_emitted_event_with(
-            event="prefect.work-queue.not-ready",
+            event="syntask.work-queue.not-ready",
             resource={
-                "prefect.resource.id": f"prefect.work-queue.{work_queue_1.id}",
-                "prefect.resource.name": work_queue_1.name,
+                "syntask.resource.id": f"syntask.work-queue.{work_queue_1.id}",
+                "syntask.resource.name": work_queue_1.name,
             },
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.work-pool.type": work_pool.type,
-                    "prefect.resource.role": "work-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.work-pool.type": work_pool.type,
+                    "syntask.resource.role": "work-pool",
                 }
             ],
         )
@@ -1200,17 +1200,17 @@ class TestUpdateWorkQueue:
         assert paused_work_queue_response["is_paused"] is True
 
         AssertingEventsClient.assert_emitted_event_with(
-            event="prefect.work-queue.paused",
+            event="syntask.work-queue.paused",
             resource={
-                "prefect.resource.id": f"prefect.work-queue.{work_queue_1.id}",
-                "prefect.resource.name": work_queue_1.name,
+                "syntask.resource.id": f"syntask.work-queue.{work_queue_1.id}",
+                "syntask.resource.name": work_queue_1.name,
             },
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.work-pool.type": work_pool.type,
-                    "prefect.resource.role": "work-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.work-pool.type": work_pool.type,
+                    "syntask.resource.role": "work-pool",
                 }
             ],
         )
@@ -1232,17 +1232,17 @@ class TestUpdateWorkQueue:
         assert unpaused_data_response.json()["status"] == "READY"
 
         AssertingEventsClient.assert_emitted_event_with(
-            event="prefect.work-queue.ready",
+            event="syntask.work-queue.ready",
             resource={
-                "prefect.resource.id": f"prefect.work-queue.{work_queue_1.id}",
-                "prefect.resource.name": work_queue_1.name,
+                "syntask.resource.id": f"syntask.work-queue.{work_queue_1.id}",
+                "syntask.resource.name": work_queue_1.name,
             },
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.work-pool.type": work_pool.type,
-                    "prefect.resource.role": "work-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.work-pool.type": work_pool.type,
+                    "syntask.resource.role": "work-pool",
                 }
             ],
         )
@@ -1307,11 +1307,11 @@ class TestWorkPoolStatus:
         assert result.is_paused
         assert result.status == schemas.statuses.WorkPoolStatus.PAUSED
 
-    async def test_work_pool_status_for_prefect_agent_work_pool(
-        self, client, prefect_agent_work_pool
+    async def test_work_pool_status_for_syntask_agent_work_pool(
+        self, client, syntask_agent_work_pool
     ):
-        """Work pools that are Prefect Agent work pools should have `null` for status."""
-        response = await client.get(f"/work_pools/{prefect_agent_work_pool.name}")
+        """Work pools that are Syntask Agent work pools should have `null` for status."""
+        response = await client.get(f"/work_pools/{syntask_agent_work_pool.name}")
         assert response.status_code == status.HTTP_200_OK, response.text
 
         result = parse_obj_as(WorkPool, response.json())
@@ -1342,7 +1342,7 @@ class TestWorkerProcess:
         assert pendulum.parse(workers_response.json()[0]["last_heartbeat_time"]) > dt
         assert workers_response.json()[0]["status"] == "ONLINE"
 
-        assert_status_events(work_pool.name, ["prefect.work-pool.ready"])
+        assert_status_events(work_pool.name, ["syntask.work-pool.ready"])
 
     async def test_worker_heartbeat_updates_work_pool_status(self, client, work_pool):
         # Verify that the work pool is not ready
@@ -1368,7 +1368,7 @@ class TestWorkerProcess:
             == schemas.statuses.WorkPoolStatus.READY.value
         )
 
-        assert_status_events(work_pool.name, ["prefect.work-pool.ready"])
+        assert_status_events(work_pool.name, ["syntask.work-pool.ready"])
 
     async def test_worker_heartbeat_does_not_updates_work_pool_status_if_paused(
         self, client, work_pool
@@ -1404,7 +1404,7 @@ class TestWorkerProcess:
             == schemas.statuses.WorkPoolStatus.PAUSED.value
         )
 
-        assert_status_events(work_pool.name, ["prefect.work-pool.paused"])
+        assert_status_events(work_pool.name, ["syntask.work-pool.paused"])
 
     async def test_heartbeat_worker_requires_name(self, client, work_pool):
         response = await client.post(f"/work_pools/{work_pool.name}/workers/heartbeat")
@@ -1621,7 +1621,7 @@ class TestGetScheduledRuns:
                 session=session,
                 flow_run=schemas.core.FlowRun(
                     flow_id=flow.id,
-                    state=prefect.server.schemas.states.Running(),
+                    state=syntask.server.schemas.states.Running(),
                     work_queue_id=wq.id,
                 ),
             )
@@ -1631,7 +1631,7 @@ class TestGetScheduledRuns:
                 session=session,
                 flow_run=schemas.core.FlowRun(
                     flow_id=flow.id,
-                    state=prefect.server.schemas.states.Pending(),
+                    state=syntask.server.schemas.states.Pending(),
                     work_queue_id=wq.id,
                 ),
             )
@@ -1644,7 +1644,7 @@ class TestGetScheduledRuns:
                     session=session,
                     flow_run=schemas.core.FlowRun(
                         flow_id=flow.id,
-                        state=prefect.server.schemas.states.Scheduled(
+                        state=syntask.server.schemas.states.Scheduled(
                             scheduled_time=pendulum.now("UTC").add(hours=i)
                         ),
                         work_queue_id=wq.id,

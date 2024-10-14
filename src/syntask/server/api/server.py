@@ -1,5 +1,5 @@
 """
-Defines the Prefect REST API FastAPI app.
+Defines the Syntask REST API FastAPI app.
 """
 
 import asyncio
@@ -35,36 +35,36 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
 
-import prefect
-import prefect.server.api as api
-import prefect.server.services as services
-import prefect.settings
-from prefect.client.constants import SERVER_API_VERSION
-from prefect.logging import get_logger
-from prefect.server.api.dependencies import EnforceMinimumAPIVersion
-from prefect.server.events import stream
-from prefect.server.events.services.actions import Actions
-from prefect.server.events.services.event_persister import EventPersister
-from prefect.server.events.services.triggers import ProactiveTriggers, ReactiveTriggers
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.services.task_run_recorder import TaskRunRecorder
-from prefect.server.utilities.database import get_dialect
-from prefect.settings import (
-    PREFECT_API_DATABASE_CONNECTION_URL,
-    PREFECT_API_LOG_RETRYABLE_ERRORS,
-    PREFECT_DEBUG_MODE,
-    PREFECT_MEMO_STORE_PATH,
-    PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION,
-    PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS,
-    PREFECT_UI_SERVE_BASE,
+import syntask
+import syntask.server.api as api
+import syntask.server.services as services
+import syntask.settings
+from syntask.client.constants import SERVER_API_VERSION
+from syntask.logging import get_logger
+from syntask.server.api.dependencies import EnforceMinimumAPIVersion
+from syntask.server.events import stream
+from syntask.server.events.services.actions import Actions
+from syntask.server.events.services.event_persister import EventPersister
+from syntask.server.events.services.triggers import ProactiveTriggers, ReactiveTriggers
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.services.task_run_recorder import TaskRunRecorder
+from syntask.server.utilities.database import get_dialect
+from syntask.settings import (
+    SYNTASK_API_DATABASE_CONNECTION_URL,
+    SYNTASK_API_LOG_RETRYABLE_ERRORS,
+    SYNTASK_DEBUG_MODE,
+    SYNTASK_MEMO_STORE_PATH,
+    SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION,
+    SYNTASK_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS,
+    SYNTASK_UI_SERVE_BASE,
     get_current_settings,
 )
-from prefect.utilities.hashing import hash_objects
+from syntask.utilities.hashing import hash_objects
 
-TITLE = "Prefect Server"
-API_TITLE = "Prefect Prefect REST API"
-UI_TITLE = "Prefect Prefect REST API UI"
-API_VERSION = prefect.__version__
+TITLE = "Syntask Server"
+API_TITLE = "Syntask Syntask REST API"
+UI_TITLE = "Syntask Syntask REST API UI"
+API_VERSION = syntask.__version__
 # migrations should run only once per app start; the ephemeral API can potentially
 # create multiple apps in a single process
 LIFESPAN_RAN_FOR_APP = set()
@@ -252,7 +252,7 @@ async def custom_internal_exception_handler(request: Request, exc: Exception):
     Send 503 for errors clients can retry on.
     """
     if is_client_retryable_exception(exc):
-        if PREFECT_API_LOG_RETRYABLE_ERRORS.value():
+        if SYNTASK_API_LOG_RETRYABLE_ERRORS.value():
             logger.error("Encountered retryable exception in request:", exc_info=True)
 
         return JSONResponse(
@@ -268,7 +268,7 @@ async def custom_internal_exception_handler(request: Request, exc: Exception):
     )
 
 
-async def prefect_object_not_found_exception_handler(
+async def syntask_object_not_found_exception_handler(
     request: Request, exc: ObjectNotFoundError
 ):
     """Return 404 status code on object not found exceptions."""
@@ -284,15 +284,15 @@ def create_api_app(
     fast_api_app_kwargs: Optional[Dict[str, Any]] = None,
 ) -> FastAPI:
     """
-    Create a FastAPI app that includes the Prefect REST API
+    Create a FastAPI app that includes the Syntask REST API
 
     Args:
-        dependencies: a list of global dependencies to add to each Prefect REST API router
+        dependencies: a list of global dependencies to add to each Syntask REST API router
         health_check_path: the health check route path
         fast_api_app_kwargs: kwargs to pass to the FastAPI constructor
 
     Returns:
-        a FastAPI app that serves the Prefect REST API
+        a FastAPI app that serves the Syntask REST API
     """
     fast_api_app_kwargs = fast_api_app_kwargs or {}
     api_app = FastAPI(title=API_TITLE, **fast_api_app_kwargs)
@@ -320,12 +320,12 @@ def create_api_app(
 
 def create_ui_app(ephemeral: bool) -> FastAPI:
     ui_app = FastAPI(title=UI_TITLE)
-    base_url = prefect.settings.PREFECT_UI_SERVE_BASE.value()
-    cache_key = f"{prefect.__version__}:{base_url}"
+    base_url = syntask.settings.SYNTASK_UI_SERVE_BASE.value()
+    cache_key = f"{syntask.__version__}:{base_url}"
     stripped_base_url = base_url.rstrip("/")
     static_dir = (
-        prefect.settings.PREFECT_UI_STATIC_DIRECTORY.value()
-        or prefect.__ui_static_subpath__
+        syntask.settings.SYNTASK_UI_STATIC_DIRECTORY.value()
+        or syntask.__ui_static_subpath__
     )
     reference_file_name = "UI_SERVE_BASE"
 
@@ -337,8 +337,8 @@ def create_ui_app(ephemeral: bool) -> FastAPI:
     @ui_app.get(f"{stripped_base_url}/ui-settings")
     def ui_settings():
         return {
-            "api_url": prefect.settings.PREFECT_UI_API_URL.value(),
-            "csrf_enabled": prefect.settings.PREFECT_SERVER_CSRF_PROTECTION_ENABLED.value(),
+            "api_url": syntask.settings.SYNTASK_UI_API_URL.value(),
+            "csrf_enabled": syntask.settings.SYNTASK_SERVER_CSRF_PROTECTION_ENABLED.value(),
             "flags": [],
         }
 
@@ -358,10 +358,10 @@ def create_ui_app(ephemeral: bool) -> FastAPI:
         if not os.path.exists(static_dir):
             os.makedirs(static_dir)
 
-        copy_directory(prefect.__ui_static_path__, static_dir)
+        copy_directory(syntask.__ui_static_path__, static_dir)
         replace_placeholder_string_in_files(
             static_dir,
-            "/PREFECT_UI_SERVE_BASE_REPLACE_PLACEHOLDER",
+            "/SYNTASK_UI_SERVE_BASE_REPLACE_PLACEHOLDER",
             stripped_base_url,
         )
 
@@ -374,8 +374,8 @@ def create_ui_app(ephemeral: bool) -> FastAPI:
     ui_app.add_middleware(GZipMiddleware)
 
     if (
-        os.path.exists(prefect.__ui_static_path__)
-        and prefect.settings.PREFECT_UI_ENABLED.value()
+        os.path.exists(syntask.__ui_static_path__)
+        and syntask.settings.SYNTASK_UI_ENABLED.value()
         and not ephemeral
     ):
         # If the static files have already been copied, check if the base_url has changed
@@ -384,7 +384,7 @@ def create_ui_app(ephemeral: bool) -> FastAPI:
             create_ui_static_subpath()
 
         ui_app.mount(
-            PREFECT_UI_SERVE_BASE.value(),
+            SYNTASK_UI_SERVE_BASE.value(),
             SPAStaticFiles(directory=static_dir),
             name="ui_root",
         )
@@ -392,7 +392,7 @@ def create_ui_app(ephemeral: bool) -> FastAPI:
     return ui_app
 
 
-APP_CACHE: Dict[Tuple[prefect.settings.Settings, bool], FastAPI] = {}
+APP_CACHE: Dict[Tuple[syntask.settings.Settings, bool], FastAPI] = {}
 
 
 def _memoize_block_auto_registration(fn: Callable[[], Awaitable[None]]):
@@ -402,31 +402,31 @@ def _memoize_block_auto_registration(fn: Callable[[], Awaitable[None]]):
     """
     import toml
 
-    import prefect.plugins
-    from prefect.blocks.core import Block
-    from prefect.server.models.block_registration import _load_collection_blocks_data
-    from prefect.utilities.dispatch import get_registry_for_type
+    import syntask.plugins
+    from syntask.blocks.core import Block
+    from syntask.server.models.block_registration import _load_collection_blocks_data
+    from syntask.utilities.dispatch import get_registry_for_type
 
     @wraps(fn)
     async def wrapper(*args, **kwargs):
-        if not PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION.value():
+        if not SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION.value():
             await fn(*args, **kwargs)
             return
 
         # Ensure collections are imported and have the opportunity to register types
         # before loading the registry
-        prefect.plugins.load_prefect_collections()
+        syntask.plugins.load_syntask_collections()
 
         blocks_registry = get_registry_for_type(Block)
         collection_blocks_data = await _load_collection_blocks_data()
         current_blocks_loading_hash = hash_objects(
             blocks_registry,
             collection_blocks_data,
-            PREFECT_API_DATABASE_CONNECTION_URL.value(),
+            SYNTASK_API_DATABASE_CONNECTION_URL.value(),
             hash_algo=sha256,
         )
 
-        memo_store_path = PREFECT_MEMO_STORE_PATH.value()
+        memo_store_path = SYNTASK_MEMO_STORE_PATH.value()
         try:
             if memo_store_path.exists():
                 saved_blocks_loading_hash = toml.load(memo_store_path).get(
@@ -436,7 +436,7 @@ def _memoize_block_auto_registration(fn: Callable[[], Awaitable[None]]):
                     saved_blocks_loading_hash is not None
                     and current_blocks_loading_hash == saved_blocks_loading_hash
                 ):
-                    if PREFECT_DEBUG_MODE.value():
+                    if SYNTASK_DEBUG_MODE.value():
                         logger.debug(
                             "Skipping block loading due to matching hash for block "
                             "auto-registration found in memo store."
@@ -445,7 +445,7 @@ def _memoize_block_auto_registration(fn: Callable[[], Awaitable[None]]):
         except Exception as exc:
             logger.warning(
                 ""
-                f"Unable to read memo_store.toml from {PREFECT_MEMO_STORE_PATH} during "
+                f"Unable to read memo_store.toml from {SYNTASK_MEMO_STORE_PATH} during "
                 f"block auto-registration: {exc!r}.\n"
                 "All blocks will be registered."
             )
@@ -463,7 +463,7 @@ def _memoize_block_auto_registration(fn: Callable[[], Awaitable[None]]):
             except Exception as exc:
                 logger.warning(
                     "Unable to write to memo_store.toml at"
-                    f" {PREFECT_MEMO_STORE_PATH} after block auto-registration:"
+                    f" {SYNTASK_MEMO_STORE_PATH} after block auto-registration:"
                     f" {exc!r}.\n Subsequent server start ups will perform block"
                     " auto-registration, which may result in slower server startup."
                 )
@@ -472,12 +472,12 @@ def _memoize_block_auto_registration(fn: Callable[[], Awaitable[None]]):
 
 
 def create_app(
-    settings: Optional[prefect.settings.Settings] = None,
+    settings: Optional[syntask.settings.Settings] = None,
     ephemeral: bool = False,
     ignore_cache: bool = False,
 ) -> FastAPI:
     """
-    Create an FastAPI app that includes the Prefect REST API and UI
+    Create an FastAPI app that includes the Syntask REST API and UI
 
     Args:
         settings: The settings to use to create the app. If not set, settings are pulled
@@ -487,10 +487,10 @@ def create_app(
         ephemeral: If set, the application will be treated as ephemeral. The UI
             and services will be disabled.
     """
-    settings = settings or prefect.settings.get_current_settings()
+    settings = settings or syntask.settings.get_current_settings()
     cache_key = (settings.hash_key(), ephemeral)
 
-    from prefect.logging.configuration import setup_logging
+    from syntask.logging.configuration import setup_logging
 
     setup_logging()
 
@@ -501,8 +501,8 @@ def create_app(
     #       another dedicated location
     async def run_migrations():
         """Ensure the database is created and up to date with the current migrations"""
-        if prefect.settings.PREFECT_API_DATABASE_MIGRATE_ON_START:
-            from prefect.server.database.dependencies import provide_database_interface
+        if syntask.settings.SYNTASK_API_DATABASE_MIGRATE_ON_START:
+            from syntask.server.database.dependencies import provide_database_interface
 
             db = provide_database_interface()
             await db.create_db()
@@ -510,11 +510,11 @@ def create_app(
     @_memoize_block_auto_registration
     async def add_block_types():
         """Add all registered blocks to the database"""
-        if not prefect.settings.PREFECT_API_BLOCKS_REGISTER_ON_START:
+        if not syntask.settings.SYNTASK_API_BLOCKS_REGISTER_ON_START:
             return
 
-        from prefect.server.database.dependencies import provide_database_interface
-        from prefect.server.models.block_registration import run_block_auto_registration
+        from syntask.server.database.dependencies import provide_database_interface
+        from syntask.server.models.block_registration import run_block_auto_registration
 
         db = provide_database_interface()
         session = await db.session()
@@ -523,51 +523,51 @@ def create_app(
             await run_block_auto_registration(session=session)
 
     async def start_services():
-        """Start additional services when the Prefect REST API starts up."""
+        """Start additional services when the Syntask REST API starts up."""
 
         if ephemeral:
             app.state.services = None
             return
 
         service_instances = []
-        if prefect.settings.PREFECT_API_SERVICES_SCHEDULER_ENABLED.value():
+        if syntask.settings.SYNTASK_API_SERVICES_SCHEDULER_ENABLED.value():
             service_instances.append(services.scheduler.Scheduler())
             service_instances.append(services.scheduler.RecentDeploymentsScheduler())
 
-        if prefect.settings.PREFECT_API_SERVICES_LATE_RUNS_ENABLED.value():
+        if syntask.settings.SYNTASK_API_SERVICES_LATE_RUNS_ENABLED.value():
             service_instances.append(services.late_runs.MarkLateRuns())
 
-        if prefect.settings.PREFECT_API_SERVICES_PAUSE_EXPIRATIONS_ENABLED.value():
+        if syntask.settings.SYNTASK_API_SERVICES_PAUSE_EXPIRATIONS_ENABLED.value():
             service_instances.append(services.pause_expirations.FailExpiredPauses())
 
-        if prefect.settings.PREFECT_API_SERVICES_CANCELLATION_CLEANUP_ENABLED.value():
+        if syntask.settings.SYNTASK_API_SERVICES_CANCELLATION_CLEANUP_ENABLED.value():
             service_instances.append(
                 services.cancellation_cleanup.CancellationCleanup()
             )
 
-        if prefect.settings.PREFECT_SERVER_ANALYTICS_ENABLED.value():
+        if syntask.settings.SYNTASK_SERVER_ANALYTICS_ENABLED.value():
             service_instances.append(services.telemetry.Telemetry())
 
-        if prefect.settings.PREFECT_API_SERVICES_FLOW_RUN_NOTIFICATIONS_ENABLED.value():
+        if syntask.settings.SYNTASK_API_SERVICES_FLOW_RUN_NOTIFICATIONS_ENABLED.value():
             service_instances.append(
                 services.flow_run_notifications.FlowRunNotifications()
             )
 
-        if prefect.settings.PREFECT_API_SERVICES_FOREMAN_ENABLED.value():
+        if syntask.settings.SYNTASK_API_SERVICES_FOREMAN_ENABLED.value():
             service_instances.append(services.foreman.Foreman())
 
-        if prefect.settings.PREFECT_API_SERVICES_TRIGGERS_ENABLED.value():
+        if syntask.settings.SYNTASK_API_SERVICES_TRIGGERS_ENABLED.value():
             service_instances.append(ReactiveTriggers())
             service_instances.append(ProactiveTriggers())
             service_instances.append(Actions())
 
-        if prefect.settings.PREFECT_API_SERVICES_TASK_RUN_RECORDER_ENABLED:
+        if syntask.settings.SYNTASK_API_SERVICES_TASK_RUN_RECORDER_ENABLED:
             service_instances.append(TaskRunRecorder())
 
-        if prefect.settings.PREFECT_API_SERVICES_EVENT_PERSISTER_ENABLED:
+        if syntask.settings.SYNTASK_API_SERVICES_EVENT_PERSISTER_ENABLED:
             service_instances.append(EventPersister())
 
-        if prefect.settings.PREFECT_API_EVENTS_STREAM_OUT_ENABLED:
+        if syntask.settings.SYNTASK_API_EVENTS_STREAM_OUT_ENABLED:
             service_instances.append(stream.Distributor())
 
         loop = asyncio.get_running_loop()
@@ -581,7 +581,7 @@ def create_app(
             task.add_done_callback(partial(on_service_exit, service))
 
     async def stop_services():
-        """Ensure services are stopped before the Prefect REST API shuts down."""
+        """Ensure services are stopped before the Syntask REST API shuts down."""
         if hasattr(app.state, "services") and app.state.services:
             await asyncio.gather(*[service.stop() for service in app.state.services])
             try:
@@ -631,7 +631,7 @@ def create_app(
                 Exception: custom_internal_exception_handler,
                 RequestValidationError: validation_exception_handler,
                 sa.exc.IntegrityError: integrity_exception_handler,
-                ObjectNotFoundError: prefect_object_not_found_exception_handler,
+                ObjectNotFoundError: syntask_object_not_found_exception_handler,
             }
         },
     )
@@ -640,13 +640,13 @@ def create_app(
     # middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=prefect.settings.PREFECT_SERVER_CORS_ALLOWED_ORIGINS.value().split(
+        allow_origins=syntask.settings.SYNTASK_SERVER_CORS_ALLOWED_ORIGINS.value().split(
             ","
         ),
-        allow_methods=prefect.settings.PREFECT_SERVER_CORS_ALLOWED_METHODS.value().split(
+        allow_methods=syntask.settings.SYNTASK_SERVER_CORS_ALLOWED_METHODS.value().split(
             ","
         ),
-        allow_headers=prefect.settings.PREFECT_SERVER_CORS_ALLOWED_HEADERS.value().split(
+        allow_headers=syntask.settings.SYNTASK_SERVER_CORS_ALLOWED_HEADERS.value().split(
             ","
         ),
     )
@@ -655,15 +655,15 @@ def create_app(
     # chance of errors where the database cannot be opened due to a high number of
     # concurrent writes
     if (
-        get_dialect(prefect.settings.PREFECT_API_DATABASE_CONNECTION_URL.value()).name
+        get_dialect(syntask.settings.SYNTASK_API_DATABASE_CONNECTION_URL.value()).name
         == "sqlite"
     ):
         app.add_middleware(RequestLimitMiddleware, limit=100)
 
-    if prefect.settings.PREFECT_SERVER_CSRF_PROTECTION_ENABLED.value():
+    if syntask.settings.SYNTASK_SERVER_CSRF_PROTECTION_ENABLED.value():
         app.add_middleware(api.middleware.CsrfMiddleware)
 
-    if prefect.settings.PREFECT_API_ENABLE_METRICS:
+    if syntask.settings.SYNTASK_API_ENABLE_METRICS:
         from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
         @api_app.get("/metrics")
@@ -699,7 +699,7 @@ def create_app(
         for path, value in partial_schema["paths"].items():
             new_schema["paths"][f"/api{path}"] = value
 
-        new_schema["info"]["x-logo"] = {"url": "static/prefect-logo-mark-gradient.png"}
+        new_schema["info"]["x-logo"] = {"url": "static/syntask-logo-mark-gradient.png"}
         return new_schema
 
     app.openapi = openapi
@@ -776,8 +776,8 @@ class SubprocessASGIServer:
             assert self.port is not None, "Port must be provided or available"
             help_message = (
                 f"Starting temporary server on {self.address}\nSee "
-                "https://docs.syntask.khulnasoft.com/3.0/manage/self-host#self-host-a-prefect-server "
-                "for more information on running a dedicated Prefect server."
+                "https://docs.syntask.khulnasoft.com/3.0/manage/self-host#self-host-a-syntask-server "
+                "for more information on running a dedicated Syntask server."
             )
             subprocess_server_logger.info(help_message)
             try:
@@ -789,7 +789,7 @@ class SubprocessASGIServer:
                     elapsed_time = 0
                     max_wait_time = (
                         timeout
-                        or PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS.value()
+                        or SYNTASK_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS.value()
                     )
                     while elapsed_time < max_wait_time:
                         if self.server_process.poll() == 3:
@@ -808,7 +808,7 @@ class SubprocessASGIServer:
                     if response:
                         response.raise_for_status()
                     if not response:
-                        error_message = "Timed out while attempting to connect to ephemeral Prefect API server."
+                        error_message = "Timed out while attempting to connect to ephemeral Syntask API server."
                         if self.server_process.poll() is not None:
                             error_message += f" Ephemeral server process exited with code {self.server_process.returncode}."
                         if self.server_process.stdout:
@@ -827,7 +827,7 @@ class SubprocessASGIServer:
     def _run_uvicorn_command(self) -> subprocess.Popen:
         # used to turn off serving the UI
         server_env = {
-            "PREFECT_UI_ENABLED": "0",
+            "SYNTASK_UI_ENABLED": "0",
         }
         return subprocess.Popen(
             args=[
@@ -835,9 +835,9 @@ class SubprocessASGIServer:
                 "-m",
                 "uvicorn",
                 "--app-dir",
-                str(prefect.__module_path__.parent),
+                str(syntask.__module_path__.parent),
                 "--factory",
-                "prefect.server.api.server:create_app",
+                "syntask.server.api.server:create_app",
                 "--host",
                 "127.0.0.1",
                 "--port",

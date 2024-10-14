@@ -5,8 +5,8 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.schemas as schemas
-from prefect.server import models
+import syntask.server.schemas as schemas
+from syntask.server import models
 
 
 class TestCreateFlowRunInput:

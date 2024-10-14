@@ -6,18 +6,18 @@ from uuid import UUID
 import pytest
 from typer import Exit
 
-from prefect.client.schemas.actions import GlobalConcurrencyLimitUpdate
-from prefect.client.schemas.objects import GlobalConcurrencyLimit
-from prefect.server import models
-from prefect.server.schemas.core import ConcurrencyLimitV2
-from prefect.testing.cli import invoke_and_assert
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.client.schemas.actions import GlobalConcurrencyLimitUpdate
+from syntask.client.schemas.objects import GlobalConcurrencyLimit
+from syntask.server import models
+from syntask.server.schemas.core import ConcurrencyLimitV2
+from syntask.testing.cli import invoke_and_assert
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 @pytest.fixture(autouse=True)
 def interactive_console(monkeypatch):
     monkeypatch.setattr(
-        "prefect.cli.global_concurrency_limit.is_interactive", lambda: True
+        "syntask.cli.global_concurrency_limit.is_interactive", lambda: True
     )
 
     # `readchar` does not like the fake stdin provided by typer isolation so we provide
@@ -38,7 +38,7 @@ def interactive_console(monkeypatch):
 @pytest.fixture
 def read_global_concurrency_limits() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.read_global_concurrency_limits",
+        "syntask.client.orchestration.SyntaskClient.read_global_concurrency_limits",
     ) as m:
         yield m
 
@@ -108,7 +108,7 @@ def test_listing_gcl(various_global_concurrency_limits: List[GlobalConcurrencyLi
 @pytest.fixture
 def read_global_concurrency_limit_by_name() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.read_global_concurrency_limit_by_name",
+        "syntask.client.orchestration.SyntaskClient.read_global_concurrency_limit_by_name",
     ) as m:
         yield m
 
@@ -148,7 +148,7 @@ def test_inspecting_gcl_not_found():
 @pytest.fixture
 def delete_global_concurrency_limit_by_name() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.delete_global_concurrency_limit_by_name",
+        "syntask.client.orchestration.SyntaskClient.delete_global_concurrency_limit_by_name",
     ) as m:
         yield m
 
@@ -194,7 +194,7 @@ def test_deleting_gcl_not_found():
 @pytest.fixture
 def update_global_concurrency_limit() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.update_global_concurrency_limit",
+        "syntask.client.orchestration.SyntaskClient.update_global_concurrency_limit",
     ) as m:
         yield m
 
@@ -326,7 +326,7 @@ async def global_concurrency_limit(session):
 
 async def test_update_gcl_limit(
     global_concurrency_limit: ConcurrencyLimitV2,
-    prefect_client,
+    syntask_client,
 ):
     assert global_concurrency_limit.limit == 1
     await run_sync_in_worker_thread(
@@ -342,7 +342,7 @@ async def test_update_gcl_limit(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(
         name=global_concurrency_limit.name
     )
 
@@ -351,7 +351,7 @@ async def test_update_gcl_limit(
 
 async def test_update_gcl_active_slots(
     global_concurrency_limit: ConcurrencyLimitV2,
-    prefect_client,
+    syntask_client,
 ):
     assert global_concurrency_limit.active_slots == 1
     await run_sync_in_worker_thread(
@@ -367,7 +367,7 @@ async def test_update_gcl_active_slots(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(
         name=global_concurrency_limit.name
     )
 
@@ -378,7 +378,7 @@ async def test_update_gcl_active_slots(
 
 async def test_update_gcl_slot_decay_per_second(
     global_concurrency_limit: ConcurrencyLimitV2,
-    prefect_client,
+    syntask_client,
 ):
     assert global_concurrency_limit.slot_decay_per_second == 0.1
     await run_sync_in_worker_thread(
@@ -394,7 +394,7 @@ async def test_update_gcl_slot_decay_per_second(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(
         name=global_concurrency_limit.name
     )
 
@@ -405,7 +405,7 @@ async def test_update_gcl_slot_decay_per_second(
 
 async def test_update_gcl_multiple_fields(
     global_concurrency_limit: ConcurrencyLimitV2,
-    prefect_client,
+    syntask_client,
 ):
     assert global_concurrency_limit.active_slots == 1
     assert global_concurrency_limit.slot_decay_per_second == 0.1
@@ -425,7 +425,7 @@ async def test_update_gcl_multiple_fields(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(
         name=global_concurrency_limit.name
     )
 
@@ -439,7 +439,7 @@ async def test_update_gcl_multiple_fields(
 
 async def test_update_gcl_to_inactive(
     global_concurrency_limit: ConcurrencyLimitV2,
-    prefect_client,
+    syntask_client,
 ):
     assert global_concurrency_limit.active is True
     await run_sync_in_worker_thread(
@@ -454,7 +454,7 @@ async def test_update_gcl_to_inactive(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(
         name=global_concurrency_limit.name
     )
 
@@ -465,7 +465,7 @@ async def test_update_gcl_to_inactive(
 
 async def test_update_gcl_to_active(
     global_concurrency_limit: ConcurrencyLimitV2,
-    prefect_client,
+    syntask_client,
 ):
     global_concurrency_limit.active = False
     await run_sync_in_worker_thread(
@@ -480,7 +480,7 @@ async def test_update_gcl_to_active(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(
         name=global_concurrency_limit.name
     )
 
@@ -506,7 +506,7 @@ def test_update_gcl_no_fields():
 
 
 async def test_create_gcl(
-    prefect_client,
+    syntask_client,
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -525,7 +525,7 @@ async def test_create_gcl(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(name="test")
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(name="test")
 
     assert (
         client_res.name == "test"
@@ -624,7 +624,7 @@ async def test_create_gcl_duplicate_name(
 
 
 async def test_create_gcl_succeeds(
-    prefect_client,
+    syntask_client,
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -643,7 +643,7 @@ async def test_create_gcl_succeeds(
         expected_code=0,
     )
 
-    client_res = await prefect_client.read_global_concurrency_limit_by_name(name="test")
+    client_res = await syntask_client.read_global_concurrency_limit_by_name(name="test")
 
     assert (
         client_res.name == "test"

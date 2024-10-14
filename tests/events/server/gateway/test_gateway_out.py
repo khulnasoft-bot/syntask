@@ -11,13 +11,13 @@ from starlette.status import (
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from prefect.server.events.filters import (
+from syntask.server.events.filters import (
     EventFilter,
     EventOccurredFilter,
     EventOrder,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.events.storage import database
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.storage import database
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def stream_mock(
 
         yield _fake_stream()
 
-    monkeypatch.setattr("prefect.server.api.events.stream.events", mock_stream)
+    monkeypatch.setattr("syntask.server.api.events.stream.events", mock_stream)
 
 
 @pytest.fixture
@@ -81,7 +81,7 @@ def default_liberal_filter() -> EventFilter:
     )
 
 
-def test_streaming_requires_prefect_subprotocol(
+def test_streaming_requires_syntask_subprotocol(
     test_client: TestClient,
     default_liberal_filter: EventFilter,
 ):
@@ -98,7 +98,7 @@ def test_streaming_requires_authentication(
 ):
     with pytest.raises(WebSocketDisconnect) as exception:
         with test_client.websocket_connect(
-            "api/events/out", subprotocols=["prefect"]
+            "api/events/out", subprotocols=["syntask"]
         ) as websocket:
             # The first message must be an auth message, otherwise the server
             # will disconnect the websocket.
@@ -128,7 +128,7 @@ async def test_streaming_requires_a_filter(
     with pytest.raises(WebSocketDisconnect) as exception:
         with test_client.websocket_connect(
             "api/events/out",
-            subprotocols=["prefect"],
+            subprotocols=["syntask"],
         ) as websocket:
             auth_message = {
                 "type": "auth",
@@ -165,7 +165,7 @@ async def test_streaming_requires_a_valid_filter(
     with pytest.raises(WebSocketDisconnect) as exception:
         with test_client.websocket_connect(
             "api/events/out",
-            subprotocols=["prefect"],
+            subprotocols=["syntask"],
         ) as websocket:
             auth_message = {
                 "type": "auth",
@@ -198,7 +198,7 @@ async def test_user_may_decline_a_backfill(
 ):
     with test_client.websocket_connect(
         "api/events/out",
-        subprotocols=["prefect"],
+        subprotocols=["syntask"],
     ) as websocket:
         auth_message = {
             "type": "auth",
@@ -238,7 +238,7 @@ async def test_user_may_explicitly_request_a_backfill(
 ):
     with test_client.websocket_connect(
         "api/events/out",
-        subprotocols=["prefect"],
+        subprotocols=["syntask"],
     ) as websocket:
         auth_message = {
             "type": "auth",

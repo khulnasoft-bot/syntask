@@ -31,8 +31,8 @@ from unittest.mock import Mock
 
 import pydantic
 
-# Quote moved to `prefect.utilities.annotations` but preserved here for compatibility
-from prefect.utilities.annotations import BaseAnnotation, Quote, quote  # noqa
+# Quote moved to `syntask.utilities.annotations` but preserved here for compatibility
+from syntask.utilities.annotations import BaseAnnotation, Quote, quote  # noqa
 
 
 class AutoEnum(str, Enum):
@@ -252,7 +252,7 @@ def visit_collection(
     - Dict (note: keys are also visited recursively)
     - Dataclass
     - Pydantic model
-    - Prefect annotations
+    - Syntask annotations
 
     Note that visit_collection will not consume generators or async generators, as it would prevent
     the caller from iterating over them.

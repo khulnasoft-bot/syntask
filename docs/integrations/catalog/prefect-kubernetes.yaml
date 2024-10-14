@@ -1,6 +1,0 @@
-integrationName: prefect-kubernetes
-author: Prefect
-authorUrl: https://syntask.khulnasoft.com
-documentation: prefect-kubernetes
-iconUrl: /images/integrations/kubernetes.png
-tag: Kubernetes

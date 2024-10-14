@@ -1,5 +1,5 @@
 """
-Core primitives for managing Prefect deployments via `prefect deploy`, providing a minimally opinionated
+Core primitives for managing Syntask deployments via `syntask deploy`, providing a minimally opinionated
 build system for managing flows and deployments.
 
 To get started, follow along with [the deloyments tutorial](/tutorials/deployments/).
@@ -19,21 +19,21 @@ import anyio
 import yaml
 from ruamel.yaml import YAML
 
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.objects import ConcurrencyLimitStrategy
-from prefect.client.schemas.schedules import IntervalSchedule
-from prefect.logging import get_logger
-from prefect.settings import PREFECT_DEBUG_MODE
-from prefect.utilities.asyncutils import LazySemaphore
-from prefect.utilities.filesystem import create_default_ignore_file, get_open_file_limit
-from prefect.utilities.templating import apply_values
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.objects import ConcurrencyLimitStrategy
+from syntask.client.schemas.schedules import IntervalSchedule
+from syntask.logging import get_logger
+from syntask.settings import SYNTASK_DEBUG_MODE
+from syntask.utilities.asyncutils import LazySemaphore
+from syntask.utilities.filesystem import create_default_ignore_file, get_open_file_limit
+from syntask.utilities.templating import apply_values
 
 
-def create_default_prefect_yaml(
+def create_default_syntask_yaml(
     path: str, name: Optional[str] = None, contents: Optional[Dict[str, Any]] = None
 ) -> bool:
     """
-    Creates default `prefect.yaml` file in the provided path if one does not already exist;
+    Creates default `syntask.yaml` file in the provided path if one does not already exist;
     returns boolean specifying whether a file was created.
 
     Args:
@@ -43,30 +43,30 @@ def create_default_prefect_yaml(
             defaults will be used
     """
     path = Path(path)
-    prefect_file = path / "prefect.yaml"
-    if prefect_file.exists():
+    syntask_file = path / "syntask.yaml"
+    if syntask_file.exists():
         return False
-    default_file = Path(__file__).parent / "templates" / "prefect.yaml"
+    default_file = Path(__file__).parent / "templates" / "syntask.yaml"
 
     with default_file.open(mode="r") as df:
         default_contents = yaml.safe_load(df)
 
-    import prefect
+    import syntask
 
-    contents["prefect-version"] = prefect.__version__
+    contents["syntask-version"] = syntask.__version__
     contents["name"] = name
 
-    with prefect_file.open(mode="w") as f:
+    with syntask_file.open(mode="w") as f:
         # write header
         f.write(
-            "# Welcome to your prefect.yaml file! You can use this file for storing and"
+            "# Welcome to your syntask.yaml file! You can use this file for storing and"
             " managing\n# configuration for deploying your flows. We recommend"
             " committing this file to source\n# control along with your flow code.\n\n"
         )
 
         f.write("# Generic metadata about this project\n")
         yaml.dump({"name": contents["name"]}, f, sort_keys=False)
-        yaml.dump({"prefect-version": contents["prefect-version"]}, f, sort_keys=False)
+        yaml.dump({"syntask-version": contents["syntask-version"]}, f, sort_keys=False)
         f.write("\n")
 
         # build
@@ -131,7 +131,7 @@ def configure_project_by_recipe(recipe: str, **formatting_kwargs) -> dict:
         ValueError: if provided recipe name does not exist.
     """
     # load the recipe
-    recipe_path = Path(__file__).parent / "recipes" / recipe / "prefect.yaml"
+    recipe_path = Path(__file__).parent / "recipes" / recipe / "syntask.yaml"
 
     if not recipe_path.exists():
         raise ValueError(f"Unknown recipe {recipe!r} provided.")
@@ -232,18 +232,18 @@ def initialize_project(
 
     files = []
     if create_default_ignore_file("."):
-        files.append(".prefectignore")
-    if create_default_prefect_yaml(".", name=project_name, contents=configuration):
-        files.append("prefect.yaml")
+        files.append(".syntaskignore")
+    if create_default_syntask_yaml(".", name=project_name, contents=configuration):
+        files.append("syntask.yaml")
 
     return files
 
 
-def _format_deployment_for_saving_to_prefect_file(
+def _format_deployment_for_saving_to_syntask_file(
     deployment: Dict,
 ) -> Dict:
     """
-    Formats a deployment into a templated deploy config for saving to prefect.yaml.
+    Formats a deployment into a templated deploy config for saving to syntask.yaml.
 
     Args:
         - deployment (Dict): a dictionary containing an untemplated deployment configuration
@@ -254,7 +254,7 @@ def _format_deployment_for_saving_to_prefect_file(
     if not deployment:
         raise ValueError("Deployment must be a non-empty dictionary.")
     deployment = deepcopy(deployment)
-    # Parameter schema is not stored in prefect.yaml
+    # Parameter schema is not stored in syntask.yaml
     deployment.pop("parameter_openapi_schema")
     # Only want entrypoint to avoid errors
     deployment.pop("flow_name", None)
@@ -309,28 +309,28 @@ def _interval_schedule_to_dict(schedule: IntervalSchedule) -> Dict:
     return schedule_config
 
 
-def _save_deployment_to_prefect_file(
+def _save_deployment_to_syntask_file(
     deployment: Dict,
     build_steps: Optional[List[Dict]] = None,
     push_steps: Optional[List[Dict]] = None,
     pull_steps: Optional[List[Dict]] = None,
     triggers: Optional[List[Dict]] = None,
-    prefect_file: Path = Path("prefect.yaml"),
+    syntask_file: Path = Path("syntask.yaml"),
 ):
     """
-    Save a deployment configuration to the `prefect.yaml` file in the
+    Save a deployment configuration to the `syntask.yaml` file in the
     current directory.
 
-    Will create a prefect.yaml file if one does not already exist.
+    Will create a syntask.yaml file if one does not already exist.
 
     Args:
         - deployment: a dictionary containing a deployment configuration
     """
-    deployment = _format_deployment_for_saving_to_prefect_file(deployment)
+    deployment = _format_deployment_for_saving_to_syntask_file(deployment)
 
     current_directory_name = os.path.basename(os.getcwd())
-    if not prefect_file.exists():
-        create_default_prefect_yaml(
+    if not syntask_file.exists():
+        create_default_syntask_yaml(
             ".",
             current_directory_name,
             contents={
@@ -344,24 +344,24 @@ def _save_deployment_to_prefect_file(
     else:
         # use ruamel.yaml to preserve comments
         ryaml = YAML()
-        with prefect_file.open(mode="r") as f:
-            parsed_prefect_file_contents = ryaml.load(f)
+        with syntask_file.open(mode="r") as f:
+            parsed_syntask_file_contents = ryaml.load(f)
 
-        if build_steps != parsed_prefect_file_contents.get("build"):
+        if build_steps != parsed_syntask_file_contents.get("build"):
             deployment["build"] = build_steps
 
-        if push_steps != parsed_prefect_file_contents.get("push"):
+        if push_steps != parsed_syntask_file_contents.get("push"):
             deployment["push"] = push_steps
 
-        if pull_steps != parsed_prefect_file_contents.get("pull"):
+        if pull_steps != parsed_syntask_file_contents.get("pull"):
             deployment["pull"] = pull_steps
 
-        if triggers and triggers != parsed_prefect_file_contents.get("triggers"):
+        if triggers and triggers != parsed_syntask_file_contents.get("triggers"):
             deployment["triggers"] = triggers
 
-        deployments = parsed_prefect_file_contents.get("deployments")
+        deployments = parsed_syntask_file_contents.get("deployments")
         if deployments is None:
-            parsed_prefect_file_contents["deployments"] = [deployment]
+            parsed_syntask_file_contents["deployments"] = [deployment]
         else:
             for i, existing_deployment in enumerate(deployments):
                 if existing_deployment.get("name") == deployment.get("name") and (
@@ -373,8 +373,8 @@ def _save_deployment_to_prefect_file(
             else:
                 deployments.append(deployment)
 
-        with prefect_file.open(mode="w") as f:
-            ryaml.dump(parsed_prefect_file_contents, f)
+        with syntask_file.open(mode="w") as f:
+            ryaml.dump(parsed_syntask_file_contents, f)
 
 
 # Only allow half of the open file limit to be open at once to allow for other
@@ -384,7 +384,7 @@ OPEN_FILE_SEMAPHORE = LazySemaphore(lambda: math.floor(get_open_file_limit() * 0
 
 async def _find_flow_functions_in_file(filename: str) -> List[Dict]:
     decorator_name = "flow"
-    decorator_module = "prefect"
+    decorator_module = "syntask"
     decorated_functions = []
     async with OPEN_FILE_SEMAPHORE:
         try:
@@ -392,13 +392,13 @@ async def _find_flow_functions_in_file(filename: str) -> List[Dict]:
                 try:
                     tree = ast.parse(await f.read())
                 except SyntaxError:
-                    if PREFECT_DEBUG_MODE:
+                    if SYNTASK_DEBUG_MODE:
                         get_logger().debug(
                             f"Could not parse {filename} as a Python file. Skipping."
                         )
                     return decorated_functions
         except Exception as exc:
-            if PREFECT_DEBUG_MODE:
+            if SYNTASK_DEBUG_MODE:
                 get_logger().debug(f"Could not open {filename}: {exc}. Skipping.")
             return decorated_functions
 
@@ -421,14 +421,14 @@ async def _find_flow_functions_in_file(filename: str) -> List[Dict]:
                     and isinstance(decorator.func, ast.Name)
                     and decorator.func.id == decorator_name
                 )
-                # handles @prefect.flow
+                # handles @syntask.flow
                 is_module_attribute_match = (
                     isinstance(decorator, ast.Attribute)
                     and isinstance(decorator.value, ast.Name)
                     and decorator.value.id == decorator_module
                     and decorator.attr == decorator_name
                 )
-                # handles @prefect.flow()
+                # handles @syntask.flow()
                 is_module_attribute_func_match = (
                     isinstance(decorator, ast.Call)
                     and isinstance(decorator.func, ast.Attribute)

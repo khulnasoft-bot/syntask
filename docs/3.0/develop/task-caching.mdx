@@ -8,7 +8,7 @@ value without actually running the code that defines the task.
 Caching allows you to efficiently reuse [results of tasks](/3.0/develop/results/) that may be expensive to compute
 and ensure that your pipelines are idempotent when retrying them due to unexpected failure. 
 
-By default Prefect's caching logic is based on the following attributes of a task invocation:
+By default Syntask's caching logic is based on the following attributes of a task invocation:
 - the inputs provided to the task
 - the code definition of the task
 - the prevailing flow run ID, or if executed autonomously, the prevailing task run ID
@@ -22,22 +22,22 @@ This behavior can be configured - see [customizing the cache](/3.0/develop/write
 **Caching requires result persistence**
 
 Caching requires result persistence, which is off by default.
-To turn on result persistence for all of your tasks use the `PREFECT_RESULTS_PERSIST_BY_DEFAULT` setting:
+To turn on result persistence for all of your tasks use the `SYNTASK_RESULTS_PERSIST_BY_DEFAULT` setting:
 
 ```
-prefect config set PREFECT_RESULTS_PERSIST_BY_DEFAULT=true
+syntask config set SYNTASK_RESULTS_PERSIST_BY_DEFAULT=true
 ```
 
 See [managing results](/3.0/develop/results/) for more details on managing your result configuration, and
-[settings](/3.0/manage/settings-and-profiles) for more details on managing Prefect settings.
+[settings](/3.0/manage/settings-and-profiles) for more details on managing Syntask settings.
 </Warning>
 
 ## Cache keys
 
-To determine whether a task run should retrieve a cached state, Prefect uses the concept of a "cache key". 
+To determine whether a task run should retrieve a cached state, Syntask uses the concept of a "cache key". 
 A cache key is a computed string value that determines where the task's return value will be persisted within
 its configured result storage.
-When a task run begins, Prefect first computes its cache key and uses this key to lookup a record in the task's result
+When a task run begins, Syntask first computes its cache key and uses this key to lookup a record in the task's result
 storage. 
 If an unexpired record is found, this result is returned and the task does not run, but instead, enters a 
 `Cached` state with the corresponding result value.
@@ -45,7 +45,7 @@ If an unexpired record is found, this result is returned and the task does not r
 Cache keys can be shared by the same task across different flows, and even among different tasks, 
 so long as they all share a common result storage location.
 
-By default Prefect stores results locally in `~/.prefect/storage/`. 
+By default Syntask stores results locally in `~/.syntask/storage/`. 
 The filenames in this directory will correspond exactly to computed cache keys from your task runs.
 
 <Warning>
@@ -64,7 +64,7 @@ using a cache, for example setting `persist_result=False`.
 Cache key computation can be configured through the use of _cache policies_. 
 A cache policy is a recipe for computing cache keys for a given task.
 
-Prefect comes prepackaged with a few common cache policies:
+Syntask comes prepackaged with a few common cache policies:
 - `DEFAULT`: this cache policy uses the task's inputs, its code definition, as well as the prevailing flow run ID
 to compute the task's cache key.
 - `INPUTS`: this cache policy uses _only_ the task's inputs to compute the cache key.
@@ -73,11 +73,11 @@ to compute the task's cache key.
 to compute the cache key.
 - `NONE`: this cache policy always returns `None` and therefore avoids caching and result persistence altogether.
 
-These policies can be set using the `cache_policy` keyword on the [task decorator](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.task):
+These policies can be set using the `cache_policy` keyword on the [task decorator](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.task):
 
 ```python
-from prefect import task
-from prefect.cache_policies import TASK_SOURCE
+from syntask import task
+from syntask.cache_policies import TASK_SOURCE
 
 import time
 
@@ -108,16 +108,16 @@ my_stateful_task() # sleeps again
 
 ## Customizing the cache
 
-Prefect allows you to configure task caching behavior in numerous ways.
+Syntask allows you to configure task caching behavior in numerous ways.
 
 ### Cache expiration
 
 All cache keys can optionally be given an _expiration_ through the `cache_expiration` keyword on 
-the [task decorator](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.task).
+the [task decorator](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.task).
 This keyword accepts a `datetime.timedelta` specifying a duration for which the cached value should be
 considered valid.
 
-Providing an expiration value results in Prefect persisting an expiration timestamp alongside the result
+Providing an expiration value results in Syntask persisting an expiration timestamp alongside the result
 record for the task.
 This expiration is then applied to _all_ other tasks that may share this cache key.
 
@@ -131,8 +131,8 @@ Combining policies in this way results in caches that are _easier_ to invalidate
 For example:
 
 ```python
-from prefect import task
-from prefect.cache_policies import TASK_SOURCE, INPUTS
+from syntask import task
+from syntask.cache_policies import TASK_SOURCE, INPUTS
 @task(cache_policy=TASK_SOURCE + INPUTS)
 def my_cached_task(x: int):
     return x + 42
@@ -144,8 +144,8 @@ The `INPUTS` policy is a special policy that allows you to _subtract_ string val
 certain task inputs:
 
 ```python
-from prefect import task
-from prefect.cache_policies import INPUTS
+from syntask import task
+from syntask.cache_policies import INPUTS
 
 
 my_custom_policy = INPUTS - 'debug'
@@ -171,7 +171,7 @@ custom logic.
 if your task has the signature `fn(x, y, z)` then the dictionary will have keys "x", "y", and "z" with corresponding values that can be used to compute your cache key.
 
 This function can then be specified using the `cache_key_fn` argument on 
-the [task decorator](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.task).
+the [task decorator](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.task).
 
 For example:
 
@@ -200,8 +200,8 @@ The `key_storage` argument accepts either a path to a local directory or a stora
 For example:
 
 ```python
-from prefect import task
-from prefect.cache_policies import TASK_SOURCE, INPUTS
+from syntask import task
+from syntask.cache_policies import TASK_SOURCE, INPUTS
 
 cache_policy = (TASK_SOURCE + INPUTS).configure(key_storage="/path/to/cache/storage")
 
@@ -215,8 +215,8 @@ This task will store cache records in the specified directory.
 To store cache records in a remote object store such as S3, pass a storage block instead:
 
 ```python
-from prefect import task
-from prefect.cache_policies import TASK_SOURCE, INPUTS
+from syntask import task
+from syntask.cache_policies import TASK_SOURCE, INPUTS
 
 from prefect_aws import S3Bucket
 
@@ -229,7 +229,7 @@ def my_cached_task(x: int):
 
 ### Cache isolation
 
-Cache isolation controls how concurrent task runs interact with cache records. Prefect supports two isolation levels: `READ_COMMITTED` and `SERIALIZABLE`.
+Cache isolation controls how concurrent task runs interact with cache records. Syntask supports two isolation levels: `READ_COMMITTED` and `SERIALIZABLE`.
 
 By default, cache records operate with a `READ_COMMITTED` isolation level. This guarantees that reading a cache record will see the latest committed cache value,
 but allows multiple executions of the same task to occur simultaneously.
@@ -237,8 +237,8 @@ but allows multiple executions of the same task to occur simultaneously.
 Consider the following example:
 
 ```python
-from prefect import task
-from prefect.cache_policies import INPUTS
+from syntask import task
+from syntask.cache_policies import INPUTS
 import threading
 
 
@@ -289,10 +289,10 @@ Here's an updated version of the previous example that uses `SERIALIZABLE` isola
 ```python
 import threading
 
-from prefect import task
-from prefect.cache_policies import INPUTS
-from prefect.locking.memory import MemoryLockManager
-from prefect.transactions import IsolationLevel
+from syntask import task
+from syntask.cache_policies import INPUTS
+from syntask.locking.memory import MemoryLockManager
+from syntask.transactions import IsolationLevel
 
 cache_policy = INPUTS.configure(
     isolation_level=IsolationLevel.SERIALIZABLE,
@@ -340,14 +340,14 @@ my_task_version_1 running
 
 To manage locks in a distributed setting, you will need to use a storage system for locks that is accessible by all of your execution infrastructure.
 
-We recommend using the `RedisLockManager` provided by `prefect-redis` in conjunction with a shared Redis instance:
+We recommend using the `RedisLockManager` provided by `syntask-redis` in conjunction with a shared Redis instance:
 
 ```python
-from prefect import task
-from prefect.cache_policies import TASK_SOURCE, INPUTS
-from prefect.transactions import IsolationLevel
+from syntask import task
+from syntask.cache_policies import TASK_SOURCE, INPUTS
+from syntask.transactions import IsolationLevel
 
-from prefect_redis import RedisLockManager
+from syntask_redis import RedisLockManager
 
 cache_policy = (INPUTS + TASK_SOURCE).configure(
     isolation_level=IsolationLevel.SERIALIZABLE,
@@ -363,12 +363,12 @@ def my_cached_task(x: int):
 ## Multi-task caching
 
 There are many situations in which multiple tasks need to always run together or not at all.
-This can be achieved in Prefect by configuring these tasks to always write to their caches within 
+This can be achieved in Syntask by configuring these tasks to always write to their caches within 
 a single [_transaction_](/3.0/develop/transactions).
 
 ```python
-from prefect import task, flow
-from prefect.transactions import transaction
+from syntask import task, flow
+from syntask.transactions import transaction
 
 
 @task(cache_key_fn=lambda *args, **kwargs: "static-key-1")
@@ -409,8 +409,8 @@ However, if the input argument value changes, `hello_task()` runs using the new 
 
 ```python 
 from datetime import timedelta
-from prefect import flow, task
-from prefect.cache_policies import INPUTS
+from syntask import flow, task
+from syntask.cache_policies import INPUTS
 @task(cache_policy=INPUTS, cache_expiration=timedelta(days=1))
 def hello_task(name_input):
     # Doing some work
@@ -427,7 +427,7 @@ A more realistic example might include the flow run id in the cache key, so only
 calls in the same flow run are cached:
 
 ```python
-from prefect.cache_policies import INPUTS, RUN_ID
+from syntask.cache_policies import INPUTS, RUN_ID
 
 
 @task(cache_policy=INPUTS + RUN_ID, cache_expiration=timedelta(days=1))
@@ -448,7 +448,7 @@ def hello_flow(name_input):
 
 ## Force ignore the cache
 
-A cache "refresh" instructs Prefect to ignore the data associated with a task's cache key and rerun 
+A cache "refresh" instructs Syntask to ignore the data associated with a task's cache key and rerun 
 no matter what.
 
 The `refresh_cache` option enables this behavior for a specific task:
@@ -470,10 +470,10 @@ def caching_task():
 When this task runs, it _always_ updates the cache key instead of using the cached value. This is 
 particularly useful when you have a flow that is responsible for updating the cache.
 
-To refresh the cache for all tasks, use the `PREFECT_TASKS_REFRESH_CACHE` setting. 
-Setting `PREFECT_TASKS_REFRESH_CACHE=true` changes the default behavior of all tasks to refresh. 
+To refresh the cache for all tasks, use the `SYNTASK_TASKS_REFRESH_CACHE` setting. 
+Setting `SYNTASK_TASKS_REFRESH_CACHE=true` changes the default behavior of all tasks to refresh. 
 This is particularly useful to rerun a flow without cached results.
-See [settings](/3.0/manage/settings-and-profiles) for more details on managing Prefect settings.
+See [settings](/3.0/manage/settings-and-profiles) for more details on managing Syntask settings.
 
 If you have tasks that should not refresh when this setting is enabled, you may explicitly set `refresh_cache` 
 to `False`. These tasks will never refresh the cache. If a cache key exists it will be read, not updated. 

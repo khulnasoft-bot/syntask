@@ -1,0 +1,6 @@
+integrationName: syntask-gitlab
+author: Syntask
+authorUrl: https://syntask.khulnasoft.com
+documentation: syntask-gitlab
+iconUrl: /images/integrations/gitlab.png
+tag: GitLab

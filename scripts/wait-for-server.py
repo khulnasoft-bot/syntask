@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Wait until the Prefect server returns a healthy response.
+Wait until the Syntask server returns a healthy response.
 
 Defaults to a 120 second timeout. If the timeout is exceeded, an exit code of 1 is set.
 
@@ -10,15 +10,14 @@ Usage:
 
 Example:
 
-    PREFECT_API_URL="http://localhost:4200" ./scripts/wait-for-server.py
+    SYNTASK_API_URL="http://localhost:4200" ./scripts/wait-for-server.py
 """
-
 
 import sys
 
 import anyio
 
-from prefect.client.orchestration import get_client
+from syntask.client.orchestration import get_client
 
 DEFAULT_TIMEOUT_SECONDS = 120
 

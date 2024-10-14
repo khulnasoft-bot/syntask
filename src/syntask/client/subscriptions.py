@@ -7,9 +7,9 @@ import websockets.exceptions
 from starlette.status import WS_1008_POLICY_VIOLATION
 from typing_extensions import Self
 
-from prefect._internal.schemas.bases import IDBaseModel
-from prefect.logging import get_logger
-from prefect.settings import PREFECT_API_KEY
+from syntask._internal.schemas.bases import IDBaseModel
+from syntask.logging import get_logger
+from syntask.settings import SYNTASK_API_KEY
 
 logger = get_logger(__name__)
 
@@ -34,7 +34,7 @@ class Subscription(Generic[S]):
 
         self._connect = websockets.connect(
             self.subscription_url,
-            subprotocols=["prefect"],
+            subprotocols=["syntask"],
         )
         self._websocket = None
 
@@ -68,7 +68,7 @@ class Subscription(Generic[S]):
         try:
             await websocket.send(
                 orjson.dumps(
-                    {"type": "auth", "token": PREFECT_API_KEY.value()}
+                    {"type": "auth", "token": SYNTASK_API_KEY.value()}
                 ).decode()
             )
 
@@ -93,7 +93,7 @@ class Subscription(Generic[S]):
             if isinstance(e, AssertionError) or e.rcvd.code == WS_1008_POLICY_VIOLATION:
                 raise Exception(
                     "Unable to authenticate to the subscription. Please "
-                    "ensure the provided `PREFECT_API_KEY` you are using is "
+                    "ensure the provided `SYNTASK_API_KEY` you are using is "
                     f"valid for this environment. Reason: {reason}"
                 ) from e
             raise

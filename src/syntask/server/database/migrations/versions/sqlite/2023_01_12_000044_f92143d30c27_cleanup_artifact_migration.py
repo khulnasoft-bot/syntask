@@ -9,7 +9,7 @@ Create Date: 2023-01-12 00:00:44.488367
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "f92143d30c27"
@@ -44,7 +44,7 @@ def downgrade():
         batch_op.add_column(
             sa.Column(
                 "flow_run_state_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             ),
         )
@@ -56,7 +56,7 @@ def downgrade():
         batch_op.add_column(
             sa.Column(
                 "task_run_state_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             ),
         )

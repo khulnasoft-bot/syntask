@@ -1,35 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prefect-agent
+  name: syntask-agent
   namespace: ${namespace}
   labels:
-    app: prefect-agent
+    app: syntask-agent
 spec:
   selector:
     matchLabels:
-      app: prefect-agent
+      app: syntask-agent
   replicas: 1
   template:
     metadata:
       labels:
-        app: prefect-agent
+        app: syntask-agent
     spec:
       containers:
         - name: agent
           image: ${image_name}
-          command: ["prefect", "agent", "start", "-q", "${work_queue}"]
+          command: ["syntask", "agent", "start", "-q", "${work_queue}"]
           imagePullPolicy: "IfNotPresent"
           env:
-            - name: PREFECT_API_URL
+            - name: SYNTASK_API_URL
               value: ${api_url}
-            - name: PREFECT_API_KEY
+            - name: SYNTASK_API_KEY
               value: ${api_key}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: prefect-agent
+  name: syntask-agent
   namespace: ${namespace}
 rules:
   - apiGroups: [""]
@@ -42,7 +42,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: prefect-agent-role-binding
+  name: syntask-agent-role-binding
   namespace: ${namespace}
 subjects:
   - kind: ServiceAccount
@@ -50,13 +50,13 @@ subjects:
     namespace: ${namespace}
 roleRef:
   kind: Role
-  name: prefect-agent
+  name: syntask-agent
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: prefect-agent
+  name: syntask-agent
 rules:
   - apiGroups: [""]
     resources: ["namespaces"]
@@ -65,12 +65,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: prefect-agent-cluster-role-binding
+  name: syntask-agent-cluster-role-binding
 subjects:
   - kind: ServiceAccount
     name: default
     namespace: ${namespace}
 roleRef:
   kind: ClusterRole
-  name: prefect-agent
+  name: syntask-agent
   apiGroup: rbac.authorization.k8s.io

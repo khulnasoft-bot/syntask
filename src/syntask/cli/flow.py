@@ -7,19 +7,19 @@ from typing import List, Optional
 import typer
 from rich.table import Table
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error
-from prefect.cli.root import app
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.schedules import construct_schedule
-from prefect.client.schemas.sorting import FlowSort
-from prefect.deployments.runner import RunnerDeployment
-from prefect.exceptions import MissingFlowError
-from prefect.runner import Runner
-from prefect.utilities import urls
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error
+from syntask.cli.root import app
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.schedules import construct_schedule
+from syntask.client.schemas.sorting import FlowSort
+from syntask.deployments.runner import RunnerDeployment
+from syntask.exceptions import MissingFlowError
+from syntask.runner import Runner
+from syntask.utilities import urls
 
-flow_app = PrefectTyper(name="flow", help="View and serve flows.")
+flow_app = SyntaskTyper(name="flow", help="View and serve flows.")
 app.add_typer(flow_app, aliases=["flows"])
 
 
@@ -152,14 +152,14 @@ async def serve(
     help_message = (
         f"[green]Your flow {runner_deployment.flow_name!r} is being served and polling"
         " for scheduled runs!\n[/]\nTo trigger a run for this flow, use the following"
-        " command:\n[blue]\n\t$ prefect deployment run"
+        " command:\n[blue]\n\t$ syntask deployment run"
         f" '{runner_deployment.flow_name}/{name}'\n[/]"
     )
 
     deployment_url = urls.url_for("deployment", obj_id=deployment_id)
     if deployment_url:
         help_message += (
-            "\nYou can also run your flow via the Prefect UI:"
+            "\nYou can also run your flow via the Syntask UI:"
             f" [blue]{deployment_url}[/]\n"
         )
 

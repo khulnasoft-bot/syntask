@@ -3,6 +3,7 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "declaration": true,
+    "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "importHelpers": true,
     "jsx": "preserve",
@@ -18,13 +19,17 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ],
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "target": "esnext"
+    "target": "esnext",
+    "types": [
+      "vite-svg-loader",
+      "vite/client"
+    ]
   },
   "include": [
     "**/*.ts",
@@ -32,9 +37,5 @@
     "**/*.vue",
     "**/*.mts",
     "postcss.config.cjs",
-    "tests/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
   ]
 }

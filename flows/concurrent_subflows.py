@@ -1,7 +1,7 @@
 import asyncio
 import random
 
-from prefect import flow, task
+from syntask import flow, task
 
 
 @task

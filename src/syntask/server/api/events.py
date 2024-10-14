@@ -9,36 +9,36 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 from starlette.status import WS_1002_PROTOCOL_ERROR
 
-from prefect.logging import get_logger
-from prefect.server.api.dependencies import is_ephemeral_request
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import messaging, stream
-from prefect.server.events.counting import (
+from syntask.logging import get_logger
+from syntask.server.api.dependencies import is_ephemeral_request
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import messaging, stream
+from syntask.server.events.counting import (
     Countable,
     InvalidEventCountParameters,
     TimeUnit,
 )
-from prefect.server.events.filters import EventFilter, EventOrder
-from prefect.server.events.models.automations import automations_session
-from prefect.server.events.pipeline import EventsPipeline
-from prefect.server.events.schemas.events import Event, EventCount, EventPage
-from prefect.server.events.storage import (
+from syntask.server.events.filters import EventFilter, EventOrder
+from syntask.server.events.models.automations import automations_session
+from syntask.server.events.pipeline import EventsPipeline
+from syntask.server.events.schemas.events import Event, EventCount, EventPage
+from syntask.server.events.storage import (
     INTERACTIVE_PAGE_SIZE,
     InvalidTokenError,
     database,
 )
-from prefect.server.utilities import subscriptions
-from prefect.server.utilities.server import PrefectRouter
-from prefect.settings import (
-    PREFECT_EVENTS_MAXIMUM_WEBSOCKET_BACKFILL,
-    PREFECT_EVENTS_WEBSOCKET_BACKFILL_PAGE_SIZE,
+from syntask.server.utilities import subscriptions
+from syntask.server.utilities.server import SyntaskRouter
+from syntask.settings import (
+    SYNTASK_EVENTS_MAXIMUM_WEBSOCKET_BACKFILL,
+    SYNTASK_EVENTS_WEBSOCKET_BACKFILL_PAGE_SIZE,
 )
 
 logger = get_logger(__name__)
 
 
-router = PrefectRouter(prefix="/events", tags=["Events"])
+router = SyntaskRouter(prefix="/events", tags=["Events"])
 
 
 @router.post("", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
@@ -76,7 +76,7 @@ async def stream_workspace_events_out(
     websocket: WebSocket,
 ) -> None:
     """Open a WebSocket to stream Events"""
-    websocket = await subscriptions.accept_prefect_socket(
+    websocket = await subscriptions.accept_syntask_socket(
         websocket,
     )
     if not websocket:
@@ -101,7 +101,7 @@ async def stream_workspace_events_out(
                 WS_1002_PROTOCOL_ERROR, reason=f"Invalid filter: {e}"
             )
 
-        filter.occurred.clamp(PREFECT_EVENTS_MAXIMUM_WEBSOCKET_BACKFILL.value())
+        filter.occurred.clamp(SYNTASK_EVENTS_MAXIMUM_WEBSOCKET_BACKFILL.value())
         filter.order = EventOrder.ASC
 
         # subscribe to the ongoing event stream first so we don't miss events...
@@ -114,7 +114,7 @@ async def stream_workspace_events_out(
                     backfill, _, next_page = await database.query_events(
                         session=session,
                         filter=filter,
-                        page_size=PREFECT_EVENTS_WEBSOCKET_BACKFILL_PAGE_SIZE.value(),
+                        page_size=SYNTASK_EVENTS_WEBSOCKET_BACKFILL_PAGE_SIZE.value(),
                     )
 
                     while backfill:
@@ -188,7 +188,7 @@ async def read_events(
         embed=True,
         description="The number of events to return with each page",
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> EventPage:
     """
     Queries for Events matching the given filter criteria in the given Account.  Returns
@@ -216,7 +216,7 @@ async def read_events(
 async def read_account_events_page(
     request: Request,
     page_token: str = Depends(verified_page_token),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> EventPage:
     """
     Returns the next page of Events for a previous query against the given Account, and
@@ -259,7 +259,7 @@ async def count_account_events(
     countable: Countable = Path(...),
     time_unit: TimeUnit = Body(default=TimeUnit.day),
     time_interval: float = Body(default=1.0, ge=0.01),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[EventCount]:
     """
     Returns distinct objects and the count of events associated with them.  Objects

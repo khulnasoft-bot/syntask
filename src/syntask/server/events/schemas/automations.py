@@ -28,18 +28,18 @@ from pydantic import (
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import Self, TypeAlias
 
-from prefect.logging import get_logger
-from prefect.server.events.actions import ServerActionTypes
-from prefect.server.events.schemas.events import (
+from syntask.logging import get_logger
+from syntask.server.events.actions import ServerActionTypes
+from syntask.server.events.schemas.events import (
     ReceivedEvent,
     RelatedResource,
     Resource,
     ResourceSpecification,
     matches,
 )
-from prefect.server.schemas.actions import ActionBaseModel
-from prefect.server.utilities.schemas import ORMBaseModel, PrefectBaseModel
-from prefect.utilities.collections import AutoEnum
+from syntask.server.schemas.actions import ActionBaseModel
+from syntask.server.utilities.schemas import ORMBaseModel, SyntaskBaseModel
+from syntask.utilities.collections import AutoEnum
 
 logger = get_logger(__name__)
 
@@ -55,7 +55,7 @@ class TriggerState(AutoEnum):
     Resolved = "Resolved"
 
 
-class Trigger(PrefectBaseModel, abc.ABC):
+class Trigger(SyntaskBaseModel, abc.ABC):
     """
     Base class describing a set of criteria that must be satisfied in order to trigger
     an automation.
@@ -105,8 +105,7 @@ class Trigger(PrefectBaseModel, abc.ABC):
     @abc.abstractmethod
     def create_automation_state_change_event(
         self, firing: "Firing", trigger_state: TriggerState
-    ) -> ReceivedEvent:
-        ...
+    ) -> ReceivedEvent: ...
 
 
 class CompositeTrigger(Trigger, abc.ABC):
@@ -127,16 +126,16 @@ class CompositeTrigger(Trigger, abc.ABC):
         triggering_event = firing.triggering_event
         return ReceivedEvent(
             occurred=firing.triggered,
-            event=f"prefect.automation.{trigger_state.value.lower()}",
+            event=f"syntask.automation.{trigger_state.value.lower()}",
             resource={
-                "prefect.resource.id": f"prefect.automation.{automation.id}",
-                "prefect.resource.name": automation.name,
+                "syntask.resource.id": f"syntask.automation.{automation.id}",
+                "syntask.resource.name": automation.name,
             },
             related=(
                 [
                     {
-                        "prefect.resource.id": f"prefect.event.{triggering_event.id}",
-                        "prefect.resource.role": "triggering-event",
+                        "syntask.resource.id": f"syntask.event.{triggering_event.id}",
+                        "syntask.resource.role": "triggering-event",
                     }
                 ]
                 if triggering_event
@@ -170,8 +169,7 @@ class CompositeTrigger(Trigger, abc.ABC):
         return len(self.triggers)
 
     @abc.abstractmethod
-    def ready_to_fire(self, firings: Sequence["Firing"]) -> bool:
-        ...
+    def ready_to_fire(self, firings: Sequence["Firing"]) -> bool: ...
 
 
 class CompoundTrigger(CompositeTrigger):
@@ -264,7 +262,7 @@ class EventTrigger(ResourceTrigger):
         description=(
             "The event(s) which must first been seen to fire this trigger.  If "
             "empty, then fire this trigger immediately.  Events may include "
-            "trailing wildcards, like `prefect.flow-run.*`"
+            "trailing wildcards, like `syntask.flow-run.*`"
         ),
     )
     expect: Set[str] = Field(
@@ -272,7 +270,7 @@ class EventTrigger(ResourceTrigger):
         description=(
             "The event(s) this trigger is expecting to see.  If empty, this "
             "trigger will match any event.  Events may include trailing wildcards, "
-            "like `prefect.flow-run.*`"
+            "like `syntask.flow-run.*`"
         ),
     )
 
@@ -284,7 +282,7 @@ class EventTrigger(ResourceTrigger):
             "triggering event.  You may also refer to labels from related "
             "resources by specifying `related:<role>:<label>`.  This will use the "
             "value of that label for the first related resource in that role.  For "
-            'example, `"for_each": ["related:flow:prefect.resource.id"]` would '
+            'example, `"for_each": ["related:flow:syntask.resource.id"]` would '
             "evaluate the trigger for each flow."
         ),
     )
@@ -423,22 +421,22 @@ class EventTrigger(ResourceTrigger):
         triggering_event = firing.triggering_event
 
         resource_data = {
-            "prefect.resource.id": f"prefect.automation.{automation.id}",
-            "prefect.resource.name": automation.name,
+            "syntask.resource.id": f"syntask.automation.{automation.id}",
+            "syntask.resource.name": automation.name,
         }
 
         if self.posture.value:
-            resource_data["prefect.posture"] = self.posture.value
+            resource_data["syntask.posture"] = self.posture.value
 
         return ReceivedEvent(
             occurred=firing.triggered,
-            event=f"prefect.automation.{trigger_state.value.lower()}",
+            event=f"syntask.automation.{trigger_state.value.lower()}",
             resource=resource_data,
             related=(
                 [
                     {
-                        "prefect.resource.id": f"prefect.event.{triggering_event.id}",
-                        "prefect.resource.role": "triggering-event",
+                        "syntask.resource.id": f"syntask.event.{triggering_event.id}",
+                        "syntask.resource.role": "triggering-event",
                     }
                 ]
                 if triggering_event
@@ -462,7 +460,7 @@ ServerTriggerTypes: TypeAlias = Union[EventTrigger, CompoundTrigger, SequenceTri
 T = TypeVar("T", bound=Trigger)
 
 
-class AutomationCore(PrefectBaseModel, extra="ignore"):
+class AutomationCore(SyntaskBaseModel, extra="ignore"):
     """Defines an action a user wants to take when a certain number of events
     do or don't happen to the matching resources"""
 
@@ -512,7 +510,7 @@ class AutomationCore(PrefectBaseModel, extra="ignore"):
     @model_validator(mode="after")
     def prevent_run_deployment_loops(self) -> Self:
         """Detects potential infinite loops in automations with RunDeployment actions"""
-        from prefect.server.events.actions import RunDeployment
+        from syntask.server.events.actions import RunDeployment
 
         if not self.enabled:
             # Disabled automations can't cause problems
@@ -526,16 +524,16 @@ class AutomationCore(PrefectBaseModel, extra="ignore"):
             # Only reactive automations can cause infinite amplification
             return self
 
-        if not any(e.startswith("prefect.flow-run.") for e in self.trigger.expect):
+        if not any(e.startswith("syntask.flow-run.") for e in self.trigger.expect):
             # Only flow run events can cause infinite amplification
             return self
 
         # Every flow run created by a Deployment goes through these states
         problematic_events = {
-            "prefect.flow-run.Scheduled",
-            "prefect.flow-run.Pending",
-            "prefect.flow-run.Running",
-            "prefect.flow-run.*",
+            "syntask.flow-run.Scheduled",
+            "syntask.flow-run.Pending",
+            "syntask.flow-run.Running",
+            "syntask.flow-run.*",
         }
         if not problematic_events.intersection(self.trigger.expect):
             return self
@@ -560,9 +558,9 @@ class AutomationCore(PrefectBaseModel, extra="ignore"):
                 # or match_related.  While it's still possible to have infinite loops
                 # with additional filters, it's less likely.
                 if self.trigger.match.matches_every_resource_of_kind(
-                    "prefect.flow-run"
+                    "syntask.flow-run"
                 ) and self.trigger.match_related.matches_every_resource_of_kind(
-                    "prefect.flow-run"
+                    "syntask.flow-run"
                 ):
                     raise ValueError(
                         "Running a selected deployment from a flow run state change "
@@ -620,7 +618,7 @@ class AutomationSort(AutoEnum):
     NAME_DESC = "NAME_DESC"
 
 
-class Firing(PrefectBaseModel):
+class Firing(SyntaskBaseModel):
     """Represents one instance of a trigger firing"""
 
     id: UUID = Field(default_factory=uuid4)
@@ -690,7 +688,7 @@ class Firing(PrefectBaseModel):
         ]
 
 
-class TriggeredAction(PrefectBaseModel):
+class TriggeredAction(SyntaskBaseModel):
     """An action caused as the result of an automation"""
 
     automation: Automation = Field(

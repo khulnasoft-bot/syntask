@@ -5,15 +5,15 @@ import readchar
 from starlette import status
 from tests.cli.cloud.test_cloud import gen_test_workspace
 
-from prefect.context import use_profile
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
+from syntask.context import use_profile
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
     Profile,
     ProfilesCollection,
     save_profiles,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 
 def test_cannot_get_webhook_if_you_are_not_logged_in():
@@ -28,7 +28,7 @@ def test_cannot_get_webhook_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -41,8 +41,8 @@ def test_get_webhook_by_id(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -56,7 +56,7 @@ def test_get_webhook_by_id(respx_mock):
         "name": "foobar",
         "enabled": True,
         "template": (
-            '{ "event": "your.event.name", "resource": { "prefect.resource.id":'
+            '{ "event": "your.event.name", "resource": { "syntask.resource.id":'
             ' "your.resource.id" } }'
         ),
         "slug": "your-webhook-slug",
@@ -89,7 +89,7 @@ def test_cannot_list_webhooks_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -102,8 +102,8 @@ def test_list_webhooks(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -116,7 +116,7 @@ def test_list_webhooks(respx_mock):
         "name": "foobar",
         "enabled": True,
         "template": (
-            '{ "event": "your.event.name", "resource": { "prefect.resource.id":'
+            '{ "event": "your.event.name", "resource": { "syntask.resource.id":'
             ' "your.resource.id" } }'
         ),
         "slug": "your-webhook-slug",
@@ -126,7 +126,7 @@ def test_list_webhooks(respx_mock):
         "name": "bazzbuzz",
         "enabled": True,
         "template": (
-            '{ "event": "your.event2.name", "resource": { "prefect.resource.id":'
+            '{ "event": "your.event2.name", "resource": { "syntask.resource.id":'
             ' "your.resource.id" } }'
         ),
         "slug": "your-webhook2-slug",
@@ -159,7 +159,7 @@ def test_cannot_create_webhook_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -172,8 +172,8 @@ def test_cannot_create_webhook_without_template():
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -199,8 +199,8 @@ def test_create_webhook(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -250,7 +250,7 @@ def test_cannot_rotate_webhook_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -263,8 +263,8 @@ def test_rotate_webhook(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -304,7 +304,7 @@ def test_cannot_toggle_webhook_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -317,8 +317,8 @@ def test_toggle_webhook(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -362,7 +362,7 @@ def test_cannot_update_webhook_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -375,8 +375,8 @@ def test_update_webhook(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -430,7 +430,7 @@ def test_cannot_delete_webhook_if_you_are_not_logged_in():
             expected_code=1,
             expected_output=(
                 f"Currently not authenticated in profile {cloud_profile!r}. "
-                "Please log in with `prefect cloud login`."
+                "Please log in with `syntask cloud login`."
             ),
         )
 
@@ -443,8 +443,8 @@ def test_delete_webhook(respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -476,8 +476,8 @@ def test_webhook_methods_with_invalid_uuid():
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],

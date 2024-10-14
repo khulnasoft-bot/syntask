@@ -21,52 +21,52 @@ from uuid import UUID, uuid4
 import anyio
 from typing_extensions import Literal
 
-import prefect
-import prefect.context
-import prefect.plugins
-from prefect._internal.concurrency.cancellation import get_deadline
-from prefect.client.schemas import OrchestrationResult, TaskRun
-from prefect.client.schemas.objects import (
+import syntask
+import syntask.context
+import syntask.plugins
+from syntask._internal.concurrency.cancellation import get_deadline
+from syntask.client.schemas import OrchestrationResult, TaskRun
+from syntask.client.schemas.objects import (
     StateType,
     TaskRunInput,
     TaskRunResult,
 )
-from prefect.client.schemas.responses import SetStateStatus
-from prefect.context import (
+from syntask.client.schemas.responses import SetStateStatus
+from syntask.context import (
     FlowRunContext,
 )
-from prefect.events import Event, emit_event
-from prefect.exceptions import (
+from syntask.events import Event, emit_event
+from syntask.exceptions import (
     Pause,
-    PrefectException,
+    SyntaskException,
     TerminationSignal,
     UpstreamTaskError,
 )
-from prefect.flows import Flow
-from prefect.futures import PrefectFuture
-from prefect.logging.loggers import (
+from syntask.flows import Flow
+from syntask.futures import SyntaskFuture
+from syntask.logging.loggers import (
     get_logger,
     task_run_logger,
 )
-from prefect.results import BaseResult, ResultRecord, should_persist_result
-from prefect.settings import (
-    PREFECT_LOGGING_LOG_PRINTS,
+from syntask.results import BaseResult, ResultRecord, should_persist_result
+from syntask.settings import (
+    SYNTASK_LOGGING_LOG_PRINTS,
 )
-from prefect.states import (
+from syntask.states import (
     State,
     get_state_exception,
 )
-from prefect.tasks import Task
-from prefect.utilities.annotations import allow_failure, quote
-from prefect.utilities.asyncutils import (
+from syntask.tasks import Task
+from syntask.utilities.annotations import allow_failure, quote
+from syntask.utilities.asyncutils import (
     gather,
     run_coro_as_sync,
 )
-from prefect.utilities.collections import StopVisiting, visit_collection
-from prefect.utilities.text import truncated_to
+from syntask.utilities.collections import StopVisiting, visit_collection
+from syntask.utilities.text import truncated_to
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient, SyncPrefectClient
+    from syntask.client.orchestration import SyncSyntaskClient, SyntaskClient
 
 API_HEALTHCHECKS = {}
 UNTRACKABLE_TYPES = {bool, type(None), type(...), type(NotImplemented)}
@@ -91,7 +91,7 @@ async def collect_task_run_inputs(expr: Any, max_depth: int = -1) -> Set[TaskRun
     futures = set()
 
     def add_futures_and_states_to_inputs(obj):
-        if isinstance(obj, PrefectFuture):
+        if isinstance(obj, SyntaskFuture):
             # We need to wait for futures to be submitted before we can get the task
             # run id but we want to do so asynchronously
             futures.add(obj)
@@ -121,7 +121,7 @@ async def collect_task_run_inputs(expr: Any, max_depth: int = -1) -> Set[TaskRun
 
 
 def collect_task_run_inputs_sync(
-    expr: Any, future_cls: Any = PrefectFuture, max_depth: int = -1
+    expr: Any, future_cls: Any = SyntaskFuture, max_depth: int = -1
 ) -> Set[TaskRunInput]:
     """
     This function recurses through an expression to generate a set of any discernible
@@ -162,7 +162,7 @@ def collect_task_run_inputs_sync(
 
 
 async def wait_for_task_runs_and_report_crashes(
-    task_run_futures: Iterable[PrefectFuture], client: "PrefectClient"
+    task_run_futures: Iterable[SyntaskFuture], client: "SyntaskClient"
 ) -> Literal[True]:
     crash_exceptions = []
 
@@ -244,7 +244,7 @@ async def resolve_inputs(
     parameters: Dict[str, Any], return_data: bool = True, max_depth: int = -1
 ) -> Dict[str, Any]:
     """
-    Resolve any `Quote`, `PrefectFuture`, or `State` types nested in parameters into
+    Resolve any `Quote`, `SyntaskFuture`, or `State` types nested in parameters into
     data.
 
     Returns:
@@ -266,7 +266,7 @@ async def resolve_inputs(
         if isinstance(context.get("annotation"), quote):
             raise StopVisiting()
 
-        if isinstance(expr, PrefectFuture):
+        if isinstance(expr, SyntaskFuture):
             futures.add(expr)
         if isinstance(expr, State):
             states.add(expr)
@@ -305,7 +305,7 @@ async def resolve_inputs(
         if isinstance(context.get("annotation"), quote):
             raise StopVisiting()
 
-        if isinstance(expr, PrefectFuture):
+        if isinstance(expr, SyntaskFuture):
             state = expr._final_state
         elif isinstance(expr, State):
             state = expr
@@ -344,7 +344,7 @@ async def resolve_inputs(
         except UpstreamTaskError:
             raise
         except Exception as exc:
-            raise PrefectException(
+            raise SyntaskException(
                 f"Failed to resolve inputs in parameter {parameter!r}. If your"
                 " parameter type is not supported, consider using the `quote`"
                 " annotation to skip resolution of inputs."
@@ -354,25 +354,25 @@ async def resolve_inputs(
 
 
 async def propose_state(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     state: State[object],
     force: bool = False,
     task_run_id: Optional[UUID] = None,
     flow_run_id: Optional[UUID] = None,
 ) -> State[object]:
     """
-    Propose a new state for a flow run or task run, invoking Prefect orchestration logic.
+    Propose a new state for a flow run or task run, invoking Syntask orchestration logic.
 
     If the proposed state is accepted, the provided `state` will be augmented with
      details and returned.
 
-    If the proposed state is rejected, a new state returned by the Prefect API will be
+    If the proposed state is rejected, a new state returned by the Syntask API will be
     returned.
 
-    If the proposed state results in a WAIT instruction from the Prefect API, the
+    If the proposed state results in a WAIT instruction from the Syntask API, the
     function will sleep and attempt to propose the state again.
 
-    If the proposed state results in an ABORT instruction from the Prefect API, an
+    If the proposed state results in an ABORT instruction from the Syntask API, an
     error will be raised.
 
     Args:
@@ -381,13 +381,13 @@ async def propose_state(
         flow_run_id: an optional flow run id, used when proposing flow run states
 
     Returns:
-        a [State model][prefect.client.schemas.objects.State] representation of the
+        a [State model][syntask.client.schemas.objects.State] representation of the
             flow or task run state
 
     Raises:
         ValueError: if neither task_run_id or flow_run_id is provided
-        prefect.exceptions.Abort: if an ABORT instruction is received from
-            the Prefect API
+        syntask.exceptions.Abort: if an ABORT instruction is received from
+            the Syntask API
     """
 
     # Determine if working with a task run or flow run
@@ -443,7 +443,7 @@ async def propose_state(
         return state
 
     elif response.status == SetStateStatus.ABORT:
-        raise prefect.exceptions.Abort(response.details.reason)
+        raise syntask.exceptions.Abort(response.details.reason)
 
     elif response.status == SetStateStatus.REJECT:
         if response.state.is_paused():
@@ -457,25 +457,25 @@ async def propose_state(
 
 
 def propose_state_sync(
-    client: "SyncPrefectClient",
+    client: "SyncSyntaskClient",
     state: State[object],
     force: bool = False,
     task_run_id: Optional[UUID] = None,
     flow_run_id: Optional[UUID] = None,
 ) -> State[object]:
     """
-    Propose a new state for a flow run or task run, invoking Prefect orchestration logic.
+    Propose a new state for a flow run or task run, invoking Syntask orchestration logic.
 
     If the proposed state is accepted, the provided `state` will be augmented with
      details and returned.
 
-    If the proposed state is rejected, a new state returned by the Prefect API will be
+    If the proposed state is rejected, a new state returned by the Syntask API will be
     returned.
 
-    If the proposed state results in a WAIT instruction from the Prefect API, the
+    If the proposed state results in a WAIT instruction from the Syntask API, the
     function will sleep and attempt to propose the state again.
 
-    If the proposed state results in an ABORT instruction from the Prefect API, an
+    If the proposed state results in an ABORT instruction from the Syntask API, an
     error will be raised.
 
     Args:
@@ -484,13 +484,13 @@ def propose_state_sync(
         flow_run_id: an optional flow run id, used when proposing flow run states
 
     Returns:
-        a [State model][prefect.client.schemas.objects.State] representation of the
+        a [State model][syntask.client.schemas.objects.State] representation of the
             flow or task run state
 
     Raises:
         ValueError: if neither task_run_id or flow_run_id is provided
-        prefect.exceptions.Abort: if an ABORT instruction is received from
-            the Prefect API
+        syntask.exceptions.Abort: if an ABORT instruction is received from
+            the Syntask API
     """
 
     # Determine if working with a task run or flow run
@@ -548,7 +548,7 @@ def propose_state_sync(
         return state
 
     elif response.status == SetStateStatus.ABORT:
-        raise prefect.exceptions.Abort(response.details.reason)
+        raise syntask.exceptions.Abort(response.details.reason)
 
     elif response.status == SetStateStatus.REJECT:
         if response.state.is_paused():
@@ -618,7 +618,7 @@ def link_state_to_result(state: State, result: Any) -> None:
     - Hashing can be expensive.
     - Not all objects are hashable.
 
-    We do not set an attribute, e.g. `__prefect_state__`, on the result because:
+    We do not set an attribute, e.g. `__syntask_state__`, on the result because:
 
     - Mutating user's objects is dangerous.
     - Unrelated equality comparisons can break unexpectedly.
@@ -659,7 +659,7 @@ def should_log_prints(flow_or_task: Union[Flow, Task]) -> bool:
         if flow_run_context:
             return flow_run_context.log_prints
         else:
-            return PREFECT_LOGGING_LOG_PRINTS.value()
+            return SYNTASK_LOGGING_LOG_PRINTS.value()
 
     return flow_or_task.log_prints
 
@@ -712,7 +712,7 @@ def _get_hook_name(hook: Callable) -> str:
     )
 
 
-async def check_api_reachable(client: "PrefectClient", fail_message: str):
+async def check_api_reachable(client: "SyntaskClient", fail_message: str):
     # Do not perform a healthcheck if it exists and is not expired
     api_url = str(client.api_url)
     if api_url in API_HEALTHCHECKS:
@@ -748,7 +748,7 @@ def emit_task_run_state_change_event(
     return emit_event(
         id=validated_state.id,
         occurred=validated_state.timestamp,
-        event=f"prefect.task-run.{validated_state.name}",
+        event=f"syntask.task-run.{validated_state.name}",
         payload={
             "intended": {
                 "from": str(initial_state.type.value) if initial_state else None,
@@ -804,19 +804,19 @@ def emit_task_run_state_change_event(
             ),
         },
         resource={
-            "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-            "prefect.resource.name": task_run.name,
-            "prefect.state-message": truncated_to(
+            "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+            "syntask.resource.name": task_run.name,
+            "syntask.state-message": truncated_to(
                 state_message_truncation_length, validated_state.message
             ),
-            "prefect.state-name": validated_state.name or "",
-            "prefect.state-timestamp": (
+            "syntask.state-name": validated_state.name or "",
+            "syntask.state-timestamp": (
                 validated_state.timestamp.isoformat()
                 if validated_state and validated_state.timestamp
                 else ""
             ),
-            "prefect.state-type": str(validated_state.type.value),
-            "prefect.orchestration": "client",
+            "syntask.state-type": str(validated_state.type.value),
+            "syntask.orchestration": "client",
         },
         follows=follows,
     )
@@ -824,7 +824,7 @@ def emit_task_run_state_change_event(
 
 def resolve_to_final_result(expr, context):
     """
-    Resolve any `PrefectFuture`, or `State` types nested in parameters into
+    Resolve any `SyntaskFuture`, or `State` types nested in parameters into
     data. Designed to be use with `visit_collection`.
     """
     state = None
@@ -833,7 +833,7 @@ def resolve_to_final_result(expr, context):
     if isinstance(context.get("annotation"), quote):
         raise StopVisiting()
 
-    if isinstance(expr, PrefectFuture):
+    if isinstance(expr, SyntaskFuture):
         upstream_task_run = context.get("current_task_run")
         upstream_task = context.get("current_task")
         if (
@@ -879,7 +879,7 @@ def resolve_inputs_sync(
     parameters: Dict[str, Any], return_data: bool = True, max_depth: int = -1
 ) -> Dict[str, Any]:
     """
-    Resolve any `Quote`, `PrefectFuture`, or `State` types nested in parameters into
+    Resolve any `Quote`, `SyntaskFuture`, or `State` types nested in parameters into
     data.
 
     Returns:
@@ -906,7 +906,7 @@ def resolve_inputs_sync(
         except UpstreamTaskError:
             raise
         except Exception as exc:
-            raise PrefectException(
+            raise SyntaskException(
                 f"Failed to resolve inputs in parameter {parameter!r}. If your"
                 " parameter type is not supported, consider using the `quote`"
                 " annotation to skip resolution of inputs."

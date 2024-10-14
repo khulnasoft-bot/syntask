@@ -8,37 +8,37 @@ import pydantic
 import pytest
 from sqlalchemy import make_url
 
-import prefect.context
-import prefect.settings
-from prefect.exceptions import ProfileSettingsValidationError
-from prefect.settings import (
+import syntask.context
+import syntask.settings
+from syntask.exceptions import ProfileSettingsValidationError
+from syntask.settings import (
     DEFAULT_PROFILES_PATH,
-    PREFECT_API_DATABASE_CONNECTION_URL,
-    PREFECT_API_DATABASE_DRIVER,
-    PREFECT_API_DATABASE_HOST,
-    PREFECT_API_DATABASE_NAME,
-    PREFECT_API_DATABASE_PASSWORD,
-    PREFECT_API_DATABASE_PORT,
-    PREFECT_API_DATABASE_USER,
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLIENT_RETRY_EXTRA_CODES,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_CLOUD_UI_URL,
-    PREFECT_DEBUG_MODE,
-    PREFECT_HOME,
-    PREFECT_LOGGING_EXTRA_LOGGERS,
-    PREFECT_LOGGING_LEVEL,
-    PREFECT_LOGGING_SERVER_LEVEL,
-    PREFECT_PROFILES_PATH,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
-    PREFECT_SERVER_API_HOST,
-    PREFECT_SERVER_API_PORT,
-    PREFECT_TEST_MODE,
-    PREFECT_TEST_SETTING,
-    PREFECT_UI_URL,
-    PREFECT_UNIT_TEST_MODE,
     SETTING_VARIABLES,
+    SYNTASK_API_DATABASE_CONNECTION_URL,
+    SYNTASK_API_DATABASE_DRIVER,
+    SYNTASK_API_DATABASE_HOST,
+    SYNTASK_API_DATABASE_NAME,
+    SYNTASK_API_DATABASE_PASSWORD,
+    SYNTASK_API_DATABASE_PORT,
+    SYNTASK_API_DATABASE_USER,
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLIENT_RETRY_EXTRA_CODES,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_CLOUD_UI_URL,
+    SYNTASK_DEBUG_MODE,
+    SYNTASK_HOME,
+    SYNTASK_LOGGING_EXTRA_LOGGERS,
+    SYNTASK_LOGGING_LEVEL,
+    SYNTASK_LOGGING_SERVER_LEVEL,
+    SYNTASK_PROFILES_PATH,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
+    SYNTASK_SERVER_API_HOST,
+    SYNTASK_SERVER_API_PORT,
+    SYNTASK_TEST_MODE,
+    SYNTASK_TEST_SETTING,
+    SYNTASK_UI_URL,
+    SYNTASK_UNIT_TEST_MODE,
     Profile,
     ProfilesCollection,
     Settings,
@@ -52,29 +52,29 @@ from prefect.settings import (
 
 class TestSettingClass:
     def test_setting_equality_with_value(self):
-        with temporary_settings({PREFECT_TEST_SETTING: "foo"}):
-            assert PREFECT_TEST_SETTING == "foo"
-            assert PREFECT_TEST_SETTING != "bar"
+        with temporary_settings({SYNTASK_TEST_SETTING: "foo"}):
+            assert SYNTASK_TEST_SETTING == "foo"
+            assert SYNTASK_TEST_SETTING != "bar"
 
     def test_setting_equality_with_self(self):
-        assert PREFECT_TEST_SETTING == PREFECT_TEST_SETTING
+        assert SYNTASK_TEST_SETTING == SYNTASK_TEST_SETTING
 
     def test_setting_equality_with_other_setting(self):
-        assert PREFECT_TEST_SETTING != PREFECT_TEST_MODE
+        assert SYNTASK_TEST_SETTING != SYNTASK_TEST_MODE
 
     def test_setting_hash_is_consistent(self):
-        assert hash(PREFECT_TEST_SETTING) == hash(PREFECT_TEST_SETTING)
+        assert hash(SYNTASK_TEST_SETTING) == hash(SYNTASK_TEST_SETTING)
 
     def test_setting_hash_is_unique(self):
-        assert hash(PREFECT_TEST_SETTING) != hash(PREFECT_LOGGING_LEVEL)
+        assert hash(SYNTASK_TEST_SETTING) != hash(SYNTASK_LOGGING_LEVEL)
 
     def test_setting_hash_consistent_on_value_change(self):
-        original = hash(PREFECT_TEST_SETTING)
-        with temporary_settings({PREFECT_TEST_SETTING: "foo"}):
-            assert hash(PREFECT_TEST_SETTING) == original
+        original = hash(SYNTASK_TEST_SETTING)
+        with temporary_settings({SYNTASK_TEST_SETTING: "foo"}):
+            assert hash(SYNTASK_TEST_SETTING) == original
 
     def test_setting_hash_is_consistent_after_deepcopy(self):
-        assert hash(PREFECT_TEST_SETTING) == hash(copy.deepcopy(PREFECT_TEST_SETTING))
+        assert hash(SYNTASK_TEST_SETTING) == hash(copy.deepcopy(SYNTASK_TEST_SETTING))
 
 
 class TestSettingsClass:
@@ -85,7 +85,7 @@ class TestSettingsClass:
         new_set_keys = set(new_settings.model_dump(exclude_unset=True).keys())
         assert new_set_keys == set_keys
 
-        new_settings = settings.copy_with_update(updates={PREFECT_API_KEY: "TEST"})
+        new_settings = settings.copy_with_update(updates={SYNTASK_API_KEY: "TEST"})
         new_set_keys = set(new_settings.model_dump(exclude_unset=True).keys())
         # Only the API key setting should be set
         assert new_set_keys - set_keys == {"api_key"}
@@ -94,10 +94,10 @@ class TestSettingsClass:
         settings = get_current_settings()
         assert settings.unit_test_mode is True
 
-        with temporary_settings(restore_defaults={PREFECT_API_KEY}):
+        with temporary_settings(restore_defaults={SYNTASK_API_KEY}):
             new_settings = settings.copy_with_update(
-                updates={PREFECT_CLIENT_RETRY_EXTRA_CODES: "400,500"},
-                set_defaults={PREFECT_UNIT_TEST_MODE: False, PREFECT_API_KEY: "TEST"},
+                updates={SYNTASK_CLIENT_RETRY_EXTRA_CODES: "400,500"},
+                set_defaults={SYNTASK_UNIT_TEST_MODE: False, SYNTASK_API_KEY: "TEST"},
             )
             assert (
                 new_settings.unit_test_mode is True
@@ -109,60 +109,60 @@ class TestSettingsClass:
             assert new_settings.client_retry_extra_codes == {400, 500}
 
     def test_settings_loads_environment_variables_at_instantiation(self, monkeypatch):
-        assert PREFECT_TEST_MODE.value() is True
+        assert SYNTASK_TEST_MODE.value() is True
 
-        monkeypatch.setenv("PREFECT_TEST_MODE", "0")
+        monkeypatch.setenv("SYNTASK_TEST_MODE", "0")
         new_settings = Settings()
-        assert PREFECT_TEST_MODE.value_from(new_settings) is False
+        assert SYNTASK_TEST_MODE.value_from(new_settings) is False
 
     def test_settings_to_environment_includes_all_settings_with_non_null_values(self):
         settings = Settings()
         assert set(settings.to_environment_variables().keys()) == {
-            f"PREFECT_{key.upper()}"
+            f"SYNTASK_{key.upper()}"
             for key in settings.model_dump(exclude_none=True).keys()
         }
 
     def test_settings_to_environment_casts_to_strings(self):
         assert (
             Settings(server_api_port=3000).to_environment_variables()[
-                "PREFECT_SERVER_API_PORT"
+                "SYNTASK_SERVER_API_PORT"
             ]
             == "3000"
         )
 
     def test_settings_to_environment_respects_includes(self):
-        include = [PREFECT_SERVER_API_PORT]
+        include = [SYNTASK_SERVER_API_PORT]
 
         assert Settings(server_api_port=3000).to_environment_variables(
             include=include
-        ) == {"PREFECT_SERVER_API_PORT": "3000"}
+        ) == {"SYNTASK_SERVER_API_PORT": "3000"}
 
-        assert include == [PREFECT_SERVER_API_PORT], "Passed list should not be mutated"
+        assert include == [SYNTASK_SERVER_API_PORT], "Passed list should not be mutated"
 
     def test_settings_to_environment_exclude_unset_empty_if_none_set(self, monkeypatch):
         for key in SETTING_VARIABLES:
-            if not key.startswith("PREFECT_") or key == "PREFECT_TEST_MODE":
+            if not key.startswith("SYNTASK_") or key == "SYNTASK_TEST_MODE":
                 continue
             monkeypatch.delenv(key, raising=False)
 
         assert Settings().to_environment_variables(
             exclude_unset=True,
         ) == {
-            "PREFECT_TEST_MODE": "True",
+            "SYNTASK_TEST_MODE": "True",
         }
 
     def test_settings_to_environment_exclude_unset_only_includes_set(self, monkeypatch):
         for key in SETTING_VARIABLES:
-            if key == "PREFECT_TEST_MODE":
+            if key == "SYNTASK_TEST_MODE":
                 continue
             monkeypatch.delenv(key, raising=False)
 
         assert Settings(debug_mode=True, api_key="Hello").to_environment_variables(
             exclude_unset=True,
         ) == {
-            "PREFECT_TEST_MODE": "True",
-            "PREFECT_DEBUG_MODE": "True",
-            "PREFECT_API_KEY": "Hello",
+            "SYNTASK_TEST_MODE": "True",
+            "SYNTASK_DEBUG_MODE": "True",
+            "SYNTASK_API_KEY": "Hello",
         }
 
     def test_settings_to_environment_exclude_unset_only_includes_set_even_if_included(
@@ -171,19 +171,19 @@ class TestSettingsClass:
         for key in SETTING_VARIABLES:
             monkeypatch.delenv(key, raising=False)
 
-        include = [PREFECT_HOME, PREFECT_DEBUG_MODE, PREFECT_API_KEY]
+        include = [SYNTASK_HOME, SYNTASK_DEBUG_MODE, SYNTASK_API_KEY]
 
         assert Settings(debug_mode=True, api_key="Hello").to_environment_variables(
             exclude_unset=True, include=include
         ) == {
-            "PREFECT_DEBUG_MODE": "True",
-            "PREFECT_API_KEY": "Hello",
+            "SYNTASK_DEBUG_MODE": "True",
+            "SYNTASK_API_KEY": "Hello",
         }
 
         assert include == [
-            PREFECT_HOME,
-            PREFECT_DEBUG_MODE,
-            PREFECT_API_KEY,
+            SYNTASK_HOME,
+            SYNTASK_DEBUG_MODE,
+            SYNTASK_API_KEY,
         ], "Passed list should not be mutated"
 
     @pytest.mark.parametrize("exclude_unset", [True, False])
@@ -206,8 +206,8 @@ class TestSettingsClass:
     @pytest.mark.parametrize(
         "log_level_setting",
         [
-            PREFECT_LOGGING_LEVEL,
-            PREFECT_LOGGING_SERVER_LEVEL,
+            SYNTASK_LOGGING_LEVEL,
+            SYNTASK_LOGGING_SERVER_LEVEL,
         ],
     )
     def test_settings_validates_log_levels(self, log_level_setting):
@@ -220,8 +220,8 @@ class TestSettingsClass:
     @pytest.mark.parametrize(
         "log_level_setting",
         [
-            PREFECT_LOGGING_LEVEL,
-            PREFECT_LOGGING_SERVER_LEVEL,
+            SYNTASK_LOGGING_LEVEL,
+            SYNTASK_LOGGING_SERVER_LEVEL,
         ],
     )
     def test_settings_uppercases_log_levels(self, log_level_setting):
@@ -238,7 +238,7 @@ class TestSettingsClass:
     def test_equality_with_different_values(self):
         settings = Settings()
         assert (
-            settings.copy_with_update(updates={PREFECT_TEST_SETTING: "foo"}) != settings
+            settings.copy_with_update(updates={SYNTASK_TEST_SETTING: "foo"}) != settings
         )
 
     def test_include_secrets(self):
@@ -252,15 +252,15 @@ class TestSettingsClass:
         )
 
     def test_loads_when_profile_path_does_not_exist(self, monkeypatch):
-        monkeypatch.setenv("PREFECT_PROFILES_PATH", str(Path.home() / "nonexistent"))
-        monkeypatch.delenv("PREFECT_TEST_MODE", raising=False)
-        monkeypatch.delenv("PREFECT_UNIT_TEST_MODE", raising=False)
+        monkeypatch.setenv("SYNTASK_PROFILES_PATH", str(Path.home() / "nonexistent"))
+        monkeypatch.delenv("SYNTASK_TEST_MODE", raising=False)
+        monkeypatch.delenv("SYNTASK_UNIT_TEST_MODE", raising=False)
         assert Settings().test_setting == "FOO"
 
     def test_loads_when_profile_path_is_not_a_toml_file(self, monkeypatch, tmp_path):
-        monkeypatch.setenv("PREFECT_PROFILES_PATH", str(tmp_path / "profiles.toml"))
-        monkeypatch.delenv("PREFECT_TEST_MODE", raising=False)
-        monkeypatch.delenv("PREFECT_UNIT_TEST_MODE", raising=False)
+        monkeypatch.setenv("SYNTASK_PROFILES_PATH", str(tmp_path / "profiles.toml"))
+        monkeypatch.delenv("SYNTASK_TEST_MODE", raising=False)
+        monkeypatch.delenv("SYNTASK_UNIT_TEST_MODE", raising=False)
 
         with open(tmp_path / "profiles.toml", "w") as f:
             f.write("Ceci n'est pas un fichier toml")
@@ -272,41 +272,41 @@ class TestSettingsClass:
 class TestSettingAccess:
     def test_get_value_root_setting(self):
         with temporary_settings(
-            updates={PREFECT_API_URL: "test"}
+            updates={SYNTASK_API_URL: "test"}
         ):  # Set a value so its not null
-            assert PREFECT_API_URL.value() == "test"
+            assert SYNTASK_API_URL.value() == "test"
             assert get_current_settings().api_url == "test"
 
     def test_get_value_nested_setting(self):
-        value = prefect.settings.PREFECT_LOGGING_LEVEL.value()
+        value = syntask.settings.SYNTASK_LOGGING_LEVEL.value()
         value_of = get_current_settings().logging_level
-        value_from = PREFECT_LOGGING_LEVEL.value_from(get_current_settings())
+        value_from = SYNTASK_LOGGING_LEVEL.value_from(get_current_settings())
         assert value == value_of == value_from
 
     def test_test_mode_access(self):
-        assert PREFECT_TEST_MODE.value() is True
+        assert SYNTASK_TEST_MODE.value() is True
 
     def test_settings_in_truthy_statements_use_value(self):
-        if PREFECT_TEST_MODE:
+        if SYNTASK_TEST_MODE:
             assert True, "Treated as truth"
         else:
             assert False, "Not treated as truth"
 
-        with temporary_settings(updates={PREFECT_TEST_MODE: False}):
-            if not PREFECT_TEST_MODE:
+        with temporary_settings(updates={SYNTASK_TEST_MODE: False}):
+            if not SYNTASK_TEST_MODE:
                 assert True, "Treated as truth"
             else:
                 assert False, "Not treated as truth"
 
         # Test with a non-boolean setting
 
-        if PREFECT_SERVER_API_HOST:
+        if SYNTASK_SERVER_API_HOST:
             assert True, "Treated as truth"
         else:
             assert False, "Not treated as truth"
 
-        with temporary_settings(updates={PREFECT_SERVER_API_HOST: ""}):
-            if not PREFECT_SERVER_API_HOST:
+        with temporary_settings(updates={SYNTASK_SERVER_API_HOST: ""}):
+            if not SYNTASK_SERVER_API_HOST:
                 assert True, "Treated as truth"
             else:
                 assert False, "Not treated as truth"
@@ -321,71 +321,71 @@ class TestSettingAccess:
     )
     def test_extra_loggers(self, value, expected):
         settings = Settings(logging_extra_loggers=value)
-        assert PREFECT_LOGGING_EXTRA_LOGGERS.value_from(settings) == expected
+        assert SYNTASK_LOGGING_EXTRA_LOGGERS.value_from(settings) == expected
 
-    def test_prefect_home_expands_tilde_in_path(self):
+    def test_syntask_home_expands_tilde_in_path(self):
         settings = Settings(home="~/test")
-        assert PREFECT_HOME.value_from(settings) == Path("~/test").expanduser()
+        assert SYNTASK_HOME.value_from(settings) == Path("~/test").expanduser()
 
     @pytest.mark.parametrize(
         "api_url,ui_url",
         [
             (None, None),
             (
-                "https://api.prefect.cloud/api/accounts/ACCOUNT/workspaces/WORKSPACE",
-                "https://app.prefect.cloud/account/ACCOUNT/workspace/WORKSPACE",
+                "https://api.syntask.cloud/api/accounts/ACCOUNT/workspaces/WORKSPACE",
+                "https://app.syntask.cloud/account/ACCOUNT/workspace/WORKSPACE",
             ),
             ("http://my-orion/api", "http://my-orion"),
             ("https://api.foo.bar", "https://api.foo.bar"),
         ],
     )
     def test_ui_url_inferred_from_api_url(self, api_url, ui_url):
-        with temporary_settings({PREFECT_API_URL: api_url}):
-            assert PREFECT_UI_URL.value() == ui_url
+        with temporary_settings({SYNTASK_API_URL: api_url}):
+            assert SYNTASK_UI_URL.value() == ui_url
 
     def test_ui_url_set_directly(self):
-        with temporary_settings({PREFECT_UI_URL: "test"}):
-            assert PREFECT_UI_URL.value() == "test"
+        with temporary_settings({SYNTASK_UI_URL: "test"}):
+            assert SYNTASK_UI_URL.value() == "test"
 
     @pytest.mark.parametrize(
         "api_url,ui_url",
         [
-            # We'll infer that app. and api. subdomains go together for prefect domains
+            # We'll infer that app. and api. subdomains go together for syntask domains
             (
-                "https://api.prefect.cloud/api",
-                "https://app.prefect.cloud",
+                "https://api.syntask.cloud/api",
+                "https://app.syntask.cloud",
             ),
             (
-                "https://api.theoretical.prefect.bonkers/api",
-                "https://app.theoretical.prefect.bonkers",
+                "https://api.theoretical.syntask.bonkers/api",
+                "https://app.theoretical.syntask.bonkers",
             ),
             (
-                "https://api.prefect.banooners/api",
-                "https://app.prefect.banooners",
+                "https://api.syntask.banooners/api",
+                "https://app.syntask.banooners",
             ),
-            # We'll leave URLs with non-prefect TLDs alone
+            # We'll leave URLs with non-syntask TLDs alone
             (
-                "https://api.theoretical.prefect.customer.com/api",
-                "https://api.theoretical.prefect.customer.com",
+                "https://api.theoretical.syntask.customer.com/api",
+                "https://api.theoretical.syntask.customer.com",
             ),
             # Some day, some day...
             (
-                "https://api.prefect/api",
-                "https://api.prefect",
+                "https://api.syntask/api",
+                "https://api.syntask",
             ),
             # We'll leave all other URLs alone
-            ("http://prefect/api", "http://prefect"),
+            ("http://syntask/api", "http://syntask"),
             ("http://my-cloud/api", "http://my-cloud"),
             ("https://api.foo.bar", "https://api.foo.bar"),
         ],
     )
     def test_cloud_ui_url_inferred_from_cloud_api_url(self, api_url, ui_url):
-        with temporary_settings({PREFECT_CLOUD_API_URL: api_url}):
-            assert PREFECT_CLOUD_UI_URL.value() == ui_url
+        with temporary_settings({SYNTASK_CLOUD_API_URL: api_url}):
+            assert SYNTASK_CLOUD_UI_URL.value() == ui_url
 
     def test_cloud_ui_url_set_directly(self):
-        with temporary_settings({PREFECT_CLOUD_UI_URL: "test"}):
-            assert PREFECT_CLOUD_UI_URL.value() == "test"
+        with temporary_settings({SYNTASK_CLOUD_UI_URL: "test"}):
+            assert SYNTASK_CLOUD_UI_URL.value() == "test"
 
     @pytest.mark.parametrize(
         "extra_codes,expected",
@@ -398,8 +398,8 @@ class TestSettingAccess:
         ],
     )
     def test_client_retry_extra_codes(self, extra_codes, expected):
-        with temporary_settings({PREFECT_CLIENT_RETRY_EXTRA_CODES: extra_codes}):
-            assert PREFECT_CLIENT_RETRY_EXTRA_CODES.value() == expected
+        with temporary_settings({SYNTASK_CLIENT_RETRY_EXTRA_CODES: extra_codes}):
+            assert SYNTASK_CLIENT_RETRY_EXTRA_CODES.value() == expected
 
     @pytest.mark.parametrize(
         "extra_codes",
@@ -414,8 +414,8 @@ class TestSettingAccess:
     )
     def test_client_retry_extra_codes_invalid(self, extra_codes):
         with pytest.raises(ValueError):
-            with temporary_settings({PREFECT_CLIENT_RETRY_EXTRA_CODES: extra_codes}):
-                PREFECT_CLIENT_RETRY_EXTRA_CODES.value()
+            with temporary_settings({SYNTASK_CLIENT_RETRY_EXTRA_CODES: extra_codes}):
+                SYNTASK_CLIENT_RETRY_EXTRA_CODES.value()
 
     def test_deprecated_ENV_VAR_attribute_access(self):
         settings = Settings()
@@ -423,12 +423,12 @@ class TestSettingAccess:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
-            value = settings.PREFECT_TEST_MODE
+            value = settings.SYNTASK_TEST_MODE
 
             assert len(w) == 1
             assert issubclass(w[-1].category, DeprecationWarning)
             assert (
-                "Accessing `Settings().PREFECT_TEST_MODE` is deprecated. Use `Settings().test_mode` instead."
+                "Accessing `Settings().SYNTASK_TEST_MODE` is deprecated. Use `Settings().test_mode` instead."
                 in str(w[-1].message)
             )
 
@@ -439,13 +439,13 @@ class TestDatabaseSettings:
     def test_database_connection_url_templates_password(self):
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: (
-                    "${PREFECT_API_DATABASE_PASSWORD}/test"
+                SYNTASK_API_DATABASE_CONNECTION_URL: (
+                    "${SYNTASK_API_DATABASE_PASSWORD}/test"
                 ),
-                PREFECT_API_DATABASE_PASSWORD: "password",
+                SYNTASK_API_DATABASE_PASSWORD: "password",
             }
         ):
-            assert PREFECT_API_DATABASE_CONNECTION_URL.value() == "password/test"
+            assert SYNTASK_API_DATABASE_CONNECTION_URL.value() == "password/test"
 
     def test_database_connection_url_raises_on_null_password(self):
         # Not exactly beautiful behavior here, but I think it's clear.
@@ -454,8 +454,8 @@ class TestDatabaseSettings:
         with pytest.raises(ValueError, match="database password is None"):
             with temporary_settings(
                 {
-                    PREFECT_API_DATABASE_CONNECTION_URL: (
-                        "${PREFECT_API_DATABASE_PASSWORD}/test"
+                    SYNTASK_API_DATABASE_CONNECTION_URL: (
+                        "${SYNTASK_API_DATABASE_PASSWORD}/test"
                     )
                 }
             ):
@@ -465,15 +465,15 @@ class TestDatabaseSettings:
         with pytest.warns(
             UserWarning,
             match=(
-                "PREFECT_API_DATABASE_PASSWORD is set but not included in the "
-                "PREFECT_API_DATABASE_CONNECTION_URL. "
+                "SYNTASK_API_DATABASE_PASSWORD is set but not included in the "
+                "SYNTASK_API_DATABASE_CONNECTION_URL. "
                 "The provided password will be ignored."
             ),
         ):
             with temporary_settings(
                 {
-                    PREFECT_API_DATABASE_CONNECTION_URL: "test",
-                    PREFECT_API_DATABASE_PASSWORD: "password",
+                    SYNTASK_API_DATABASE_CONNECTION_URL: "test",
+                    SYNTASK_API_DATABASE_PASSWORD: "password",
                 }
             ):
                 pass
@@ -481,16 +481,16 @@ class TestDatabaseSettings:
     def test_postgres_database_settings_may_be_set_individually(self):
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: None,
-                PREFECT_API_DATABASE_DRIVER: "postgresql+asyncpg",
-                PREFECT_API_DATABASE_HOST: "the-database-server.example.com",
-                PREFECT_API_DATABASE_PORT: 15432,
-                PREFECT_API_DATABASE_USER: "the-user",
-                PREFECT_API_DATABASE_NAME: "the-database",
-                PREFECT_API_DATABASE_PASSWORD: "the-password",
+                SYNTASK_API_DATABASE_CONNECTION_URL: None,
+                SYNTASK_API_DATABASE_DRIVER: "postgresql+asyncpg",
+                SYNTASK_API_DATABASE_HOST: "the-database-server.example.com",
+                SYNTASK_API_DATABASE_PORT: 15432,
+                SYNTASK_API_DATABASE_USER: "the-user",
+                SYNTASK_API_DATABASE_NAME: "the-database",
+                SYNTASK_API_DATABASE_PASSWORD: "the-password",
             }
         ):
-            url = make_url(PREFECT_API_DATABASE_CONNECTION_URL.value())
+            url = make_url(SYNTASK_API_DATABASE_CONNECTION_URL.value())
             assert url.drivername == "postgresql+asyncpg"
             assert url.host == "the-database-server.example.com"
             assert url.port == 15432
@@ -501,16 +501,16 @@ class TestDatabaseSettings:
     def test_postgres_password_is_quoted(self):
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: None,
-                PREFECT_API_DATABASE_DRIVER: "postgresql+asyncpg",
-                PREFECT_API_DATABASE_HOST: "the-database-server.example.com",
-                PREFECT_API_DATABASE_PORT: 15432,
-                PREFECT_API_DATABASE_USER: "the-user",
-                PREFECT_API_DATABASE_NAME: "the-database",
-                PREFECT_API_DATABASE_PASSWORD: "the-password:has:funky!@stuff",
+                SYNTASK_API_DATABASE_CONNECTION_URL: None,
+                SYNTASK_API_DATABASE_DRIVER: "postgresql+asyncpg",
+                SYNTASK_API_DATABASE_HOST: "the-database-server.example.com",
+                SYNTASK_API_DATABASE_PORT: 15432,
+                SYNTASK_API_DATABASE_USER: "the-user",
+                SYNTASK_API_DATABASE_NAME: "the-database",
+                SYNTASK_API_DATABASE_PASSWORD: "the-password:has:funky!@stuff",
             }
         ):
-            url = make_url(PREFECT_API_DATABASE_CONNECTION_URL.value())
+            url = make_url(SYNTASK_API_DATABASE_CONNECTION_URL.value())
             assert url.drivername == "postgresql+asyncpg"
             assert url.host == "the-database-server.example.com"
             assert url.port == 15432
@@ -521,15 +521,15 @@ class TestDatabaseSettings:
     def test_postgres_database_settings_defaults_port(self):
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: None,
-                PREFECT_API_DATABASE_DRIVER: "postgresql+asyncpg",
-                PREFECT_API_DATABASE_HOST: "the-database-server.example.com",
-                PREFECT_API_DATABASE_USER: "the-user",
-                PREFECT_API_DATABASE_NAME: "the-database",
-                PREFECT_API_DATABASE_PASSWORD: "the-password",
+                SYNTASK_API_DATABASE_CONNECTION_URL: None,
+                SYNTASK_API_DATABASE_DRIVER: "postgresql+asyncpg",
+                SYNTASK_API_DATABASE_HOST: "the-database-server.example.com",
+                SYNTASK_API_DATABASE_USER: "the-user",
+                SYNTASK_API_DATABASE_NAME: "the-database",
+                SYNTASK_API_DATABASE_PASSWORD: "the-password",
             }
         ):
-            url = make_url(PREFECT_API_DATABASE_CONNECTION_URL.value())
+            url = make_url(SYNTASK_API_DATABASE_CONNECTION_URL.value())
             assert url.drivername == "postgresql+asyncpg"
             assert url.host == "the-database-server.example.com"
             assert url.port == 5432
@@ -540,55 +540,55 @@ class TestDatabaseSettings:
     def test_sqlite_database_settings_may_be_set_individually(self):
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: None,
-                PREFECT_API_DATABASE_DRIVER: "sqlite+aiosqlite",
-                PREFECT_API_DATABASE_NAME: "/the/database/file/path.db",
+                SYNTASK_API_DATABASE_CONNECTION_URL: None,
+                SYNTASK_API_DATABASE_DRIVER: "sqlite+aiosqlite",
+                SYNTASK_API_DATABASE_NAME: "/the/database/file/path.db",
             }
         ):
-            url = make_url(PREFECT_API_DATABASE_CONNECTION_URL.value())
+            url = make_url(SYNTASK_API_DATABASE_CONNECTION_URL.value())
             assert url.drivername == "sqlite+aiosqlite"
             assert url.database == "/the/database/file/path.db"
 
     def test_sqlite_database_driver_uses_default_path(self):
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: None,
-                PREFECT_API_DATABASE_DRIVER: "sqlite+aiosqlite",
+                SYNTASK_API_DATABASE_CONNECTION_URL: None,
+                SYNTASK_API_DATABASE_DRIVER: "sqlite+aiosqlite",
             }
         ):
-            url = make_url(PREFECT_API_DATABASE_CONNECTION_URL.value())
+            url = make_url(SYNTASK_API_DATABASE_CONNECTION_URL.value())
             assert url.drivername == "sqlite+aiosqlite"
-            assert url.database == f"{PREFECT_HOME.value()}/prefect.db"
+            assert url.database == f"{SYNTASK_HOME.value()}/syntask.db"
 
     def test_unknown_driver_raises(self):
         with pytest.raises(pydantic.ValidationError, match="literal_error"):
             with temporary_settings(
                 {
-                    PREFECT_API_DATABASE_CONNECTION_URL: None,
-                    PREFECT_API_DATABASE_DRIVER: "wat",
+                    SYNTASK_API_DATABASE_CONNECTION_URL: None,
+                    SYNTASK_API_DATABASE_DRIVER: "wat",
                 }
             ):
                 pass
 
     def test_connection_string_with_dollar_sign(self):
         """
-        Regression test for https://github.com/synopkg/synopkg/issues/11067.
+        Regression test for https://github.com/synopkg/syntask/issues/11067.
 
         This test ensures that passwords with dollar signs do not cause issues when
         templating the connection string.
         """
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: (
+                SYNTASK_API_DATABASE_CONNECTION_URL: (
                     "postgresql+asyncpg://"
                     "the-user:the-$password@"
                     "the-database-server.example.com:5432"
                     "/the-database"
                 ),
-                PREFECT_API_DATABASE_USER: "the-user",
+                SYNTASK_API_DATABASE_USER: "the-user",
             }
         ):
-            url = make_url(PREFECT_API_DATABASE_CONNECTION_URL.value())
+            url = make_url(SYNTASK_API_DATABASE_CONNECTION_URL.value())
             assert url.drivername == "postgresql+asyncpg"
             assert url.host == "the-database-server.example.com"
             assert url.port == 5432
@@ -599,14 +599,14 @@ class TestDatabaseSettings:
 
 class TestTemporarySettings:
     def test_temporary_settings(self):
-        assert PREFECT_TEST_MODE.value() is True
-        with temporary_settings(updates={PREFECT_TEST_MODE: False}) as new_settings:
+        assert SYNTASK_TEST_MODE.value() is True
+        with temporary_settings(updates={SYNTASK_TEST_MODE: False}) as new_settings:
             assert (
-                PREFECT_TEST_MODE.value_from(new_settings) is False
+                SYNTASK_TEST_MODE.value_from(new_settings) is False
             ), "Yields the new settings"
-            assert PREFECT_TEST_MODE.value() is False
+            assert SYNTASK_TEST_MODE.value() is False
 
-        assert PREFECT_TEST_MODE.value() is True
+        assert SYNTASK_TEST_MODE.value() is True
 
     def test_temporary_settings_does_not_mark_unset_as_set(self):
         settings = get_current_settings()
@@ -617,23 +617,23 @@ class TestTemporarySettings:
         assert new_set_keys == set_keys
 
     def test_temporary_settings_can_restore_to_defaults_values(self):
-        with temporary_settings(updates={PREFECT_API_DATABASE_PORT: 9001}):
-            assert PREFECT_API_DATABASE_PORT.value() == 9001
-            with temporary_settings(restore_defaults={PREFECT_API_DATABASE_PORT}):
+        with temporary_settings(updates={SYNTASK_API_DATABASE_PORT: 9001}):
+            assert SYNTASK_API_DATABASE_PORT.value() == 9001
+            with temporary_settings(restore_defaults={SYNTASK_API_DATABASE_PORT}):
                 assert (
-                    PREFECT_API_DATABASE_PORT.value()
-                    == PREFECT_API_DATABASE_PORT.default()
+                    SYNTASK_API_DATABASE_PORT.value()
+                    == SYNTASK_API_DATABASE_PORT.default()
                 )
 
     def test_temporary_settings_restores_on_error(self):
-        assert PREFECT_TEST_MODE.value() is True
+        assert SYNTASK_TEST_MODE.value() is True
 
         with pytest.raises(ValueError):
-            with temporary_settings(updates={PREFECT_TEST_MODE: False}):
+            with temporary_settings(updates={SYNTASK_TEST_MODE: False}):
                 raise ValueError()
 
-        assert os.environ["PREFECT_TEST_MODE"] == "1", "Does not alter os environ."
-        assert PREFECT_TEST_MODE.value() is True
+        assert os.environ["SYNTASK_TEST_MODE"] == "1", "Does not alter os environ."
+        assert SYNTASK_TEST_MODE.value() is True
 
 
 class TestSettingsSources:
@@ -657,7 +657,7 @@ class TestSettingsSources:
             env_file.write_text(original_env_content)
 
     def test_env_source(self, temporary_env_file):
-        temporary_env_file("PREFECT_CLIENT_RETRY_EXTRA_CODES=420,500")
+        temporary_env_file("SYNTASK_CLIENT_RETRY_EXTRA_CODES=420,500")
 
         assert Settings().client_retry_extra_codes == {420, 500}
 
@@ -668,9 +668,9 @@ class TestSettingsSources:
     def test_resolution_order(self, temporary_env_file, monkeypatch, tmp_path):
         profiles_path = tmp_path / "profiles.toml"
 
-        monkeypatch.delenv("PREFECT_TEST_MODE", raising=False)
-        monkeypatch.delenv("PREFECT_UNIT_TEST_MODE", raising=False)
-        monkeypatch.setenv("PREFECT_PROFILES_PATH", str(profiles_path))
+        monkeypatch.delenv("SYNTASK_TEST_MODE", raising=False)
+        monkeypatch.delenv("SYNTASK_UNIT_TEST_MODE", raising=False)
+        monkeypatch.setenv("SYNTASK_PROFILES_PATH", str(profiles_path))
 
         profiles_path.write_text(
             textwrap.dedent(
@@ -678,14 +678,14 @@ class TestSettingsSources:
                 active = "foo"
 
                 [profiles.foo]
-                PREFECT_CLIENT_RETRY_EXTRA_CODES = "420,500"
+                SYNTASK_CLIENT_RETRY_EXTRA_CODES = "420,500"
                 """
             )
         )
 
         assert Settings().client_retry_extra_codes == {420, 500}
 
-        temporary_env_file("PREFECT_CLIENT_RETRY_EXTRA_CODES=429,500")
+        temporary_env_file("SYNTASK_CLIENT_RETRY_EXTRA_CODES=429,500")
 
         assert Settings().client_retry_extra_codes == {429, 500}
 
@@ -693,9 +693,9 @@ class TestSettingsSources:
 
         assert Settings().client_retry_extra_codes == {420, 500}
 
-        monkeypatch.setenv("PREFECT_TEST_MODE", "1")
-        monkeypatch.setenv("PREFECT_UNIT_TEST_MODE", "1")
-        monkeypatch.delenv("PREFECT_PROFILES_PATH", raising=True)
+        monkeypatch.setenv("SYNTASK_TEST_MODE", "1")
+        monkeypatch.setenv("SYNTASK_UNIT_TEST_MODE", "1")
+        monkeypatch.delenv("SYNTASK_PROFILES_PATH", raising=True)
 
         assert Settings().client_retry_extra_codes == set()
 
@@ -704,7 +704,7 @@ class TestLoadProfiles:
     @pytest.fixture(autouse=True)
     def temporary_profiles_path(self, tmp_path):
         path = tmp_path / "profiles.toml"
-        with temporary_settings(updates={PREFECT_PROFILES_PATH: path}):
+        with temporary_settings(updates={SYNTASK_PROFILES_PATH: path}):
             yield path
 
     def test_load_profiles_no_profiles_file(self):
@@ -715,11 +715,11 @@ class TestLoadProfiles:
             textwrap.dedent(
                 """
                 [profiles.foo]
-                PREFECT_API_KEY = "bar"
+                SYNTASK_API_KEY = "bar"
                 """
             )
         )
-        assert load_profiles()["foo"].settings == {PREFECT_API_KEY: "bar"}
+        assert load_profiles()["foo"].settings == {SYNTASK_API_KEY: "bar"}
         assert isinstance(load_profiles()["ephemeral"].settings, dict)
 
     def test_load_profiles_only_active_key(self, temporary_profiles_path):
@@ -742,19 +742,19 @@ class TestLoadProfiles:
         temporary_profiles_path.write_text(
             """
             [profiles.ephemeral]
-            PREFECT_API_KEY = "foo"
+            SYNTASK_API_KEY = "foo"
 
             [profiles.bar]
-            PREFECT_API_KEY = "bar"
+            SYNTASK_API_KEY = "bar"
             """
         )
         profiles = load_profiles()
         expected = {
             "ephemeral": {
-                PREFECT_API_KEY: "foo",
-                PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: "true",  # default value
+                SYNTASK_API_KEY: "foo",
+                SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: "true",  # default value
             },
-            "bar": {PREFECT_API_KEY: "bar"},
+            "bar": {SYNTASK_API_KEY: "bar"},
         }
         for name, settings in expected.items():
             assert profiles[name].settings == settings
@@ -763,7 +763,7 @@ class TestLoadProfiles:
     def test_load_profile_ephemeral(self):
         assert load_profile("ephemeral") == Profile(
             name="ephemeral",
-            settings={PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: "true"},
+            settings={SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: "true"},
             source=DEFAULT_PROFILES_PATH,
         )
 
@@ -776,16 +776,16 @@ class TestLoadProfiles:
             textwrap.dedent(
                 """
                 [profiles.foo]
-                PREFECT_API_KEY = "bar"
-                PREFECT_DEBUG_MODE = 1
+                SYNTASK_API_KEY = "bar"
+                SYNTASK_DEBUG_MODE = 1
                 """
             )
         )
         assert load_profile("foo") == Profile(
             name="foo",
             settings={
-                PREFECT_API_KEY: "bar",
-                PREFECT_DEBUG_MODE: 1,
+                SYNTASK_API_KEY: "bar",
+                SYNTASK_DEBUG_MODE: 1,
             },
             source=temporary_profiles_path,
         )
@@ -795,7 +795,7 @@ class TestLoadProfiles:
             textwrap.dedent(
                 """
                 [profiles.foo]
-                PREFECT_API_KEY = "bar"
+                SYNTASK_API_KEY = "bar"
 
                 [profiles.foo.nested]
                 """
@@ -821,7 +821,7 @@ class TestSaveProfiles:
     @pytest.fixture(autouse=True)
     def temporary_profiles_path(self, tmp_path):
         path = tmp_path / "profiles.toml"
-        with temporary_settings(updates={PREFECT_PROFILES_PATH: path}):
+        with temporary_settings(updates={SYNTASK_PROFILES_PATH: path}):
             yield path
 
     def test_save_profiles_does_not_include_default(self, temporary_profiles_path):
@@ -838,12 +838,12 @@ class TestSaveProfiles:
                 profiles=[
                     Profile(
                         name="foo",
-                        settings={PREFECT_API_KEY: 1},
+                        settings={SYNTASK_API_KEY: 1},
                         source=temporary_profiles_path,
                     ),
                     Profile(
                         name="bar",
-                        settings={PREFECT_API_KEY: 2},
+                        settings={SYNTASK_API_KEY: 2},
                         source=temporary_profiles_path,
                     ),
                 ],
@@ -855,10 +855,10 @@ class TestSaveProfiles:
             == textwrap.dedent(
                 """
                 [profiles.foo]
-                PREFECT_API_KEY = "1"
+                SYNTASK_API_KEY = "1"
 
                 [profiles.bar]
-                PREFECT_API_KEY = "2"
+                SYNTASK_API_KEY = "2"
                 """
             ).lstrip()
         )
@@ -866,11 +866,11 @@ class TestSaveProfiles:
 
 class TestProfile:
     def test_init_casts_names_to_setting_types(self):
-        profile = Profile(name="test", settings={"PREFECT_DEBUG_MODE": 1})
-        assert profile.settings == {PREFECT_DEBUG_MODE: 1}
+        profile = Profile(name="test", settings={"SYNTASK_DEBUG_MODE": 1})
+        assert profile.settings == {SYNTASK_DEBUG_MODE: 1}
 
     def test_validate_settings(self):
-        profile = Profile(name="test", settings={PREFECT_SERVER_API_PORT: "foo"})
+        profile = Profile(name="test", settings={SYNTASK_SERVER_API_PORT: "foo"})
         with pytest.raises(
             ProfileSettingsValidationError, match="should be a valid integer"
         ):
@@ -881,8 +881,8 @@ class TestProfile:
         If using `context.use_profile` to validate settings, environment variables may
         override the setting and hide validation errors
         """
-        monkeypatch.setenv("PREFECT_SERVER_API_PORT", "1234")
-        profile = Profile(name="test", settings={PREFECT_SERVER_API_PORT: "foo"})
+        monkeypatch.setenv("SYNTASK_SERVER_API_PORT", "1234")
+        profile = Profile(name="test", settings={SYNTASK_SERVER_API_PORT: "foo"})
         with pytest.raises(
             ProfileSettingsValidationError, match="should be a valid integer"
         ):
@@ -1017,44 +1017,44 @@ class TestProfilesCollection:
 
     def test_update_profile_adds_key(self):
         profiles = ProfilesCollection(profiles=[Profile(name="test", settings={})])
-        profiles.update_profile(name="test", settings={PREFECT_API_URL: "hello"})
-        assert profiles["test"].settings == {PREFECT_API_URL: "hello"}
+        profiles.update_profile(name="test", settings={SYNTASK_API_URL: "hello"})
+        assert profiles["test"].settings == {SYNTASK_API_URL: "hello"}
 
     def test_update_profile_updates_key(self):
         profiles = ProfilesCollection(profiles=[Profile(name="test", settings={})])
-        profiles.update_profile(name="test", settings={PREFECT_API_URL: "hello"})
-        assert profiles["test"].settings == {PREFECT_API_URL: "hello"}
-        profiles.update_profile(name="test", settings={PREFECT_API_URL: "goodbye"})
-        assert profiles["test"].settings == {PREFECT_API_URL: "goodbye"}
+        profiles.update_profile(name="test", settings={SYNTASK_API_URL: "hello"})
+        assert profiles["test"].settings == {SYNTASK_API_URL: "hello"}
+        profiles.update_profile(name="test", settings={SYNTASK_API_URL: "goodbye"})
+        assert profiles["test"].settings == {SYNTASK_API_URL: "goodbye"}
 
     def test_update_profile_removes_key(self):
         profiles = ProfilesCollection(profiles=[Profile(name="test", settings={})])
-        profiles.update_profile(name="test", settings={PREFECT_API_URL: "hello"})
-        assert profiles["test"].settings == {PREFECT_API_URL: "hello"}
-        profiles.update_profile(name="test", settings={PREFECT_API_URL: None})
+        profiles.update_profile(name="test", settings={SYNTASK_API_URL: "hello"})
+        assert profiles["test"].settings == {SYNTASK_API_URL: "hello"}
+        profiles.update_profile(name="test", settings={SYNTASK_API_URL: None})
         assert profiles["test"].settings == {}
 
     def test_update_profile_mixed_add_and_update(self):
         profiles = ProfilesCollection(profiles=[Profile(name="test", settings={})])
-        profiles.update_profile(name="test", settings={PREFECT_API_URL: "hello"})
-        assert profiles["test"].settings == {PREFECT_API_URL: "hello"}
+        profiles.update_profile(name="test", settings={SYNTASK_API_URL: "hello"})
+        assert profiles["test"].settings == {SYNTASK_API_URL: "hello"}
         profiles.update_profile(
             name="test",
-            settings={PREFECT_API_URL: "goodbye", PREFECT_LOGGING_LEVEL: "DEBUG"},
+            settings={SYNTASK_API_URL: "goodbye", SYNTASK_LOGGING_LEVEL: "DEBUG"},
         )
         assert profiles["test"].settings == {
-            PREFECT_API_URL: "goodbye",
-            PREFECT_LOGGING_LEVEL: "DEBUG",
+            SYNTASK_API_URL: "goodbye",
+            SYNTASK_LOGGING_LEVEL: "DEBUG",
         }
 
     def test_update_profile_retains_existing_keys(self):
         profiles = ProfilesCollection(profiles=[Profile(name="test", settings={})])
-        profiles.update_profile(name="test", settings={PREFECT_API_URL: "hello"})
-        assert profiles["test"].settings == {PREFECT_API_URL: "hello"}
-        profiles.update_profile(name="test", settings={PREFECT_LOGGING_LEVEL: "DEBUG"})
+        profiles.update_profile(name="test", settings={SYNTASK_API_URL: "hello"})
+        assert profiles["test"].settings == {SYNTASK_API_URL: "hello"}
+        profiles.update_profile(name="test", settings={SYNTASK_LOGGING_LEVEL: "DEBUG"})
         assert profiles["test"].settings == {
-            PREFECT_API_URL: "hello",
-            PREFECT_LOGGING_LEVEL: "DEBUG",
+            SYNTASK_API_URL: "hello",
+            SYNTASK_LOGGING_LEVEL: "DEBUG",
         }
 
     def test_without_profile_source(self):
@@ -1122,7 +1122,7 @@ class TestProfilesCollection:
             profiles=[
                 foo,
                 Profile(
-                    name="bar", settings={PREFECT_API_KEY: "test"}, source=Path("/bar")
+                    name="bar", settings={SYNTASK_API_KEY: "test"}, source=Path("/bar")
                 ),
             ]
         ), "Changed profile settings should be inequal"

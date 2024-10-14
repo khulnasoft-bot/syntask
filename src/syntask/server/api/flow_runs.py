@@ -24,38 +24,38 @@ from fastapi.responses import ORJSONResponse, PlainTextResponse, StreamingRespon
 from pydantic_extra_types.pendulum_dt import DateTime
 from sqlalchemy.exc import IntegrityError
 
-import prefect.server.api.dependencies as dependencies
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.logging import get_logger
-from prefect.server.api.run_history import run_history
-from prefect.server.api.validation import validate_job_variables_for_deployment_flow_run
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import FlowRunGraphTooLarge
-from prefect.server.models.flow_runs import (
+import syntask.server.api.dependencies as dependencies
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.logging import get_logger
+from syntask.server.api.run_history import run_history
+from syntask.server.api.validation import validate_job_variables_for_deployment_flow_run
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import FlowRunGraphTooLarge
+from syntask.server.models.flow_runs import (
     DependencyResult,
     read_flow_run_graph,
 )
-from prefect.server.orchestration import dependencies as orchestration_dependencies
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.schemas.graph import Graph
-from prefect.server.schemas.responses import (
+from syntask.server.orchestration import dependencies as orchestration_dependencies
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.schemas.graph import Graph
+from syntask.server.schemas.responses import (
     FlowRunPaginationResponse,
     OrchestrationResult,
 )
-from prefect.server.utilities.server import PrefectRouter
-from prefect.utilities import schema_tools
+from syntask.server.utilities.server import SyntaskRouter
+from syntask.utilities import schema_tools
 
 logger = get_logger("server.api")
 
-router = PrefectRouter(prefix="/flow_runs", tags=["Flow Runs"])
+router = SyntaskRouter(prefix="/flow_runs", tags=["Flow Runs"])
 
 
 @router.post("/")
 async def create_flow_run(
     flow_run: schemas.actions.FlowRunCreate,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
     response: Response = None,
     created_by: Optional[schemas.core.CreatedBy] = Depends(dependencies.get_created_by),
     orchestration_parameters: Dict[str, Any] = Depends(
@@ -98,7 +98,7 @@ async def create_flow_run(
 async def update_flow_run(
     flow_run: schemas.actions.FlowRunUpdate,
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Updates a flow run.
@@ -156,7 +156,7 @@ async def count_flow_runs(
     deployments: schemas.filters.DeploymentFilter = None,
     work_pools: schemas.filters.WorkPoolFilter = None,
     work_pool_queues: schemas.filters.WorkQueueFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     """
     Query for flow runs.
@@ -181,7 +181,7 @@ async def average_flow_run_lateness(
     deployments: Optional[schemas.filters.DeploymentFilter] = None,
     work_pools: Optional[schemas.filters.WorkPoolFilter] = None,
     work_pool_queues: Optional[schemas.filters.WorkQueueFilter] = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> Optional[float]:
     """
     Query for average flow-run lateness in seconds.
@@ -253,7 +253,7 @@ async def flow_run_history(
     deployments: schemas.filters.DeploymentFilter = None,
     work_pools: schemas.filters.WorkPoolFilter = None,
     work_queues: schemas.filters.WorkQueueFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.HistoryResponse]:
     """
     Query for flow run history data across a given range and interval.
@@ -286,7 +286,7 @@ async def flow_run_history(
 @router.get("/{id}")
 async def read_flow_run(
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.responses.FlowRunResponse:
     """
     Get a flow run by id.
@@ -305,7 +305,7 @@ async def read_flow_run(
 @router.get("/{id}/graph")
 async def read_flow_run_graph_v1(
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[DependencyResult]:
     """
     Get a task run dependency map for a given flow run.
@@ -323,7 +323,7 @@ async def read_flow_run_graph_v2(
         datetime.datetime.min,
         description="Only include runs that start or end after this time.",
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> Graph:
     """
     Get a graph of the tasks and subflow runs for the given flow run
@@ -345,7 +345,7 @@ async def read_flow_run_graph_v2(
 @router.post("/{id}/resume")
 async def resume_flow_run(
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
     run_input: Optional[Dict] = Body(default=None, embed=True),
     response: Response = None,
     flow_policy: Type[BaseOrchestrationPolicy] = Depends(
@@ -500,7 +500,7 @@ async def read_flow_runs(
     deployments: Optional[schemas.filters.DeploymentFilter] = None,
     work_pools: Optional[schemas.filters.WorkPoolFilter] = None,
     work_pool_queues: Optional[schemas.filters.WorkQueueFilter] = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.FlowRunResponse]:
     """
     Query for flow runs.
@@ -535,7 +535,7 @@ async def read_flow_runs(
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_flow_run(
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete a flow run by id.
@@ -561,7 +561,7 @@ async def set_flow_run_state(
             " the state transition. If True, orchestration rules are not applied."
         ),
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
     response: Response = None,
     flow_policy: Type[BaseOrchestrationPolicy] = Depends(
         orchestration_dependencies.provide_flow_policy
@@ -607,7 +607,7 @@ async def create_flow_run_input(
     key: str = Body(..., description="The input key"),
     value: bytes = Body(..., description="The value of the input"),
     sender: Optional[str] = Body(None, description="The sender of the input"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Create a key/value input for a flow run.
@@ -647,7 +647,7 @@ async def filter_flow_run_input(
     exclude_keys: List[str] = Body(
         [], description="Exclude inputs with these keys", embed=True
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.core.FlowRunInput]:
     """
     Filter flow run inputs by key prefix
@@ -666,7 +666,7 @@ async def filter_flow_run_input(
 async def read_flow_run_input(
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
     key: str = Path(..., description="The input key", alias="key"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> PlainTextResponse:
     """
     Create a value from a flow run input
@@ -689,7 +689,7 @@ async def read_flow_run_input(
 async def delete_flow_run_input(
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
     key: str = Path(..., description="The input key", alias="key"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete a flow run input
@@ -718,7 +718,7 @@ async def paginate_flow_runs(
     deployments: Optional[schemas.filters.DeploymentFilter] = None,
     work_pools: Optional[schemas.filters.WorkPoolFilter] = None,
     work_pool_queues: Optional[schemas.filters.WorkQueueFilter] = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> FlowRunPaginationResponse:
     """
     Pagination query for flow runs.
@@ -777,7 +777,7 @@ FLOW_RUN_LOGS_DOWNLOAD_PAGE_LIMIT = 1000
 @router.get("/{id}/logs/download")
 async def download_logs(
     flow_run_id: UUID = Path(..., description="The flow run id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> StreamingResponse:
     """
     Download all flow run logs as a CSV file, collecting all logs until there are no more logs to retrieve.

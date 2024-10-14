@@ -5,13 +5,13 @@ import pendulum
 from pydantic import Field, PrivateAttr
 from pydantic_extra_types.pendulum_dt import DateTime
 
-from prefect._internal.schemas.bases import PrefectBaseModel
-from prefect.utilities.collections import AutoEnum
+from syntask._internal.schemas.bases import SyntaskBaseModel
+from syntask.utilities.collections import AutoEnum
 
 from .schemas.events import Event, Resource, ResourceSpecification
 
 
-class AutomationFilterCreated(PrefectBaseModel):
+class AutomationFilterCreated(SyntaskBaseModel):
     """Filter by `Automation.created`."""
 
     before_: Optional[DateTime] = Field(
@@ -20,7 +20,7 @@ class AutomationFilterCreated(PrefectBaseModel):
     )
 
 
-class AutomationFilterName(PrefectBaseModel):
+class AutomationFilterName(SyntaskBaseModel):
     """Filter by `Automation.created`."""
 
     any_: Optional[List[str]] = Field(
@@ -29,7 +29,7 @@ class AutomationFilterName(PrefectBaseModel):
     )
 
 
-class AutomationFilter(PrefectBaseModel):
+class AutomationFilter(SyntaskBaseModel):
     name: Optional[AutomationFilterName] = Field(
         default=None, description="Filter criteria for `Automation.name`"
     )
@@ -38,7 +38,7 @@ class AutomationFilter(PrefectBaseModel):
     )
 
 
-class EventDataFilter(PrefectBaseModel, extra="forbid"):  # type: ignore[call-arg]
+class EventDataFilter(SyntaskBaseModel, extra="forbid"):  # type: ignore[call-arg]
     """A base class for filtering event data."""
 
     _top_level_filter: Optional["EventFilter"] = PrivateAttr(None)

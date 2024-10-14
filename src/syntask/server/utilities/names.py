@@ -1,5 +1,5 @@
 """
-This module is deprecated. Use `prefect.utilities.names` instead.
+This module is deprecated. Use `syntask.utilities.names` instead.
 """
 
-from prefect.utilities.names import *  # noqa
+from syntask.utilities.names import *  # noqa

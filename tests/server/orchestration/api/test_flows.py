@@ -5,8 +5,8 @@ import pendulum
 import pytest
 from starlette import status
 
-from prefect.server import models, schemas
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.server import models, schemas
+from syntask.utilities.pydantic import parse_obj_as
 
 
 class TestCreateFlow:

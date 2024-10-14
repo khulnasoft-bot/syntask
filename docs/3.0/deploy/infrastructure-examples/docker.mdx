@@ -3,7 +3,7 @@ title: Run flows in Docker containers
 description: Learn how to deploy a flow to a Docker work pool with workers
 ---
 
-In this example, you will create a work pool and worker to deploy your flow, and then execute it with the Prefect API.
+In this example, you will create a work pool and worker to deploy your flow, and then execute it with the Syntask API.
 You must have [Docker](https://docs.docker.com/engine/install/) installed and running on your machine.
 
 ### Create a work pool
@@ -11,18 +11,18 @@ You must have [Docker](https://docs.docker.com/engine/install/) installed and ru
 To set up a **Docker** type work pool, run:
 
 ```bash
-prefect work-pool create --type docker my-docker-pool
+syntask work-pool create --type docker my-docker-pool
 ```
 
 To confirm the work pool creation was successful, run:
 
 ```bash
-prefect work-pool ls
+syntask work-pool ls
 ```
 
 You should see your new `my-docker-pool` listed in the output.
 
-Next, check that you can see this work pool in your Prefect UI.
+Next, check that you can see this work pool in your Syntask UI.
 Navigate to the **Work Pools** tab and verify that you see `my-docker-pool` listed.
 When you click into `my-docker-pool`, you should see a red status icon signifying that this work pool is not ready.
 
@@ -32,17 +32,17 @@ We'll show how to do this next.
 ### Start a worker
 
 Workers are a lightweight polling process that kick off scheduled flow runs on a specific type of infrastructure (such as Docker).
-To start a worker on your local machine, open a new terminal and confirm that your virtual environment has `prefect` installed.
+To start a worker on your local machine, open a new terminal and confirm that your virtual environment has `syntask` installed.
 
 Run the following command in this new terminal to start the worker:
 
 
 ```bash
-prefect worker start --pool my-docker-pool
+syntask worker start --pool my-docker-pool
 ```
 
 You should see the worker start.
-It's now polling the Prefect API to check for any scheduled flow runs it should pick up and then submit for execution.
+It's now polling the Syntask API to check for any scheduled flow runs it should pick up and then submit for execution.
 You'll see your new worker listed in the UI under the **Workers** tab of the Work Pools page with a recent last polled date.
 The work pool should have a `Ready` status indicator.
 
@@ -64,7 +64,7 @@ Next, you'll create a deployment from your flow code.
 Create a deployment from Python code by calling the `.deploy` method on a flow:
 
 ```python buy.py
-from prefect import flow
+from syntask import flow
 
 @flow(log_prints=True)
 def buy():
@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
 The specified image must be available in your deployment's execution environment for accessible flow code.
 
-Prefect generates a Dockerfile for you that builds an image based off of one of Prefect's published images.
+Syntask generates a Dockerfile for you that builds an image based off of one of Syntask's published images.
 The generated Dockerfile copies the current directory into the Docker image and installs any dependencies listed
 in a `requirements.txt` file.
 
@@ -141,8 +141,8 @@ in a `requirements.txt` file.
 If you want to use a custom Dockerfile, specify the path to the Dockerfile with the `DockerImage` class:
 
 ```python custom_dockerfile.py
-from prefect import flow
-from prefect.docker import DockerImage
+from syntask import flow
+from syntask.docker import DockerImage
 
 
 @flow(log_prints=True)
@@ -182,9 +182,9 @@ For example, you can install a private Python package from GCP's artifact regist
 1. Create your deployment with the DockerImage class:
 
    ```python private-package.py
-   from prefect import flow
-   from prefect.deployments.runner import DockerImage
-   from prefect.blocks.system import Secret
+   from syntask import flow
+   from syntask.deployments.runner import DockerImage
+   from syntask.blocks.system import Secret
    from myproject.cool import do_something_cool
 
 
@@ -208,7 +208,7 @@ For example, you can install a private Python package from GCP's artifact regist
        )
    ```
 
-Note that you used a [Prefect Secret block](/3.0/develop/blocks/) to load the URL configuration for
+Note that you used a [Syntask Secret block](/3.0/develop/blocks/) to load the URL configuration for
 the artifact registry above.
 
 See all the optional keyword arguments for the [DockerImage class](https://docker-py.readthedocs.io/en/stable/images.html#docker.models.images.ImageCollection.build).
@@ -216,13 +216,13 @@ See all the optional keyword arguments for the [DockerImage class](https://docke
 <Tip>
 **Default Docker namespace**
 
-    You can set the `PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE` setting to append a default Docker namespace to all images
+    You can set the `SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE` setting to append a default Docker namespace to all images
     you build with `.deploy`. This is helpful if you use a private registry to store your images.
 
     To set a default Docker namespace for your current profile run:
 
     ```bash
-    prefect config set PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE=<docker-registry-url>/<organization-or-username>
+    syntask config set SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE=<docker-registry-url>/<organization-or-username>
     ```
 
     Once set, you can omit the namespace from your image name when creating a deployment:
@@ -237,7 +237,7 @@ See all the optional keyword arguments for the [DockerImage class](https://docke
     ```
 
     The above code builds an image with the format `<docker-registry-url>/<organization-or-username>/my_image:my_image_tag`
-    when `PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE` is set.
+    when `SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE` is set.
 </Tip>
 
 ### Store your code in git-based cloud storage
@@ -251,7 +251,7 @@ with the `from_source` method.
 Here's how to pull your flow code from a GitHub repository:
 
 ```python git_storage.py
-from prefect import flow
+from syntask import flow
 
 if __name__ == "__main__":
     flow.from_source(
@@ -276,7 +276,7 @@ To pass parameters to your flow, you can use the `parameters` argument in the `.
 key-value pairs.
 
 ```python pass_params.py
-from prefect import flow
+from syntask import flow
 
 
 @flow
@@ -288,7 +288,7 @@ if __name__ == "__main__":
     hello_world.deploy(
         name="pass-params-deployment",
         work_pool_name="my-docker-pool",
-        parameters=dict(name="Prefect"),
+        parameters=dict(name="Syntask"),
         image="my_registry/my_image:my_image_tag",
     )
 ```
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     )
 ```
 
-The dictionary key "EXTRA_PIP_PACKAGES" denotes a special environment variable that Prefect uses to install additional
+The dictionary key "EXTRA_PIP_PACKAGES" denotes a special environment variable that Syntask uses to install additional
 Python packages at runtime.
 This approach is an alternative to building an image with a custom `requirements.txt` copied into it.
 
@@ -339,7 +339,7 @@ in the same codebase.
 To create multiple work pool-based deployments at once, use the `deploy` function, which is analogous to the `serve` function:
 
 ```python
-from prefect import deploy, flow
+from syntask import deploy, flow
 
 
 @flow(log_prints=True)
@@ -360,7 +360,7 @@ In the example above you created two deployments from the same flow, but with di
 Alternatively, you can create two deployments from different flows:
 
 ```python
-from prefect import deploy, flow
+from syntask import deploy, flow
 
 
 @flow(log_prints=True)
@@ -389,7 +389,7 @@ You can specify one or more flows to pull from a remote location at runtime with
 Here's an example of deploying two flows, one defined locally and one defined in a remote repository:
 
 ```python
-from prefect import deploy, flow
+from syntask import deploy, flow
 
 
 @flow(log_prints=True)

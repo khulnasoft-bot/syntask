@@ -3,7 +3,7 @@ title: Define custom event triggers
 description: Define a custom trigger to react to many kinds of events and metrics.
 ---
 
-When you need a trigger beyond what the templates in the UI trigger builder provide, you can define a custom trigger in JSON. With custom triggers, you have access to the full capabilities of Prefect's automation system—allowing you to react to many kinds of events and metrics in your workspace.
+When you need a trigger beyond what the templates in the UI trigger builder provide, you can define a custom trigger in JSON. With custom triggers, you have access to the full capabilities of Syntask's automation system—allowing you to react to many kinds of events and metrics in your workspace.
 
 Each automation has a single trigger that, when fired, causes all of its associated actions to run. That single
 trigger may be a reactive or proactive event trigger, a trigger monitoring the value of a metric, or a composite trigger
@@ -14,7 +14,7 @@ that combines several underlying triggers.
 Event triggers are the most common type of trigger. They are intended to react to the presence or absence of an event.
 Event triggers are indicated with `{"type": "event"}`.
 
-![Viewing a custom trigger for automations for a workspace in Prefect Cloud.](/3.0/img/ui/automations-custom.png)
+![Viewing a custom trigger for automations for a workspace in Syntask Cloud.](/3.0/img/ui/automations-custom.png)
 
 This is the schema that defines an event trigger:
 
@@ -32,31 +32,31 @@ This is the schema that defines an event trigger:
 ### Resource matching
 
 Both the `event` and `metric` triggers support matching events for specific resources in your workspace, including most
-Prefect objects (like flows, deployment, blocks, work pools, tags) as well as resources you have defined in any
+Syntask objects (like flows, deployment, blocks, work pools, tags) as well as resources you have defined in any
 events you emit yourself.
 
 The `match` and `match_related` fields control which events a trigger considers for evaluation
 by filtering on the contents of their `resource` and `related` fields, respectively. Each label added to a `match` filter
 is `AND`ed with the other labels, and can accept a single value or a list of multiple values that are `OR`ed together.
 
-See the `resource` and `related` fields on the following `prefect.flow-run.Completed` event, truncated for this example. Its primary resource is a flow run, and since that flow run was started by a deployment, it is related to
+See the `resource` and `related` fields on the following `syntask.flow-run.Completed` event, truncated for this example. Its primary resource is a flow run, and since that flow run was started by a deployment, it is related to
 both its flow and its deployment:
 
 ```json
 "resource": {
-  "prefect.resource.id": "prefect.flow-run.925eacce-7fe5-4753-8f02-77f1511543db",
-  "prefect.resource.name": "cute-kittiwake"
+  "syntask.resource.id": "syntask.flow-run.925eacce-7fe5-4753-8f02-77f1511543db",
+  "syntask.resource.name": "cute-kittiwake"
 }
 "related": [
   {
-    "prefect.resource.id": "prefect.flow.cb6126db-d528-402f-b439-96637187a8ca",
-    "prefect.resource.role": "flow",
-    "prefect.resource.name": "hello"
+    "syntask.resource.id": "syntask.flow.cb6126db-d528-402f-b439-96637187a8ca",
+    "syntask.resource.role": "flow",
+    "syntask.resource.name": "hello"
   },
   {
-    "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e",
-    "prefect.resource.role": "deployment",
-    "prefect.resource.name": "example"
+    "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e",
+    "syntask.resource.role": "deployment",
+    "syntask.resource.name": "example"
   }
 ]
 ```
@@ -69,8 +69,8 @@ name starting with `cute-` or `radical-`.
 
 ```json
 "match": {
-  "prefect.resource.id": "prefect.flow-run.*",
-  "prefect.resource.name": ["cute-*", "radical-*"]
+  "syntask.resource.id": "syntask.flow-run.*",
+  "syntask.resource.name": ["cute-*", "radical-*"]
 },
 "match_related": {},
 ...
@@ -82,22 +82,22 @@ resource to:
 ```json
 "match": {},
 "match_related": {
-  "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
+  "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
 },
 ...
 ```
 
-Both of the above approaches will select the example `prefect.flow-run.Completed` event, but will permit additional,
+Both of the above approaches will select the example `syntask.flow-run.Completed` event, but will permit additional,
 possibly undesired events through the filter as well. You can combine `match` and `match_related` for more restrictive
 filtering:
 
 ```json
 "match": {
-  "prefect.resource.id": "prefect.flow-run.*",
-  "prefect.resource.name": ["cute-*", "radical-*"]
+  "syntask.resource.id": "syntask.flow-run.*",
+  "syntask.resource.name": ["cute-*", "radical-*"]
 },
 "match_related": {
-  "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
+  "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
 },
 ...
 ```
@@ -110,23 +110,23 @@ _and_ that flow run has a name starting with `cute-` or `radical-`.
 Once an event has passed through the `match` filters, you must decide if this event counts toward the
 trigger's `threshold`. That is determined by the event names present in `expect`.
 
-This configuration informs the trigger to evaluate _only_ `prefect.flow-run.Completed` events that have passed the
+This configuration informs the trigger to evaluate _only_ `syntask.flow-run.Completed` events that have passed the
 `match` filters.
 
 ```json
 "expect": [
-  "prefect.flow-run.Completed"
+  "syntask.flow-run.Completed"
 ],
 ...
 ```
 
 `threshold` decides the quantity of `expect`ed events needed to satisfy the trigger. Increasing the `threshold`
 above 1 requires use of `within` to define a range of time when multiple events are seen. The following
-configuration expects two occurrences of `prefect.flow-run.Completed` within 60 seconds:
+configuration expects two occurrences of `syntask.flow-run.Completed` within 60 seconds:
 
 ```json
 "expect": [
-  "prefect.flow-run.Completed"
+  "syntask.flow-run.Completed"
 ],
 "threshold": 2,
 "within": 60,
@@ -138,8 +138,8 @@ Use `after` to handle scenarios that require more complex event reactivity.
 For example, this flow emits an event indicating the table it operates on is missing or empty:
 
 ```python
-from prefect import flow
-from prefect.events import emit_event
+from syntask import flow
+from syntask.events import emit_event
 from myproject.db import Table
 
 
@@ -150,12 +150,12 @@ def transform(table_name: str):
   if not table.exists():
     emit_event(
         event="table-missing",
-        resource={"prefect.resource.id": "etl-events.transform"}
+        resource={"syntask.resource.id": "etl-events.transform"}
     )
   elif table.is_empty():
     emit_event(
         event="table-empty",
-        resource={"prefect.resource.id": "etl-events.transform"}
+        resource={"syntask.resource.id": "etl-events.transform"}
     )
   else:
     # transform data
@@ -172,20 +172,20 @@ The following configuration uses `after` to prevent this automation from firing 
 
 ```json
 "match": {
-  "prefect.resource.id": [
-    "prefect.flow-run.*",
+  "syntask.resource.id": [
+    "syntask.flow-run.*",
     "etl-events.transform"
   ]
 },
 "match_related": {
-  "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
+  "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
 }
 "after": [
   "table-missing",
   "table-empty"
 ]
 "expect": [
-  "prefect.flow-run.Completed"
+  "syntask.flow-run.Completed"
 ],
 ...
 ```
@@ -197,20 +197,20 @@ All of the previous examples were designed around a reactive `posture`; that is,
 A proactive trigger fires when its `threshold` has _not_ been met by the end of the window of time defined by `within`.
 Proactive triggers must have a `within` value of at least 10 seconds.
 
-The following trigger fires if a `prefect.flow-run.Completed` event is not seen within 60 seconds after a
-`prefect.flow-run.Running` event is seen:
+The following trigger fires if a `syntask.flow-run.Completed` event is not seen within 60 seconds after a
+`syntask.flow-run.Running` event is seen:
 
 ```json
 {
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {},
   "after": [
-    "prefect.flow-run.Running"
+    "syntask.flow-run.Running"
   ],
   "expect": [
-    "prefect.flow-run.Completed"
+    "syntask.flow-run.Completed"
   ],
   "for_each": [],
   "posture": "Proactive",
@@ -219,24 +219,24 @@ The following trigger fires if a `prefect.flow-run.Completed` event is not seen 
 }
 ```
 
-However, without `for_each`, a `prefect.flow-run.Completed` event from a _different_ flow run than the one that
-started this trigger with its `prefect.flow-run.Running` event could satisfy the condition. Adding a `for_each` of
-`prefect.resource.id` causes this trigger to be evaluated separately for each flow run id associated with these events.
+However, without `for_each`, a `syntask.flow-run.Completed` event from a _different_ flow run than the one that
+started this trigger with its `syntask.flow-run.Running` event could satisfy the condition. Adding a `for_each` of
+`syntask.resource.id` causes this trigger to be evaluated separately for each flow run id associated with these events.
 
 ```json
 {
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {},
   "after": [
-    "prefect.flow-run.Running"
+    "syntask.flow-run.Running"
   ],
   "expect": [
-    "prefect.flow-run.Completed"
+    "syntask.flow-run.Completed"
   ],
   "for_each": [
-    "prefect.resource.id"
+    "syntask.resource.id"
   ],
   "posture": "Proactive",
   "threshold": 1,
@@ -250,10 +250,10 @@ Metric triggers (`{"type": "metric"}`) fire when the value of a metric in your w
 For example, you can trigger an automation when the success rate of flows in your workspace drops below 95% over the course
 of an hour.
 
-Prefect's metrics are all derived by examining your workspace's events, and if applicable, use the `occurred` times of
+Syntask's metrics are all derived by examining your workspace's events, and if applicable, use the `occurred` times of
 those events as the basis for their calculations.
 
-Prefect defines three metrics:
+Syntask defines three metrics:
 
 - **Successes** (`{"name": "successes"}`), defined as the number of flow runs that went `Pending` and then the latest
 state we saw was not a failure (`Failed` or `Crashed`). This metric accounts for retries if the ultimate state was
@@ -276,7 +276,7 @@ And the `MetricTriggerQuery` query is defined as:
 
 | Name           | Type                                  | Description                                                            |
 | -------------- | ------------------------------------- | ---------------------------------------------------------------------- |
-| **name**       | string                                | The name of the Prefect metric to evaluate (see above).                |
+| **name**       | string                                | The name of the Syntask metric to evaluate (see above).                |
 | **threshold**  | number                                | The threshold the current metric value is compared to.            |
 | **operator**   | string (`"<"`, `"<="`, `">"`, `">="`) | The comparison operator to use to decide if the threshold value is met. |
 | **range**      | duration in seconds                   | How far back to evaluate the metric.                                    |
@@ -288,11 +288,11 @@ For example, to fire when flow runs tagged `production` in your workspace are fa
 {
   "type": "metric",
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {
-    "prefect.resource.id": "prefect.tag.production",
-    "prefect.resource.role": "tag"
+    "syntask.resource.id": "syntask.tag.production",
+    "syntask.resource.role": "tag"
   },
   "metric": {
     "name": "successes",
@@ -311,11 +311,11 @@ last day exceeds five minutes late—and that number hasn't gotten better for th
 {
   "type": "metric",
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {
-    "prefect.resource.id": "prefect.work-pool.kubernetes",
-    "prefect.resource.role": "work-pool"
+    "syntask.resource.id": "syntask.work-pool.kubernetes",
+    "syntask.resource.role": "work-pool"
   },
   "metric": {
     "name": "lateness",
@@ -344,28 +344,28 @@ results to a remote filesystem, combine them with a 'compound' trigger:
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.block.remote-file-system.write_path.called"],
+      "expect": ["syntask.block.remote-file-system.write_path.called"],
       "match_related": {
-        "prefect.resource.name": "daily-customer-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-customer-export",
+        "syntask.resource.role": "flow"
       }
     },
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.block.remote-file-system.write_path.called"],
+      "expect": ["syntask.block.remote-file-system.write_path.called"],
       "match_related": {
-        "prefect.resource.name": "daily-revenue-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-revenue-export",
+        "syntask.resource.role": "flow"
       }
     },
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.block.remote-file-system.write_path.called"],
+      "expect": ["syntask.block.remote-file-system.write_path.called"],
       "match_related": {
-        "prefect.resource.name": "daily-expenses-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-expenses-export",
+        "syntask.resource.role": "flow"
       }
     }
   ]
@@ -389,10 +389,10 @@ previous trigger as the second part of a sequence of two triggers:
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.flow-run.Completed"],
+      "expect": ["syntask.flow-run.Completed"],
       "match_related": {
-        "prefect.resource.name": "daily-export-initiator",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-export-initiator",
+        "syntask.resource.role": "flow"
       }
     },
     // and the second child trigger being the compound trigger from the prior example
@@ -404,28 +404,28 @@ previous trigger as the second part of a sequence of two triggers:
         {
           "type": "event",
           "posture": "Reactive",
-          "expect": ["prefect.block.remote-file-system.write_path.called"],
+          "expect": ["syntask.block.remote-file-system.write_path.called"],
           "match_related": {
-            "prefect.resource.name": "daily-customer-export",
-            "prefect.resource.role": "flow"
+            "syntask.resource.name": "daily-customer-export",
+            "syntask.resource.role": "flow"
           }
         },
         {
           "type": "event",
           "posture": "Reactive",
-          "expect": ["prefect.block.remote-file-system.write_path.called"],
+          "expect": ["syntask.block.remote-file-system.write_path.called"],
           "match_related": {
-            "prefect.resource.name": "daily-revenue-export",
-            "prefect.resource.role": "flow"
+            "syntask.resource.name": "daily-revenue-export",
+            "syntask.resource.role": "flow"
           }
         },
         {
           "type": "event",
           "posture": "Reactive",
-          "expect": ["prefect.block.remote-file-system.write_path.called"],
+          "expect": ["syntask.block.remote-file-system.write_path.called"],
           "match_related": {
-            "prefect.resource.name": "daily-expenses-export",
-            "prefect.resource.role": "flow"
+            "syntask.resource.name": "daily-expenses-export",
+            "syntask.resource.role": "flow"
           }
         }
       ]
@@ -458,20 +458,20 @@ stuck in `Pending`, a work pool becoming unready, or the average amount of `Late
     {
       "type": "event",
       "posture": "Proactive",
-      "after": ["prefect.flow-run.Pending"],
-      "expect": ["prefect.flow-run.Running", "prefect.flow-run.Crashed"],
-      "for_each": ["prefect.resource.id"],
+      "after": ["syntask.flow-run.Pending"],
+      "expect": ["syntask.flow-run.Running", "syntask.flow-run.Crashed"],
+      "for_each": ["syntask.resource.id"],
       "match_related": {
-        "prefect.resource.name": "daily-customer-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-customer-export",
+        "syntask.resource.role": "flow"
       }
     },
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.work-pool.not-ready"],
+      "expect": ["syntask.work-pool.not-ready"],
       "match": {
-        "prefect.resource.name": "kubernetes-workers",
+        "syntask.resource.name": "kubernetes-workers",
       }
     },
     {

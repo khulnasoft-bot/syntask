@@ -1,20 +1,20 @@
 ---
 title: Rate limits and data retention
-description: Prefect Cloud API rate limits.
+description: Syntask Cloud API rate limits.
 ---
 
-Prefect Cloud has controls in place to ensure stability.
+Syntask Cloud has controls in place to ensure stability.
 
 ## API Rate Limits
 
 <Note>
-**Prefect Cloud rate limits are subject to change**
+**Syntask Cloud rate limits are subject to change**
 
 **API rate limits are subject to change.**
-Contact Prefect support at [help@syntask.khulnasoft.com](mailto:help@syntask.khulnasoft.com) with questions about rate limits.
+Contact Syntask support at [help@khulnasoft.com](mailto:help@khulnasoft.com) with questions about rate limits.
 </Note>
 
-Prefect Cloud's API rate limits restrict the number of requests that a single client can make to certain endpoints in a given time period. 
+Syntask Cloud's API rate limits restrict the number of requests that a single client can make to certain endpoints in a given time period. 
 The `flow_runs`, `task_runs`, and `flows` endpoints and their subroutes are limited to:
 
 - 400 requests per minute for Free accounts
@@ -31,7 +31,7 @@ The endpoint returns a `429` response if this limit is triggered.
 
 ## Metadata retention period
 
-Flow run, task run, and artifact metadata is retained according to your Prefect Cloud account's retention period.
+Flow run, task run, and artifact metadata is retained according to your Syntask Cloud account's retention period.
 The retention period applies to all workspaces that belong to the account.
 
 The retention period is the number of days that metadata is available after it is created. 
@@ -40,4 +40,4 @@ For flow and task runs, it is calculated from the time the run reaches a
 Subflow runs are retained independently from their parent flow runs. They are removed based on 
 the time each subflow run reaches a terminal state.
 
-If you have needs that require a custom retention period, [contact Prefect's sales team](https://www.syntask.khulnasoft.com/pricing).
+If you have needs that require a custom retention period, [contact Syntask's sales team](https://www.syntask.khulnasoft.com/pricing).

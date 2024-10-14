@@ -8,27 +8,27 @@ import pytest
 from httpx import AsyncClient, Request, Response
 from starlette import status
 
-import prefect
-import prefect.client
-import prefect.client.constants
-from prefect.client.base import (
-    PrefectHttpxAsyncClient,
-    PrefectResponse,
+import syntask
+import syntask.client
+import syntask.client.constants
+from syntask.client.base import (
     ServerType,
+    SyntaskHttpxAsyncClient,
+    SyntaskResponse,
     determine_server_type,
 )
-from prefect.client.schemas.objects import CsrfToken
-from prefect.exceptions import PrefectHTTPStatusError
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_CLIENT_MAX_RETRIES,
-    PREFECT_CLIENT_RETRY_EXTRA_CODES,
-    PREFECT_CLIENT_RETRY_JITTER_FACTOR,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
+from syntask.client.schemas.objects import CsrfToken
+from syntask.exceptions import SyntaskHTTPStatusError
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_CLIENT_MAX_RETRIES,
+    SYNTASK_CLIENT_RETRY_EXTRA_CODES,
+    SYNTASK_CLIENT_RETRY_JITTER_FACTOR,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
     temporary_settings,
 )
-from prefect.testing.utilities import AsyncMock
+from syntask.testing.utilities import AsyncMock
 
 now = datetime.now(timezone.utc)
 
@@ -83,11 +83,11 @@ RESPONSE_INVALID_TOKEN = Response(
 
 @pytest.fixture
 def disable_jitter():
-    with temporary_settings({PREFECT_CLIENT_RETRY_JITTER_FACTOR: 0}):
+    with temporary_settings({SYNTASK_CLIENT_RETRY_JITTER_FACTOR: 0}):
         yield
 
 
-class TestPrefectHttpxAsyncClient:
+class TestSyntaskHttpxAsyncClient:
     @pytest.mark.usefixtures("mock_anyio_sleep", "disable_jitter")
     @pytest.mark.parametrize(
         "error_code",
@@ -98,12 +98,12 @@ class TestPrefectHttpxAsyncClient:
             status.HTTP_502_BAD_GATEWAY,
         ],
     )
-    async def test_prefect_httpx_client_retries_on_designated_error_codes(
+    async def test_syntask_httpx_client_retries_on_designated_error_codes(
         self, monkeypatch, error_code, caplog
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         retry_response = Response(
             error_code,
             request=Request("a test request", "fake.url/fake/route"),
@@ -138,12 +138,12 @@ class TestPrefectHttpxAsyncClient:
             (status.HTTP_409_CONFLICT, "508,409"),
         ],
     )
-    async def test_prefect_httpx_client_retries_on_extra_error_codes(
+    async def test_syntask_httpx_client_retries_on_extra_error_codes(
         self, monkeypatch, error_code, extra_codes, caplog
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         retry_response = Response(
             error_code,
             request=Request("a test request", "fake.url/fake/route"),
@@ -154,7 +154,7 @@ class TestPrefectHttpxAsyncClient:
             retry_response,
             RESPONSE_200,
         ]
-        with temporary_settings({PREFECT_CLIENT_RETRY_EXTRA_CODES: extra_codes}):
+        with temporary_settings({SYNTASK_CLIENT_RETRY_EXTRA_CODES: extra_codes}):
             async with client:
                 response = await client.post(
                     url="fake.url/fake/route", data={"evenmorefake": "data"}
@@ -172,12 +172,12 @@ class TestPrefectHttpxAsyncClient:
             assert f"This is attempt {attempt}/6" in caplog.text
 
     @pytest.mark.usefixtures("mock_anyio_sleep", "disable_jitter")
-    async def test_prefect_httpx_client_raises_on_non_extra_error_codes(
+    async def test_syntask_httpx_client_raises_on_non_extra_error_codes(
         self, monkeypatch, caplog
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         retry_response = Response(
             status.HTTP_508_LOOP_DETECTED,
             request=Request("a test request", "fake.url/fake/route"),
@@ -188,8 +188,8 @@ class TestPrefectHttpxAsyncClient:
             retry_response,
             RESPONSE_200,
         ]
-        with temporary_settings({PREFECT_CLIENT_RETRY_EXTRA_CODES: "409"}):
-            with pytest.raises(PrefectHTTPStatusError):
+        with temporary_settings({SYNTASK_CLIENT_RETRY_EXTRA_CODES: "409"}):
+            with pytest.raises(SyntaskHTTPStatusError):
                 async with client:
                     await client.post(
                         url="fake.url/fake/route", data={"evenmorefake": "data"}
@@ -208,7 +208,7 @@ class TestPrefectHttpxAsyncClient:
             httpx.ConnectTimeout,
         ],
     )
-    async def test_prefect_httpx_client_retries_on_designated_exceptions(
+    async def test_syntask_httpx_client_retries_on_designated_exceptions(
         self,
         monkeypatch,
         exception_type,
@@ -216,7 +216,7 @@ class TestPrefectHttpxAsyncClient:
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
 
         base_client_send.side_effect = [
             exception_type("test"),
@@ -248,12 +248,12 @@ class TestPrefectHttpxAsyncClient:
         "response_or_exc",
         [RESPONSE_429_RETRY_AFTER_0, httpx.RemoteProtocolError("test")],
     )
-    async def test_prefect_httpx_client_retries_up_to_five_times(
+    async def test_syntask_httpx_client_retries_up_to_five_times(
         self,
         monkeypatch,
         response_or_exc,
     ):
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
@@ -275,12 +275,12 @@ class TestPrefectHttpxAsyncClient:
         "response_or_exc",
         [RESPONSE_429_RETRY_AFTER_0, httpx.RemoteProtocolError("test")],
     )
-    async def test_prefect_httpx_client_respects_max_retry_setting(
+    async def test_syntask_httpx_client_respects_max_retry_setting(
         self,
         monkeypatch,
         response_or_exc,
     ):
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
@@ -288,7 +288,7 @@ class TestPrefectHttpxAsyncClient:
         base_client_send.side_effect = [response_or_exc] * 20
 
         with pytest.raises(Exception):
-            with temporary_settings({PREFECT_CLIENT_MAX_RETRIES: 10}):
+            with temporary_settings({SYNTASK_CLIENT_MAX_RETRIES: 10}):
                 async with client:
                     await client.post(
                         url="fake.url/fake/route",
@@ -309,10 +309,10 @@ class TestPrefectHttpxAsyncClient:
             (httpx.RemoteProtocolError("test"), httpx.RemoteProtocolError),
         ],
     )
-    async def test_prefect_httpx_client_raises_final_error_after_retries(
+    async def test_syntask_httpx_client_raises_final_error_after_retries(
         self, monkeypatch, final_response, expected_error_type
     ):
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
@@ -334,13 +334,13 @@ class TestPrefectHttpxAsyncClient:
         [status.HTTP_429_TOO_MANY_REQUESTS, status.HTTP_503_SERVICE_UNAVAILABLE],
     )
     @pytest.mark.usefixtures("disable_jitter")
-    async def test_prefect_httpx_client_respects_retry_header(
+    async def test_syntask_httpx_client_respects_retry_header(
         self, monkeypatch, mock_anyio_sleep, error_code
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         retry_response = Response(
             error_code,
             headers={"Retry-After": "5"},
@@ -364,13 +364,13 @@ class TestPrefectHttpxAsyncClient:
         "response_or_exc",
         [RESPONSE_429_RETRY_AFTER_MISSING, httpx.RemoteProtocolError("test")],
     )
-    async def test_prefect_httpx_client_uses_exponential_backoff_without_retry_after_header(
+    async def test_syntask_httpx_client_uses_exponential_backoff_without_retry_after_header(
         self, mock_anyio_sleep, response_or_exc, monkeypatch
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
 
         base_client_send.side_effect = [
             response_or_exc,
@@ -388,13 +388,13 @@ class TestPrefectHttpxAsyncClient:
         mock_anyio_sleep.assert_has_awaits([mock.call(2), mock.call(4), mock.call(8)])
 
     @pytest.mark.usefixtures("disable_jitter")
-    async def test_prefect_httpx_client_respects_retry_header_per_response(
+    async def test_syntask_httpx_client_respects_retry_header_per_response(
         self, mock_anyio_sleep, monkeypatch
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
 
         base_client_send.side_effect = [
             # Generate responses with retry after headers
@@ -416,13 +416,13 @@ class TestPrefectHttpxAsyncClient:
             [mock.call(5), mock.call(0), mock.call(10), mock.call(2.0)]
         )
 
-    async def test_prefect_httpx_client_adds_jitter_with_retry_header(
+    async def test_syntask_httpx_client_adds_jitter_with_retry_header(
         self, monkeypatch, mock_anyio_sleep
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         retry_response = Response(
             status.HTTP_429_TOO_MANY_REQUESTS,
             headers={"Retry-After": "5"},
@@ -452,13 +452,13 @@ class TestPrefectHttpxAsyncClient:
         "response_or_exc",
         [RESPONSE_429_RETRY_AFTER_MISSING, httpx.RemoteProtocolError("test")],
     )
-    async def test_prefect_httpx_client_adds_jitter_with_exponential_backoff(
+    async def test_syntask_httpx_client_adds_jitter_with_exponential_backoff(
         self, mock_anyio_sleep, response_or_exc, monkeypatch
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
 
         base_client_send.side_effect = [
             response_or_exc,
@@ -480,13 +480,13 @@ class TestPrefectHttpxAsyncClient:
             [mock.call(pytest.approx(n, rel=0.2)) for n in [2, 4, 8]]
         )
 
-    async def test_prefect_httpx_client_does_not_retry_other_exceptions(
+    async def test_syntask_httpx_client_does_not_retry_other_exceptions(
         self, mock_anyio_sleep, monkeypatch
     ):
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
 
         base_client_send.side_effect = [TypeError("This error should not be retried")]
 
@@ -498,9 +498,9 @@ class TestPrefectHttpxAsyncClient:
 
         mock_anyio_sleep.assert_not_called()
 
-    async def test_prefect_httpx_client_returns_prefect_response(self, monkeypatch):
-        """Test that the PrefectHttpxAsyncClient returns a PrefectResponse"""
-        client = PrefectHttpxAsyncClient()
+    async def test_syntask_httpx_client_returns_syntask_response(self, monkeypatch):
+        """Test that the SyntaskHttpxAsyncClient returns a SyntaskResponse"""
+        client = SyntaskHttpxAsyncClient()
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
@@ -510,9 +510,9 @@ class TestPrefectHttpxAsyncClient:
             response = await client.post(
                 url="fake.url/fake/route", data={"evenmorefake": "data"}
             )
-        assert isinstance(response, PrefectResponse)
+        assert isinstance(response, SyntaskResponse)
 
-    async def test_prefect_httpx_client_raises_prefect_http_status_error(
+    async def test_syntask_httpx_client_raises_syntask_http_status_error(
         self, monkeypatch
     ):
         RESPONSE_400 = Response(
@@ -521,12 +521,12 @@ class TestPrefectHttpxAsyncClient:
             request=Request("a test request", "fake.url/fake/route"),
         )
 
-        client = PrefectHttpxAsyncClient()
+        client = SyntaskHttpxAsyncClient()
         base_client_send = AsyncMock()
         monkeypatch.setattr(AsyncClient, "send", base_client_send)
 
         base_client_send.return_value = RESPONSE_400
-        with pytest.raises(PrefectHTTPStatusError) as exc:
+        with pytest.raises(SyntaskHTTPStatusError) as exc:
             async with client:
                 await client.post(
                     url="fake.url/fake/route", data={"evenmorefake": "data"}
@@ -539,10 +539,10 @@ class TestPrefectHttpxAsyncClient:
 async def mocked_client(
     responses: List[Response],
     **client_kwargs: Dict[str, Any],
-) -> AsyncGenerator[Tuple[PrefectHttpxAsyncClient, mock.AsyncMock], None]:
+) -> AsyncGenerator[Tuple[SyntaskHttpxAsyncClient, mock.AsyncMock], None]:
     with mock.patch("httpx.AsyncClient.send", autospec=True) as send:
         send.side_effect = responses
-        client = PrefectHttpxAsyncClient(**client_kwargs)
+        client = SyntaskHttpxAsyncClient(**client_kwargs)
         async with client:
             try:
                 yield client, send
@@ -553,7 +553,7 @@ async def mocked_client(
 @asynccontextmanager
 async def mocked_csrf_client(
     responses: List[Response],
-) -> AsyncGenerator[Tuple[PrefectHttpxAsyncClient, mock.AsyncMock], None]:
+) -> AsyncGenerator[Tuple[SyntaskHttpxAsyncClient, mock.AsyncMock], None]:
     async with mocked_client(responses, enable_csrf_support=True) as (client, send):
         yield client, send
 
@@ -566,8 +566,8 @@ class TestCsrfSupport:
         request = send.call_args[0][1]
         assert isinstance(request, httpx.Request)
 
-        assert "Prefect-Csrf-Token" not in request.headers
-        assert "Prefect-Csrf-Client" not in request.headers
+        assert "Syntask-Csrf-Token" not in request.headers
+        assert "Syntask-Csrf-Client" not in request.headers
 
     @pytest.mark.parametrize("method", ["post", "put", "patch", "delete"])
     async def test_csrf_headers_on_change_request(self, method: str):
@@ -592,11 +592,11 @@ class TestCsrfSupport:
         assert isinstance(request, httpx.Request)
         assert request.method == method.upper()
         assert request.url == httpx.URL("/fake.url/fake/route")
-        assert request.headers["Prefect-Csrf-Token"] == "test_token"
-        assert request.headers["Prefect-Csrf-Client"] == str(client.csrf_client_id)
+        assert request.headers["Syntask-Csrf-Token"] == "test_token"
+        assert request.headers["Syntask-Csrf-Client"] == str(client.csrf_client_id)
 
     @pytest.mark.xfail(
-        reason="Very brittle for some reason, see https://github.com/synopkg/synopkg/issues/13963"
+        reason="Very brittle for some reason, see https://github.com/synopkg/syntask/issues/13963"
     )
     async def test_refreshes_token_on_csrf_403(self):
         async with mocked_csrf_client(
@@ -626,8 +626,8 @@ class TestCsrfSupport:
         request = send.call_args_list[1][0][1]
         assert isinstance(request, httpx.Request)
         assert request.url == httpx.URL("/fake.url/fake/route")
-        assert request.headers["Prefect-Csrf-Token"] == "test_token"
-        assert request.headers["Prefect-Csrf-Client"] == str(client.csrf_client_id)
+        assert request.headers["Syntask-Csrf-Token"] == "test_token"
+        assert request.headers["Syntask-Csrf-Client"] == str(client.csrf_client_id)
 
         # The third call should be a refresh of the CSRF token
         request = send.call_args_list[0][0][1]
@@ -641,8 +641,8 @@ class TestCsrfSupport:
         request = send.call_args_list[1][0][1]
         assert isinstance(request, httpx.Request)
         assert request.url == httpx.URL("/fake.url/fake/route")
-        assert request.headers["Prefect-Csrf-Token"] == "test_token"
-        assert request.headers["Prefect-Csrf-Client"] == str(client.csrf_client_id)
+        assert request.headers["Syntask-Csrf-Token"] == "test_token"
+        assert request.headers["Syntask-Csrf-Client"] == str(client.csrf_client_id)
 
     async def test_does_not_refresh_csrf_token_not_expired(self):
         async with mocked_csrf_client(responses=[RESPONSE_200]) as (
@@ -658,8 +658,8 @@ class TestCsrfSupport:
         request = send.call_args_list[0][0][1]
         assert isinstance(request, httpx.Request)
         assert request.url == httpx.URL("/fake.url/fake/route")
-        assert request.headers["Prefect-Csrf-Token"] == "fresh_token"
-        assert request.headers["Prefect-Csrf-Client"] == str(client.csrf_client_id)
+        assert request.headers["Syntask-Csrf-Token"] == "fresh_token"
+        assert request.headers["Syntask-Csrf-Client"] == str(client.csrf_client_id)
 
     async def test_does_refresh_csrf_token_when_expired(self):
         async with mocked_csrf_client(responses=[RESPONSE_CSRF, RESPONSE_200]) as (
@@ -684,15 +684,15 @@ class TestCsrfSupport:
         request = send.call_args_list[1][0][1]
         assert isinstance(request, httpx.Request)
         assert request.url == httpx.URL("/fake.url/fake/route")
-        assert request.headers["Prefect-Csrf-Token"] == "test_token"
-        assert request.headers["Prefect-Csrf-Client"] == str(client.csrf_client_id)
+        assert request.headers["Syntask-Csrf-Token"] == "test_token"
+        assert request.headers["Syntask-Csrf-Client"] == str(client.csrf_client_id)
 
     async def test_raises_exception_bad_csrf_token_response(self):
         async with mocked_csrf_client(responses=[RESPONSE_400]) as (
             client,
             _,
         ):
-            with pytest.raises(PrefectHTTPStatusError):
+            with pytest.raises(SyntaskHTTPStatusError):
                 await client.post(url="fake.url/fake/route")
 
     async def test_disables_csrf_support_404_token_endpoint(self):
@@ -718,21 +718,21 @@ class TestCsrfSupport:
 
 class TestUserAgent:
     @pytest.fixture
-    def prefect_version(self, monkeypatch: pytest.MonkeyPatch) -> str:
+    def syntask_version(self, monkeypatch: pytest.MonkeyPatch) -> str:
         v = "42.43.44"
-        monkeypatch.setattr(prefect, "__version__", v)
+        monkeypatch.setattr(syntask, "__version__", v)
         return v
 
     @pytest.fixture
-    def prefect_api_version(self, monkeypatch: pytest.MonkeyPatch) -> str:
+    def syntask_api_version(self, monkeypatch: pytest.MonkeyPatch) -> str:
         v = "45.46.47"
-        monkeypatch.setattr(prefect.client.constants, "SERVER_API_VERSION", v)
+        monkeypatch.setattr(syntask.client.constants, "SERVER_API_VERSION", v)
         return v
 
     async def test_passes_informative_user_agent(
         self,
-        prefect_version: str,
-        prefect_api_version: str,
+        syntask_version: str,
+        syntask_api_version: str,
     ):
         async with mocked_client(responses=[RESPONSE_200]) as (client, send):
             await client.get(url="fake.url/fake/route")
@@ -740,7 +740,7 @@ class TestUserAgent:
         request = send.call_args[0][1]
         assert isinstance(request, httpx.Request)
 
-        assert request.headers["User-Agent"] == "prefect/42.43.44 (API 45.46.47)"
+        assert request.headers["User-Agent"] == "syntask/42.43.44 (API 45.46.47)"
 
 
 class TestDetermineServerType:
@@ -749,28 +749,28 @@ class TestDetermineServerType:
         [
             (
                 {
-                    PREFECT_API_URL: "http://localhost:4200/api",
+                    SYNTASK_API_URL: "http://localhost:4200/api",
                 },
                 ServerType.SERVER,
             ),
             (
                 {
-                    PREFECT_API_URL: None,
-                    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: True,
+                    SYNTASK_API_URL: None,
+                    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: True,
                 },
                 ServerType.EPHEMERAL,
             ),
             (
                 {
-                    PREFECT_API_URL: None,
-                    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: False,
+                    SYNTASK_API_URL: None,
+                    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: False,
                 },
                 ServerType.UNCONFIGURED,
             ),
             (
                 {
-                    PREFECT_CLOUD_API_URL: "https://api.prefect.cloud/api/",
-                    PREFECT_API_URL: "https://api.prefect.cloud/api/accounts/foo/workspaces/bar",
+                    SYNTASK_CLOUD_API_URL: "https://api.syntask.cloud/api/",
+                    SYNTASK_API_URL: "https://api.syntask.cloud/api/accounts/foo/workspaces/bar",
                 },
                 ServerType.CLOUD,
             ),

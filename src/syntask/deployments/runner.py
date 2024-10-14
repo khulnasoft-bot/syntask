@@ -4,7 +4,7 @@ Objects for creating and configuring deployments for flows using `serve` functio
 Example:
     ```python
     import time
-    from prefect import flow, serve
+    from syntask import flow, serve
 
 
     @flow
@@ -47,43 +47,43 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, track
 from rich.table import Table
 
-from prefect._internal.concurrency.api import create_call, from_async
-from prefect._internal.schemas.validators import (
+from syntask._internal.concurrency.api import create_call, from_async
+from syntask._internal.schemas.validators import (
     reconcile_paused_deployment,
     reconcile_schedules_runner,
 )
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.objects import ConcurrencyLimitConfig, ConcurrencyOptions
-from prefect.client.schemas.schedules import (
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.objects import ConcurrencyLimitConfig, ConcurrencyOptions
+from syntask.client.schemas.schedules import (
     SCHEDULE_TYPES,
     construct_schedule,
 )
-from prefect.deployments.schedules import (
+from syntask.deployments.schedules import (
     create_deployment_schedule_create,
 )
-from prefect.docker.docker_image import DockerImage
-from prefect.events import DeploymentTriggerTypes, TriggerTypes
-from prefect.exceptions import (
+from syntask.docker.docker_image import DockerImage
+from syntask.events import DeploymentTriggerTypes, TriggerTypes
+from syntask.exceptions import (
     ObjectNotFound,
-    PrefectHTTPStatusError,
+    SyntaskHTTPStatusError,
 )
-from prefect.runner.storage import RunnerStorage
-from prefect.settings import (
-    PREFECT_DEFAULT_WORK_POOL_NAME,
-    PREFECT_UI_URL,
+from syntask.runner.storage import RunnerStorage
+from syntask.settings import (
+    SYNTASK_DEFAULT_WORK_POOL_NAME,
+    SYNTASK_UI_URL,
 )
-from prefect.types.entrypoint import EntrypointType
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.callables import ParameterSchema, parameter_schema
-from prefect.utilities.collections import get_from_dict, isiterable
-from prefect.utilities.dockerutils import (
+from syntask.types.entrypoint import EntrypointType
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.callables import ParameterSchema, parameter_schema
+from syntask.utilities.collections import get_from_dict, isiterable
+from syntask.utilities.dockerutils import (
     parse_image_tag,
 )
 
 if TYPE_CHECKING:
-    from prefect.client.types.flexible_schedule_list import FlexibleScheduleList
-    from prefect.flows import Flow
+    from syntask.client.types.flexible_schedule_list import FlexibleScheduleList
+    from syntask.flows import Flow
 
 __all__ = ["RunnerDeployment"]
 
@@ -96,7 +96,7 @@ class DeploymentApplyError(RuntimeError):
 
 class RunnerDeployment(BaseModel):
     """
-    A Prefect RunnerDeployment definition, used for specifying and building deployments.
+    A Syntask RunnerDeployment definition, used for specifying and building deployments.
 
     Attributes:
         name: A name for the deployment (required).
@@ -114,7 +114,7 @@ class RunnerDeployment(BaseModel):
         entrypoint: The path to the entrypoint for the workflow, always relative to the
             `path`
         parameter_openapi_schema: The parameter schema of the flow, including defaults.
-        enforce_parameter_schema: Whether or not the Prefect API should enforce the
+        enforce_parameter_schema: Whether or not the Syntask API should enforce the
             parameter schema for this deployment.
         work_pool_name: The name of the work pool to use for this deployment.
         work_queue_name: The name of the work queue to use for this deployment's scheduled runs.
@@ -169,7 +169,7 @@ class RunnerDeployment(BaseModel):
     enforce_parameter_schema: bool = Field(
         default=True,
         description=(
-            "Whether or not the Prefect API should enforce the parameter schema for"
+            "Whether or not the Syntask API should enforce the parameter schema for"
             " this deployment."
         ),
     )
@@ -310,7 +310,7 @@ class RunnerDeployment(BaseModel):
             try:
                 deployment_id = await client.create_deployment(**create_payload)
             except Exception as exc:
-                if isinstance(exc, PrefectHTTPStatusError):
+                if isinstance(exc, SyntaskHTTPStatusError):
                     detail = exc.response.json().get("detail")
                     if detail:
                         raise DeploymentApplyError(detail) from exc
@@ -325,11 +325,11 @@ class RunnerDeployment(BaseModel):
                 # by the deployment, meaning that they were created via this
                 # mechanism below, and then recreate them.
                 await client.delete_resource_owned_automations(
-                    f"prefect.deployment.{deployment_id}"
+                    f"syntask.deployment.{deployment_id}"
                 )
-            except PrefectHTTPStatusError as e:
+            except SyntaskHTTPStatusError as e:
                 if e.response.status_code == 404:
-                    # This Prefect server does not support automations, so we can safely
+                    # This Syntask server does not support automations, so we can safely
                     # ignore this 404 and move on.
                     return deployment_id
                 raise e
@@ -476,7 +476,7 @@ class RunnerDeployment(BaseModel):
             tags: A list of tags to associate with the created deployment for organizational
                 purposes.
             version: A version for the created deployment. Defaults to the flow's version.
-            enforce_parameter_schema: Whether or not the Prefect API should enforce the
+            enforce_parameter_schema: Whether or not the Syntask API should enforce the
                 parameter schema for this deployment.
             work_pool_name: The name of the work pool to use for this deployment.
             work_queue_name: The name of the work queue to use for this deployment's scheduled runs.
@@ -544,7 +544,7 @@ class RunnerDeployment(BaseModel):
                         module = importlib.import_module(mod_name)
                         flow_file = getattr(module, "__file__", None)
                     except ModuleNotFoundError as exc:
-                        if "__prefect_loader__" in str(exc):
+                        if "__syntask_loader__" in str(exc):
                             raise ValueError(
                                 "Cannot create a RunnerDeployment from a flow that has been"
                                 " loaded from an entrypoint. To deploy a flow via"
@@ -615,7 +615,7 @@ class RunnerDeployment(BaseModel):
             tags: A list of tags to associate with the created deployment for organizational
                 purposes.
             version: A version for the created deployment. Defaults to the flow's version.
-            enforce_parameter_schema: Whether or not the Prefect API should enforce the
+            enforce_parameter_schema: Whether or not the Syntask API should enforce the
                 parameter schema for this deployment.
             work_pool_name: The name of the work pool to use for this deployment.
             work_queue_name: The name of the work queue to use for this deployment's scheduled runs.
@@ -624,7 +624,7 @@ class RunnerDeployment(BaseModel):
                 of the chosen work pool. Refer to the base job template of the chosen work pool for
                 available settings.
         """
-        from prefect.flows import load_flow_from_entrypoint
+        from syntask.flows import load_flow_from_entrypoint
 
         job_variables = job_variables or {}
         flow = load_flow_from_entrypoint(entrypoint)
@@ -716,7 +716,7 @@ class RunnerDeployment(BaseModel):
             tags: A list of tags to associate with the created deployment for organizational
                 purposes.
             version: A version for the created deployment. Defaults to the flow's version.
-            enforce_parameter_schema: Whether or not the Prefect API should enforce the
+            enforce_parameter_schema: Whether or not the Syntask API should enforce the
                 parameter schema for this deployment.
             work_pool_name: The name of the work pool to use for this deployment.
             work_queue_name: The name of the work queue to use for this deployment's scheduled runs.
@@ -725,7 +725,7 @@ class RunnerDeployment(BaseModel):
                 of the chosen work pool. Refer to the base job template of the chosen work pool for
                 available settings.
         """
-        from prefect.flows import load_flow_from_entrypoint
+        from syntask.flows import load_flow_from_entrypoint
 
         constructed_schedules = cls._construct_deployment_schedules(
             interval=interval,
@@ -796,7 +796,7 @@ async def deploy(
     work pool.
 
     By default, calling this function will build a Docker image for the deployments, push it to a
-    registry, and create each deployment via the Prefect API that will run the corresponding
+    registry, and create each deployment via the Syntask API that will run the corresponding
     flow on the given schedule.
 
     If you want to use an existing image, you can pass `build=False` to skip building and pushing
@@ -805,7 +805,7 @@ async def deploy(
     Args:
         *deployments: A list of deployments to deploy.
         work_pool_name: The name of the work pool to use for these deployments. Defaults to
-            the value of `PREFECT_DEFAULT_WORK_POOL_NAME`.
+            the value of `SYNTASK_DEFAULT_WORK_POOL_NAME`.
         image: The name of the Docker image to build, including the registry and
             repository. Pass a DockerImage instance to customize the Dockerfile used
             and build arguments.
@@ -822,7 +822,7 @@ async def deploy(
         Deploy a group of flows to a work pool:
 
         ```python
-        from prefect import deploy, flow
+        from syntask import deploy, flow
 
         @flow(log_prints=True)
         def local_flow():
@@ -842,7 +842,7 @@ async def deploy(
             )
         ```
     """
-    work_pool_name = work_pool_name or PREFECT_DEFAULT_WORK_POOL_NAME.value()
+    work_pool_name = work_pool_name or SYNTASK_DEFAULT_WORK_POOL_NAME.value()
 
     if not image and not all(
         d.storage or d.entrypoint_type == EntrypointType.MODULE_PATH
@@ -857,7 +857,7 @@ async def deploy(
         raise ValueError(
             "A work pool name must be provided when deploying a deployment. Either"
             " provide a work pool name when calling `deploy` or set"
-            " `PREFECT_DEFAULT_WORK_POOL_NAME` in your profile."
+            " `SYNTASK_DEFAULT_WORK_POOL_NAME` in your profile."
         )
 
     if image and isinstance(image, str):
@@ -997,19 +997,19 @@ async def deploy(
                 f" {work_pool_name!r} work pool:"
             )
             console.print(
-                f"\n\t$ prefect worker start --pool {work_pool_name!r}",
+                f"\n\t$ syntask worker start --pool {work_pool_name!r}",
                 style="blue",
             )
         console.print(
             "\nTo trigger any of these deployments, use the"
-            " following command:\n[blue]\n\t$ prefect deployment run"
+            " following command:\n[blue]\n\t$ syntask deployment run"
             " [DEPLOYMENT_NAME]\n[/]"
         )
 
-        if PREFECT_UI_URL:
+        if SYNTASK_UI_URL:
             console.print(
-                "\nYou can also trigger your deployments via the Prefect UI:"
-                f" [blue]{PREFECT_UI_URL.value()}/deployments[/]\n"
+                "\nYou can also trigger your deployments via the Syntask UI:"
+                f" [blue]{SYNTASK_UI_URL.value()}/deployments[/]\n"
             )
 
     return deployment_ids

@@ -1,6 +1,6 @@
 """
 Tests for the server-side orchestration API client, used by server-side services to
-interact with the Prefect API.
+interact with the Syntask API.
 """
 
 from typing import TYPE_CHECKING, AsyncGenerator, List
@@ -11,19 +11,19 @@ import httpx
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.api.clients import OrchestrationClient
-from prefect.server.models import deployments, flow_runs, flows
-from prefect.server.models.variables import create_variable
-from prefect.server.schemas.actions import VariableCreate
-from prefect.server.schemas.core import Deployment, Flow, FlowRun
-from prefect.server.schemas.responses import (
+from syntask.server.api.clients import OrchestrationClient
+from syntask.server.models import deployments, flow_runs, flows
+from syntask.server.models.variables import create_variable
+from syntask.server.schemas.actions import VariableCreate
+from syntask.server.schemas.core import Deployment, Flow, FlowRun
+from syntask.server.schemas.responses import (
     DeploymentResponse,
     SetStateStatus,
 )
-from prefect.server.schemas.states import Paused, Suspended
+from syntask.server.schemas.states import Paused, Suspended
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMDeployment, ORMVariable
+    from syntask.server.database.orm_models import ORMDeployment, ORMVariable
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ async def test_read_deployment_not_found(orchestration_client: OrchestrationClie
 
 async def test_read_deployment_raises_errors(orchestration_client: OrchestrationClient):
     with mock.patch(
-        "prefect.server.api.deployments.models.deployments.read_deployment",
+        "syntask.server.api.deployments.models.deployments.read_deployment",
         return_value=ValueError("woops"),
     ):
         with pytest.raises(httpx.HTTPStatusError):
@@ -112,7 +112,7 @@ async def test_read_deployment_raises_errors(orchestration_client: Orchestration
 
 async def test_resume_flow_run_raises_errors(orchestration_client: OrchestrationClient):
     with mock.patch(
-        "prefect.server.api.flow_runs.models.flow_runs.read_flow_run",
+        "syntask.server.api.flow_runs.models.flow_runs.read_flow_run",
         return_value=ValueError("woops"),
     ):
         with pytest.raises(httpx.HTTPStatusError):
@@ -218,7 +218,7 @@ async def test_read_variables_empty_nonsensical_maximum(
 
 async def test_read_variables_with_error(orchestration_client: OrchestrationClient):
     with mock.patch(
-        "prefect.server.api.variables.models.variables.read_variables",
+        "syntask.server.api.variables.models.variables.read_variables",
         return_value=ValueError("woops"),
     ):
         with pytest.raises(httpx.HTTPStatusError):

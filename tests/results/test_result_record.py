@@ -1,10 +1,10 @@
 import pytest
 from pydantic import ValidationError
 
-from prefect.filesystems import NullFileSystem
-from prefect.results import ResultRecord, ResultRecordMetadata, ResultStore
-from prefect.serializers import JSONSerializer
-from prefect.settings import PREFECT_LOCAL_STORAGE_PATH
+from syntask.filesystems import NullFileSystem
+from syntask.results import ResultRecord, ResultRecordMetadata, ResultStore
+from syntask.serializers import JSONSerializer
+from syntask.settings import SYNTASK_LOCAL_STORAGE_PATH
 
 
 class TestResultRecord:
@@ -54,7 +54,7 @@ class TestResultRecord:
         # assert that the raw result was persisted without metadata
         assert (
             JSONSerializer().loads(
-                (PREFECT_LOCAL_STORAGE_PATH.value() / "the-key").read_bytes()
+                (SYNTASK_LOCAL_STORAGE_PATH.value() / "the-key").read_bytes()
             )
             == "The results are in..."
         )

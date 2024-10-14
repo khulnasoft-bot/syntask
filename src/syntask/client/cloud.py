@@ -6,20 +6,20 @@ import httpx
 import pydantic
 from starlette import status
 
-import prefect.context
-import prefect.settings
-from prefect.client.base import PrefectHttpxAsyncClient
-from prefect.client.schemas.objects import (
+import syntask.context
+import syntask.settings
+from syntask.client.base import SyntaskHttpxAsyncClient
+from syntask.client.schemas.objects import (
     IPAllowlist,
     IPAllowlistMyAccessResponse,
     Workspace,
 )
-from prefect.exceptions import ObjectNotFound, PrefectException
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_UNIT_TEST_MODE,
+from syntask.exceptions import ObjectNotFound, SyntaskException
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_UNIT_TEST_MODE,
 )
 
 PARSE_API_URL_REGEX = re.compile(r"accounts/(.{36})/workspaces/(.{36})")
@@ -38,19 +38,19 @@ def get_cloud_client(
         httpx_settings = httpx_settings.copy()
 
     if infer_cloud_url is False:
-        host = host or PREFECT_CLOUD_API_URL.value()
+        host = host or SYNTASK_CLOUD_API_URL.value()
     else:
-        configured_url = prefect.settings.PREFECT_API_URL.value()
+        configured_url = syntask.settings.SYNTASK_API_URL.value()
         host = re.sub(PARSE_API_URL_REGEX, "", configured_url)
 
     return CloudClient(
         host=host,
-        api_key=api_key or PREFECT_API_KEY.value(),
+        api_key=api_key or SYNTASK_API_KEY.value(),
         httpx_settings=httpx_settings,
     )
 
 
-class CloudUnauthorizedError(PrefectException):
+class CloudUnauthorizedError(SyntaskException):
     """
     Raised when the CloudClient receives a 401 or 403 from the Cloud API.
     """
@@ -68,13 +68,13 @@ class CloudClient:
         httpx_settings["headers"].setdefault("Authorization", f"Bearer {api_key}")
 
         httpx_settings.setdefault("base_url", host)
-        if not PREFECT_UNIT_TEST_MODE.value():
+        if not SYNTASK_UNIT_TEST_MODE.value():
             httpx_settings.setdefault("follow_redirects", True)
-        self._client = PrefectHttpxAsyncClient(
+        self._client = SyntaskHttpxAsyncClient(
             **httpx_settings, enable_csrf_support=False
         )
 
-        api_url = prefect.settings.PREFECT_API_URL.value() or ""
+        api_url = syntask.settings.SYNTASK_API_URL.value() or ""
         if match := (
             re.search(PARSE_API_URL_REGEX, host)
             or re.search(PARSE_API_URL_REGEX, api_url)
@@ -113,7 +113,7 @@ class CloudClient:
 
     async def read_current_workspace(self) -> Workspace:
         workspaces = await self.read_workspaces()
-        current_api_url = PREFECT_API_URL.value()
+        current_api_url = SYNTASK_API_URL.value()
         for workspace in workspaces:
             if workspace.api_url() == current_api_url.rstrip("/"):
                 return workspace

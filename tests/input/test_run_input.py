@@ -5,10 +5,10 @@ import orjson
 import pydantic
 import pytest
 
-from prefect.client.schemas.objects import FlowRunInput
-from prefect.context import FlowRunContext
-from prefect.flows import flow
-from prefect.input import (
+from syntask.client.schemas.objects import FlowRunInput
+from syntask.context import FlowRunContext
+from syntask.flows import flow
+from syntask.input import (
     RunInput,
     RunInputMetadata,
     create_flow_run_input,
@@ -16,19 +16,19 @@ from prefect.input import (
     keyset_from_paused_state,
     read_flow_run_input,
 )
-from prefect.input.run_input import (
+from syntask.input.run_input import (
     AutomaticRunInput,
     receive_input,
     run_input_subclass_from_type,
     send_input,
 )
-from prefect.states import Paused, Running, Suspended
+from syntask.states import Paused, Running, Suspended
 
 
 @pytest.fixture
-def flow_run_context(flow_run, prefect_client):
+def flow_run_context(flow_run, syntask_client):
     with FlowRunContext.model_construct(
-        flow_run=flow_run, client=prefect_client
+        flow_run=flow_run, client=syntask_client
     ) as context:
         yield context
 
@@ -191,7 +191,7 @@ async def test_load_from_flow_run_input(flow_run_context):
         value=orjson.dumps(
             {"name": "Bob", "email": "bob@example.com", "human": True}
         ).decode(),
-        sender=f"prefect.flow-run.{uuid4()}",
+        sender=f"syntask.flow-run.{uuid4()}",
     )
 
     person = Person.load_from_flow_run_input(flow_run_input)
@@ -243,7 +243,7 @@ async def test_respond(flow_run):
         value=orjson.dumps(
             {"name": "Bob", "email": "bob@example.com", "human": True}
         ).decode(),
-        sender=f"prefect.flow-run.{flow_run.id}",
+        sender=f"syntask.flow-run.{flow_run.id}",
     )
 
     person = Person.load_from_flow_run_input(flow_run_input)
@@ -262,7 +262,7 @@ async def test_respond_functions_sync(flow_run):
         value=orjson.dumps(
             {"name": "Bob", "email": "bob@example.com", "human": True}
         ).decode(),
-        sender=f"prefect.flow-run.{flow_run.id}",
+        sender=f"syntask.flow-run.{flow_run.id}",
     )
 
     person = Person.load_from_flow_run_input(flow_run_input)
@@ -286,7 +286,7 @@ async def test_respond_can_set_sender(flow_run):
         value=orjson.dumps(
             {"name": "Bob", "email": "bob@example.com", "human": True}
         ).decode(),
-        sender=f"prefect.flow-run.{flow_run.id}",
+        sender=f"syntask.flow-run.{flow_run.id}",
     )
 
     person = Person.load_from_flow_run_input(flow_run_input)
@@ -303,7 +303,7 @@ async def test_respond_can_set_key_prefix(flow_run):
         value=orjson.dumps(
             {"name": "Bob", "email": "bob@example.com", "human": True}
         ).decode(),
-        sender=f"prefect.flow-run.{flow_run.id}",
+        sender=f"syntask.flow-run.{flow_run.id}",
     )
 
     person = Person.load_from_flow_run_input(flow_run_input)
@@ -340,7 +340,7 @@ async def test_respond_uses_automatic_input_if_needed(flow_run):
         value=orjson.dumps(
             {"name": "Bob", "email": "bob@example.com", "human": True}
         ).decode(),
-        sender=f"prefect.flow-run.{flow_run.id}",
+        sender=f"syntask.flow-run.{flow_run.id}",
     )
 
     person = Person.load_from_flow_run_input(flow_run_input)

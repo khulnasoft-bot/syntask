@@ -5,9 +5,9 @@ import pendulum
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -15,10 +15,10 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
-from prefect.server.models import deployments, flow_runs, flows
-from prefect.server.schemas.core import Deployment, Flow, FlowRun
-from prefect.server.schemas.states import Running, StateType
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.models import deployments, flow_runs, flows
+from syntask.server.schemas.core import Deployment, Flow, FlowRun
+from syntask.server.schemas.states import Running, StateType
 
 
 @pytest.fixture
@@ -69,11 +69,11 @@ def cancel_exposures_that_last_over_a_minute(
         name="If the exposure is longer than 1 minute, cancel it",
         trigger=EventTrigger(
             match_related={
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture.id}",
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture.id}",
             },
-            after={"prefect.flow-run.Running"},
-            expect={"prefect.flow-run.Completed"},
+            after={"syntask.flow-run.Running"},
+            expect={"syntask.flow-run.Completed"},
             posture=Posture.Proactive,
             threshold=0,
             within=timedelta(minutes=1),
@@ -92,7 +92,7 @@ def cancel_that_long_exposure(
         trigger_states={TriggerState.Triggered},
         triggered=pendulum.now("UTC"),
         triggering_labels={
-            "prefect.resource.id": f"prefect.flow-run.{super_long_exposure.id}"
+            "syntask.resource.id": f"syntask.flow-run.{super_long_exposure.id}"
         },
         triggering_event=None,
     )
@@ -139,11 +139,11 @@ def cancel_exposures_that_go_into_a_weirdo_state(
         name="If the exposure is longer than 1 minute, cancel it",
         trigger=EventTrigger(
             match_related={
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture.id}",
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture.id}",
             },
-            after={"prefect.flow-run.Running"},
-            expect={"prefect.flow-run.Weirdo"},
+            after={"syntask.flow-run.Running"},
+            expect={"syntask.flow-run.Weirdo"},
             posture=Posture.Reactive,
             threshold=0,
             within=timedelta(minutes=1),
@@ -164,9 +164,9 @@ def cancel_that_weird_exposure(
         triggering_labels={},
         triggering_event=ReceivedEvent(
             occurred=pendulum.now("UTC"),
-            event="prefect.flow-run.Weirdo",
+            event="syntask.flow-run.Weirdo",
             resource={
-                "prefect.resource.id": f"prefect.flow-run.{super_long_exposure.id}"
+                "syntask.resource.id": f"syntask.flow-run.{super_long_exposure.id}"
             },
             id=uuid4(),
         ),
@@ -218,12 +218,12 @@ async def test_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow-run.{super_long_exposure.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.flow-run.{super_long_exposure.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -233,12 +233,12 @@ async def test_success_event(
         "invocation": str(cancel_that_weird_exposure.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow-run.{super_long_exposure.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.flow-run.{super_long_exposure.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]

@@ -8,12 +8,12 @@ import anyio
 from cachetools import TTLCache
 from typing_extensions import Self
 
-from prefect._internal.concurrency.api import create_call, from_async, from_sync
-from prefect._internal.concurrency.threads import get_global_loop
-from prefect.client.schemas.objects import TERMINAL_STATES
-from prefect.events.clients import get_events_subscriber
-from prefect.events.filters import EventFilter, EventNameFilter
-from prefect.logging.loggers import get_logger
+from syntask._internal.concurrency.api import create_call, from_async, from_sync
+from syntask._internal.concurrency.threads import get_global_loop
+from syntask.client.schemas.objects import TERMINAL_STATES
+from syntask.events.clients import get_events_subscriber
+from syntask.events.filters import EventFilter, EventNameFilter
+from syntask.logging.loggers import get_logger
 
 
 class TaskRunWaiter:
@@ -40,9 +40,9 @@ class TaskRunWaiter:
     import asyncio
     from uuid import uuid4
 
-    from prefect import task
-    from prefect.task_engine import run_task_async
-    from prefect.task_runs import TaskRunWaiter
+    from syntask import task
+    from syntask.task_engine import run_task_async
+    from syntask.task_runs import TaskRunWaiter
 
 
     @task
@@ -109,7 +109,7 @@ class TaskRunWaiter:
             filter=EventFilter(
                 event=EventNameFilter(
                     name=[
-                        f"prefect.task-run.{state.name.title()}"
+                        f"syntask.task-run.{state.name.title()}"
                         for state in TERMINAL_STATES
                     ],
                 )
@@ -119,11 +119,11 @@ class TaskRunWaiter:
             async for event in subscriber:
                 try:
                     self.logger.debug(
-                        f"Received event: {event.resource['prefect.resource.id']}"
+                        f"Received event: {event.resource['syntask.resource.id']}"
                     )
                     task_run_id = uuid.UUID(
-                        event.resource["prefect.resource.id"].replace(
-                            "prefect.task-run.", ""
+                        event.resource["syntask.resource.id"].replace(
+                            "syntask.task-run.", ""
                         )
                     )
 

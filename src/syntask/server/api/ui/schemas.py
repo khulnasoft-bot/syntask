@@ -2,12 +2,12 @@ from typing import Any, Dict
 
 from fastapi import Body, Depends, HTTPException, status
 
-from prefect.logging import get_logger
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.server import APIRouter
-from prefect.utilities.schema_tools.hydration import HydrationContext, hydrate
-from prefect.utilities.schema_tools.validation import (
+from syntask.logging import get_logger
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.server import APIRouter
+from syntask.utilities.schema_tools.hydration import HydrationContext, hydrate
+from syntask.utilities.schema_tools.validation import (
     CircularSchemaRefError,
     build_error_obj,
     is_valid_schema,
@@ -24,7 +24,7 @@ logger = get_logger("server.api.ui.schemas")
 async def validate_obj(
     json_schema: Dict[str, Any] = Body(..., embed=True, alias="schema"),
     values: Dict[str, Any] = Body(..., embed=True),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     schema = preprocess_schema(json_schema)
 

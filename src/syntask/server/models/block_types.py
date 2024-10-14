@@ -1,6 +1,6 @@
 """
 Functions for interacting with block type ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 import html
@@ -10,19 +10,19 @@ from uuid import UUID
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import schemas
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.database.orm_models import BlockSchema, BlockType
+from syntask.server import schemas
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.database.orm_models import BlockSchema, BlockType
 
 if TYPE_CHECKING:
-    from prefect.client.schemas import BlockType as ClientBlockType
-    from prefect.client.schemas.actions import BlockTypeUpdate as ClientBlockTypeUpdate
+    from syntask.client.schemas import BlockType as ClientBlockType
+    from syntask.client.schemas.actions import BlockTypeUpdate as ClientBlockTypeUpdate
 
 
 @db_injector
 async def create_block_type(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     block_type: Union[schemas.core.BlockType, "ClientBlockType"],
     override: bool = False,

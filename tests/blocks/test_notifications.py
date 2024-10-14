@@ -6,9 +6,9 @@ import cloudpickle
 import pytest
 import respx
 
-from prefect.blocks.abstract import NotificationError
-from prefect.blocks.notifications import (
-    PREFECT_NOTIFY_TYPE_DEFAULT,
+from syntask.blocks.abstract import NotificationError
+from syntask.blocks.notifications import (
+    SYNTASK_NOTIFY_TYPE_DEFAULT,
     AppriseNotificationBlock,
     CustomWebhookNotificationBlock,
     DiscordWebhook,
@@ -19,8 +19,8 @@ from prefect.blocks.notifications import (
     SendgridEmail,
     TwilioSMS,
 )
-from prefect.flows import flow
-from prefect.testing.utilities import AsyncMock
+from syntask.flows import flow
+from syntask.testing.utilities import AsyncMock
 
 # A list of the notification classes Pytest should use as parameters to each method in TestAppriseNotificationBlock
 notification_classes = sorted(
@@ -87,7 +87,7 @@ class TestAppriseNotificationBlock:
                 block.url.get_secret_value()
             )
             apprise_instance_mock.async_notify.assert_awaited_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_notify_sync(self, block_class: Type[AppriseNotificationBlock]):
@@ -108,7 +108,7 @@ class TestAppriseNotificationBlock:
                 block.url.get_secret_value()
             )
             apprise_instance_mock.async_notify.assert_called_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_is_picklable(self, block_class: Type[AppriseNotificationBlock]):
@@ -167,7 +167,7 @@ class TestMattermostWebhook:
                 "?image=yes&format=text&overflow=upstream"
             )
             apprise_instance_mock.async_notify.assert_awaited_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_notify_sync(self):
@@ -189,7 +189,7 @@ class TestMattermostWebhook:
                 "?image=no&format=text&overflow=upstream"
             )
             apprise_instance_mock.async_notify.assert_called_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_notify_with_multiple_channels(self):
@@ -217,7 +217,7 @@ class TestMattermostWebhook:
             )
 
             apprise_instance_mock.async_notify.assert_called_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_is_picklable(self):
@@ -245,7 +245,7 @@ class TestDiscordWebhook:
                 "?tts=no&avatar=no&footer=no&footer_logo=yes&image=no&fields=yes&format=text&overflow=upstream"
             )
             apprise_instance_mock.async_notify.assert_awaited_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_notify_sync(self):
@@ -269,7 +269,7 @@ class TestDiscordWebhook:
                 "?tts=no&avatar=no&footer=no&footer_logo=yes&image=no&fields=yes&format=text&overflow=upstream"
             )
             apprise_instance_mock.async_notify.assert_called_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_is_picklable(self):
@@ -298,7 +298,7 @@ class TestOpsgenieWebhook:
             )
 
             apprise_instance_mock.async_notify.assert_awaited_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def _test_notify_sync(self, targets="", params=None, **kwargs):
@@ -324,7 +324,7 @@ class TestOpsgenieWebhook:
             )
 
             apprise_instance_mock.async_notify.assert_awaited_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_notify_sync_simple(self):
@@ -370,7 +370,7 @@ class TestPagerDutyWebhook:
 
             AppriseMock.assert_called_once()
             apprise_instance_mock.add.assert_called_once_with(
-                "pagerduty://int_key@api_key/Prefect/Notification?region=us&"
+                "pagerduty://int_key@api_key/Syntask/Notification?region=us&"
                 "image=yes&format=text&overflow=upstream"
             )
 
@@ -390,12 +390,12 @@ class TestPagerDutyWebhook:
             apprise_instance_mock.add.assert_has_calls(
                 [
                     call(
-                        "pagerduty://int_key@api_key/Prefect/Notification?region=us"
+                        "pagerduty://int_key@api_key/Syntask/Notification?region=us"
                         "&image=yes&format=text&overflow=upstream"
                     ),
                     call(
-                        "pagerduty://int_key@api_key/Prefect/Notification?region=us"
-                        "&image=yes&%2BPrefect+Notification+Body=test&format=text&overflow=upstream"
+                        "pagerduty://int_key@api_key/Syntask/Notification?region=us"
+                        "&image=yes&%2BSyntask+Notification+Body=test&format=text&overflow=upstream"
                     ),
                 ],
                 any_order=False,
@@ -421,7 +421,7 @@ class TestPagerDutyWebhook:
 
             AppriseMock.assert_called_once()
             apprise_instance_mock.add.assert_called_once_with(
-                "pagerduty://int_key@api_key/Prefect/Notification?region=us&"
+                "pagerduty://int_key@api_key/Syntask/Notification?region=us&"
                 "image=yes&format=text&overflow=upstream"
             )
 
@@ -446,12 +446,12 @@ class TestPagerDutyWebhook:
             apprise_instance_mock.add.assert_has_calls(
                 [
                     call(
-                        "pagerduty://int_key@api_key/Prefect/Notification?region=us"
+                        "pagerduty://int_key@api_key/Syntask/Notification?region=us"
                         "&image=yes&format=text&overflow=upstream"
                     ),
                     call(
-                        "pagerduty://int_key@api_key/Prefect/Notification?region=us"
-                        "&image=yes&%2BPrefect+Notification+Body=test&format=text&overflow=upstream"
+                        "pagerduty://int_key@api_key/Syntask/Notification?region=us"
+                        "&image=yes&%2BSyntask+Notification+Body=test&format=text&overflow=upstream"
                     ),
                 ],
                 any_order=False,
@@ -485,15 +485,15 @@ class TestTwilioSMS:
                 to_phone_numbers=["+15555555556", "+15555555557"],
             )
 
-            await twilio_sms_block.notify("hello from prefect")
+            await twilio_sms_block.notify("hello from syntask")
 
             AppriseMock.assert_called_once()
             client_instance_mock.add.assert_called_once_with(valid_apprise_url)
 
             client_instance_mock.async_notify.assert_awaited_once_with(
-                body="hello from prefect",
+                body="hello from syntask",
                 title=None,
-                notify_type=PREFECT_NOTIFY_TYPE_DEFAULT,
+                notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT,
             )
 
     def test_twilio_notify_sync(self, valid_apprise_url):
@@ -510,7 +510,7 @@ class TestTwilioSMS:
 
             @flow
             def test_flow():
-                twilio_sms_block.notify("hello from prefect")
+                twilio_sms_block.notify("hello from syntask")
 
             test_flow()
 
@@ -518,9 +518,9 @@ class TestTwilioSMS:
             client_instance_mock.add.assert_called_once_with(valid_apprise_url)
 
             client_instance_mock.async_notify.assert_awaited_once_with(
-                body="hello from prefect",
+                body="hello from syntask",
                 title=None,
-                notify_type=PREFECT_NOTIFY_TYPE_DEFAULT,
+                notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT,
             )
 
     def test_invalid_from_phone_number_raises_validation_error(self):
@@ -559,7 +559,7 @@ class TestCustomWebhook:
             await custom_block.notify("test", "subject")
 
             last_req = xmock.calls.last.request
-            assert last_req.headers["user-agent"] == "Prefect Notifications"
+            assert last_req.headers["user-agent"] == "Syntask Notifications"
             assert (
                 last_req.content
                 == b'{"msg": "subject\\ntest", "token": "someSecretToken"}'
@@ -583,7 +583,7 @@ class TestCustomWebhook:
             custom_block.notify("test", "subject")
 
             last_req = xmock.calls.last.request
-            assert last_req.headers["user-agent"] == "Prefect Notifications"
+            assert last_req.headers["user-agent"] == "Syntask Notifications"
             assert (
                 last_req.content
                 == b'{"msg": "subject\\ntest", "token": "someSecretToken"}'
@@ -676,7 +676,7 @@ class TestCustomWebhook:
             await custom_block.notify("test", "subject")
 
             last_req = xmock.calls.last.request
-            assert last_req.headers["user-agent"] == "Prefect Notifications"
+            assert last_req.headers["user-agent"] == "Syntask Notifications"
             assert (
                 last_req.content
                 == b'{"data": {"sub1": [{"in-list": "test", "name": "test name"}]}}'
@@ -699,7 +699,7 @@ class TestCustomWebhook:
             await custom_block.notify("test", None)
 
             last_req = xmock.calls.last.request
-            assert last_req.headers["user-agent"] == "Prefect Notifications"
+            assert last_req.headers["user-agent"] == "Syntask Notifications"
             assert (
                 last_req.content
                 == b'{"msg": "null\\ntest", "token": "someSecretToken"}'
@@ -773,7 +773,7 @@ class TestSendgridEmail:
 
             apprise_instance_mock.add.assert_called_once_with(url)
             apprise_instance_mock.async_notify.assert_awaited_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_notify_sync(self):
@@ -804,7 +804,7 @@ class TestSendgridEmail:
             AppriseMock.assert_called_once()
             apprise_instance_mock.add.assert_called_once_with(url)
             apprise_instance_mock.async_notify.assert_called_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_is_picklable(self):
@@ -836,7 +836,7 @@ class TestMicrosoftTeamsWebhook:
                 "&format=markdown&overflow=upstream"
             )
             apprise_instance_mock.async_notify.assert_awaited_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_notify_sync(self):
@@ -859,7 +859,7 @@ class TestMicrosoftTeamsWebhook:
                 "&format=markdown&overflow=upstream"
             )
             apprise_instance_mock.async_notify.assert_called_once_with(
-                body="test", title=None, notify_type=PREFECT_NOTIFY_TYPE_DEFAULT
+                body="test", title=None, notify_type=SYNTASK_NOTIFY_TYPE_DEFAULT
             )
 
     def test_is_picklable(self):

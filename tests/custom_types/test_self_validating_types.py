@@ -4,7 +4,7 @@ from typing import Annotated, Set
 import pytest
 from pydantic import BaseModel, BeforeValidator, TypeAdapter, ValidationError
 
-from prefect.types import (
+from syntask.types import (
     NonNegativeInteger,
     PositiveInteger,
     validate_set_T_from_delim_string,
@@ -64,7 +64,7 @@ class TestCustomValidationLogic:
         ],
     )
     def test_valid_set_of_ints(self, value, delim, expected):
-        """e.g. scooping PREFECT_CLIENT_RETRY_EXTRA_CODES"""
+        """e.g. scooping SYNTASK_CLIENT_RETRY_EXTRA_CODES"""
         scoop_set_int_from_string = BeforeValidator(
             partial(validate_set_T_from_delim_string, type_=int, delim=delim)
         )

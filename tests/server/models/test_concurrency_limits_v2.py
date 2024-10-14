@@ -6,9 +6,9 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models.concurrency_limits_v2 import (
+from syntask.server import models, schemas
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models.concurrency_limits_v2 import (
     MINIMUM_OCCUPANCY_SECONDS_PER_SLOT,
     bulk_decrement_active_slots,
     bulk_increment_active_slots,
@@ -20,11 +20,11 @@ from prefect.server.models.concurrency_limits_v2 import (
     read_concurrency_limit,
     update_concurrency_limit,
 )
-from prefect.server.schemas.actions import (
+from syntask.server.schemas.actions import (
     ConcurrencyLimitV2Create,
     ConcurrencyLimitV2Update,
 )
-from prefect.server.schemas.core import ConcurrencyLimitV2
+from syntask.server.schemas.core import ConcurrencyLimitV2
 
 
 @pytest.fixture
@@ -341,7 +341,7 @@ async def test_delete_concurrency_limit_by_name(
 
 
 async def test_bulk_read_or_create_concurrency_limits_with_deprecated_flag(
-    session: AsyncSession, ignore_prefect_deprecation_warnings
+    session: AsyncSession, ignore_syntask_deprecation_warnings
 ):
     names = ["Chase", "Marshall", "Skye", "Rubble", "Zuma", "Rocky", "Everest"]
 
@@ -430,7 +430,7 @@ async def test_increment_active_slots_with_decay_success(
 
 
 async def test_increment_active_slots_with_decay_slots_decay_over_time(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     concurrency_limit_with_decay: ConcurrencyLimitV2,
 ):
     async with db.session_context() as session:

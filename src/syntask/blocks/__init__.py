@@ -1,7 +1,7 @@
 # ensure core blocks are registered
 
-import prefect.blocks.notifications
-import prefect.blocks.system
-import prefect.blocks.webhook
+import syntask.blocks.notifications
+import syntask.blocks.system
+import syntask.blocks.webhook
 
 __all__ = ["notifications", "system", "webhook"]

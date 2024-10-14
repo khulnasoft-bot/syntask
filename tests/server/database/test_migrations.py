@@ -6,19 +6,19 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 
-from prefect.server.database.alembic_commands import (
+from syntask.server.database.alembic_commands import (
     alembic_config,
     alembic_downgrade,
     alembic_upgrade,
 )
-from prefect.server.database.orm_models import (
+from syntask.server.database.orm_models import (
     AioSqliteORMConfiguration,
     AsyncPostgresORMConfiguration,
 )
-from prefect.server.models.variables import read_variables
-from prefect.server.utilities.database import get_dialect
-from prefect.settings import PREFECT_API_DATABASE_CONNECTION_URL
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.server.models.variables import read_variables
+from syntask.server.utilities.database import get_dialect
+from syntask.settings import SYNTASK_API_DATABASE_CONNECTION_URL
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 pytestmark = pytest.mark.service("database")
 
@@ -67,7 +67,7 @@ async def test_backfill_state_name(db, flow):
     Tests state_name is backfilled correctly for the flow_run
     and task_run tables by a specific migration
     """
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     dialect = get_dialect(connection_url)
 
     # get the proper migration revisions
@@ -212,7 +212,7 @@ async def test_backfill_artifacts(db):
     """
     Tests that the backfill_artifacts migration works as expected
     """
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     dialect = get_dialect(connection_url)
 
     # get the proper migration revisions
@@ -337,7 +337,7 @@ async def test_adding_work_pool_tables_does_not_remove_fks(db, flow):
     Tests state_name is backfilled correctly for the flow_run
     and task_run tables by a specific migration
     """
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     dialect = get_dialect(connection_url)
 
     # get the proper migration revisions
@@ -412,7 +412,7 @@ async def test_adding_work_pool_tables_does_not_remove_fks(db, flow):
 async def test_adding_default_agent_pool_with_existing_default_queue_migration(
     db, flow
 ):
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     dialect = get_dialect(connection_url)
 
     # get the proper migration revisions
@@ -523,7 +523,7 @@ async def test_adding_default_agent_pool_with_existing_default_queue_migration(
 
 
 async def test_adding_default_agent_pool_without_existing_default_queue_migration(db):
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     dialect = get_dialect(connection_url)
 
     # get the proper migration revisions
@@ -594,7 +594,7 @@ async def test_adding_default_agent_pool_without_existing_default_queue_migratio
 
 
 async def test_not_adding_default_agent_pool_when_all_work_queues_have_work_pool(db):
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     dialect = get_dialect(connection_url)
 
     # get the proper migration revisions
@@ -615,7 +615,7 @@ async def test_not_adding_default_agent_pool_when_all_work_queues_have_work_pool
             # insert some work queues with a work pool into the database
             await session.execute(
                 sa.text(
-                    "INSERT INTO work_pool (name, type) VALUES ('existing-pool', 'prefect-agent');"
+                    "INSERT INTO work_pool (name, type) VALUES ('existing-pool', 'syntask-agent');"
                 )
             )
             existing_pool_id = (
@@ -681,7 +681,7 @@ async def test_not_adding_default_agent_pool_when_all_work_queues_have_work_pool
 
 
 async def test_migrate_variables_to_json(db):
-    connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     dialect = get_dialect(connection_url)
 
     # get the proper migration revisions

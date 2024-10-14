@@ -1,9 +1,9 @@
-# Prefect logging config file.
+# Syntask logging config file.
 #
 # Any item in this file can be overridden with an environment variable:
-#    `PREFECT_LOGGING_[PATH]_[TO]_[KEY]=VALUE`
+#    `SYNTASK_LOGGING_[PATH]_[TO]_[KEY]=VALUE`
 #
-# Templated values can be used to insert values from the Prefect settings at runtime.
+# Templated values can be used to insert values from the Syntask settings at runtime.
 
 version: 1
 disable_existing_loggers: False
@@ -14,7 +14,7 @@ formatters:
         datefmt: "%H:%M:%S"
 
     standard:
-        (): prefect.logging.formatters.PrefectFormatter
+        (): syntask.logging.formatters.SyntaskFormatter
         format: "%(asctime)s.%(msecs)03d | %(levelname)-7s | %(name)s - %(message)s"
         flow_run_fmt: "%(asctime)s.%(msecs)03d | %(levelname)-7s | Flow run %(flow_run_name)r - %(message)s"
         task_run_fmt: "%(asctime)s.%(msecs)03d | %(levelname)-7s | Task run %(task_run_name)r - %(message)s"
@@ -25,7 +25,7 @@ formatters:
         datefmt: "%H:%M:%S"
 
     json:
-        class: prefect.logging.formatters.JsonFormatter
+        class: syntask.logging.formatters.JsonFormatter
         format: "default"
 
 # filters:
@@ -41,7 +41,7 @@ handlers:
 
     console:
         level: 0
-        class: prefect.logging.handlers.PrefectConsoleHandler
+        class: syntask.logging.handlers.SyntaskConsoleHandler
         formatter: standard
         styles:
             log.web_url: bright_blue
@@ -62,7 +62,7 @@ handlers:
 
     api:
         level: 0
-        class: prefect.logging.handlers.APILogHandler
+        class: syntask.logging.handlers.APILogHandler
 
     
     debug:
@@ -71,41 +71,41 @@ handlers:
         formatter: debug
 
 loggers:
-    prefect:
-        level: "${PREFECT_LOGGING_LEVEL}"
+    syntask:
+        level: "${SYNTASK_LOGGING_LEVEL}"
 
-    prefect.extra:
-        level: "${PREFECT_LOGGING_LEVEL}"
+    syntask.extra:
+        level: "${SYNTASK_LOGGING_LEVEL}"
         handlers: [api]
         propagate: false
 
-    prefect.flow_runs:
+    syntask.flow_runs:
         level: NOTSET
         handlers: [api]
 
-    prefect.task_runs:
+    syntask.task_runs:
         level: NOTSET
         handlers: [api]
 
-    prefect.server:
-        level: "${PREFECT_LOGGING_SERVER_LEVEL}"
+    syntask.server:
+        level: "${SYNTASK_LOGGING_SERVER_LEVEL}"
 
-    prefect.client:
-        level: "${PREFECT_LOGGING_LEVEL}"
+    syntask.client:
+        level: "${SYNTASK_LOGGING_LEVEL}"
 
-    prefect.infrastructure:
-        level: "${PREFECT_LOGGING_LEVEL}"
+    syntask.infrastructure:
+        level: "${SYNTASK_LOGGING_LEVEL}"
 
-    prefect._internal:
-        level: "${PREFECT_LOGGING_INTERNAL_LEVEL}"
+    syntask._internal:
+        level: "${SYNTASK_LOGGING_INTERNAL_LEVEL}"
         propagate: false
         handlers: [debug]
 
     uvicorn:
-        level: "${PREFECT_LOGGING_SERVER_LEVEL}"
+        level: "${SYNTASK_LOGGING_SERVER_LEVEL}"
 
     fastapi:
-        level: "${PREFECT_LOGGING_SERVER_LEVEL}"
+        level: "${SYNTASK_LOGGING_SERVER_LEVEL}"
 
 # The root logger: any logger without propagation disabled sends to here as well
 root:

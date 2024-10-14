@@ -3,10 +3,10 @@ from typing import Optional
 
 from pendulum import now as pendulum_now
 
-from prefect.settings import (
-    PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE,
+from syntask.settings import (
+    SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE,
 )
-from prefect.utilities.dockerutils import (
+from syntask.utilities.dockerutils import (
     PushError,
     build_image,
     docker_client,
@@ -14,7 +14,7 @@ from prefect.utilities.dockerutils import (
     parse_image_tag,
     split_repository_path,
 )
-from prefect.utilities.slugify import slugify
+from syntask.utilities.slugify import slugify
 
 
 class DockerImage:
@@ -46,7 +46,7 @@ class DockerImage:
         # if the provided image name does not include a namespace (registry URL or user/org name),
         # use the default namespace
         if not namespace:
-            namespace = PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE.value()
+            namespace = SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE.value()
         # join the namespace and repository to create the full image name
         # ignore namespace if it is None
         self.name = "/".join(filter(None, [namespace, repository]))

@@ -4,7 +4,7 @@ from itertools import combinations
 import pytest
 from pydantic_extra_types.pendulum_dt import DateTime
 
-from prefect.client.schemas.schedules import (
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,

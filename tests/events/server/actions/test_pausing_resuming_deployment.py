@@ -8,9 +8,9 @@ from pendulum.datetime import DateTime
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -18,12 +18,12 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
-from prefect.server.models import deployments, flows
-from prefect.server.schemas.actions import DeploymentScheduleCreate
-from prefect.server.schemas.core import Deployment, Flow
-from prefect.server.schemas.schedules import IntervalSchedule
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.models import deployments, flows
+from syntask.server.schemas.actions import DeploymentScheduleCreate
+from syntask.server.schemas.core import Deployment, Flow
+from syntask.server.schemas.schedules import IntervalSchedule
+from syntask.utilities.pydantic import parse_obj_as
 
 
 def test_source_determines_if_deployment_id_is_required_or_allowed():
@@ -100,12 +100,12 @@ def guard_one_got_sick(
         occurred=start_of_test + timedelta(microseconds=2),
         event="guard.sick",
         resource={
-            "prefect.resource.id": "guard-1",
+            "syntask.resource.id": "guard-1",
         },
         related=[
             {
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": f"prefect.deployment.{hourly_garden_patrol.id}",
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{hourly_garden_patrol.id}",
             }
         ],
         id=uuid4(),
@@ -200,12 +200,12 @@ def guard_one_got_well(
         occurred=start_of_test + timedelta(microseconds=2),
         event="guard.well",
         resource={
-            "prefect.resource.id": "guard-1",
+            "syntask.resource.id": "guard-1",
         },
         related=[
             {
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": f"prefect.deployment.{hourly_garden_patrol.id}",
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{hourly_garden_patrol.id}",
             }
         ],
         id=uuid4(),
@@ -428,16 +428,16 @@ async def test_inferring_deployment_requires_recognizable_resource_id(
         List[RelatedResource],
         [
             {
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": "prefect.deployment.nope",  # not a uuid
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": "syntask.deployment.nope",  # not a uuid
             },
             {
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": f"oh.so.close.{uuid4()}",  # not a deployment
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": f"oh.so.close.{uuid4()}",  # not a deployment
             },
             {
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": "nah-ah",  # not a dotted name
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": "nah-ah",  # not a dotted name
             },
         ],
     )
@@ -460,12 +460,12 @@ async def test_pausing_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.deployment.{hourly_garden_patrol.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.deployment.{hourly_garden_patrol.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -475,12 +475,12 @@ async def test_pausing_success_event(
         "invocation": str(pause_their_deployment.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.deployment.{hourly_garden_patrol.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.deployment.{hourly_garden_patrol.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -504,12 +504,12 @@ async def test_resuming_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.deployment.{hourly_garden_patrol.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.deployment.{hourly_garden_patrol.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]
@@ -519,12 +519,12 @@ async def test_resuming_success_event(
         "invocation": str(resume_their_deployment.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.deployment.{hourly_garden_patrol.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.deployment.{hourly_garden_patrol.id}",
+                "syntask.resource.role": "target",
             }
         )
     ]

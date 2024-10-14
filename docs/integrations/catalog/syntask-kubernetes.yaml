@@ -1,0 +1,6 @@
+integrationName: syntask-kubernetes
+author: Syntask
+authorUrl: https://syntask.khulnasoft.com
+documentation: syntask-kubernetes
+iconUrl: /images/integrations/kubernetes.png
+tag: Kubernetes

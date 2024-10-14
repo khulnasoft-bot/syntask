@@ -5,17 +5,17 @@ import pytest
 import respx
 from respx.patterns import M
 
-from prefect.client.cloud import get_cloud_client
-from prefect.settings import PREFECT_API_URL, PREFECT_UNIT_TEST_MODE, temporary_settings
+from syntask.client.cloud import get_cloud_client
+from syntask.settings import SYNTASK_API_URL, SYNTASK_UNIT_TEST_MODE, temporary_settings
 
 mock_work_pool_types_response = {
-    "prefect": {
-        "prefect-agent": {
-            "type": "prefect-agent",
+    "syntask": {
+        "syntask-agent": {
+            "type": "syntask-agent",
             "default_base_job_configuration": {},
         }
     },
-    "prefect-kubernetes": {
+    "syntask-kubernetes": {
         "kubernetes": {
             "type": "kubernetes",
             "default_base_job_configuration": {},
@@ -27,7 +27,7 @@ mock_work_pool_types_response = {
 @pytest.fixture
 async def mock_work_pool_types():
     with respx.mock(
-        assert_all_mocked=False, base_url=PREFECT_API_URL.value()
+        assert_all_mocked=False, base_url=SYNTASK_API_URL.value()
     ) as respx_mock:
         respx_mock.route(
             M(
@@ -46,7 +46,7 @@ async def mock_work_pool_types():
 
 
 async def test_cloud_client_init_with_no_api():
-    with temporary_settings({PREFECT_API_URL: None}):
+    with temporary_settings({SYNTASK_API_URL: None}):
         async with get_cloud_client() as client:
             assert client
 
@@ -61,7 +61,7 @@ async def test_cloud_client_follow_redirects():
         assert client._client.follow_redirects is False
 
     # follow redirects by default
-    with temporary_settings({PREFECT_UNIT_TEST_MODE: False}):
+    with temporary_settings({SYNTASK_UNIT_TEST_MODE: False}):
         async with get_cloud_client() as client:
             assert client._client.follow_redirects is True
 
@@ -75,15 +75,15 @@ async def test_get_cloud_work_pool_types():
     workspace_id = uuid.uuid4()
     with temporary_settings(
         updates={
-            PREFECT_API_URL: f"https://api.prefect.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/"
+            SYNTASK_API_URL: f"https://api.syntask.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/"
         }
     ):
         with respx.mock(
-            assert_all_mocked=False, base_url=PREFECT_API_URL.value()
+            assert_all_mocked=False, base_url=SYNTASK_API_URL.value()
         ) as respx_mock:
             respx_mock.route(
                 M(
-                    host="api.prefect.cloud",
+                    host="api.syntask.cloud",
                     path__regex=(
                         r"api/accounts/(.{36})/workspaces/(.{36})/collections/work_pool_types"
                     ),
@@ -103,13 +103,13 @@ async def test_get_cloud_work_pool_types():
 async def test_read_current_workspace():
     account_id = uuid.uuid4()
     workspace_id = uuid.uuid4()
-    api_url = f"https://api.prefect.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/"
+    api_url = f"https://api.syntask.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/"
 
-    with temporary_settings(updates={PREFECT_API_URL: api_url}):
+    with temporary_settings(updates={SYNTASK_API_URL: api_url}):
         with respx.mock(
-            assert_all_mocked=False, base_url=PREFECT_API_URL.value()
+            assert_all_mocked=False, base_url=SYNTASK_API_URL.value()
         ) as respx_mock:
-            respx_mock.get("https://api.prefect.cloud/api/me/workspaces").mock(
+            respx_mock.get("https://api.syntask.cloud/api/me/workspaces").mock(
                 return_value=httpx.Response(
                     200,
                     json=[

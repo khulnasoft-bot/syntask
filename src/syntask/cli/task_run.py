@@ -13,16 +13,16 @@ from rich.pretty import Pretty
 from rich.table import Table
 from starlette import status
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error
-from prefect.cli.root import app
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.filters import LogFilter, TaskRunFilter
-from prefect.client.schemas.objects import StateType
-from prefect.client.schemas.sorting import LogSort, TaskRunSort
-from prefect.exceptions import ObjectNotFound
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error
+from syntask.cli.root import app
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.filters import LogFilter, TaskRunFilter
+from syntask.client.schemas.objects import StateType
+from syntask.client.schemas.sorting import LogSort, TaskRunSort
+from syntask.exceptions import ObjectNotFound
 
-task_run_app = PrefectTyper(name="task-run", help="View and inspect task runs.")
+task_run_app = SyntaskTyper(name="task-run", help="View and inspect task runs.")
 app.add_typer(task_run_app, aliases=["task-runs"])
 
 LOGS_DEFAULT_PAGE_SIZE = 200

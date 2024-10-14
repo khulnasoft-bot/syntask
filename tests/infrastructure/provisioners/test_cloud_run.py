@@ -8,15 +8,15 @@ import pytest
 from anyio import run_process
 from pydantic import Field
 
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient
-from prefect.infrastructure.provisioners.cloud_run import CloudRunPushProvisioner
-from prefect.settings import (
-    PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE,
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient
+from syntask.infrastructure.provisioners.cloud_run import CloudRunPushProvisioner
+from syntask.settings import (
+    SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE,
     load_current_profile,
 )
-from prefect.testing.utilities import AsyncMock
-from prefect.types import SecretDict
+from syntask.testing.utilities import AsyncMock
+from syntask.types import SecretDict
 
 default_cloud_run_push_base_job_template = {
     "job_configuration": {
@@ -124,10 +124,10 @@ default_cloud_run_push_base_job_template = {
                 "title": "Image Name",
                 "description": (
                     "The image to use for a new Cloud Run Job. If not set, the latest"
-                    " Prefect image will be used. See"
+                    " Syntask image will be used. See"
                     " https://cloud.google.com/run/docs/deploying#images."
                 ),
-                "example": "docker.io/prefecthq/prefect:3-latest",
+                "example": "docker.io/synopkg/syntask:3-latest",
                 "type": "string",
             },
             "cpu": {
@@ -178,7 +178,7 @@ default_cloud_run_push_base_job_template = {
             "timeout": {
                 "title": "Job Timeout",
                 "description": (
-                    "The length of time that Prefect will wait for Cloud Run Job state"
+                    "The length of time that Syntask will wait for Cloud Run Job state"
                     " changes."
                 ),
                 "default": 600,
@@ -273,7 +273,7 @@ def mock_run_process(monkeypatch):
     mock = AsyncMock(spec=run_process)
     mock.side_effect = mock_gcloud
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.run_process", mock
+        "syntask.infrastructure.provisioners.cloud_run.run_process", mock
     )
     return mock
 
@@ -286,7 +286,7 @@ def assert_commands(mock: MagicMock, *commands: Union[str, re.Pattern]):
             assert command.match(shlex.join(mock.mock_calls[i].args[0]))
 
 
-async def test_provision(mock_run_process, prefect_client: PrefectClient):
+async def test_provision(mock_run_process, syntask_client: SyntaskClient):
     provisioner = CloudRunPushProvisioner()
     new_base_job_template = await provisioner.provision(
         work_pool_name="test",
@@ -302,7 +302,7 @@ async def test_provision(mock_run_process, prefect_client: PrefectClient):
         "gcloud services enable run.googleapis.com --project=test-project",
         "gcloud services enable artifactregistry.googleapis.com --project=test-project",
         (
-            "gcloud artifacts repositories create prefect-images"
+            "gcloud artifacts repositories create syntask-images"
             " --repository-format=docker --location=us-central1 --project=test-project"
         ),
         (
@@ -310,22 +310,22 @@ async def test_provision(mock_run_process, prefect_client: PrefectClient):
             " --project=test-project"
         ),
         (
-            "gcloud iam service-accounts create prefect-cloud-run --display-name"
-            " 'Prefect Cloud Run Service Account'"
+            "gcloud iam service-accounts create syntask-cloud-run --display-name"
+            " 'Syntask Cloud Run Service Account'"
         ),
         (
             "gcloud projects add-iam-policy-binding test-project"
-            " --member=serviceAccount:prefect-cloud-run@test-project.iam.gserviceaccount.com"
+            " --member=serviceAccount:syntask-cloud-run@test-project.iam.gserviceaccount.com"
             " --role=roles/iam.serviceAccountUser"
         ),
         (
             "gcloud projects add-iam-policy-binding test-project"
-            " --member=serviceAccount:prefect-cloud-run@test-project.iam.gserviceaccount.com"
+            " --member=serviceAccount:syntask-cloud-run@test-project.iam.gserviceaccount.com"
             " --role=roles/run.developer"
         ),
         re.compile(
-            r"gcloud iam service-accounts keys create .*\/prefect-cloud-run-key\.json"
-            r" --iam-account=prefect-cloud-run@test-project\.iam\.gserviceaccount\.com"
+            r"gcloud iam service-accounts keys create .*\/syntask-cloud-run-key\.json"
+            r" --iam-account=syntask-cloud-run@test-project\.iam\.gserviceaccount\.com"
         ),
     )
 
@@ -333,12 +333,12 @@ async def test_provision(mock_run_process, prefect_client: PrefectClient):
         "default"
     ]["$ref"]["block_document_id"]
 
-    block_doc = await prefect_client.read_block_document(new_block_doc_id)
+    block_doc = await syntask_client.read_block_document(new_block_doc_id)
     assert block_doc.name == "test-push-pool-credentials"
     assert block_doc.data == {"service_account_info": {"private_key": "test-key"}}
     assert (
-        load_current_profile().settings[PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE]
-        == "us-central1-docker.pkg.dev/test-project/prefect-images"
+        load_current_profile().settings[SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE]
+        == "us-central1-docker.pkg.dev/test-project/syntask-images"
     )
 
 
@@ -362,7 +362,7 @@ async def test_no_active_gcloud_account(mock_run_process):
 
 
 async def test_provision_interactive_with_default_names(
-    mock_run_process, prefect_client: PrefectClient, monkeypatch
+    mock_run_process, syntask_client: SyntaskClient, monkeypatch
 ):
     mock_prompt_select_from_table = MagicMock(
         side_effect=[
@@ -378,11 +378,11 @@ async def test_provision_interactive_with_default_names(
     mock_confirm = MagicMock(return_value=True)
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.prompt_select_from_table",
+        "syntask.infrastructure.provisioners.cloud_run.prompt_select_from_table",
         mock_prompt_select_from_table,
     )
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.Confirm.ask", mock_confirm
+        "syntask.infrastructure.provisioners.cloud_run.Confirm.ask", mock_confirm
     )
     provisioner = CloudRunPushProvisioner()
     monkeypatch.setattr(provisioner._console, "is_interactive", True)
@@ -400,7 +400,7 @@ async def test_provision_interactive_with_default_names(
         "gcloud services enable run.googleapis.com --project=test-project",
         "gcloud services enable artifactregistry.googleapis.com --project=test-project",
         (
-            "gcloud artifacts repositories create prefect-images"
+            "gcloud artifacts repositories create syntask-images"
             " --repository-format=docker --location=us-central1 --project=test-project"
         ),
         (
@@ -408,23 +408,23 @@ async def test_provision_interactive_with_default_names(
             " --project=test-project"
         ),
         (
-            "gcloud iam service-accounts create prefect-cloud-run --display-name"
-            " 'Prefect Cloud Run Service Account'"
+            "gcloud iam service-accounts create syntask-cloud-run --display-name"
+            " 'Syntask Cloud Run Service Account'"
         ),
         (
             "gcloud projects add-iam-policy-binding test-project"
-            " --member=serviceAccount:prefect-cloud-run@test-project.iam.gserviceaccount.com"
+            " --member=serviceAccount:syntask-cloud-run@test-project.iam.gserviceaccount.com"
             " --role=roles/iam.serviceAccountUser"
         ),
         (
             "gcloud projects add-iam-policy-binding test-project"
-            " --member=serviceAccount:prefect-cloud-run@test-project.iam.gserviceaccount.com"
+            " --member=serviceAccount:syntask-cloud-run@test-project.iam.gserviceaccount.com"
             " --role=roles/run.developer"
         ),
         re.compile(
             r"gcloud iam service-accounts keys create"
-            r" .*\/prefect-cloud-run-key\.json"
-            r" --iam-account=prefect-cloud-run@test-project\.iam\.gserviceaccount\.com"
+            r" .*\/syntask-cloud-run-key\.json"
+            r" --iam-account=syntask-cloud-run@test-project\.iam\.gserviceaccount\.com"
         ),
     )
 
@@ -432,13 +432,13 @@ async def test_provision_interactive_with_default_names(
         "default"
     ]["$ref"]["block_document_id"]
 
-    block_doc = await prefect_client.read_block_document(new_block_doc_id)
+    block_doc = await syntask_client.read_block_document(new_block_doc_id)
 
     assert block_doc.name == "test-push-pool-credentials"
 
 
 async def test_provision_interactive_with_custom_names(
-    mock_run_process, prefect_client: PrefectClient, monkeypatch
+    mock_run_process, syntask_client: SyntaskClient, monkeypatch
 ):
     def prompt_mocks(*args, **kwargs):
         if args[0] == "Please enter a name for the service account":
@@ -458,14 +458,14 @@ async def test_provision_interactive_with_custom_names(
     mock_confirm = MagicMock(return_value=True)
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.prompt", mock_prompt
+        "syntask.infrastructure.provisioners.cloud_run.prompt", mock_prompt
     )
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.prompt_select_from_table",
+        "syntask.infrastructure.provisioners.cloud_run.prompt_select_from_table",
         mock_prompt_select_from_table,
     )
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.Confirm.ask", mock_confirm
+        "syntask.infrastructure.provisioners.cloud_run.Confirm.ask", mock_confirm
     )
     provisioner = CloudRunPushProvisioner()
     monkeypatch.setattr(provisioner._console, "is_interactive", True)
@@ -492,7 +492,7 @@ async def test_provision_interactive_with_custom_names(
         ),
         (
             "gcloud iam service-accounts create custom-service-account --display-name"
-            " 'Prefect Cloud Run Service Account'"
+            " 'Syntask Cloud Run Service Account'"
         ),
         (
             "gcloud projects add-iam-policy-binding test-project"
@@ -515,13 +515,13 @@ async def test_provision_interactive_with_custom_names(
         "default"
     ]["$ref"]["block_document_id"]
 
-    block_doc = await prefect_client.read_block_document(new_block_doc_id)
+    block_doc = await syntask_client.read_block_document(new_block_doc_id)
     assert block_doc.name == "custom-credentials"
     assert block_doc.data == {"service_account_info": {"private_key": "test-key"}}
 
 
 async def test_provision_interactive_reject_provisioning(
-    mock_run_process, prefect_client: PrefectClient, monkeypatch
+    mock_run_process, syntask_client: SyntaskClient, monkeypatch
 ):
     mock_prompt_select_from_table = MagicMock(
         side_effect=[
@@ -532,11 +532,11 @@ async def test_provision_interactive_reject_provisioning(
     mock_confirm = MagicMock(return_value=False)
 
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.prompt_select_from_table",
+        "syntask.infrastructure.provisioners.cloud_run.prompt_select_from_table",
         mock_prompt_select_from_table,
     )
     monkeypatch.setattr(
-        "prefect.infrastructure.provisioners.cloud_run.Confirm.ask", mock_confirm
+        "syntask.infrastructure.provisioners.cloud_run.Confirm.ask", mock_confirm
     )
     provisioner = CloudRunPushProvisioner()
     monkeypatch.setattr(provisioner._console, "is_interactive", True)

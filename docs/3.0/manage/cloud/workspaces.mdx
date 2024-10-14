@@ -3,12 +3,12 @@ title: Manage workspaces
 description: Organize and compartmentalize your workflows with workspaces.
 ---
 
-A workspace is a discrete environment within Prefect Cloud for your workflows and related information. 
+A workspace is a discrete environment within Syntask Cloud for your workflows and related information. 
 For example, you can use separate workspaces to isolate dev, staging, and prod environments, or to provide separation between different teams.
 
 ## Get started with workspaces
 
-When you first log into Prefect Cloud, you are prompted to create your own workspace. 
+When you first log into Syntask Cloud, you are prompted to create your own workspace. 
 
 To see all workspace workspaces you can access, click on your workspace name in the top of the navigation sidebar.
 To see all workspace workspaces you can access, click on your workspace name in the top of the navigation sidebar.
@@ -30,12 +30,12 @@ Configure:
 *   A unique **Workspace Name** must be unique within the account.
 *   An optional description for the workspace.
 
-Select **Create** to create the new workspace. The number of available workspaces varies by [Prefect Cloud plan](https://www.syntask.khulnasoft.com/pricing/). 
+Select **Create** to create the new workspace. The number of available workspaces varies by [Syntask Cloud plan](https://www.syntask.khulnasoft.com/pricing/). 
 See [Pricing](https://www.syntask.khulnasoft.com/pricing/) if you need additional workspaces or users.
 
 ## Control access 
 
-Within a Prefect Cloud Pro or Enterprise tier account, workspace owners can invite other people as members, and provision [service accounts](https://docs.syntask.khulnasoft.com/ui/service-accounts/) to a workspace. 
+Within a Syntask Cloud Pro or Enterprise tier account, workspace owners can invite other people as members, and provision [service accounts](https://docs.syntask.khulnasoft.com/ui/service-accounts/) to a workspace. 
 A workspace owner assigns a [workspace role](https://docs.syntask.khulnasoft.com/ui/roles/) to the user and specifies the user's scope of permissions within the workspace.
 
 As a workspace owner, select **Workspaces -> Members** to manage members and **Workspaces -> Service Accounts** and service accounts for the workspace.
@@ -64,7 +64,7 @@ Workspace transfer retains existing workspace configuration and flow run history
 
 You must have administrator privileges to initiate or approve a workspace transfer.
 
-To initiate a workspace transfer between personal accounts, contact [support@syntask.khulnasoft.com](mailto:support@syntask.khulnasoft.com).
+To initiate a workspace transfer between personal accounts, contact [support@khulnasoft.com](mailto:support@khulnasoft.com).
 </Note>
 
 Click on the name of your workspace in the sidebar navigation and select **Workspace settings**.
@@ -82,7 +82,7 @@ Workspace transfer may impact resource usage and costs for source and target acc
 When you transfer a workspace, users, API keys, and service accounts may lose access to the workspace. 
 The audit log will no longer track activity on the workspace. 
 Flow runs ending outside of the destination account's flow run retention period will be removed. 
-You may also need to update Prefect CLI profiles and execution environment settings to access the workspace's new location.
+You may also need to update Syntask CLI profiles and execution environment settings to access the workspace's new location.
 
 You may incur new charges in the target account to accommodate the transferred workspace.
 </Tip>

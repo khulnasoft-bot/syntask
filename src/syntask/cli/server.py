@@ -1,5 +1,5 @@
 """
-Command line interface for working with Prefect
+Command line interface for working with Syntask
 """
 
 import logging
@@ -13,41 +13,41 @@ import anyio
 import anyio.abc
 import typer
 
-import prefect
-from prefect.cli._prompts import prompt
-from prefect.cli._types import PrefectTyper, SettingsOption
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.cloud import prompt_select_from_list
-from prefect.cli.root import app, is_interactive
-from prefect.logging import get_logger
-from prefect.settings import (
-    PREFECT_API_SERVICES_LATE_RUNS_ENABLED,
-    PREFECT_API_SERVICES_SCHEDULER_ENABLED,
-    PREFECT_API_URL,
-    PREFECT_HOME,
-    PREFECT_LOGGING_SERVER_LEVEL,
-    PREFECT_SERVER_ANALYTICS_ENABLED,
-    PREFECT_SERVER_API_HOST,
-    PREFECT_SERVER_API_KEEPALIVE_TIMEOUT,
-    PREFECT_SERVER_API_PORT,
-    PREFECT_UI_ENABLED,
+import syntask
+from syntask.cli._prompts import prompt
+from syntask.cli._types import SettingsOption, SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.cloud import prompt_select_from_list
+from syntask.cli.root import app, is_interactive
+from syntask.logging import get_logger
+from syntask.settings import (
+    SYNTASK_API_SERVICES_LATE_RUNS_ENABLED,
+    SYNTASK_API_SERVICES_SCHEDULER_ENABLED,
+    SYNTASK_API_URL,
+    SYNTASK_HOME,
+    SYNTASK_LOGGING_SERVER_LEVEL,
+    SYNTASK_SERVER_ANALYTICS_ENABLED,
+    SYNTASK_SERVER_API_HOST,
+    SYNTASK_SERVER_API_KEEPALIVE_TIMEOUT,
+    SYNTASK_SERVER_API_PORT,
+    SYNTASK_UI_ENABLED,
     Profile,
     load_current_profile,
     load_profiles,
     save_profiles,
     update_current_profile,
 )
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
-from prefect.utilities.processutils import (
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.utilities.processutils import (
     consume_process_output,
     setup_signal_handlers_server,
 )
 
-server_app = PrefectTyper(
+server_app = SyntaskTyper(
     name="server",
-    help="Start a Prefect server instance and interact with the database",
+    help="Start a Syntask server instance and interact with the database",
 )
-database_app = PrefectTyper(name="database", help="Interact with the database.")
+database_app = SyntaskTyper(name="database", help="Interact with the database.")
 server_app.add_typer(database_app)
 app.add_typer(server_app)
 
@@ -64,9 +64,9 @@ def generate_welcome_blurb(base_url, ui_enabled: bool):
         |  _/   / _|| _|| _| (__  | |  
         |_| |_|_\___|_| |___\___| |_|  
 
-        Configure Prefect to communicate with the server with:
+        Configure Syntask to communicate with the server with:
 
-            prefect config set PREFECT_API_URL={api_url}
+            syntask config set SYNTASK_API_URL={api_url}
 
         View the API reference documentation at {docs_url}
         """
@@ -81,17 +81,17 @@ def generate_welcome_blurb(base_url, ui_enabled: bool):
     dashboard_not_built = textwrap.dedent(
         """
         The dashboard is not built. It looks like you're on a development version.
-        See `prefect dev` for development commands.
+        See `syntask dev` for development commands.
         """
     )
 
     dashboard_disabled = textwrap.dedent(
         """
-        The dashboard is disabled. Set `PREFECT_UI_ENABLED=1` to re-enable it.
+        The dashboard is disabled. Set `SYNTASK_UI_ENABLED=1` to re-enable it.
         """
     )
 
-    if not os.path.exists(prefect.__ui_static_path__):
+    if not os.path.exists(syntask.__ui_static_path__):
         blurb += dashboard_not_built
     elif not ui_enabled:
         blurb += dashboard_disabled
@@ -103,7 +103,7 @@ def generate_welcome_blurb(base_url, ui_enabled: bool):
 
 def prestart_check(base_url: str):
     """
-    Check if `PREFECT_API_URL` is set in the current profile. If not, prompt the user to set it.
+    Check if `SYNTASK_API_URL` is set in the current profile. If not, prompt the user to set it.
 
     Args:
         base_url: The base URL the server will be running on
@@ -111,11 +111,11 @@ def prestart_check(base_url: str):
     api_url = f"{base_url}/api"
     current_profile = load_current_profile()
     profiles = load_profiles()
-    if current_profile and PREFECT_API_URL not in current_profile.settings:
+    if current_profile and SYNTASK_API_URL not in current_profile.settings:
         profiles_with_matching_url = [
             name
             for name, profile in profiles.items()
-            if profile.settings.get(PREFECT_API_URL) == api_url
+            if profile.settings.get(SYNTASK_API_URL) == api_url
         ]
         if len(profiles_with_matching_url) == 1:
             profiles.set_active(profiles_with_matching_url[0])
@@ -127,7 +127,7 @@ def prestart_check(base_url: str):
             return
         elif len(profiles_with_matching_url) > 1:
             app.console.print(
-                "Your current profile doesn't have `PREFECT_API_URL` set to the address"
+                "Your current profile doesn't have `SYNTASK_API_URL` set to the address"
                 " of the server that's running. Some of your other profiles do."
             )
             selected_profile = prompt_select_from_list(
@@ -145,7 +145,7 @@ def prestart_check(base_url: str):
             return
 
         app.console.print(
-            "The `PREFECT_API_URL` setting for your current profile doesn't match the"
+            "The `SYNTASK_API_URL` setting for your current profile doesn't match the"
             " address of the server that's running. You need to set it to communicate"
             " with the server.",
             style="yellow",
@@ -157,11 +157,11 @@ def prestart_check(base_url: str):
             [
                 (
                     "create",
-                    "Create a new profile with `PREFECT_API_URL` set and switch to it",
+                    "Create a new profile with `SYNTASK_API_URL` set and switch to it",
                 ),
                 (
                     "set",
-                    f"Set `PREFECT_API_URL` in the current profile: {current_profile.name!r}",
+                    f"Set `SYNTASK_API_URL` in the current profile: {current_profile.name!r}",
                 ),
             ],
         )
@@ -179,7 +179,7 @@ def prestart_check(base_url: str):
 
             profiles.add_profile(
                 Profile(
-                    name=profile_name, settings={PREFECT_API_URL: f"{base_url}/api"}
+                    name=profile_name, settings={SYNTASK_API_URL: f"{base_url}/api"}
                 )
             )
             profiles.set_active(profile_name)
@@ -190,33 +190,33 @@ def prestart_check(base_url: str):
             )
         elif choice == "set":
             api_url = prompt(
-                "Enter the `PREFECT_API_URL` value", default="http://127.0.0.1:4200/api"
+                "Enter the `SYNTASK_API_URL` value", default="http://127.0.0.1:4200/api"
             )
-            update_current_profile({PREFECT_API_URL: api_url})
+            update_current_profile({SYNTASK_API_URL: api_url})
             app.console.print(
-                f"Set `PREFECT_API_URL` to {api_url!r} in the current profile {current_profile.name!r}",
+                f"Set `SYNTASK_API_URL` to {api_url!r} in the current profile {current_profile.name!r}",
                 style="green",
             )
 
 
 @server_app.command()
 async def start(
-    host: str = SettingsOption(PREFECT_SERVER_API_HOST),
-    port: int = SettingsOption(PREFECT_SERVER_API_PORT),
-    keep_alive_timeout: int = SettingsOption(PREFECT_SERVER_API_KEEPALIVE_TIMEOUT),
-    log_level: str = SettingsOption(PREFECT_LOGGING_SERVER_LEVEL),
-    scheduler: bool = SettingsOption(PREFECT_API_SERVICES_SCHEDULER_ENABLED),
+    host: str = SettingsOption(SYNTASK_SERVER_API_HOST),
+    port: int = SettingsOption(SYNTASK_SERVER_API_PORT),
+    keep_alive_timeout: int = SettingsOption(SYNTASK_SERVER_API_KEEPALIVE_TIMEOUT),
+    log_level: str = SettingsOption(SYNTASK_LOGGING_SERVER_LEVEL),
+    scheduler: bool = SettingsOption(SYNTASK_API_SERVICES_SCHEDULER_ENABLED),
     analytics: bool = SettingsOption(
-        PREFECT_SERVER_ANALYTICS_ENABLED, "--analytics-on/--analytics-off"
+        SYNTASK_SERVER_ANALYTICS_ENABLED, "--analytics-on/--analytics-off"
     ),
-    late_runs: bool = SettingsOption(PREFECT_API_SERVICES_LATE_RUNS_ENABLED),
-    ui: bool = SettingsOption(PREFECT_UI_ENABLED),
+    late_runs: bool = SettingsOption(SYNTASK_API_SERVICES_LATE_RUNS_ENABLED),
+    ui: bool = SettingsOption(SYNTASK_UI_ENABLED),
     background: bool = typer.Option(
         False, "--background", "-b", help="Run the server in the background"
     ),
 ):
     """
-    Start a Prefect server instance
+    Start a Syntask server instance
     """
     base_url = f"http://{host}:{port}"
     if is_interactive():
@@ -226,14 +226,14 @@ async def start(
             pass
 
     server_env = os.environ.copy()
-    server_env["PREFECT_API_SERVICES_SCHEDULER_ENABLED"] = str(scheduler)
-    server_env["PREFECT_SERVER_ANALYTICS_ENABLED"] = str(analytics)
-    server_env["PREFECT_API_SERVICES_LATE_RUNS_ENABLED"] = str(late_runs)
-    server_env["PREFECT_API_SERVICES_UI"] = str(ui)
-    server_env["PREFECT_UI_ENABLED"] = str(ui)
-    server_env["PREFECT_LOGGING_SERVER_LEVEL"] = log_level
+    server_env["SYNTASK_API_SERVICES_SCHEDULER_ENABLED"] = str(scheduler)
+    server_env["SYNTASK_SERVER_ANALYTICS_ENABLED"] = str(analytics)
+    server_env["SYNTASK_API_SERVICES_LATE_RUNS_ENABLED"] = str(late_runs)
+    server_env["SYNTASK_API_SERVICES_UI"] = str(ui)
+    server_env["SYNTASK_UI_ENABLED"] = str(ui)
+    server_env["SYNTASK_LOGGING_SERVER_LEVEL"] = log_level
 
-    pid_file = anyio.Path(PREFECT_HOME.value() / PID_FILE)
+    pid_file = anyio.Path(SYNTASK_HOME.value() / PID_FILE)
     # check if port is already in use
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -242,7 +242,7 @@ async def start(
         if await pid_file.exists():
             exit_with_error(
                 f"A background server process is already running on port {port}. "
-                "Run `prefect server stop` to stop it or specify a different port "
+                "Run `syntask server stop` to stop it or specify a different port "
                 "with the `--port` flag."
             )
         exit_with_error(
@@ -257,7 +257,7 @@ async def start(
         except FileExistsError:
             exit_with_error(
                 "A server is already running in the background. To stop it,"
-                " run `prefect server stop`."
+                " run `syntask server stop`."
             )
 
     app.console.print(generate_welcome_blurb(base_url, ui_enabled=ui))
@@ -269,9 +269,9 @@ async def start(
             "-m",
             "uvicorn",
             "--app-dir",
-            str(prefect.__module_path__.parent),
+            str(syntask.__module_path__.parent),
             "--factory",
-            "prefect.server.api.server:create_app",
+            "syntask.server.api.server:create_app",
             "--host",
             str(host),
             "--port",
@@ -290,7 +290,7 @@ async def start(
             await pid_file.write_text(str(process_id))
 
             app.console.print(
-                "The Prefect server is running in the background. Run `prefect"
+                "The Syntask server is running in the background. Run `syntask"
                 " server stop` to stop it."
             )
             return
@@ -301,10 +301,10 @@ async def start(
             # large amount of anyio error traces on the terminal, because the
             # SIGINT is handled by Typer/Click in this process (the parent process)
             # and will start shutting down subprocesses:
-            # https://github.com/PrefectHQ/server/issues/2475
+            # https://github.com/SynoPKG/server/issues/2475
 
             setup_signal_handlers_server(
-                process_id, "the Prefect server", app.console.print
+                process_id, "the Syntask server", app.console.print
             )
 
             await consume_process_output(process, sys.stdout, sys.stderr)
@@ -319,8 +319,8 @@ async def start(
 
 @server_app.command()
 async def stop():
-    """Stop a Prefect server instance running in the background"""
-    pid_file = anyio.Path(PREFECT_HOME.value() / PID_FILE)
+    """Stop a Syntask server instance running in the background"""
+    pid_file = anyio.Path(SYNTASK_HOME.value() / PID_FILE)
     if not await pid_file.exists():
         exit_with_success("No server running in the background.")
     pid = int(await pid_file.read_text())
@@ -339,14 +339,14 @@ async def stop():
 
 @database_app.command()
 async def reset(yes: bool = typer.Option(False, "--yes", "-y")):
-    """Drop and recreate all Prefect database tables"""
-    from prefect.server.database.dependencies import provide_database_interface
+    """Drop and recreate all Syntask database tables"""
+    from syntask.server.database.dependencies import provide_database_interface
 
     db = provide_database_interface()
     engine = await db.engine()
     if not yes:
         confirm = typer.confirm(
-            "Are you sure you want to reset the Prefect database located "
+            "Are you sure you want to reset the Syntask database located "
             f'at "{engine.url!r}"? This will drop and recreate all tables.'
         )
         if not confirm:
@@ -355,7 +355,7 @@ async def reset(yes: bool = typer.Option(False, "--yes", "-y")):
     await db.drop_db()
     app.console.print("Upgrading database...")
     await db.create_db()
-    exit_with_success(f'Prefect database "{engine.url!r}" reset!')
+    exit_with_success(f'Syntask database "{engine.url!r}" reset!')
 
 
 @database_app.command()
@@ -377,16 +377,16 @@ async def upgrade(
         ),
     ),
 ):
-    """Upgrade the Prefect database"""
-    from prefect.server.database.alembic_commands import alembic_upgrade
-    from prefect.server.database.dependencies import provide_database_interface
+    """Upgrade the Syntask database"""
+    from syntask.server.database.alembic_commands import alembic_upgrade
+    from syntask.server.database.dependencies import provide_database_interface
 
     db = provide_database_interface()
     engine = await db.engine()
 
     if not yes:
         confirm = typer.confirm(
-            f"Are you sure you want to upgrade the Prefect database at {engine.url!r}?"
+            f"Are you sure you want to upgrade the Syntask database at {engine.url!r}?"
         )
         if not confirm:
             exit_with_error("Database upgrade aborted!")
@@ -394,7 +394,7 @@ async def upgrade(
     app.console.print("Running upgrade migrations ...")
     await run_sync_in_worker_thread(alembic_upgrade, revision=revision, dry_run=dry_run)
     app.console.print("Migrations succeeded!")
-    exit_with_success(f"Prefect database at {engine.url!r} upgraded!")
+    exit_with_success(f"Syntask database at {engine.url!r} upgraded!")
 
 
 @database_app.command()
@@ -417,9 +417,9 @@ async def downgrade(
         ),
     ),
 ):
-    """Downgrade the Prefect database"""
-    from prefect.server.database.alembic_commands import alembic_downgrade
-    from prefect.server.database.dependencies import provide_database_interface
+    """Downgrade the Syntask database"""
+    from syntask.server.database.alembic_commands import alembic_downgrade
+    from syntask.server.database.dependencies import provide_database_interface
 
     db = provide_database_interface()
 
@@ -427,7 +427,7 @@ async def downgrade(
 
     if not yes:
         confirm = typer.confirm(
-            "Are you sure you want to downgrade the Prefect "
+            "Are you sure you want to downgrade the Syntask "
             f"database at {engine.url!r}?"
         )
         if not confirm:
@@ -438,7 +438,7 @@ async def downgrade(
         alembic_downgrade, revision=revision, dry_run=dry_run
     )
     app.console.print("Migrations succeeded!")
-    exit_with_success(f"Prefect database at {engine.url!r} downgraded!")
+    exit_with_success(f"Syntask database at {engine.url!r} downgraded!")
 
 
 @database_app.command()
@@ -451,8 +451,8 @@ async def revision(
     ),
     autogenerate: bool = False,
 ):
-    """Create a new migration for the Prefect database"""
-    from prefect.server.database.alembic_commands import alembic_revision
+    """Create a new migration for the Syntask database"""
+    from syntask.server.database.alembic_commands import alembic_revision
 
     app.console.print("Running migration file creation ...")
     await run_sync_in_worker_thread(
@@ -466,7 +466,7 @@ async def revision(
 @database_app.command()
 async def stamp(revision: str):
     """Stamp the revision table with the given revision; don't run any migrations"""
-    from prefect.server.database.alembic_commands import alembic_stamp
+    from syntask.server.database.alembic_commands import alembic_stamp
 
     app.console.print("Stamping database with revision ...")
     await run_sync_in_worker_thread(alembic_stamp, revision=revision)

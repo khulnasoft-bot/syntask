@@ -3,7 +3,7 @@ title: Write and run tasks
 description: Learn the basics of writing tasks.
 ---
 
-A Prefect task is a discrete unit of work in a Prefect workflow. 
+A Syntask task is a discrete unit of work in a Syntask workflow. 
 You can turn any Python function into a task by adding an `@task` decorator to it.
 Tasks can:
 
@@ -31,7 +31,7 @@ Here's an example of a simple flow with a single task:
 
 ```python repo_info.py
 import httpx
-from prefect import flow, task
+from syntask import flow, task
 from typing import Optional
 
 
@@ -43,7 +43,7 @@ def get_url(url: str, params: Optional[dict[str, any]] = None):
 
 
 @flow(retries=3, retry_delay_seconds=5, log_prints=True)
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "SynoPKG/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     repo_stats = get_url(url)
     print(f"{repo_name} repository statistics 🤓:")
@@ -58,11 +58,11 @@ if __name__ == "__main__":
 Running that flow in the terminal results in output like this:
 
 ```bash
-09:55:55.412 | INFO    | prefect.engine - Created flow run 'great-ammonite' for flow 'get-repo-info'
+09:55:55.412 | INFO    | syntask.engine - Created flow run 'great-ammonite' for flow 'get-repo-info'
 09:55:55.499 | INFO    | Flow run 'great-ammonite' - Created task run 'get_url-0' for task 'get_url'
 09:55:55.500 | INFO    | Flow run 'great-ammonite' - Executing 'get_url-0' immediately...
 09:55:55.825 | INFO    | Task run 'get_url-0' - Finished in state Completed()
-09:55:55.827 | INFO    | Flow run 'great-ammonite' - PrefectHQ/prefect repository statistics 🤓:
+09:55:55.827 | INFO    | Flow run 'great-ammonite' - SynoPKG/syntask repository statistics 🤓:
 09:55:55.827 | INFO    | Flow run 'great-ammonite' - Stars 🌠 : 12157
 09:55:55.827 | INFO    | Flow run 'great-ammonite' - Forks 🍴 : 1251
 09:55:55.849 | INFO    | Flow run 'great-ammonite' - Finished in state Completed('All states completed.')
@@ -76,8 +76,8 @@ If the task does not have a name specified, the name is derived from the decorat
 <Note>
 **How big should a task be?**
 
-Prefect encourages "small tasks." Each one should represent a single logical step of your workflow. 
-This allows Prefect to better contain task failures.
+Syntask encourages "small tasks." Each one should represent a single logical step of your workflow. 
+This allows Syntask to better contain task failures.
 
 There's nothing stopping you from putting all of your code in a single task. However, if any line of 
 code fails, the entire task fails and must be retried from the beginning. 
@@ -87,9 +87,9 @@ Avoid this by splitting the code into multiple dependent tasks.
 
 ## Supported functions
 
-Almost any standard Python function can be turned into a Prefect task by adding the `@task` decorator. 
+Almost any standard Python function can be turned into a Syntask task by adding the `@task` decorator. 
 
-Prefect uses client-side task run orchestration by default, which significantly improves performance, especially for workflows with many tasks. Task creation and state updates happen locally, reducing API calls to the Prefect server during execution. This enables efficient handling of large-scale workflows and improves reliability when server connectivity is intermittent.
+Syntask uses client-side task run orchestration by default, which significantly improves performance, especially for workflows with many tasks. Task creation and state updates happen locally, reducing API calls to the Syntask server during execution. This enables efficient handling of large-scale workflows and improves reliability when server connectivity is intermittent.
 <Tip>
 Tasks are always executed in the main thread by default, unless a specific [task runner](/3.0/develop/task-runners) is used to execute them on different threads, processes, or infrastructure. This facilitates native Python debugging and profiling.
 </Tip>
@@ -97,10 +97,10 @@ Task updates are logged in batch, leading to eventual consistency for task state
 
 ### Synchronous functions
 
-The simplest Prefect task is a synchronous Python function. Here's an example of a synchronous task that prints a message:
+The simplest Syntask task is a synchronous Python function. Here's an example of a synchronous task that prints a message:
 
 ```python
-from prefect import task
+from syntask import task
 
 
 @task
@@ -114,11 +114,11 @@ if __name__ == "__main__":
 
 ### Asynchronous functions
 
-Prefect also supports asynchronous Python functions. 
+Syntask also supports asynchronous Python functions. 
 The resulting tasks are coroutines that can be awaited or run concurrently, following [standard async Python behavior](https://docs.python.org/3/library/asyncio-task.html).
 
 ```python
-from prefect import task
+from syntask import task
 import asyncio
 
 
@@ -133,10 +133,10 @@ asyncio.run(print_message())
 
 ### Class Methods
 
-Prefect supports synchronous and asynchronous methods as tasks, including instance methods, class methods, and static methods. For class methods and static methods, you must apply the appropriate method decorator _above_ the `@task` decorator:
+Syntask supports synchronous and asynchronous methods as tasks, including instance methods, class methods, and static methods. For class methods and static methods, you must apply the appropriate method decorator _above_ the `@task` decorator:
 
 ```python
-from prefect import task
+from syntask import task
 
 
 class MyClass:
@@ -165,10 +165,10 @@ MyClass.my_static_method()
 
 ### Generators
 
-Prefect supports synchronous and asynchronous generators as tasks. The task is considered to be `Running` as long as the generator is yielding values. When the generator is exhausted, the task is considered `Completed`. Any values yielded by the generator can be consumed by other tasks, and they will automatically record the generator task as their parent. 
+Syntask supports synchronous and asynchronous generators as tasks. The task is considered to be `Running` as long as the generator is yielding values. When the generator is exhausted, the task is considered `Completed`. Any values yielded by the generator can be consumed by other tasks, and they will automatically record the generator task as their parent. 
 
 ```python
-from prefect import task
+from syntask import task
 
 
 @task
@@ -196,7 +196,7 @@ This can lead to unexpected behavior or blocking if the generator is infinite or
 Here is an example of proactive generator consumption:
 
 ```python
-from prefect import task
+from syntask import task
 
 
 def gen():
@@ -216,7 +216,7 @@ If you need to return a generator without consuming it, you can `yield` it inste
 Values yielded from generator tasks are not considered final results and do not face the same serialization constraints:
 
 ```python
-from prefect import task
+from syntask import task
 
 
 def gen():
@@ -244,8 +244,8 @@ Expand the script to calculate the average open issues per user by making more r
 ```python repo_info.py
 import httpx
 from datetime import timedelta
-from prefect import flow, task
-from prefect.tasks import task_input_hash
+from syntask import flow, task
+from syntask.tasks import task_input_hash
 from typing import Optional
 
 
@@ -270,7 +270,7 @@ def get_open_issues(repo_name: str, open_issues_count: int, per_page: int = 100)
 
 
 @flow(retries=3, retry_delay_seconds=5, log_prints=True)
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "SynoPKG/syntask"):
     repo_stats = get_url(f"https://api.github.com/repos/{repo_name}")
     issues = get_open_issues(repo_name, repo_stats["open_issues_count"])
     issues_per_user = len(issues) / len(set([i["user"]["id"] for i in issues]))
@@ -286,10 +286,10 @@ if __name__ == "__main__":
 ```
 
 Now you're fetching the data you need, but the requests happen sequentially.
-Tasks expose a [`submit`](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.Task.submit) method that changes 
+Tasks expose a [`submit`](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.Task.submit) method that changes 
 the execution from sequential to concurrent.
 In this example, you also need to use the 
-[`result`](https://prefect-python-sdk-docs.netlify.app/prefect/futures/#prefect.futures.PrefectFuture.result) 
+[`result`](https://syntask-python-sdk-docs.netlify.app/syntask/futures/#syntask.futures.SyntaskFuture.result) 
 method to unpack a list of return values:
 
 ```python 
@@ -310,7 +310,7 @@ The logs show that each task is running concurrently:
 
 
 ```bash
-12:45:28.241 | INFO    | prefect.engine - Created flow run 'intrepid-coua' for flow 'get-repo-info'
+12:45:28.241 | INFO    | syntask.engine - Created flow run 'intrepid-coua' for flow 'get-repo-info'
 12:45:28.311 | INFO    | Flow run 'intrepid-coua' - Created task run 'get_url-0' for task 'get_url'
 12:45:28.312 | INFO    | Flow run 'intrepid-coua' - Executing 'get_url-0' immediately...
 12:45:28.543 | INFO    | Task run 'get_url-0' - Finished in state Completed()
@@ -332,7 +332,7 @@ The logs show that each task is running concurrently:
 12:45:29.749 | INFO    | Task run 'get_url-4' - Finished in state Completed()
 12:45:29.801 | INFO    | Task run 'get_url-3' - Finished in state Completed()
 12:45:29.817 | INFO    | Task run 'get_url-1' - Finished in state Completed()
-12:45:29.820 | INFO    | Flow run 'intrepid-coua' - PrefectHQ/prefect repository statistics 🤓:
+12:45:29.820 | INFO    | Flow run 'intrepid-coua' - SynoPKG/syntask repository statistics 🤓:
 12:45:29.820 | INFO    | Flow run 'intrepid-coua' - Stars 🌠 : 12159
 12:45:29.821 | INFO    | Flow run 'intrepid-coua' - Forks 🍴 : 1251
 Average open issues per user 💌 : 2.27
@@ -341,13 +341,13 @@ Average open issues per user 💌 : 2.27
 
 ## Task configuration
 
-Tasks allow for customization through optional arguments that can be provided to the [task decorator](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.task).
+Tasks allow for customization through optional arguments that can be provided to the [task decorator](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.task).
 
 | Argument              | Description                                                                                                                                                                                                             |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`                | An optional name for the task. If not provided, the name is inferred from the function name.                                                                                                                       |
 | `description`         | An optional string description for the task. If not provided, the description is pulled from the docstring for the decorated function.                                                                             |
-| `tags`                | An optional set of tags associated with runs of this task. These tags are combined with any tags defined by a `prefect.tags` context at task runtime.                                                             |
+| `tags`                | An optional set of tags associated with runs of this task. These tags are combined with any tags defined by a `syntask.tags` context at task runtime.                                                             |
 | `timeout_seconds`     | An optional number of seconds indicating a maximum runtime for the task. If the task exceeds this runtime, it will be marked as failed. |
 | `cache_key_fn`        | An optional callable that, given the task run context and call parameters, generates a string key. If the key matches a previous completed state, that state result is restored instead of running the task again. |
 | `cache_expiration`    | An optional amount of time indicating how long cached states for this task are restorable; if not provided, cached states will never expire. |
@@ -355,7 +355,7 @@ Tasks allow for customization through optional arguments that can be provided to
 | `retry_delay_seconds` | An optional number of seconds to wait before retrying the task after failure. This is only applicable if `retries` is nonzero.                                                                                          |
 | `log_prints`|An optional boolean indicating whether to log print statements. |
 
-See all possible options in the [Python SDK docs](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.task).
+See all possible options in the [Python SDK docs](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.task).
 
 For example, provide optional `name` and `description` arguments to a task:
 
@@ -370,7 +370,7 @@ Python's standard string formatting syntax applies:
 
 ```python
 import datetime
-from prefect import flow, task
+from syntask import flow, task
 
 
 @task(name="My Example Task", 
@@ -393,7 +393,7 @@ Additionally, this setting accepts a function that returns a string for the task
 
 ```python
 import datetime
-from prefect import flow, task
+from syntask import flow, task
 
 
 def generate_task_name():
@@ -418,11 +418,11 @@ if __name__ == "__main__":
     my_flow()  
 ```
 
-If you need access to information about the task, use the `prefect.runtime` module. For example:
+If you need access to information about the task, use the `syntask.runtime` module. For example:
 
 ```python
-from prefect import flow
-from prefect.runtime import flow_run, task_run
+from syntask import flow
+from syntask.runtime import flow_run, task_run
 
 
 def generate_task_name():
@@ -454,10 +454,10 @@ def my_flow(name: str):
 Tags are optional string labels that enable you to identify and group tasks other than by name or flow. 
 Tags are useful to:
 
-- Filter task runs by tag in the UI and through the [Prefect REST API](/3.0/api-ref/rest-api/#filtering).
+- Filter task runs by tag in the UI and through the [Syntask REST API](/3.0/api-ref/rest-api/#filtering).
 - Set [concurrency limits](#task-run-concurrency-limits) on task runs by tag.
 
-You may specify tags as a keyword argument on the [task decorator](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.task).
+You may specify tags as a keyword argument on the [task decorator](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.task).
 
 ```python 
 @task(name="hello-task", tags=["test"])
@@ -465,11 +465,11 @@ def my_task():
     print("Hello, I'm a task")
 ```
 
-Alternatively, specify tags when the task is called rather than in its definition with a [`tags` context manager](https://prefect-python-sdk-docs.netlify.app/prefect/context/#prefect.context.tags), .
+Alternatively, specify tags when the task is called rather than in its definition with a [`tags` context manager](https://syntask-python-sdk-docs.netlify.app/syntask/context/#syntask.context.tags), .
 
 ```python 
-from prefect import flow, task
-from prefect import tags
+from syntask import flow, task
+from syntask import tags
 
 
 @task
@@ -497,7 +497,7 @@ flow, the timed-out task is treated like any other failed task.
 Specify timeout durations with the `timeout_seconds` keyword argument:
 
 ```python 
-from prefect import task
+from syntask import task
 import time
 
 
@@ -510,14 +510,14 @@ def show_timeouts():
 
 ## Retries
 
-Prefect can automatically retry task runs on failure. 
+Syntask can automatically retry task runs on failure. 
 A task run _fails_ if its Python function raises an exception.
 
 To enable retries, pass `retries` and `retry_delay_seconds` arguments to your
 task. 
-If the task run fails, Prefect will retry it up to `retries` times, waiting
+If the task run fails, Syntask will retry it up to `retries` times, waiting
 `retry_delay_seconds` seconds between each attempt. 
-If the task fails on the final retry, Prefect marks the task as _failed_.
+If the task fails on the final retry, Syntask marks the task as _failed_.
 
 A new task run is not created when a task is retried. 
 Instead, a new state is added to the state history of the original task run.
@@ -528,7 +528,7 @@ request.
 
 ```python
 import httpx
-from prefect import flow, task
+from syntask import flow, task
 
 
 @task(retries=2, retry_delay_seconds=5)
@@ -538,7 +538,7 @@ def get_data_task(
     response = httpx.get(url)
     
     # If the response status code is anything but a 2xx, httpx will raise
-    # an exception. This task doesn't handle the exception, so Prefect will
+    # an exception. This task doesn't handle the exception, so Syntask will
     # catch the exception and will consider the task run failed.
     response.raise_for_status()
     
@@ -555,7 +555,7 @@ if __name__ == "__main__":
 ```
 
 In this task, if the HTTP request to the brittle API receives any status code
-other than a 2xx (200, 201, etc.), Prefect will retry the task a maximum of two
+other than a 2xx (200, 201, etc.), Syntask will retry the task a maximum of two
 times, waiting five seconds in between retries.
 
 ### Custom retry behavior
@@ -564,7 +564,7 @@ The `retry_delay_seconds` option accepts a list of integers for customized retry
 The following task will wait for successively increasing intervals of 1, 10, and 100 seconds, respectively, before the next attempt starts:
 
 ```python
-from prefect import task
+from syntask import task
 
 
 @task(retries=3, retry_delay_seconds=[1, 10, 100])
@@ -580,7 +580,7 @@ The following task will retry on HTTP status codes other than 401 or 404:
 
 ```python
 import httpx
-from prefect import flow, task
+from syntask import flow, task
 
 
 def retry_handler(task, task_run, state) -> bool:
@@ -617,12 +617,12 @@ if __name__ == "__main__":
 ```
 
 Additionally, you can pass a callable that accepts the number of retries as an argument and returns a list. 
-Prefect includes an [`exponential_backoff`](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.exponential_backoff) utility that will automatically generate a list of retry delays that correspond to an exponential backoff retry strategy. 
+Syntask includes an [`exponential_backoff`](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.exponential_backoff) utility that will automatically generate a list of retry delays that correspond to an exponential backoff retry strategy. 
 The following flow will wait for 10, 20, then 40 seconds before each retry.
 
 ```python
-from prefect import task
-from prefect.tasks import exponential_backoff
+from syntask import task
+from syntask.tasks import exponential_backoff
 
 
 @task(retries=3, retry_delay_seconds=exponential_backoff(backoff_factor=10))
@@ -641,8 +641,8 @@ Large values of `retry_jitter_factor` provide more protection against "thunderin
 For example, the following task adds jitter to its exponential backoff so the retry delays will vary up to a maximum delay time of 20, 40, and 80 seconds respectively.
 
 ```python
-from prefect import task
-from prefect.tasks import exponential_backoff
+from syntask import task
+from syntask.tasks import exponential_backoff
 
 
 @task(
@@ -662,6 +662,6 @@ Set default retries and retry delays globally through settings.
 These settings will not override the `retries` or `retry_delay_seconds` that are set in the task decorator.
 
 ```
-prefect config set PREFECT_TASK_DEFAULT_RETRIES=2
-prefect config set PREFECT_TASK_DEFAULT_RETRY_DELAY_SECONDS = [1, 10, 100]
+syntask config set SYNTASK_TASK_DEFAULT_RETRIES=2
+syntask config set SYNTASK_TASK_DEFAULT_RETRY_DELAY_SECONDS = [1, 10, 100]
 ```

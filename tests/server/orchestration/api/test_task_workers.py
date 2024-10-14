@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.server.models.task_workers import observe_worker
+from syntask.server.models.task_workers import observe_worker
 
 
 @pytest.mark.parametrize(

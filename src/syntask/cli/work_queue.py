@@ -12,15 +12,15 @@ import typer
 from rich.pretty import Pretty
 from rich.table import Table
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.filters import WorkPoolFilter, WorkPoolFilterId
-from prefect.client.schemas.objects import DEFAULT_AGENT_WORK_POOL_NAME
-from prefect.exceptions import ObjectAlreadyExists, ObjectNotFound
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.filters import WorkPoolFilter, WorkPoolFilterId
+from syntask.client.schemas.objects import DEFAULT_AGENT_WORK_POOL_NAME
+from syntask.exceptions import ObjectAlreadyExists, ObjectNotFound
 
-work_app = PrefectTyper(name="work-queue", help="Manage work queues.")
+work_app = SyntaskTyper(name="work-queue", help="Manage work queues.")
 app.add_typer(work_app, aliases=["work-queues"])
 
 
@@ -109,10 +109,10 @@ async def create(
             id - {result.id}
             concurrency limit - {limit}
         Start a worker to pick up flow runs from the work queue:
-            prefect worker start -q '{result.name} -p {pool}'
+            syntask worker start -q '{result.name} -p {pool}'
 
         Inspect the work queue:
-            prefect work-queue inspect '{result.name}'
+            syntask work-queue inspect '{result.name}'
         """
     )
     exit_with_success(output_msg)

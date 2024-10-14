@@ -7,8 +7,8 @@ from typing import Any
 
 from packaging.version import Version
 
-import prefect
-from prefect.server.api.server import create_app
+import syntask
+from syntask.server.api.server import create_app
 
 Mint = dict[str, Any]
 Navigation = list[dict[str, Any]]
@@ -29,10 +29,10 @@ with open(docs_path() / "mint.json", "r") as f:
 
 def current_version() -> str:
     """
-    Return a high-level version string for the current Prefect version,
+    Return a high-level version string for the current Syntask version,
     such as "3.1" or "3.1rc".
     """
-    version = Version(prefect.__version__)
+    version = Version(syntask.__version__)
     return f"{version.major}.{version.minor}{version.pre[0] if version.pre else ''}"
 
 

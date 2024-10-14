@@ -9,19 +9,19 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from typing_extensions import Self
 
-import prefect
-from prefect.exceptions import MissingContextError
-from prefect.logging.filters import ObfuscateApiKeyFilter
+import syntask
+from syntask.exceptions import MissingContextError
+from syntask.logging.filters import ObfuscateApiKeyFilter
 
 if TYPE_CHECKING:
-    from prefect.client.schemas import FlowRun as ClientFlowRun
-    from prefect.client.schemas.objects import FlowRun, TaskRun
-    from prefect.context import RunContext
-    from prefect.flows import Flow
-    from prefect.tasks import Task
+    from syntask.client.schemas import FlowRun as ClientFlowRun
+    from syntask.client.schemas.objects import FlowRun, TaskRun
+    from syntask.context import RunContext
+    from syntask.flows import Flow
+    from syntask.tasks import Task
 
 
-class PrefectLogAdapter(logging.LoggerAdapter):
+class SyntaskLogAdapter(logging.LoggerAdapter):
     """
     Adapter that ensures extra kwargs are passed through correctly; without this
     the `extra` fields set on the adapter would overshadow any provided on a
@@ -37,11 +37,11 @@ class PrefectLogAdapter(logging.LoggerAdapter):
 
     def getChild(
         self, suffix: str, extra: Optional[Dict[str, str]] = None
-    ) -> "PrefectLogAdapter":
+    ) -> "SyntaskLogAdapter":
         if extra is None:
             extra = {}
 
-        return PrefectLogAdapter(
+        return SyntaskLogAdapter(
             self.logger.getChild(suffix),
             extra={
                 **self.extra,
@@ -53,17 +53,17 @@ class PrefectLogAdapter(logging.LoggerAdapter):
 @lru_cache()
 def get_logger(name: Optional[str] = None) -> logging.Logger:
     """
-    Get a `prefect` logger. These loggers are intended for internal use within the
-    `prefect` package.
+    Get a `syntask` logger. These loggers are intended for internal use within the
+    `syntask` package.
 
     See `get_run_logger` for retrieving loggers for use within task or flow runs.
     By default, only run-related loggers are connected to the `APILogHandler`.
     """
-    parent_logger = logging.getLogger("prefect")
+    parent_logger = logging.getLogger("syntask")
 
     if name:
-        # Append the name if given but allow explicit full names e.g. "prefect.test"
-        # should not become "prefect.prefect.test"
+        # Append the name if given but allow explicit full names e.g. "syntask.test"
+        # should not become "syntask.syntask.test"
         if not name.startswith(parent_logger.name + "."):
             logger = parent_logger.getChild(name)
         else:
@@ -82,9 +82,9 @@ def get_run_logger(
     context: Optional["RunContext"] = None, **kwargs: str
 ) -> Union[logging.Logger, logging.LoggerAdapter]:
     """
-    Get a Prefect logger for the current task run or flow run.
+    Get a Syntask logger for the current task run or flow run.
 
-    The logger will be named either `prefect.task_runs` or `prefect.flow_runs`.
+    The logger will be named either `syntask.task_runs` or `syntask.flow_runs`.
     Contextual data about the run will be attached to the log records.
 
     These loggers are connected to the `APILogHandler` by default to send log records to
@@ -100,14 +100,14 @@ def get_run_logger(
         MissingContextError: If no context can be found
     """
     # Check for existing contexts
-    task_run_context = prefect.context.TaskRunContext.get()
-    flow_run_context = prefect.context.FlowRunContext.get()
+    task_run_context = syntask.context.TaskRunContext.get()
+    flow_run_context = syntask.context.FlowRunContext.get()
 
     # Apply the context override
     if context:
-        if isinstance(context, prefect.context.FlowRunContext):
+        if isinstance(context, syntask.context.FlowRunContext):
             flow_run_context = context
-        elif isinstance(context, prefect.context.TaskRunContext):
+        elif isinstance(context, syntask.context.TaskRunContext):
             task_run_context = context
         else:
             raise TypeError(
@@ -129,8 +129,8 @@ def get_run_logger(
             flow_run=flow_run_context.flow_run, flow=flow_run_context.flow, **kwargs
         )
     elif (
-        get_logger("prefect.flow_run").disabled
-        and get_logger("prefect.task_run").disabled
+        get_logger("syntask.flow_run").disabled
+        and get_logger("syntask.task_run").disabled
     ):
         logger = logging.getLogger("null")
     else:
@@ -152,8 +152,8 @@ def flow_run_logger(
 
     If the flow run context is available, see `get_run_logger` instead.
     """
-    return PrefectLogAdapter(
-        get_logger("prefect.flow_runs"),
+    return SyntaskLogAdapter(
+        get_logger("syntask.flow_runs"),
         extra={
             **{
                 "flow_run_name": flow_run.name if flow_run else "<unknown>",
@@ -184,13 +184,13 @@ def task_run_logger(
     of `flow_run` and `flow`.
     """
     if not flow_run or not flow:
-        flow_run_context = prefect.context.FlowRunContext.get()
+        flow_run_context = syntask.context.FlowRunContext.get()
         if flow_run_context:
             flow_run = flow_run or flow_run_context.flow_run
             flow = flow or flow_run_context.flow
 
-    return PrefectLogAdapter(
-        get_logger("prefect.task_runs"),
+    return SyntaskLogAdapter(
+        get_logger("syntask.task_runs"),
         extra={
             **{
                 "task_run_id": str(task_run.id),
@@ -228,24 +228,24 @@ def disable_logger(name: str):
 @contextmanager
 def disable_run_logger():
     """
-    Gets both `prefect.flow_run` and `prefect.task_run` and disables them
+    Gets both `syntask.flow_run` and `syntask.task_run` and disables them
     within the context manager. Upon exiting the context manager, both loggers
     are returned to its original state.
     """
-    with disable_logger("prefect.flow_run"), disable_logger("prefect.task_run"):
+    with disable_logger("syntask.flow_run"), disable_logger("syntask.task_run"):
         yield
 
 
 def print_as_log(*args, **kwargs):
     """
-    A patch for `print` to send printed messages to the Prefect run logger.
+    A patch for `print` to send printed messages to the Syntask run logger.
 
     If no run is active, `print` will behave as if it were not patched.
 
     If `print` sends data to a file other than `sys.stdout` or `sys.stderr`, it will
-    not be forwarded to the Prefect logger either.
+    not be forwarded to the Syntask logger either.
     """
-    from prefect.context import FlowRunContext, TaskRunContext
+    from syntask.context import FlowRunContext, TaskRunContext
 
     context = TaskRunContext.get() or FlowRunContext.get()
     if (
@@ -289,7 +289,7 @@ class LogEavesdropper(logging.Handler):
 
         ```python
         import logging
-        from prefect.logging import LogEavesdropper
+        from syntask.logging import LogEavesdropper
 
         with LogEavesdropper("my_logger") as eavesdropper:
             logging.getLogger("my_logger").info("Hello, world!")

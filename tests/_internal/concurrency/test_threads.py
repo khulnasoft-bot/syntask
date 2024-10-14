@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from prefect._internal.concurrency.calls import Call
-from prefect._internal.concurrency.threads import EventLoopThread, WorkerThread
-from prefect.testing.utilities import AsyncMock
+from syntask._internal.concurrency.calls import Call
+from syntask._internal.concurrency.threads import EventLoopThread, WorkerThread
+from syntask.testing.utilities import AsyncMock
 
 
 def identity(x):

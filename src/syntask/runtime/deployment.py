@@ -4,11 +4,11 @@ Access attributes of the current deployment run dynamically.
 Note that if a deployment is not currently being run, all attributes will return empty values.
 
 You can mock the runtime attributes for testing purposes by setting environment variables
-prefixed with `PREFECT__RUNTIME__DEPLOYMENT`.
+prefixed with `SYNTASK__RUNTIME__DEPLOYMENT`.
 
 Example usage:
     ```python
-    from prefect.runtime import deployment
+    from syntask.runtime import deployment
 
     def get_task_runner():
         task_runner_config = deployment.parameters.get("runner_config", "default config here")
@@ -28,9 +28,9 @@ Available attributes:
 import os
 from typing import Any, Dict, List, Optional
 
-from prefect._internal.concurrency.api import create_call, from_sync
-from prefect.client.orchestration import get_client
-from prefect.context import FlowRunContext
+from syntask._internal.concurrency.api import create_call, from_sync
+from syntask.client.orchestration import get_client
+from syntask.context import FlowRunContext
 
 from .flow_run import _get_flow_run
 
@@ -53,14 +53,14 @@ def __getattr__(name: str) -> Any:
     """
     Attribute accessor for this submodule; note that imports also work with this:
 
-        from prefect.runtime.flow_run import id
+        from syntask.runtime.flow_run import id
     """
 
     func = FIELDS.get(name)
 
     # if `name` is an attribute but it is mocked through environment variable, the mocked type will be str,
     # which might be different from original one. For consistency, cast env var to the same type
-    env_key = f"PREFECT__RUNTIME__DEPLOYMENT__{name.upper()}"
+    env_key = f"SYNTASK__RUNTIME__DEPLOYMENT__{name.upper()}"
 
     if func is None:
         if env_key in os.environ:
@@ -151,7 +151,7 @@ def get_version() -> Optional[Dict]:
 
 
 def get_flow_run_id() -> Optional[str]:
-    return os.getenv("PREFECT__FLOW_RUN_ID")
+    return os.getenv("SYNTASK__FLOW_RUN_ID")
 
 
 FIELDS = {

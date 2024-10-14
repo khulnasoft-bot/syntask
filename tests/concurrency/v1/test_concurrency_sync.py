@@ -5,15 +5,15 @@ import pytest
 from httpx import HTTPStatusError, Request, Response
 from starlette import status
 
-from prefect import flow, task
-from prefect.concurrency.v1.asyncio import (
+from syntask import flow, task
+from syntask.concurrency.v1.asyncio import (
     _acquire_concurrency_slots,
     _release_concurrency_slots,
 )
-from prefect.concurrency.v1.sync import concurrency
-from prefect.events.clients import AssertingEventsClient
-from prefect.events.worker import EventsWorker
-from prefect.server.schemas.core import ConcurrencyLimit
+from syntask.concurrency.v1.sync import concurrency
+from syntask.events.clients import AssertingEventsClient
+from syntask.events.worker import EventsWorker
+from syntask.server.schemas.core import ConcurrencyLimit
 
 
 def test_concurrency_orchestrates_api(concurrency_limit: ConcurrencyLimit):
@@ -28,11 +28,11 @@ def test_concurrency_orchestrates_api(concurrency_limit: ConcurrencyLimit):
     assert not executed
 
     with mock.patch(
-        "prefect.concurrency.v1.sync._acquire_concurrency_slots",
+        "syntask.concurrency.v1.sync._acquire_concurrency_slots",
         wraps=_acquire_concurrency_slots,
     ) as acquire_spy:
         with mock.patch(
-            "prefect.concurrency.v1.sync._release_concurrency_slots",
+            "syntask.concurrency.v1.sync._release_concurrency_slots",
             wraps=_release_concurrency_slots,
         ) as release_spy:
             resource_heavy()
@@ -71,51 +71,51 @@ def test_concurrency_emits_events(
     for phase in ["acquired", "released"]:
         event = next(
             filter(
-                lambda e: e.event == f"prefect.concurrency-limit.v1.{phase}"
+                lambda e: e.event == f"syntask.concurrency-limit.v1.{phase}"
                 and e.resource.id
-                == f"prefect.concurrency-limit.v1.{v1_concurrency_limit.id}",
+                == f"syntask.concurrency-limit.v1.{v1_concurrency_limit.id}",
                 asserting_events_worker._client.events,
             )
         )
 
         assert dict(event.resource) == {
-            "prefect.resource.id": f"prefect.concurrency-limit.v1.{v1_concurrency_limit.id}",
-            "prefect.resource.name": v1_concurrency_limit.tag,
+            "syntask.resource.id": f"syntask.concurrency-limit.v1.{v1_concurrency_limit.id}",
+            "syntask.resource.name": v1_concurrency_limit.tag,
             "task_run_id": str(task_run_id),
             "limit": str(v1_concurrency_limit.concurrency_limit),
         }
 
         assert len(event.related) == 1
         assert dict(event.related[0]) == {
-            "prefect.resource.id": (
-                f"prefect.concurrency-limit.v1.{other_v1_concurrency_limit.id}"
+            "syntask.resource.id": (
+                f"syntask.concurrency-limit.v1.{other_v1_concurrency_limit.id}"
             ),
-            "prefect.resource.role": "concurrency-limit",
+            "syntask.resource.role": "concurrency-limit",
         }
 
     for phase in ["acquired", "released"]:
         event = next(
             filter(
-                lambda e: e.event == f"prefect.concurrency-limit.v1.{phase}"
+                lambda e: e.event == f"syntask.concurrency-limit.v1.{phase}"
                 and e.resource.id
-                == f"prefect.concurrency-limit.v1.{other_v1_concurrency_limit.id}",
+                == f"syntask.concurrency-limit.v1.{other_v1_concurrency_limit.id}",
                 asserting_events_worker._client.events,
             )
         )
 
         assert dict(event.resource) == {
-            "prefect.resource.id": (
-                f"prefect.concurrency-limit.v1.{other_v1_concurrency_limit.id}"
+            "syntask.resource.id": (
+                f"syntask.concurrency-limit.v1.{other_v1_concurrency_limit.id}"
             ),
-            "prefect.resource.name": other_v1_concurrency_limit.tag,
+            "syntask.resource.name": other_v1_concurrency_limit.tag,
             "task_run_id": str(task_run_id),
             "limit": str(other_v1_concurrency_limit.concurrency_limit),
         }
 
         assert len(event.related) == 1
         assert dict(event.related[0]) == {
-            "prefect.resource.id": f"prefect.concurrency-limit.v1.{v1_concurrency_limit.id}",
-            "prefect.resource.role": "concurrency-limit",
+            "syntask.resource.id": f"syntask.concurrency-limit.v1.{v1_concurrency_limit.id}",
+            "syntask.resource.role": "concurrency-limit",
         }
 
 
@@ -174,7 +174,7 @@ def mock_increment_concurrency_slots(monkeypatch):
         )
 
     monkeypatch.setattr(
-        "prefect.client.orchestration.PrefectClient.increment_v1_concurrency_slots",
+        "syntask.client.orchestration.SyntaskClient.increment_v1_concurrency_slots",
         mocked_increment_concurrency_slots,
     )
 
@@ -201,11 +201,11 @@ def test_concurrency_without_limit_names_sync(names):
     assert not executed
 
     with mock.patch(
-        "prefect.concurrency.v1.sync._acquire_concurrency_slots",
+        "syntask.concurrency.v1.sync._acquire_concurrency_slots",
         wraps=lambda *args, **kwargs: None,
     ) as acquire_spy:
         with mock.patch(
-            "prefect.concurrency.v1.sync._release_concurrency_slots",
+            "syntask.concurrency.v1.sync._release_concurrency_slots",
             wraps=lambda *args, **kwargs: None,
         ) as release_spy:
             resource_heavy()

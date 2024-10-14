@@ -2,8 +2,8 @@ from contextvars import ContextVar
 from typing import List, Tuple
 from uuid import UUID
 
-from prefect.client.orchestration import get_client
-from prefect.context import ContextModel, Field
+from syntask.client.orchestration import get_client
+from syntask.context import ContextModel, Field
 
 
 class ConcurrencyContext(ContextModel):

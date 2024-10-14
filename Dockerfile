@@ -1,9 +1,9 @@
 # The version of Python in the final image
 ARG PYTHON_VERSION=3.9
-# The base image to use for the final image; Prefect and its Python requirements will
+# The base image to use for the final image; Syntask and its Python requirements will
 # be installed in this image. The default is the official Python slim image.
 # The following images are also available in this file:
-#   prefect-conda: Derivative of continuum/miniconda3 with a 'prefect' environment. Used for the 'conda' flavor.
+#   syntask-conda: Derivative of continuum/miniconda3 with a 'syntask' environment. Used for the 'conda' flavor.
 # Any image tag can be used, but it must have apt and pip.
 ARG BASE_IMAGE=python:${PYTHON_VERSION}-slim
 # The version used to build the Python distributable.
@@ -13,35 +13,12 @@ ARG NODE_VERSION=16.15
 # Any extra Python requirements to install
 ARG EXTRA_PIP_PACKAGES=""
 
-# Build the UI distributable.
-FROM node:${NODE_VERSION}-bullseye-slim as ui-builder
-
-WORKDIR /opt/ui
-
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y \
-    # Required for arm64 builds
-    chromium \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install a newer npm to avoid esbuild errors
-RUN npm install -g npm@8
-
-# Install dependencies separately so they cache
-COPY ./ui/package*.json ./
-RUN npm ci
-
-# Build static UI files
-COPY ./ui .
-RUN npm run build
-
-
 # Build the Python distributable.
 # Without this build step, versioneer cannot infer the version without git
 # see https://github.com/python-versioneer/python-versioneer/issues/215
 FROM python:${BUILD_PYTHON_VERSION}-slim AS python-builder
 
-WORKDIR /opt/prefect
+WORKDIR /opt/syntask
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
@@ -52,42 +29,39 @@ RUN apt-get update && \
 # Copy the repository in; requires full git history for versions to generate correctly
 COPY . ./
 
-# Package the UI into the distributable.
-COPY --from=ui-builder /opt/ui/dist ./src/prefect/server/ui
-
 # Create a source distributable archive; ensuring existing dists are removed first
 RUN rm -rf dist && python setup.py sdist
-RUN mv "dist/$(python setup.py --fullname).tar.gz" "dist/prefect.tar.gz"
+RUN mv "dist/$(python setup.py --fullname).tar.gz" "dist/syntask.tar.gz"
 
 
 # Setup a base final image from miniconda
-FROM continuumio/miniconda3 as prefect-conda
+FROM continuumio/miniconda3 as syntask-conda
 
 # Create a new conda environment with our required Python version
 ARG PYTHON_VERSION
 RUN conda create \
     python=${PYTHON_VERSION} \
-    --name prefect
+    --name syntask
 
-# Use the prefect environment by default
-RUN echo "conda activate prefect" >> ~/.bashrc
+# Use the syntask environment by default
+RUN echo "conda activate syntask" >> ~/.bashrc
 SHELL ["/bin/bash", "--login", "-c"]
 
 
 
-# Build the final image with Prefect installed and our entrypoint configured
+# Build the final image with Syntask installed and our entrypoint configured
 FROM ${BASE_IMAGE} as final
 
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-LABEL maintainer="help@syntask.khulnasoft.com"
-LABEL io.prefect.python-version=${PYTHON_VERSION}
+LABEL maintainer="help@khulnasoft.com"
+LABEL io.syntask.python-version=${PYTHON_VERSION}
 LABEL org.label-schema.schema-version = "1.0"
-LABEL org.label-schema.name="prefect"
+LABEL org.label-schema.name="syntask"
 LABEL org.label-schema.url="https://www.syntask.khulnasoft.com/"
 
-WORKDIR /opt/prefect
+WORKDIR /opt/syntask
 
 # Install requirements
 # - tini: Used in the entrypoint
@@ -104,22 +78,22 @@ RUN apt-get update && \
 RUN python -m pip install --no-cache-dir pip==23.3.1
 
 # Install the base requirements separately so they cache
-COPY requirements-client.txt requirements.txt ./
-RUN pip install --upgrade --upgrade-strategy eager --no-cache-dir -r requirements.txt
+COPY requirements requirements
+RUN pip install --upgrade --upgrade-strategy eager --no-cache-dir -r requirements/requirements.txt
 
-# Install prefect from the sdist
-COPY --from=python-builder /opt/prefect/dist ./dist
+# Install syntask from the sdist
+COPY --from=python-builder /opt/syntask/dist ./dist
 
 # Extras to include during `pip install`. Must be wrapped in brackets, e.g. "[dev]"
-ARG PREFECT_EXTRAS=${PREFECT_EXTRAS:-""}
-RUN pip install --no-cache-dir "./dist/prefect.tar.gz${PREFECT_EXTRAS}"
+ARG SYNTASK_EXTRAS=${SYNTASK_EXTRAS:-""}
+RUN pip install --no-cache-dir "./dist/syntask.tar.gz${SYNTASK_EXTRAS}"
 
 ARG EXTRA_PIP_PACKAGES=${EXTRA_PIP_PACKAGES:-""}
 RUN [ -z "${EXTRA_PIP_PACKAGES}" ] || pip install --no-cache-dir "${EXTRA_PIP_PACKAGES}"
 
 # Smoke test
-RUN prefect version
+RUN syntask version
 
 # Setup entrypoint
 COPY scripts/entrypoint.sh ./entrypoint.sh
-ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/opt/prefect/entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/opt/syntask/entrypoint.sh"]

@@ -4,12 +4,12 @@ from contextlib import asynccontextmanager
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from prefect.server.database import orm_models
-from prefect.server.database.alembic_commands import alembic_downgrade, alembic_upgrade
-from prefect.server.database.configurations import BaseDatabaseConfiguration
-from prefect.server.database.query_components import BaseQueryComponents
-from prefect.server.utilities.database import get_dialect
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.server.database import orm_models
+from syntask.server.database.alembic_commands import alembic_downgrade, alembic_upgrade
+from syntask.server.database.configurations import BaseDatabaseConfiguration
+from syntask.server.database.query_components import BaseQueryComponents
+from syntask.server.utilities.database import get_dialect
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 class DBSingleton(type):
@@ -31,7 +31,7 @@ class DBSingleton(type):
         return cls._instances[unique_key]
 
 
-class PrefectDBInterface(metaclass=DBSingleton):
+class SyntaskDBInterface(metaclass=DBSingleton):
     """
     An interface for backend-specific SqlAlchemy actions and ORM models.
 

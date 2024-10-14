@@ -2,8 +2,8 @@ import importlib
 
 import pytest
 
-from prefect._internal.compatibility.migration import MOVED_IN_V3, REMOVED_IN_V3
-from prefect.exceptions import PrefectImportError
+from syntask._internal.compatibility.migration import MOVED_IN_V3, REMOVED_IN_V3
+from syntask.exceptions import SyntaskImportError
 
 
 def import_from(dotted_path: str):
@@ -66,6 +66,6 @@ def test_moved_in_v3(module):
 
 @pytest.mark.parametrize("module", REMOVED_IN_V3.keys())
 def test_removed_in_v3(module):
-    with pytest.raises(PrefectImportError):
+    with pytest.raises(SyntaskImportError):
         import_from(module)
         assert False, f"{module} should not have been importable"

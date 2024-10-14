@@ -9,8 +9,8 @@ Create Date: 2022-04-25 13:52:07.514013
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
-from prefect.blocks.core import Block
+import syntask
+from syntask.blocks.core import Block
 
 # revision identifiers, used by Alembic.
 revision = "b75d279ba985"
@@ -25,7 +25,7 @@ def upgrade():
         "block_type",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4))) \n        || '-' \n       "
                 " || lower(hex(randomblob(2))) \n        || '-4' \n        ||"
@@ -38,13 +38,13 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
@@ -62,7 +62,7 @@ def upgrade():
     with op.batch_alter_table("block_document", schema=None) as batch_op:
         batch_op.add_column(
             sa.Column(
-                "block_type_id", prefect.server.utilities.database.UUID(), nullable=True
+                "block_type_id", syntask.server.utilities.database.UUID(), nullable=True
             )
         )
         batch_op.drop_index("uq_block__schema_id_name")
@@ -84,7 +84,7 @@ def upgrade():
     ) as batch_op:
         batch_op.add_column(
             sa.Column(
-                "block_type_id", prefect.server.utilities.database.UUID(), nullable=True
+                "block_type_id", syntask.server.utilities.database.UUID(), nullable=True
             )
         )
         batch_op.create_foreign_key(

@@ -1,31 +1,31 @@
-import prefect.settings
-from prefect.cli.root import app
+import syntask.settings
+from syntask.cli.root import app
 
 # Import CLI submodules to register them to the app
 # isort: split
 
-import prefect.cli.artifact
-import prefect.cli.block
-import prefect.cli.cloud
-import prefect.cli.cloud.ip_allowlist
-import prefect.cli.cloud.webhook
-import prefect.cli.shell
-import prefect.cli.concurrency_limit
-import prefect.cli.config
-import prefect.cli.dashboard
-import prefect.cli.deploy
-import prefect.cli.deployment
-import prefect.cli.dev
-import prefect.cli.events
-import prefect.cli.flow
-import prefect.cli.flow_run
-import prefect.cli.global_concurrency_limit
-import prefect.cli.profile
-import prefect.cli.server
-import prefect.cli.task
-import prefect.cli.variable
-import prefect.cli.work_pool
-import prefect.cli.work_queue
-import prefect.cli.worker
-import prefect.cli.task_run
-import prefect.events.cli.automations
+import syntask.cli.artifact
+import syntask.cli.block
+import syntask.cli.cloud
+import syntask.cli.cloud.ip_allowlist
+import syntask.cli.cloud.webhook
+import syntask.cli.shell
+import syntask.cli.concurrency_limit
+import syntask.cli.config
+import syntask.cli.dashboard
+import syntask.cli.deploy
+import syntask.cli.deployment
+import syntask.cli.dev
+import syntask.cli.events
+import syntask.cli.flow
+import syntask.cli.flow_run
+import syntask.cli.global_concurrency_limit
+import syntask.cli.profile
+import syntask.cli.server
+import syntask.cli.task
+import syntask.cli.variable
+import syntask.cli.work_pool
+import syntask.cli.work_queue
+import syntask.cli.worker
+import syntask.cli.task_run
+import syntask.events.cli.automations

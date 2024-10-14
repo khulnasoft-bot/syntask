@@ -11,9 +11,9 @@ from fastapi.applications import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect import states as client_states
-from prefect.server import models
-from prefect.server.database.orm_models import (
+from syntask import states as client_states
+from syntask.server import models
+from syntask.server.database.orm_models import (
     ORMDeployment,
     ORMFlow,
     ORMFlowRun,
@@ -21,24 +21,24 @@ from prefect.server.database.orm_models import (
     ORMWorkPool,
     ORMWorkQueue,
 )
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.events import RelatedResource, Resource
-from prefect.server.models import events, flow_run_states, flow_runs, workers
-from prefect.server.models.events import _flow_run_resource_data_cache
-from prefect.server.models.work_queues import create_work_queue
-from prefect.server.orchestration.instrumentation_policies import (
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.events import RelatedResource, Resource
+from syntask.server.models import events, flow_run_states, flow_runs, workers
+from syntask.server.models.events import _flow_run_resource_data_cache
+from syntask.server.models.work_queues import create_work_queue
+from syntask.server.orchestration.instrumentation_policies import (
     InstrumentFlowRunStateTransitions,
 )
-from prefect.server.orchestration.rules import (
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     BaseOrchestrationRule,
     FlowOrchestrationContext,
     TaskOrchestrationContext,
 )
-from prefect.server.schemas.actions import WorkQueueCreate
-from prefect.server.schemas.core import CreatedBy, FlowRun
-from prefect.server.schemas.responses import FlowRunResponse
-from prefect.server.schemas.states import (
+from syntask.server.schemas.actions import WorkQueueCreate
+from syntask.server.schemas.core import CreatedBy, FlowRun
+from syntask.server.schemas.responses import FlowRunResponse
+from syntask.server.schemas.states import (
     Pending,
     State,
     StateDetails,
@@ -80,25 +80,25 @@ async def test_instrumenting_a_flow_run_state_change(
     (event,) = AssertingEventsClient.last.events
 
     assert context.proposed_state
-    assert event.event == "prefect.flow-run.Running"
+    assert event.event == "syntask.flow-run.Running"
     assert start_of_test <= event.occurred <= pendulum.now("UTC")
 
     assert event.resource == Resource.model_validate(
         {
-            "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-            "prefect.resource.name": flow_run.name,
-            "prefect.state-message": "",
-            "prefect.state-name": "Running",
-            "prefect.state-timestamp": context.proposed_state.timestamp.isoformat(),
-            "prefect.state-type": "RUNNING",
+            "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+            "syntask.resource.name": flow_run.name,
+            "syntask.state-message": "",
+            "syntask.state-name": "Running",
+            "syntask.state-timestamp": context.proposed_state.timestamp.isoformat(),
+            "syntask.state-type": "RUNNING",
         }
     )
     assert event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow.{flow.id}",
-                "prefect.resource.role": "flow",
-                "prefect.resource.name": "my-flow",
+                "syntask.resource.id": f"syntask.flow.{flow.id}",
+                "syntask.resource.role": "flow",
+                "syntask.resource.name": "my-flow",
             }
         )
     ]
@@ -109,11 +109,11 @@ async def test_instrumenting_a_flow_run_state_change(
     [
         (
             CreatedBy(id=uuid4(), type="DEPLOYMENT", display_value="Deployjoy"),
-            "prefect.deployment",
+            "syntask.deployment",
         ),
         (
             CreatedBy(id=uuid4(), type="AUTOMATION", display_value="I'm Triggered"),
-            "prefect.automation",
+            "syntask.automation",
         ),
         (
             CreatedBy(id=uuid4(), type="NEVERHOIDOFIT", display_value="anything"),
@@ -157,9 +157,9 @@ async def test_capturing_flow_run_provenance_as_related_resource(
         assert creators == [
             RelatedResource.model_validate(
                 {
-                    "prefect.resource.id": f"{resource_prefix}.{created_by.id}",
-                    "prefect.resource.role": "creator",
-                    "prefect.resource.name": created_by.display_value,
+                    "syntask.resource.id": f"{resource_prefix}.{created_by.id}",
+                    "syntask.resource.role": "creator",
+                    "syntask.resource.name": created_by.display_value,
                 }
             )
         ]
@@ -210,12 +210,12 @@ async def test_flow_run_state_change_events_capture_order_on_short_gaps(
 
     assert len(AssertingEventsClient.all) == 2
     all_events = {e.events[0].event for e in AssertingEventsClient.all}
-    assert all_events == {"prefect.flow-run.Pending", "prefect.flow-run.Running"}
+    assert all_events == {"syntask.flow-run.Pending", "syntask.flow-run.Running"}
 
     assert AssertingEventsClient.last
     (event,) = AssertingEventsClient.last.events
 
-    assert event.event == "prefect.flow-run.Running"
+    assert event.event == "syntask.flow-run.Running"
     assert event.id == running_state.id
 
     # we _do_ track event.follows here because the events are close enough in time
@@ -269,7 +269,7 @@ async def test_flow_run_state_change_events_do_not_capture_order_on_long_gaps(
     assert AssertingEventsClient.last
     (event,) = AssertingEventsClient.last.events
 
-    assert event.event == "prefect.flow-run.Running"
+    assert event.event == "syntask.flow-run.Running"
     assert event.id == running_state.id
 
     # we _do not_ track event.follows here because the events are distant enough in time
@@ -301,7 +301,7 @@ async def test_flow_run_state_change_events_do_not_capture_order_on_initial_tran
     assert AssertingEventsClient.last
     (event,) = AssertingEventsClient.last.events
 
-    assert event.event == "prefect.flow-run.Pending"
+    assert event.event == "syntask.flow-run.Pending"
     assert event.id == pending_state.id
     assert event.follows is None
 
@@ -328,7 +328,7 @@ async def test_instrumenting_a_flow_run_with_no_flow(
 
     # emulate the race condition where a flow is deleted just after getting a flow_run
     with mock.patch(
-        "prefect.server.models.events.models.flows.read_flow",
+        "syntask.server.models.events.models.flows.read_flow",
         return_value=None,
         spec=models.flows.read_flow,
     ):
@@ -340,17 +340,17 @@ async def test_instrumenting_a_flow_run_with_no_flow(
     (event,) = AssertingEventsClient.last.events
 
     assert context.proposed_state
-    assert event.event == "prefect.flow-run.Running"
+    assert event.event == "syntask.flow-run.Running"
     assert start_of_test <= event.occurred <= pendulum.now("UTC")
 
     assert event.resource == Resource.model_validate(
         {
-            "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-            "prefect.resource.name": flow_run.name,
-            "prefect.state-message": "",
-            "prefect.state-name": "Running",
-            "prefect.state-timestamp": context.proposed_state.timestamp.isoformat(),
-            "prefect.state-type": "RUNNING",
+            "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+            "syntask.resource.name": flow_run.name,
+            "syntask.state-message": "",
+            "syntask.state-name": "Running",
+            "syntask.state-timestamp": context.proposed_state.timestamp.isoformat(),
+            "syntask.state-type": "RUNNING",
         }
     )
     # flow runs without a flow won't be able to have any related resources
@@ -415,22 +415,22 @@ async def test_instrumenting_a_deployed_flow_run_state_change(
     assert event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow.{flow.id}",
-                "prefect.resource.role": "flow",
-                "prefect.resource.name": "my-flow",
+                "syntask.resource.id": f"syntask.flow.{flow.id}",
+                "syntask.resource.role": "flow",
+                "syntask.resource.name": "my-flow",
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.deployment.{deployment.id}",
-                "prefect.resource.role": "deployment",
-                "prefect.resource.name": deployment.name,
+                "syntask.resource.id": f"syntask.deployment.{deployment.id}",
+                "syntask.resource.role": "deployment",
+                "syntask.resource.name": deployment.name,
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.tag.test",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": "syntask.tag.test",
+                "syntask.resource.role": "tag",
             }
         ),
     ]
@@ -479,8 +479,8 @@ async def test_instrumenting_a_flow_with_tags(
     assert (
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.tag.common-one",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": "syntask.tag.common-one",
+                "syntask.resource.role": "tag",
             }
         )
         in event.related
@@ -488,8 +488,8 @@ async def test_instrumenting_a_flow_with_tags(
     assert (
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.tag.deployment-one",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": "syntask.tag.deployment-one",
+                "syntask.resource.role": "tag",
             }
         )
         in event.related
@@ -497,8 +497,8 @@ async def test_instrumenting_a_flow_with_tags(
     assert (
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.tag.flow-run-one",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": "syntask.tag.flow-run-one",
+                "syntask.resource.role": "tag",
             }
         )
         in event.related
@@ -506,8 +506,8 @@ async def test_instrumenting_a_flow_with_tags(
     assert (
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.tag.flow-one",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": "syntask.tag.flow-one",
+                "syntask.resource.role": "tag",
             }
         )
         in event.related
@@ -569,9 +569,9 @@ async def test_instrumenting_a_flow_run_from_a_work_queue(
     assert (
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-queue.{work_queue.id}",
-                "prefect.resource.role": "work-queue",
-                "prefect.resource.name": "This is a queuey one",
+                "syntask.resource.id": f"syntask.work-queue.{work_queue.id}",
+                "syntask.resource.role": "work-queue",
+                "syntask.resource.name": "This is a queuey one",
             }
         )
         in event.related
@@ -580,9 +580,9 @@ async def test_instrumenting_a_flow_run_from_a_work_queue(
     assert (
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                "prefect.resource.role": "work-pool",
-                "prefect.resource.name": work_pool.name,
+                "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                "syntask.resource.role": "work-pool",
+                "syntask.resource.name": work_pool.name,
             }
         )
         in event.related
@@ -656,8 +656,8 @@ async def test_still_instruments_rejected_state_transitions(
     assert AssertingEventsClient.last
     (event,) = AssertingEventsClient.last.events
 
-    assert event.event == "prefect.flow-run.Cancelled Fussily"
-    assert event.resource["prefect.state-type"] == "CANCELLED"
+    assert event.event == "syntask.flow-run.Cancelled Fussily"
+    assert event.resource["syntask.state-type"] == "CANCELLED"
 
 
 async def test_does_nothing_for_aborted_transitions(
@@ -764,7 +764,7 @@ async def test_cancelling_to_cancelled_transitions(
     flow_run: ORMFlowRun,
     start_of_test: pendulum.DateTime,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/2826, where
+    """Regression test for https://github.com/SynoPKG/nebula/issues/2826, where
     we observed that flow runs firing Cancelling events never end up firing Cancelled
     events.  Uses the API for a more realistic reproduction case."""
     await flow_runs.set_flow_run_state(
@@ -796,17 +796,17 @@ async def test_cancelling_to_cancelled_transitions(
     assert AssertingEventsClient.last
     (event,) = AssertingEventsClient.last.events
 
-    assert event.event == "prefect.flow-run.Cancelled"
+    assert event.event == "syntask.flow-run.Cancelled"
     assert start_of_test <= event.occurred <= pendulum.now("UTC")
 
     assert event.resource == Resource.model_validate(
         {
-            "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-            "prefect.resource.name": flow_run.name,
-            "prefect.state-message": "",
-            "prefect.state-name": "Cancelled",
-            "prefect.state-timestamp": updated_flow_run.state.timestamp.isoformat(),
-            "prefect.state-type": "CANCELLED",
+            "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+            "syntask.resource.name": flow_run.name,
+            "syntask.state-message": "",
+            "syntask.state-name": "Cancelled",
+            "syntask.state-timestamp": updated_flow_run.state.timestamp.isoformat(),
+            "syntask.state-type": "CANCELLED",
         }
     )
 

@@ -25,21 +25,21 @@ from pydantic import (
 )
 from typing_extensions import Literal, Self, TypeVar
 
-from prefect._internal.schemas.validators import (
+from syntask._internal.schemas.validators import (
     cast_type_names_to_serializers,
     validate_compressionlib,
     validate_dump_kwargs,
     validate_load_kwargs,
     validate_picklelib,
 )
-from prefect.utilities.dispatch import get_dispatch_key, lookup_type, register_base_type
-from prefect.utilities.importtools import from_qualified_name, to_qualified_name
-from prefect.utilities.pydantic import custom_pydantic_encoder
+from syntask.utilities.dispatch import get_dispatch_key, lookup_type, register_base_type
+from syntask.utilities.importtools import from_qualified_name, to_qualified_name
+from syntask.utilities.pydantic import custom_pydantic_encoder
 
 D = TypeVar("D", default=Any)
 
 
-def prefect_json_object_encoder(obj: Any) -> Any:
+def syntask_json_object_encoder(obj: Any) -> Any:
     """
     `JSONEncoder.default` for encoding objects into JSON with extended type support.
 
@@ -54,10 +54,10 @@ def prefect_json_object_encoder(obj: Any) -> Any:
         }
 
 
-def prefect_json_object_decoder(result: dict):
+def syntask_json_object_decoder(result: dict):
     """
     `JSONDecoder.object_hook` for decoding objects from JSON when previously encoded
-    with `prefect_json_object_encoder`
+    with `syntask_json_object_encoder`
     """
     if "__class__" in result:
         return TypeAdapter(from_qualified_name(result["__class__"])).validate_python(
@@ -155,7 +155,7 @@ class JSONSerializer(Serializer):
 
     jsonlib: str = "json"
     object_encoder: Optional[str] = Field(
-        default="prefect.serializers.prefect_json_object_encoder",
+        default="syntask.serializers.syntask_json_object_encoder",
         description=(
             "An optional callable to use when serializing objects that are not "
             "supported by the JSON encoder. By default, this is set to a callable that "
@@ -163,7 +163,7 @@ class JSONSerializer(Serializer):
         ),
     )
     object_decoder: Optional[str] = Field(
-        default="prefect.serializers.prefect_json_object_decoder",
+        default="syntask.serializers.syntask_json_object_decoder",
         description=(
             "An optional callable to use when deserializing objects. This callable "
             "is passed each dictionary encountered during JSON deserialization. "

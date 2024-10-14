@@ -5,20 +5,20 @@ import sys
 # Checks to make sure that collections are loaded prior to attempting to start a worker
 def main():
     subprocess.check_call(
-        ["python", "-m", "pip", "install", "prefect-kubernetes>=0.5.0"],
+        ["python", "-m", "pip", "install", "syntask-kubernetes>=0.5.0"],
         stdout=sys.stdout,
         stderr=sys.stderr,
     )
     try:
         subprocess.check_output(
-            ["prefect", "work-pool", "delete", "test-pool"],
+            ["syntask", "work-pool", "delete", "test-pool"],
         )
     except subprocess.CalledProcessError:
         pass
 
     try:
         subprocess.check_output(
-            ["prefect", "work-pool", "create", "test-pool", "-t", "nonsense"],
+            ["syntask", "work-pool", "create", "test-pool", "-t", "nonsense"],
         )
     except subprocess.CalledProcessError as e:
         # Check that the error message contains kubernetes worker type
@@ -28,13 +28,13 @@ def main():
             ), f"Worker type {type!r} missing from output {e.output}"
 
     subprocess.check_call(
-        ["prefect", "work-pool", "create", "test-pool", "-t", "kubernetes"],
+        ["syntask", "work-pool", "create", "test-pool", "-t", "kubernetes"],
         stdout=sys.stdout,
         stderr=sys.stderr,
     )
     subprocess.check_call(
         [
-            "prefect",
+            "syntask",
             "worker",
             "start",
             "-p",
@@ -47,12 +47,12 @@ def main():
         stderr=sys.stderr,
     )
     subprocess.check_call(
-        ["python", "-m", "pip", "uninstall", "prefect-kubernetes", "-y"],
+        ["python", "-m", "pip", "uninstall", "syntask-kubernetes", "-y"],
         stdout=sys.stdout,
         stderr=sys.stderr,
     )
     subprocess.check_call(
-        ["prefect", "work-pool", "delete", "test-pool"],
+        ["syntask", "work-pool", "delete", "test-pool"],
         stdout=sys.stdout,
         stderr=sys.stderr,
     )

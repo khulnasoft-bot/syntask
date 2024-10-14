@@ -5,10 +5,10 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect import settings
-from prefect.server import models
-from prefect.server.database import orm_models
-from prefect.server.schemas import core
+from syntask import settings
+from syntask.server import models
+from syntask.server.database import orm_models
+from syntask.server.schemas import core
 
 
 @pytest.fixture
@@ -28,11 +28,11 @@ class TestCreateOrUpdateCsrfToken:
 
         now = datetime.now(timezone.utc)
         fuzzy_expiration_start = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             - timedelta(seconds=10)
         )
         fuzzy_expiration_end = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             + timedelta(seconds=10)
         )
 
@@ -55,11 +55,11 @@ class TestCreateOrUpdateCsrfToken:
 
         now = datetime.now(timezone.utc)
         fuzzy_expiration_start = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             - timedelta(seconds=10)
         )
         fuzzy_expiration_end = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             + timedelta(seconds=10)
         )
 

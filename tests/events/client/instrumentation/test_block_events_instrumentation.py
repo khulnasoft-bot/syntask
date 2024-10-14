@@ -2,12 +2,12 @@ from unittest import mock
 
 from pydantic import SecretStr
 
-from prefect.blocks.notifications import PagerDutyWebHook
-from prefect.blocks.system import Secret
-from prefect.events.clients import AssertingEventsClient
-from prefect.events.worker import EventsWorker
-from prefect.flows import flow
-from prefect.testing.utilities import AsyncMock
+from syntask.blocks.notifications import PagerDutyWebHook
+from syntask.blocks.system import Secret
+from syntask.events.clients import AssertingEventsClient
+from syntask.events.worker import EventsWorker
+from syntask.flows import flow
+from syntask.testing.utilities import AsyncMock
 
 
 async def test_async_blocks_instrumented(
@@ -24,10 +24,10 @@ async def test_async_blocks_instrumented(
     assert len(asserting_events_worker._client.events) == 1
 
     load_event = asserting_events_worker._client.events[0]
-    assert load_event.event == "prefect.block.secret.loaded"
-    assert load_event.resource.id == f"prefect.block-document.{document_id}"
-    assert load_event.resource["prefect.resource.name"] == "top-secret"
-    assert load_event.related[0].id == "prefect.block-type.secret"
+    assert load_event.event == "syntask.block.secret.loaded"
+    assert load_event.resource.id == f"syntask.block-document.{document_id}"
+    assert load_event.resource["syntask.resource.name"] == "top-secret"
+    assert load_event.related[0].id == "syntask.block-type.secret"
     assert load_event.related[0].role == "block-type"
 
 
@@ -52,10 +52,10 @@ def test_sync_blocks_instrumented(
     assert len(asserting_events_worker._client.events) == 1
 
     load_event = asserting_events_worker._client.events[0]
-    assert load_event.event == "prefect.block.secret.loaded"
-    assert load_event.resource.id == f"prefect.block-document.{document_id}"
-    assert load_event.resource["prefect.resource.name"] == "top-secret"
-    assert load_event.related[0].id == "prefect.block-type.secret"
+    assert load_event.event == "syntask.block.secret.loaded"
+    assert load_event.resource.id == f"syntask.block-document.{document_id}"
+    assert load_event.resource["syntask.resource.name"] == "top-secret"
+    assert load_event.related[0].id == "syntask.block-type.secret"
     assert load_event.related[0].role == "block-type"
 
 
@@ -88,10 +88,10 @@ def test_notifications_notify_instrumented_sync(
         assert len(asserting_events_worker._client.events) == 1
 
         load_event = asserting_events_worker._client.events[0]
-        assert load_event.event == "prefect.block.pager-duty-webhook.loaded"
-        assert load_event.resource.id == f"prefect.block-document.{document_id}"
-        assert load_event.resource["prefect.resource.name"] == "pager-duty-events"
-        assert load_event.related[0].id == "prefect.block-type.pager-duty-webhook"
+        assert load_event.event == "syntask.block.pager-duty-webhook.loaded"
+        assert load_event.resource.id == f"syntask.block-document.{document_id}"
+        assert load_event.resource["syntask.resource.name"] == "pager-duty-events"
+        assert load_event.related[0].id == "syntask.block-type.pager-duty-webhook"
         assert load_event.related[0].role == "block-type"
 
 
@@ -116,8 +116,8 @@ async def test_notifications_notify_instrumented_async(
         assert len(asserting_events_worker._client.events) == 1
 
         load_event = asserting_events_worker._client.events[0]
-        assert load_event.event == "prefect.block.pager-duty-webhook.loaded"
-        assert load_event.resource.id == f"prefect.block-document.{document_id}"
-        assert load_event.resource["prefect.resource.name"] == "pager-duty-events"
-        assert load_event.related[0].id == "prefect.block-type.pager-duty-webhook"
+        assert load_event.event == "syntask.block.pager-duty-webhook.loaded"
+        assert load_event.resource.id == f"syntask.block-document.{document_id}"
+        assert load_event.resource["syntask.resource.name"] == "pager-duty-events"
+        assert load_event.related[0].id == "syntask.block-type.pager-duty-webhook"
         assert load_event.related[0].role == "block-type"

@@ -9,21 +9,21 @@ import pendulum
 import sqlalchemy as sa
 from typing_extensions import Self
 
-from prefect.server import models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models.deployments import mark_deployments_not_ready
-from prefect.server.models.work_queues import mark_work_queues_not_ready
-from prefect.server.models.workers import emit_work_pool_status_event
-from prefect.server.schemas.internal import InternalWorkPoolUpdate
-from prefect.server.schemas.statuses import DeploymentStatus, WorkPoolStatus
-from prefect.server.services.loop_service import LoopService
-from prefect.settings import (
-    PREFECT_API_SERVICES_FOREMAN_DEPLOYMENT_LAST_POLLED_TIMEOUT_SECONDS,
-    PREFECT_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS,
-    PREFECT_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE,
-    PREFECT_API_SERVICES_FOREMAN_LOOP_SECONDS,
-    PREFECT_API_SERVICES_FOREMAN_WORK_QUEUE_LAST_POLLED_TIMEOUT_SECONDS,
+from syntask.server import models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models.deployments import mark_deployments_not_ready
+from syntask.server.models.work_queues import mark_work_queues_not_ready
+from syntask.server.models.workers import emit_work_pool_status_event
+from syntask.server.schemas.internal import InternalWorkPoolUpdate
+from syntask.server.schemas.statuses import DeploymentStatus, WorkPoolStatus
+from syntask.server.services.loop_service import LoopService
+from syntask.settings import (
+    SYNTASK_API_SERVICES_FOREMAN_DEPLOYMENT_LAST_POLLED_TIMEOUT_SECONDS,
+    SYNTASK_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS,
+    SYNTASK_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE,
+    SYNTASK_API_SERVICES_FOREMAN_LOOP_SECONDS,
+    SYNTASK_API_SERVICES_FOREMAN_WORK_QUEUE_LAST_POLLED_TIMEOUT_SECONDS,
 )
 
 
@@ -45,32 +45,32 @@ class Foreman(LoopService):
     ):
         super().__init__(
             loop_seconds=loop_seconds
-            or PREFECT_API_SERVICES_FOREMAN_LOOP_SECONDS.value(),
+            or SYNTASK_API_SERVICES_FOREMAN_LOOP_SECONDS.value(),
             **kwargs,
         )
         self._inactivity_heartbeat_multiple = (
-            PREFECT_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE.value()
+            SYNTASK_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE.value()
             if inactivity_heartbeat_multiple is None
             else inactivity_heartbeat_multiple
         )
         self._fallback_heartbeat_interval_seconds = (
-            PREFECT_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS.value()
+            SYNTASK_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS.value()
             if fallback_heartbeat_interval_seconds is None
             else fallback_heartbeat_interval_seconds
         )
         self._deployment_last_polled_timeout_seconds = (
-            PREFECT_API_SERVICES_FOREMAN_DEPLOYMENT_LAST_POLLED_TIMEOUT_SECONDS.value()
+            SYNTASK_API_SERVICES_FOREMAN_DEPLOYMENT_LAST_POLLED_TIMEOUT_SECONDS.value()
             if deployment_last_polled_timeout_seconds is None
             else deployment_last_polled_timeout_seconds
         )
         self._work_queue_last_polled_timeout_seconds = (
-            PREFECT_API_SERVICES_FOREMAN_WORK_QUEUE_LAST_POLLED_TIMEOUT_SECONDS.value()
+            SYNTASK_API_SERVICES_FOREMAN_WORK_QUEUE_LAST_POLLED_TIMEOUT_SECONDS.value()
             if work_queue_last_polled_timeout_seconds is None
             else work_queue_last_polled_timeout_seconds
         )
 
     @db_injector
-    async def run_once(db: PrefectDBInterface, self: Self) -> None:
+    async def run_once(db: SyntaskDBInterface, self: Self) -> None:
         """
         Iterate over workers current marked as online. Mark workers as offline
         if they have an old last_heartbeat_time. Marks work pools as not ready
@@ -85,7 +85,7 @@ class Foreman(LoopService):
 
     @db_injector
     async def _mark_online_workers_without_a_recent_heartbeat_as_offline(
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         self: Self,
     ) -> None:
         """
@@ -147,7 +147,7 @@ class Foreman(LoopService):
             self.logger.info(f"Marked {result.rowcount} workers as offline.")
 
     @db_injector
-    async def _mark_work_pools_as_not_ready(db: PrefectDBInterface, self: Self):
+    async def _mark_work_pools_as_not_ready(db: SyntaskDBInterface, self: Self):
         """
         Marks a work pool as not ready.
 
@@ -186,7 +186,7 @@ class Foreman(LoopService):
 
     @db_injector
     async def _mark_deployments_as_not_ready(
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         self: Self,
     ):
         """
@@ -232,7 +232,7 @@ class Foreman(LoopService):
 
     @db_injector
     async def _mark_work_queues_as_not_ready(
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         self: Self,
     ):
         """

@@ -7,20 +7,20 @@ import anyio
 import httpx
 from typing_extensions import Literal
 
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.filters import FlowRunFilter, TaskRunFilter
-from prefect.client.schemas.objects import FlowRun
-from prefect.context import FlowRunContext
-from prefect.flows import Flow
-from prefect.logging import get_logger
-from prefect.settings import (
-    PREFECT_RUNNER_PROCESS_LIMIT,
-    PREFECT_RUNNER_SERVER_HOST,
-    PREFECT_RUNNER_SERVER_PORT,
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.filters import FlowRunFilter, TaskRunFilter
+from syntask.client.schemas.objects import FlowRun
+from syntask.context import FlowRunContext
+from syntask.flows import Flow
+from syntask.logging import get_logger
+from syntask.settings import (
+    SYNTASK_RUNNER_PROCESS_LIMIT,
+    SYNTASK_RUNNER_SERVER_HOST,
+    SYNTASK_RUNNER_SERVER_PORT,
 )
-from prefect.states import Pending
-from prefect.tasks import Task
-from prefect.utilities.asyncutils import sync_compatible
+from syntask.states import Pending
+from syntask.tasks import Task
+from syntask.utilities.asyncutils import sync_compatible
 
 logger = get_logger("webserver")
 
@@ -42,7 +42,7 @@ async def _submit_flow_to_runner(
     Returns:
         A `FlowRun` object representing the flow run that was submitted.
     """
-    from prefect.utilities.engine import (
+    from syntask.utilities.engine import (
         _dynamic_key_for_task_run,
         collect_task_run_inputs,
         resolve_inputs,
@@ -77,8 +77,8 @@ async def _submit_flow_to_runner(
 
         response = await client._client.post(
             (
-                f"http://{PREFECT_RUNNER_SERVER_HOST.value()}"
-                f":{PREFECT_RUNNER_SERVER_PORT.value()}"
+                f"http://{SYNTASK_RUNNER_SERVER_HOST.value()}"
+                f":{SYNTASK_RUNNER_SERVER_PORT.value()}"
                 "/flow/run"
             ),
             json={
@@ -94,25 +94,23 @@ async def _submit_flow_to_runner(
 
 @overload
 def submit_to_runner(
-    prefect_callable: Union[Flow, Task],
+    syntask_callable: Union[Flow, Task],
     parameters: Dict[str, Any],
     retry_failed_submissions: bool = True,
-) -> FlowRun:
-    ...
+) -> FlowRun: ...
 
 
 @overload
 def submit_to_runner(
-    prefect_callable: Union[Flow, Task],
+    syntask_callable: Union[Flow, Task],
     parameters: List[Dict[str, Any]],
     retry_failed_submissions: bool = True,
-) -> List[FlowRun]:
-    ...
+) -> List[FlowRun]: ...
 
 
 @sync_compatible
 async def submit_to_runner(
-    prefect_callable: Union[Flow, Task],
+    syntask_callable: Union[Flow, Task],
     parameters: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
     retry_failed_submissions: bool = True,
 ) -> Union[FlowRun, List[FlowRun]]:
@@ -120,12 +118,12 @@ async def submit_to_runner(
     Submit a callable in the background via the runner webserver one or more times.
 
     Args:
-        prefect_callable: the callable to run (only flows are supported for now, but eventually tasks)
+        syntask_callable: the callable to run (only flows are supported for now, but eventually tasks)
         parameters: keyword arguments to pass to the callable. May be a list of dictionaries where
             each dictionary represents a discrete invocation of the callable
         retry_failed_submissions: Whether to retry failed submissions to the runner webserver.
     """
-    if not isinstance(prefect_callable, (Flow, Task)):
+    if not isinstance(syntask_callable, (Flow, Task)):
         raise TypeError(
             "The `submit_to_runner` utility only supports submitting flows and tasks."
         )
@@ -145,7 +143,7 @@ async def submit_to_runner(
     for p in parameters:
         try:
             flow_run = await _submit_flow_to_runner(
-                prefect_callable, p, retry_failed_submissions
+                syntask_callable, p, retry_failed_submissions
             )
             if inspect.isawaitable(flow_run):
                 flow_run = await flow_run
@@ -155,7 +153,7 @@ async def submit_to_runner(
                 "Failed to connect to the `Runner` webserver. Ensure that the server is"
                 " running and reachable. You can run the webserver either by starting"
                 " your `serve` process with `webserver=True`, or by setting"
-                " `PREFECT_RUNNER_SERVER_ENABLE=True`."
+                " `SYNTASK_RUNNER_SERVER_ENABLE=True`."
             ) from exc
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 429:
@@ -166,9 +164,9 @@ async def submit_to_runner(
     if unsubmitted_parameters:
         logger.warning(
             f"Failed to submit {len(unsubmitted_parameters)} runs to the runner, as all"
-            f" of the available {PREFECT_RUNNER_PROCESS_LIMIT.value()} slots were"
+            f" of the available {SYNTASK_RUNNER_PROCESS_LIMIT.value()} slots were"
             " occupied. To increase the number of available slots, configure"
-            " the`PREFECT_RUNNER_PROCESS_LIMIT` setting."
+            " the`SYNTASK_RUNNER_PROCESS_LIMIT` setting."
         )
 
     # If one run was submitted, return the corresponding FlowRun directly

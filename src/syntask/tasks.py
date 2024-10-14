@@ -1,5 +1,5 @@
 """
-Module containing the base workflow task class and decorator - for most use cases, using the [`@task` decorator][prefect.tasks.task] is preferred.
+Module containing the base workflow task class and decorator - for most use cases, using the [`@task` decorator][syntask.tasks.task] is preferred.
 """
 # This file requires type-checking with pyright because mypy does not yet support PEP612
 # See https://github.com/python/mypy/issues/8645
@@ -32,53 +32,53 @@ from uuid import UUID, uuid4
 
 from typing_extensions import Literal, ParamSpec
 
-import prefect.states
-from prefect.cache_policies import DEFAULT, NONE, CachePolicy
-from prefect.client.orchestration import get_client
-from prefect.client.schemas import TaskRun
-from prefect.client.schemas.objects import (
+import syntask.states
+from syntask.cache_policies import DEFAULT, NONE, CachePolicy
+from syntask.client.orchestration import get_client
+from syntask.client.schemas import TaskRun
+from syntask.client.schemas.objects import (
     StateDetails,
     TaskRunInput,
     TaskRunPolicy,
     TaskRunResult,
 )
-from prefect.context import (
+from syntask.context import (
     FlowRunContext,
     TagsContext,
     TaskRunContext,
     serialize_context,
 )
-from prefect.futures import PrefectDistributedFuture, PrefectFuture, PrefectFutureList
-from prefect.logging.loggers import get_logger
-from prefect.results import (
+from syntask.futures import SyntaskDistributedFuture, SyntaskFuture, SyntaskFutureList
+from syntask.logging.loggers import get_logger
+from syntask.results import (
     ResultSerializer,
     ResultStorage,
     ResultStore,
     get_or_create_default_task_scheduling_storage,
 )
-from prefect.settings import (
-    PREFECT_TASK_DEFAULT_RETRIES,
-    PREFECT_TASK_DEFAULT_RETRY_DELAY_SECONDS,
+from syntask.settings import (
+    SYNTASK_TASK_DEFAULT_RETRIES,
+    SYNTASK_TASK_DEFAULT_RETRY_DELAY_SECONDS,
 )
-from prefect.states import Pending, Scheduled, State
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.asyncutils import (
+from syntask.states import Pending, Scheduled, State
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.asyncutils import (
     run_coro_as_sync,
     sync_compatible,
 )
-from prefect.utilities.callables import (
+from syntask.utilities.callables import (
     expand_mapping_parameters,
     get_call_parameters,
     raise_for_reserved_arguments,
 )
-from prefect.utilities.hashing import hash_objects
-from prefect.utilities.importtools import to_qualified_name
-from prefect.utilities.urls import url_for
+from syntask.utilities.hashing import hash_objects
+from syntask.utilities.importtools import to_qualified_name
+from syntask.utilities.urls import url_for
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
-    from prefect.context import TaskRunContext
-    from prefect.transactions import Transaction
+    from syntask.client.orchestration import SyntaskClient
+    from syntask.context import TaskRunContext
+    from syntask.transactions import Transaction
 
 T = TypeVar("T")  # Generic type var for capturing the inner return type of async funcs
 R = TypeVar("R")  # The return type of the user's function
@@ -176,7 +176,7 @@ def _infer_parent_task_runs(
         for v in parameters.values():
             if isinstance(v, State):
                 upstream_state = v
-            elif isinstance(v, PrefectFuture):
+            elif isinstance(v, SyntaskFuture):
                 upstream_state = v.state
             else:
                 upstream_state = flow_run_context.task_run_results.get(id(v))
@@ -224,12 +224,12 @@ def _generate_task_key(fn: Callable[..., Any]) -> str:
 
 class Task(Generic[P, R]):
     """
-    A Prefect task definition.
+    A Syntask task definition.
 
     !!! note
-        We recommend using [the `@task` decorator][prefect.tasks.task] for most use-cases.
+        We recommend using [the `@task` decorator][syntask.tasks.task] for most use-cases.
 
-    Wraps a function with an entrypoint to the Prefect engine. Calling this class within a flow function
+    Wraps a function with an entrypoint to the Syntask engine. Calling this class within a flow function
     creates a new task run.
 
     To preserve the input and output types, we use the generic type variables P and R for "Parameters" and
@@ -241,7 +241,7 @@ class Task(Generic[P, R]):
             from the given function.
         description: An optional string description for the task.
         tags: An optional set of tags to be associated with runs of this task. These
-            tags are combined with any tags defined by a `prefect.tags` context at
+            tags are combined with any tags defined by a `syntask.tags` context at
             task runtime.
         version: An optional string specifying the version of this task definition
         cache_policy: A cache policy that determines the level of caching for this task
@@ -279,7 +279,7 @@ class Task(Generic[P, R]):
         timeout_seconds: An optional number of seconds indicating a maximum runtime for
             the task. If the task exceeds this runtime, it will be marked as failed.
         log_prints: If set, `print` statements in the task will be redirected to the
-            Prefect logger for the task run. Defaults to `None`, which indicates
+            Syntask logger for the task run. Defaults to `None`, which indicates
             that the value from the flow should be used.
         refresh_cache: If set, cached results for the cache key are not used.
             Defaults to `None`, which indicates that a cached result from a previous
@@ -450,10 +450,10 @@ class Task(Generic[P, R]):
         #       validate that the user passes positive numbers here
 
         self.retries = (
-            retries if retries is not None else PREFECT_TASK_DEFAULT_RETRIES.value()
+            retries if retries is not None else SYNTASK_TASK_DEFAULT_RETRIES.value()
         )
         if retry_delay_seconds is None:
-            retry_delay_seconds = PREFECT_TASK_DEFAULT_RETRY_DELAY_SECONDS.value()
+            retry_delay_seconds = SYNTASK_TASK_DEFAULT_RETRY_DELAY_SECONDS.value()
 
         if callable(retry_delay_seconds):
             self.retry_delay_seconds = retry_delay_seconds(retries)
@@ -500,7 +500,7 @@ class Task(Generic[P, R]):
 
     @property
     def ismethod(self) -> bool:
-        return hasattr(self.fn, "__prefect_self__")
+        return hasattr(self.fn, "__syntask_self__")
 
     def __get__(self, instance, owner):
         """
@@ -513,11 +513,11 @@ class Task(Generic[P, R]):
         if instance is None:
             return self
 
-        # if the task is being accessed on an instance, bind the instance to the __prefect_self__ attribute
+        # if the task is being accessed on an instance, bind the instance to the __syntask_self__ attribute
         # of the task's function. This will allow it to be automatically added to the task's parameters
         else:
             bound_task = copy(self)
-            bound_task.fn.__prefect_self__ = instance
+            bound_task.fn.__syntask_self__ = instance
             return bound_task
 
     def with_options(
@@ -718,16 +718,16 @@ class Task(Generic[P, R]):
 
     async def create_run(
         self,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
         id: Optional[UUID] = None,
         parameters: Optional[Dict[str, Any]] = None,
         flow_run_context: Optional[FlowRunContext] = None,
         parent_task_run_context: Optional[TaskRunContext] = None,
-        wait_for: Optional[Iterable[PrefectFuture]] = None,
+        wait_for: Optional[Iterable[SyntaskFuture]] = None,
         extra_task_inputs: Optional[Dict[str, Set[TaskRunInput]]] = None,
         deferred: bool = False,
     ) -> TaskRun:
-        from prefect.utilities.engine import (
+        from syntask.utilities.engine import (
             _dynamic_key_for_task_run,
             collect_task_run_inputs_sync,
         )
@@ -821,16 +821,16 @@ class Task(Generic[P, R]):
 
     async def create_local_run(
         self,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
         id: Optional[UUID] = None,
         parameters: Optional[Dict[str, Any]] = None,
         flow_run_context: Optional[FlowRunContext] = None,
         parent_task_run_context: Optional[TaskRunContext] = None,
-        wait_for: Optional[Iterable[PrefectFuture]] = None,
+        wait_for: Optional[Iterable[SyntaskFuture]] = None,
         extra_task_inputs: Optional[Dict[str, Set[TaskRunInput]]] = None,
         deferred: bool = False,
     ) -> TaskRun:
-        from prefect.utilities.engine import (
+        from syntask.utilities.engine import (
             _dynamic_key_for_task_run,
             collect_task_run_inputs_sync,
         )
@@ -907,7 +907,7 @@ class Task(Generic[P, R]):
                 else None
             )
             task_run_id = id or uuid4()
-            state = prefect.states.Pending(
+            state = syntask.states.Pending(
                 state_details=StateDetails(
                     task_run_id=task_run_id,
                     flow_run_id=flow_run_id,
@@ -953,8 +953,7 @@ class Task(Generic[P, R]):
         self: "Task[P, T]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> T:
-        ...
+    ) -> T: ...
 
     @overload
     def __call__(
@@ -962,21 +961,20 @@ class Task(Generic[P, R]):
         *args: P.args,
         return_state: Literal[True],
         **kwargs: P.kwargs,
-    ) -> State[T]:
-        ...
+    ) -> State[T]: ...
 
     def __call__(
         self,
         *args: P.args,
         return_state: bool = False,
-        wait_for: Optional[Iterable[PrefectFuture]] = None,
+        wait_for: Optional[Iterable[SyntaskFuture]] = None,
         **kwargs: P.kwargs,
     ):
         """
         Run the task and return the result. If `return_state` is True returns
-        the result is wrapped in a Prefect State which provides error handling.
+        the result is wrapped in a Syntask State which provides error handling.
         """
-        from prefect.utilities.visualization import (
+        from syntask.utilities.visualization import (
             get_task_viz_tracker,
             track_viz_task,
         )
@@ -992,7 +990,7 @@ class Task(Generic[P, R]):
                 self.isasync, self.name, parameters, self.viz_return_value
             )
 
-        from prefect.task_engine import run_task
+        from syntask.task_engine import run_task
 
         return run_task(
             task=self,
@@ -1006,7 +1004,7 @@ class Task(Generic[P, R]):
         self: "Task[P, NoReturn]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> PrefectFuture[NoReturn]:
+    ) -> SyntaskFuture[NoReturn]:
         # `NoReturn` matches if a type can't be inferred for the function which stops a
         # sync function from matching the `Coroutine` overload
         ...
@@ -1016,16 +1014,14 @@ class Task(Generic[P, R]):
         self: "Task[P, Coroutine[Any, Any, T]]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> PrefectFuture[T]:
-        ...
+    ) -> SyntaskFuture[T]: ...
 
     @overload
     def submit(
         self: "Task[P, T]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> PrefectFuture[T]:
-        ...
+    ) -> SyntaskFuture[T]: ...
 
     @overload
     def submit(
@@ -1033,8 +1029,7 @@ class Task(Generic[P, R]):
         *args: P.args,
         return_state: Literal[True],
         **kwargs: P.kwargs,
-    ) -> State[T]:
-        ...
+    ) -> State[T]: ...
 
     @overload
     def submit(
@@ -1042,14 +1037,13 @@ class Task(Generic[P, R]):
         *args: P.args,
         return_state: Literal[True],
         **kwargs: P.kwargs,
-    ) -> State[T]:
-        ...
+    ) -> State[T]: ...
 
     def submit(
         self,
         *args: Any,
         return_state: bool = False,
-        wait_for: Optional[Iterable[PrefectFuture]] = None,
+        wait_for: Optional[Iterable[SyntaskFuture]] = None,
         **kwargs: Any,
     ):
         """
@@ -1062,28 +1056,28 @@ class Task(Generic[P, R]):
         Args:
             *args: Arguments to run the task with
             return_state: Return the result of the flow run wrapped in a
-                Prefect State.
+                Syntask State.
             wait_for: Upstream task futures to wait for before starting the task
             **kwargs: Keyword arguments to run the task with
 
         Returns:
             If `return_state` is False a future allowing asynchronous access to
                 the state of the task
-            If `return_state` is True a future wrapped in a Prefect State allowing asynchronous access to
+            If `return_state` is True a future wrapped in a Syntask State allowing asynchronous access to
                 the state of the task
 
         Examples:
 
             Define a task
 
-            >>> from prefect import task
+            >>> from syntask import task
             >>> @task
             >>> def my_task():
             >>>     return "hello"
 
             Run a task in a flow
 
-            >>> from prefect import flow
+            >>> from syntask import flow
             >>> @flow
             >>> def my_flow():
             >>>     my_task.submit()
@@ -1137,7 +1131,7 @@ class Task(Generic[P, R]):
 
         """
 
-        from prefect.utilities.visualization import (
+        from syntask.utilities.visualization import (
             VisualizationUnsupportedError,
             get_task_viz_tracker,
         )
@@ -1172,24 +1166,21 @@ class Task(Generic[P, R]):
         self: "Task[P, NoReturn]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> PrefectFutureList[PrefectFuture[NoReturn]]:
-        ...
+    ) -> SyntaskFutureList[SyntaskFuture[NoReturn]]: ...
 
     @overload
     def map(
         self: "Task[P, Coroutine[Any, Any, T]]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> PrefectFutureList[PrefectFuture[T]]:
-        ...
+    ) -> SyntaskFutureList[SyntaskFuture[T]]: ...
 
     @overload
     def map(
         self: "Task[P, T]",
         *args: P.args,
         **kwargs: P.kwargs,
-    ) -> PrefectFutureList[PrefectFuture[T]]:
-        ...
+    ) -> SyntaskFutureList[SyntaskFuture[T]]: ...
 
     @overload
     def map(
@@ -1197,8 +1188,7 @@ class Task(Generic[P, R]):
         *args: P.args,
         return_state: Literal[True],
         **kwargs: P.kwargs,
-    ) -> PrefectFutureList[State[T]]:
-        ...
+    ) -> SyntaskFutureList[State[T]]: ...
 
     @overload
     def map(
@@ -1206,14 +1196,13 @@ class Task(Generic[P, R]):
         *args: P.args,
         return_state: Literal[True],
         **kwargs: P.kwargs,
-    ) -> PrefectFutureList[State[T]]:
-        ...
+    ) -> SyntaskFutureList[State[T]]: ...
 
     def map(
         self,
         *args: Any,
         return_state: bool = False,
-        wait_for: Optional[Iterable[PrefectFuture]] = None,
+        wait_for: Optional[Iterable[SyntaskFuture]] = None,
         deferred: bool = False,
         **kwargs: Any,
     ):
@@ -1236,7 +1225,7 @@ class Task(Generic[P, R]):
 
         Args:
             *args: Iterable and static arguments to run the tasks with
-            return_state: Return a list of Prefect States that wrap the results
+            return_state: Return a list of Syntask States that wrap the results
                 of each task run.
             wait_for: Upstream task futures to wait for before starting the
                 task
@@ -1250,14 +1239,14 @@ class Task(Generic[P, R]):
 
             Define a task
 
-            >>> from prefect import task
+            >>> from syntask import task
             >>> @task
             >>> def my_task(x):
             >>>     return x + 1
 
             Create mapped tasks
 
-            >>> from prefect import flow
+            >>> from syntask import flow
             >>> @flow
             >>> def my_flow():
             >>>     return my_task.map([1, 2, 3])
@@ -1315,7 +1304,7 @@ class Task(Generic[P, R]):
             Check it out: 3
 
             Use `unmapped` to treat an iterable argument as a constant
-            >>> from prefect import unmapped
+            >>> from syntask import unmapped
             >>>
             >>> @task
             >>> def add_n_to_items(items, n):
@@ -1329,8 +1318,8 @@ class Task(Generic[P, R]):
             [[11, 21], [12, 22], [13, 23]]
         """
 
-        from prefect.task_runners import TaskRunner
-        from prefect.utilities.visualization import (
+        from syntask.task_runners import TaskRunner
+        from syntask.utilities.visualization import (
             VisualizationUnsupportedError,
             get_task_viz_tracker,
         )
@@ -1375,9 +1364,9 @@ class Task(Generic[P, R]):
         self,
         args: Optional[Tuple[Any, ...]] = None,
         kwargs: Optional[Dict[str, Any]] = None,
-        wait_for: Optional[Iterable[PrefectFuture]] = None,
+        wait_for: Optional[Iterable[SyntaskFuture]] = None,
         dependencies: Optional[Dict[str, Set[TaskRunInput]]] = None,
-    ) -> PrefectDistributedFuture:
+    ) -> SyntaskDistributedFuture:
         """
         Create a pending task run for a task worker to execute.
 
@@ -1386,20 +1375,20 @@ class Task(Generic[P, R]):
             kwargs: Keyword arguments to run the task with
 
         Returns:
-            A PrefectDistributedFuture object representing the pending task run
+            A SyntaskDistributedFuture object representing the pending task run
 
         Examples:
 
             Define a task
 
-            >>> from prefect import task
+            >>> from syntask import task
             >>> @task
             >>> def my_task(name: str = "world"):
             >>>     return f"hello {name}"
 
             Create a pending task run for the task
 
-            >>> from prefect import flow
+            >>> from syntask import flow
             >>> @flow
             >>> def my_flow():
             >>>     my_task.apply_async(("marvin",))
@@ -1435,7 +1424,7 @@ class Task(Generic[P, R]):
             >>>     y = task_2.apply_async(wait_for=[x])
 
         """
-        from prefect.utilities.visualization import (
+        from syntask.utilities.visualization import (
             VisualizationUnsupportedError,
             get_task_viz_tracker,
         )
@@ -1460,7 +1449,7 @@ class Task(Generic[P, R]):
             )
         )  # type: ignore
 
-        from prefect.utilities.engine import emit_task_run_state_change_event
+        from syntask.utilities.engine import emit_task_run_state_change_event
 
         # emit a `SCHEDULED` event for the task run
         emit_task_run_state_change_event(
@@ -1474,9 +1463,9 @@ class Task(Generic[P, R]):
                 f"Created task run {task_run.name!r}. View it in the UI at {task_run_url!r}"
             )
 
-        return PrefectDistributedFuture(task_run_id=task_run.id)
+        return SyntaskDistributedFuture(task_run_id=task_run.id)
 
-    def delay(self, *args: P.args, **kwargs: P.kwargs) -> PrefectDistributedFuture:
+    def delay(self, *args: P.args, **kwargs: P.kwargs) -> SyntaskDistributedFuture:
         """
         An alias for `apply_async` with simpler calling semantics.
 
@@ -1487,14 +1476,14 @@ class Task(Generic[P, R]):
 
                 Define a task
 
-                >>> from prefect import task
+                >>> from syntask import task
                 >>> @task
                 >>> def my_task(name: str = "world"):
                 >>>     return f"hello {name}"
 
                 Create a pending task run for the task
 
-                >>> from prefect import flow
+                >>> from syntask import flow
                 >>> @flow
                 >>> def my_flow():
                 >>>     my_task.delay("marvin")
@@ -1519,7 +1508,7 @@ class Task(Generic[P, R]):
     @sync_compatible
     async def serve(self) -> NoReturn:
         """Serve the task using the provided task runner. This method is used to
-        establish a websocket connection with the Prefect server and listen for
+        establish a websocket connection with the Syntask server and listen for
         submitted task runs to execute.
 
         Args:
@@ -1534,14 +1523,13 @@ class Task(Generic[P, R]):
 
             >>> my_task.serve()
         """
-        from prefect.task_worker import serve
+        from syntask.task_worker import serve
 
         await serve(self)
 
 
 @overload
-def task(__fn: Callable[P, R]) -> Task[P, R]:
-    ...
+def task(__fn: Callable[P, R]) -> Task[P, R]: ...
 
 
 @overload
@@ -1577,8 +1565,7 @@ def task(
     on_failure: Optional[List[Callable[["Task", TaskRun, State], None]]] = None,
     retry_condition_fn: Optional[Callable[["Task", TaskRun, State], bool]] = None,
     viz_return_value: Any = None,
-) -> Callable[[Callable[P, R]], Task[P, R]]:
-    ...
+) -> Callable[[Callable[P, R]], Task[P, R]]: ...
 
 
 def task(
@@ -1613,7 +1600,7 @@ def task(
     viz_return_value: Any = None,
 ):
     """
-    Decorator to designate a function as a task in a Prefect workflow.
+    Decorator to designate a function as a task in a Syntask workflow.
 
     This decorator may be used for asynchronous or synchronous functions.
 
@@ -1622,7 +1609,7 @@ def task(
             from the given function.
         description: An optional string description for the task.
         tags: An optional set of tags to be associated with runs of this task. These
-            tags are combined with any tags defined by a `prefect.tags` context at
+            tags are combined with any tags defined by a `syntask.tags` context at
             task runtime.
         version: An optional string specifying the version of this task definition
         cache_key_fn: An optional callable that, given the task run context and call
@@ -1659,7 +1646,7 @@ def task(
         timeout_seconds: An optional number of seconds indicating a maximum runtime for
             the task. If the task exceeds this runtime, it will be marked as failed.
         log_prints: If set, `print` statements in the task will be redirected to the
-            Prefect logger for the task run. Defaults to `None`, which indicates
+            Syntask logger for the task run. Defaults to `None`, which indicates
             that the value from the flow should be used.
         refresh_cache: If set, cached results for the cache key are not used.
             Defaults to `None`, which indicates that a cached result from a previous
@@ -1713,7 +1700,7 @@ def task(
 
         Define a task that is cached for a day based on its inputs
 
-        >>> from prefect.tasks import task_input_hash
+        >>> from syntask.tasks import task_input_hash
         >>> from datetime import timedelta
         >>>
         >>> @task(cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))

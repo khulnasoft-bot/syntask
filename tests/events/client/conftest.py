@@ -1,7 +1,7 @@
 import pytest
 
-from prefect.events import Event
-from prefect.events.clients import AssertingEventsClient
+from syntask.events import Event
+from syntask.events.clients import AssertingEventsClient
 
 
 @pytest.fixture(autouse=True)
@@ -18,7 +18,7 @@ def mock_should_emit_events(mock_should_emit_events):
 def example_event_1() -> Event:
     return Event(
         event="marvelous.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
     )
 
 
@@ -26,7 +26,7 @@ def example_event_1() -> Event:
 def example_event_2() -> Event:
     return Event(
         event="wondrous.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
     )
 
 
@@ -34,7 +34,7 @@ def example_event_2() -> Event:
 def example_event_3() -> Event:
     return Event(
         event="delightful.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
     )
 
 
@@ -42,7 +42,7 @@ def example_event_3() -> Event:
 def example_event_4() -> Event:
     return Event(
         event="ingenious.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
     )
 
 
@@ -50,5 +50,5 @@ def example_event_4() -> Event:
 def example_event_5() -> Event:
     return Event(
         event="delectable.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
     )

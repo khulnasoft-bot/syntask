@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.results import BaseResult
+from syntask.results import BaseResult
 
 
 class ConcreteResult(BaseResult[int]):

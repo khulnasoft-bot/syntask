@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.utilities.text import fuzzy_match_string
+from syntask.utilities.text import fuzzy_match_string
 
 
 @pytest.mark.parametrize(

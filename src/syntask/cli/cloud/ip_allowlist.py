@@ -6,17 +6,17 @@ from pydantic import BaseModel, IPvAnyNetwork
 from rich.panel import Panel
 from rich.table import Table
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.cloud import cloud_app, confirm_logged_in
-from prefect.cli.root import app
-from prefect.client.cloud import get_cloud_client
-from prefect.client.schemas.objects import IPAllowlist, IPAllowlistEntry
-from prefect.exceptions import PrefectHTTPStatusError
-from prefect.logging.loggers import get_logger
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.cloud import cloud_app, confirm_logged_in
+from syntask.cli.root import app
+from syntask.client.cloud import get_cloud_client
+from syntask.client.schemas.objects import IPAllowlist, IPAllowlistEntry
+from syntask.exceptions import SyntaskHTTPStatusError
+from syntask.logging.loggers import get_logger
 
-ip_allowlist_app = PrefectTyper(
-    name="ip-allowlist", help="Manage Prefect Cloud IP Allowlists"
+ip_allowlist_app = SyntaskTyper(
+    name="ip-allowlist", help="Manage Syntask Cloud IP Allowlists"
 )
 cloud_app.add_typer(ip_allowlist_app, aliases=["ip-allowlists"])
 
@@ -51,7 +51,7 @@ async def _require_access_to_ip_allowlisting(ctx: typer.Context):
 
 @ip_allowlist_app.command()
 async def enable(ctx: typer.Context):
-    """Enable the IP allowlist for your account. When enabled, if the allowlist is non-empty, then access to your Prefect Cloud account will be restricted to only those IP addresses on the allowlist."""
+    """Enable the IP allowlist for your account. When enabled, if the allowlist is non-empty, then access to your Syntask Cloud account will be restricted to only those IP addresses on the allowlist."""
     enforcing_ip_allowlist = ctx.meta["enforce_ip_allowlist"]
     if enforcing_ip_allowlist:
         exit_with_success("IP allowlist is already enabled.")
@@ -66,7 +66,7 @@ async def enable(ctx: typer.Context):
         logger.debug(my_access_if_enabled.detail)
 
         if not typer.confirm(
-            "Enabling the IP allowlist will restrict Prefect Cloud API and UI access to only the IP addresses on the list. "
+            "Enabling the IP allowlist will restrict Syntask Cloud API and UI access to only the IP addresses on the list. "
             "Continue?"
         ):
             exit_with_error("Aborted.")
@@ -77,7 +77,7 @@ async def enable(ctx: typer.Context):
 
 @ip_allowlist_app.command()
 async def disable():
-    """Disable the IP allowlist for your account. When disabled, all IP addresses will be allowed to access your Prefect Cloud account."""
+    """Disable the IP allowlist for your account. When disabled, all IP addresses will be allowed to access your Syntask Cloud account."""
     async with get_cloud_client(infer_cloud_url=True) as client:
         await client.update_account_settings({"enforce_ip_allowlist": False})
 
@@ -153,7 +153,7 @@ async def add(
 
         try:
             await client.update_account_ip_allowlist(ip_allowlist)
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             _handle_update_error(exc)
 
         updated_ip_allowlist = await client.read_account_ip_allowlist()
@@ -175,7 +175,7 @@ async def remove(ctx: typer.Context, ip_address_or_range: IP_ARGUMENT):
 
         try:
             await client.update_account_ip_allowlist(ip_allowlist)
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             _handle_update_error(exc)
 
         updated_ip_allowlist = await client.read_account_ip_allowlist()
@@ -204,7 +204,7 @@ async def toggle(ctx: typer.Context, ip_address_or_range: IP_ARGUMENT):
 
         try:
             await client.update_account_ip_allowlist(ip_allowlist)
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             _handle_update_error(exc)
 
         updated_ip_allowlist = await client.read_account_ip_allowlist()
@@ -217,7 +217,7 @@ def _print_ip_allowlist_table(ip_allowlist: IPAllowlist, enabled: bool):
     if not ip_allowlist.entries:
         app.console.print(
             Panel(
-                "IP allowlist is empty. Add an entry to secure access to your Prefect Cloud account.",
+                "IP allowlist is empty. Add an entry to secure access to your Syntask Cloud account.",
                 expand=False,
             )
         )
@@ -249,7 +249,7 @@ def _print_ip_allowlist_table(ip_allowlist: IPAllowlist, enabled: bool):
     app.console.print(table)
 
 
-def _handle_update_error(error: PrefectHTTPStatusError):
+def _handle_update_error(error: SyntaskHTTPStatusError):
     if error.response.status_code == 422 and (
         details := (
             error.response.json().get("detail")

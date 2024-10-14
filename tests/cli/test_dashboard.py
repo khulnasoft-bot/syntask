@@ -7,17 +7,17 @@ import httpx
 import pytest
 from starlette import status
 
-from prefect.client.schemas import Workspace
-from prefect.context import use_profile
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
+from syntask.client.schemas import Workspace
+from syntask.context import use_profile
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
     Profile,
     ProfilesCollection,
     save_profiles,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 
 def gen_test_workspace(**kwargs) -> Workspace:
@@ -37,7 +37,7 @@ def gen_test_workspace(**kwargs) -> Workspace:
 @pytest.fixture
 def mock_webbrowser(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr("prefect.cli.dashboard.webbrowser", mock)
+    monkeypatch.setattr("syntask.cli.dashboard.webbrowser", mock)
     yield mock
 
 
@@ -56,8 +56,8 @@ def test_open_current_workspace_in_browser_success(mock_webbrowser, respx_mock):
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -65,7 +65,7 @@ def test_open_current_workspace_in_browser_success(mock_webbrowser, respx_mock):
         )
     )
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[foo_workspace.model_dump(mode="json")],
@@ -82,7 +82,9 @@ def test_open_current_workspace_in_browser_success(mock_webbrowser, respx_mock):
 
 
 @pytest.mark.usefixtures("mock_webbrowser")
-@pytest.mark.parametrize("api_url", ["http://localhost:4200", "https://api.syntask.khulnasoft.com"])
+@pytest.mark.parametrize(
+    "api_url", ["http://localhost:4200", "https://api.syntask.khulnasoft.com"]
+)
 def test_open_current_workspace_in_browser_failure_no_workspace_set(
     respx_mock, api_url
 ):
@@ -92,8 +94,8 @@ def test_open_current_workspace_in_browser_failure_no_workspace_set(
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: api_url,
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: api_url,
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -101,7 +103,7 @@ def test_open_current_workspace_in_browser_failure_no_workspace_set(
         )
     )
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
             json=[],
@@ -113,7 +115,9 @@ def test_open_current_workspace_in_browser_failure_no_workspace_set(
 
 
 @pytest.mark.usefixtures("mock_webbrowser")
-@pytest.mark.parametrize("api_url", ["http://localhost:4200", "https://api.syntask.khulnasoft.com"])
+@pytest.mark.parametrize(
+    "api_url", ["http://localhost:4200", "https://api.syntask.khulnasoft.com"]
+)
 def test_open_current_workspace_in_browser_failure_unauthorized(respx_mock, api_url):
     save_profiles(
         ProfilesCollection(
@@ -121,8 +125,8 @@ def test_open_current_workspace_in_browser_failure_unauthorized(respx_mock, api_
                 Profile(
                     name="logged-in-profile",
                     settings={
-                        PREFECT_API_URL: api_url,
-                        PREFECT_API_KEY: "invalid_key",
+                        SYNTASK_API_URL: api_url,
+                        SYNTASK_API_KEY: "invalid_key",
                     },
                 )
             ],
@@ -130,7 +134,7 @@ def test_open_current_workspace_in_browser_failure_unauthorized(respx_mock, api_
         )
     )
 
-    respx_mock.get(PREFECT_CLOUD_API_URL.value() + "/me/workspaces").mock(
+    respx_mock.get(SYNTASK_CLOUD_API_URL.value() + "/me/workspaces").mock(
         return_value=httpx.Response(
             status.HTTP_401_UNAUTHORIZED,
             json={"detail": "Unauthorized"},

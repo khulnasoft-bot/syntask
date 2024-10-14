@@ -7,9 +7,9 @@ import pytest
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -17,14 +17,14 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
-from prefect.server.models import deployments, flow_runs, flows, variables, workers
-from prefect.server.schemas.actions import VariableCreate, WorkPoolCreate
-from prefect.server.schemas.core import CreatedBy, Deployment, Flow
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.models import deployments, flow_runs, flows, variables, workers
+from syntask.server.schemas.actions import VariableCreate, WorkPoolCreate
+from syntask.server.schemas.core import CreatedBy, Deployment, Flow
 
 
 async def test_action_can_omit_parameters():
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/2857, where
+    """Regression test for https://github.com/SynoPKG/nebula/issues/2857, where
     `parameters` are omitted by the UI"""
 
     action = actions.RunDeployment.model_validate(
@@ -94,7 +94,7 @@ def take_a_picture_of_the_culprit(take_a_picture: Deployment) -> Automation:
         trigger=EventTrigger(
             expect={"animal.ingested"},
             match_related={
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "genus": "Hemerocallis",
                 "species": "fulva",
             },
@@ -255,14 +255,14 @@ async def test_running_a_deployment_supports_schemas_v2(
 
     action.parameters = {
         "camera": "back-yard",
-        "focal_ratio": {"__prefect_kind": "whatevs", "value": 1 / 6},
-        "flash": {"__prefect_kind": "json", "value": "false"},
+        "focal_ratio": {"__syntask_kind": "whatevs", "value": 1 / 6},
+        "flash": {"__syntask_kind": "json", "value": "false"},
         "meta": {
-            "__prefect_kind": "json",
+            "__syntask_kind": "json",
             "value": '{"one_thing": "hello", "another_thing": 5}',
         },
         "somefin": {
-            "__prefect_kind": "workspace_variable",
+            "__syntask_kind": "workspace_variable",
             "variable_name": "my_variable",
         },
     }
@@ -294,7 +294,7 @@ async def test_run_deployment_parameter_validation_handles_workspace_variables(
     snap_that_naughty_woodchuck: TriggeredAction,
     my_workspace_variable: None,
 ):
-    # regression test for https://github.com/PrefectHQ/nebula/issues/7425
+    # regression test for https://github.com/SynoPKG/nebula/issues/7425
     # previously this would raise a `ValidationError` due to the workspace variable not being found
     # and failing to hydrate.
 
@@ -302,7 +302,7 @@ async def test_run_deployment_parameter_validation_handles_workspace_variables(
         deployment_id=uuid4(),
         parameters={
             "my_string": {
-                "__prefect_kind": "workspace_variable",
+                "__syntask_kind": "workspace_variable",
                 "variable_name": "my_variable",
             }
         },
@@ -340,7 +340,7 @@ async def test_run_deployment_handles_json_workspace_variables(
 
     action.parameters = {
         "my_param": {
-            "__prefect_kind": "workspace_variable",
+            "__syntask_kind": "workspace_variable",
             "variable_name": "my_workspace_var",
         }
     }
@@ -351,13 +351,13 @@ async def test_run_deployment_handles_json_workspace_variables(
 async def test_run_deployment_parameter_validation_handles_top_level_hydration_error(
     snap_that_naughty_woodchuck: TriggeredAction,
 ):
-    # regression test for: https://github.com/synopkg/synopkg/issues/12585
+    # regression test for: https://github.com/synopkg/syntask/issues/12585
     # Model instantiation would fail with `AttributeError` instead of correctly raising a ValidationError
 
     with pytest.raises(ValidationError) as exc:
         actions.RunDeployment(
             deployment_id=uuid4(),
-            parameters={"__prefect_kind": "json", "value": "{notajsonstring}"},
+            parameters={"__syntask_kind": "json", "value": "{notajsonstring}"},
         )
     assert (
         "Invalid JSON: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
@@ -368,13 +368,13 @@ async def test_run_deployment_parameter_validation_handles_top_level_hydration_e
 async def test_running_a_deployment_handles_top_level_hydration_error(
     snap_that_naughty_woodchuck: TriggeredAction,
 ):
-    # regression test for: https://github.com/synopkg/synopkg/issues/12585
+    # regression test for: https://github.com/synopkg/syntask/issues/12585
     # The action would fail due to an `AttributeError` instead of `InvalidJSON`
 
     action = snap_that_naughty_woodchuck.action
     assert isinstance(action, actions.RunDeployment)
     action.parameters = {
-        "__prefect_kind": "json",
+        "__syntask_kind": "json",
         "value": "{notvalidjson}",
     }
 
@@ -401,8 +401,8 @@ async def test_running_an_inferred_deployment(
     snap_that_naughty_woodchuck.triggering_event.related.append(
         RelatedResource.model_validate(
             {
-                "prefect.resource.role": "deployment",
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture.id}",
+                "syntask.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture.id}",
             }
         )
     )
@@ -475,19 +475,19 @@ async def test_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture.id}",
+                "syntask.resource.role": "target",
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow-run.{new_flow_run.id}",
-                "prefect.resource.name": new_flow_run.name,
-                "prefect.resource.role": "flow-run",
+                "syntask.resource.id": f"syntask.flow-run.{new_flow_run.id}",
+                "syntask.resource.name": new_flow_run.name,
+                "syntask.resource.role": "flow-run",
             }
         ),
     ]
@@ -497,19 +497,19 @@ async def test_success_event(
         "invocation": str(snap_that_naughty_woodchuck.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture.id}",
-                "prefect.resource.role": "target",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture.id}",
+                "syntask.resource.role": "target",
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.flow-run.{new_flow_run.id}",
-                "prefect.resource.name": new_flow_run.name,
-                "prefect.resource.role": "flow-run",
+                "syntask.resource.id": f"syntask.flow-run.{new_flow_run.id}",
+                "syntask.resource.name": new_flow_run.name,
+                "syntask.resource.role": "flow-run",
             }
         ),
     ]
@@ -526,8 +526,8 @@ async def test_running_a_deployment_action_succeeds_paramaters_too_large(
     take_a_picture: Deployment,
     session: AsyncSession,
 ):
-    """In a significant difference from Prefect Cloud, we will not restrict the size of
-    parameters in the open-source Prefect API"""
+    """In a significant difference from Syntask Cloud, we will not restrict the size of
+    parameters in the open-source Syntask API"""
     action = snap_that_naughty_woodchuck.action
 
     assert isinstance(action, actions.RunDeployment)

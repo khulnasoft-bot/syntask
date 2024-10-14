@@ -1,11 +1,11 @@
 import asyncio
 from typing import Optional
 
-from prefect.logging import get_logger
-from prefect.server.events import triggers
-from prefect.server.services.loop_service import LoopService
-from prefect.server.utilities.messaging import create_consumer
-from prefect.settings import PREFECT_EVENTS_PROACTIVE_GRANULARITY
+from syntask.logging import get_logger
+from syntask.server.events import triggers
+from syntask.server.services.loop_service import LoopService
+from syntask.server.utilities.messaging import create_consumer
+from syntask.settings import SYNTASK_EVENTS_PROACTIVE_GRANULARITY
 
 logger = get_logger(__name__)
 
@@ -47,7 +47,7 @@ class ProactiveTriggers(LoopService):
         super().__init__(
             loop_seconds=(
                 loop_seconds
-                or PREFECT_EVENTS_PROACTIVE_GRANULARITY.value().total_seconds()
+                or SYNTASK_EVENTS_PROACTIVE_GRANULARITY.value().total_seconds()
             ),
             **kwargs,
         )

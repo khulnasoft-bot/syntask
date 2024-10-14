@@ -4,7 +4,7 @@ import pendulum
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from prefect.server import models, schemas
+from syntask.server import models, schemas
 
 
 @pytest.fixture

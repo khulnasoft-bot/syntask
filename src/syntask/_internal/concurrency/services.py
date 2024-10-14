@@ -11,11 +11,11 @@ from typing import Awaitable, Dict, Generic, List, Optional, Type, TypeVar, Unio
 
 from typing_extensions import Self
 
-from prefect._internal.concurrency import logger
-from prefect._internal.concurrency.api import create_call, from_sync
-from prefect._internal.concurrency.cancellation import get_deadline, get_timeout
-from prefect._internal.concurrency.event_loop import get_running_loop
-from prefect._internal.concurrency.threads import WorkerThread, get_global_loop
+from syntask._internal.concurrency import logger
+from syntask._internal.concurrency.api import create_call, from_sync
+from syntask._internal.concurrency.cancellation import get_deadline, get_timeout
+from syntask._internal.concurrency.event_loop import get_running_loop
+from syntask._internal.concurrency.threads import WorkerThread, get_global_loop
 
 T = TypeVar("T")
 
@@ -93,7 +93,7 @@ class QueueService(abc.ABC, Generic[T]):
             self._stopped = True
 
             # Allow asyncio task to be garbage-collected. Its context may contain
-            # references to all Prefect Task calls made during a flow run, through
+            # references to all Syntask Task calls made during a flow run, through
             # EngineContext. Issue #10338.
             self._task = None
 

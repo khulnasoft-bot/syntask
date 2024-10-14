@@ -1,4 +1,4 @@
-from prefect.utilities.collections import AutoEnum
+from syntask.utilities.collections import AutoEnum
 
 
 class WorkPoolStatus(AutoEnum):

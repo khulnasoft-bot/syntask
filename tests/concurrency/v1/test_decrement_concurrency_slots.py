@@ -3,8 +3,8 @@ from unittest import mock
 
 from httpx import Response
 
-from prefect.client.schemas.responses import MinimalConcurrencyLimitResponse
-from prefect.concurrency.v1.asyncio import _release_concurrency_slots
+from syntask.client.schemas.responses import MinimalConcurrencyLimitResponse
+from syntask.concurrency.v1.asyncio import _release_concurrency_slots
 
 
 async def test_calls_release_client_method():
@@ -16,7 +16,7 @@ async def test_calls_release_client_method():
     ]
 
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.decrement_v1_concurrency_slots"
+        "syntask.client.orchestration.SyntaskClient.decrement_v1_concurrency_slots"
     ) as client_decrement_v1_concurrency_slots:
         response = Response(
             200, json=[limit.model_dump(mode="json") for limit in limits]
@@ -42,7 +42,7 @@ async def test_returns_minimal_concurrency_limit():
     ]
 
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.decrement_v1_concurrency_slots"
+        "syntask.client.orchestration.SyntaskClient.decrement_v1_concurrency_slots"
     ) as client_decrement_v1_concurrency_slots:
         response = Response(
             200, json=[limit.model_dump(mode="json") for limit in limits]

@@ -9,22 +9,22 @@ import pendulum
 from fastapi import Depends, HTTPException, Path, Response, status
 from fastapi.param_functions import Body
 
-import prefect.server.api.dependencies as dependencies
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas.responses import FlowPaginationResponse
-from prefect.server.utilities.server import PrefectRouter
+import syntask.server.api.dependencies as dependencies
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas.responses import FlowPaginationResponse
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="/flows", tags=["Flows"])
+router = SyntaskRouter(prefix="/flows", tags=["Flows"])
 
 
 @router.post("/")
 async def create_flow(
     flow: schemas.actions.FlowCreate,
     response: Response,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.Flow:
     """Gracefully creates a new flow from the provided schema. If a flow with the
     same name already exists, the existing flow is returned.
@@ -46,7 +46,7 @@ async def create_flow(
 async def update_flow(
     flow: schemas.actions.FlowUpdate,
     flow_id: UUID = Path(..., description="The flow id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Updates a flow.
@@ -68,7 +68,7 @@ async def count_flows(
     task_runs: schemas.filters.TaskRunFilter = None,
     deployments: schemas.filters.DeploymentFilter = None,
     work_pools: schemas.filters.WorkPoolFilter = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> int:
     """
     Count flows.
@@ -87,7 +87,7 @@ async def count_flows(
 @router.get("/name/{name}")
 async def read_flow_by_name(
     name: str = Path(..., description="The name of the flow"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.Flow:
     """
     Get a flow by name.
@@ -104,7 +104,7 @@ async def read_flow_by_name(
 @router.get("/{id}")
 async def read_flow(
     flow_id: UUID = Path(..., description="The flow id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.Flow:
     """
     Get a flow by id.
@@ -128,7 +128,7 @@ async def read_flows(
     deployments: schemas.filters.DeploymentFilter = None,
     work_pools: schemas.filters.WorkPoolFilter = None,
     sort: schemas.sorting.FlowSort = Body(schemas.sorting.FlowSort.NAME_ASC),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.core.Flow]:
     """
     Query for flows.
@@ -150,7 +150,7 @@ async def read_flows(
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_flow(
     flow_id: UUID = Path(..., description="The flow id", alias="id"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     """
     Delete a flow by id.
@@ -173,7 +173,7 @@ async def paginate_flows(
     deployments: Optional[schemas.filters.DeploymentFilter] = None,
     work_pools: Optional[schemas.filters.WorkPoolFilter] = None,
     sort: schemas.sorting.FlowSort = Body(schemas.sorting.FlowSort.NAME_ASC),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> FlowPaginationResponse:
     """
     Pagination query for flows.

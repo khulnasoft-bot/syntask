@@ -5,15 +5,15 @@ from typing import Tuple
 
 import pytest
 
-import prefect
-from prefect.filesystems import (
+import syntask
+from syntask.filesystems import (
     LocalFileSystem,
     RemoteFileSystem,
 )
-from prefect.testing.utilities import MagicMock
-from prefect.utilities.filesystem import tmpchdir
+from syntask.testing.utilities import MagicMock
+from syntask.utilities.filesystem import tmpchdir
 
-TEST_PROJECTS_DIR = prefect.__development_base_path__ / "tests" / "test-projects"
+TEST_PROJECTS_DIR = syntask.__development_base_path__ / "tests" / "test-projects"
 
 
 def setup_test_directory(tmp_src: str, sub_dir: str = "puppy") -> Tuple[str, str]:
@@ -288,7 +288,7 @@ class TestRemoteFileSystem:
         await fs.put_directory(
             os.path.join(TEST_PROJECTS_DIR, "flat-project"),
             ignore_file=os.path.join(
-                TEST_PROJECTS_DIR, "flat-project", ".prefectignore"
+                TEST_PROJECTS_DIR, "flat-project", ".syntaskignore"
             ),
         )
         copied_files = set(fs.filesystem.glob("/flat/**"))
@@ -308,7 +308,7 @@ class TestRemoteFileSystem:
         await fs.put_directory(
             os.path.join(TEST_PROJECTS_DIR, "tree-project"),
             ignore_file=os.path.join(
-                TEST_PROJECTS_DIR, "tree-project", ".prefectignore"
+                TEST_PROJECTS_DIR, "tree-project", ".syntaskignore"
             ),
         )
         copied_files = set(fs.filesystem.glob("/tree/**"))
@@ -328,7 +328,7 @@ class TestRemoteFileSystem:
         }
 
     async def test_put_directory_put_file_count(self):
-        ignore_file = os.path.join(TEST_PROJECTS_DIR, "tree-project", ".prefectignore")
+        ignore_file = os.path.join(TEST_PROJECTS_DIR, "tree-project", ".syntaskignore")
 
         # Put files
         fs = RemoteFileSystem(basepath="memory://tree")
@@ -339,7 +339,7 @@ class TestRemoteFileSystem:
 
         # Expected files
         ignore_patterns = Path(ignore_file).read_text().splitlines(keepends=False)
-        included_files = prefect.utilities.filesystem.filter_files(
+        included_files = syntask.utilities.filesystem.filter_files(
             os.path.join(TEST_PROJECTS_DIR, "tree-project"),
             ignore_patterns,
             include_dirs=False,

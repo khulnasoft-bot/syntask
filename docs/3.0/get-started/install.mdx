@@ -1,17 +1,17 @@
 ---
-title: Install Prefect 
+title: Install Syntask 
 ---
 
 import Installation from '/snippets/installation.mdx'
 
-Prefect is published as a Python package, which requires Python 3.9 or newer. We recommend installing Prefect in a Python virtual environment. 
+Syntask is published as a Python package, which requires Python 3.9 or newer. We recommend installing Syntask in a Python virtual environment. 
 
 <Installation />
 
-To confirm that Prefect was installed successfully, run:
+To confirm that Syntask was installed successfully, run:
 
 ```bash
-prefect version
+syntask version
 ```
 
 You should see output similar to:
@@ -32,7 +32,7 @@ Server:
 
 ## Windows installation
 
-You can install and run Prefect via Windows PowerShell, the Windows Command Prompt, or [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/windows.html). After installation, you may need to manually add the Python local packages `Scripts` folder to your `Path` environment variable.
+You can install and run Syntask via Windows PowerShell, the Windows Command Prompt, or [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/windows.html). After installation, you may need to manually add the Python local packages `Scripts` folder to your `Path` environment variable.
 
 The `Scripts` folder path looks something like:
 
@@ -42,28 +42,28 @@ C:\Users\MyUserNameHere\AppData\Local\Packages\PythonSoftwareFoundation.Python.3
 
 Review the `pip install` output messages for the `Scripts` folder path on your system.
 
-## Minimal Prefect installation
+## Minimal Syntask installation
 
-The `prefect-client` library is a minimal installation of Prefect designed for interacting with Prefect Cloud or a remote self-hosted Prefect server instance.
+The `syntask-client` library is a minimal installation of Syntask designed for interacting with Syntask Cloud or a remote self-hosted Syntask server instance.
 
-`prefect-client` enables a subset of Prefect's capabilities with a smaller installation size, making it ideal for use in lightweight, resource-constrained, or ephemeral environments.
-It omits all CLI and server components found in the `prefect` library.
+`syntask-client` enables a subset of Syntask's capabilities with a smaller installation size, making it ideal for use in lightweight, resource-constrained, or ephemeral environments.
+It omits all CLI and server components found in the `syntask` library.
 
-To install the latest release of `prefect-client`, run:
+To install the latest release of `syntask-client`, run:
 
 ```bash
-pip install -U prefect-client
+pip install -U syntask-client
 ```
 
 ## Next steps
 
 You also need an API server, either:
 
-* [Prefect Cloud](/3.0/manage/cloud/), a managed solution that provides strong scaling, performance, and security, or
-* [Self-hosted Prefect server](/3.0/manage/self-host/), an API server that you run on your own infrastructure where you are responsible for scaling and any authentication and authorization.
+* [Syntask Cloud](/3.0/manage/cloud/), a managed solution that provides strong scaling, performance, and security, or
+* [Self-hosted Syntask server](/3.0/manage/self-host/), an API server that you run on your own infrastructure where you are responsible for scaling and any authentication and authorization.
 
-Now that you have Prefect installed, go through the [quickstart](/3.0/get-started/quickstart/) to try it out.
+Now that you have Syntask installed, go through the [quickstart](/3.0/get-started/quickstart/) to try it out.
 
-Learn more about release versions in the [Prefect release notes](https://github.com/synopkg/synopkg/releases).
+Learn more about release versions in the [Syntask release notes](https://github.com/synopkg/syntask/releases).
 
-See our [Contributing docs](/contribute/dev-contribute/) for instructions on installing Prefect for development.
+See our [Contributing docs](/contribute/dev-contribute/) for instructions on installing Syntask for development.

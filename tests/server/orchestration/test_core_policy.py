@@ -10,17 +10,17 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 
-from prefect.results import ResultRecordMetadata
-from prefect.server import schemas
-from prefect.server.database import orm_models as orm
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.models import (
+from syntask.results import ResultRecordMetadata
+from syntask.server import schemas
+from syntask.server.database import orm_models as orm
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.models import (
     concurrency_limits,
     concurrency_limits_v2,
     deployments,
     flow_runs,
 )
-from prefect.server.orchestration.core_policy import (
+from syntask.server.orchestration.core_policy import (
     BypassCancellingFlowRunsWithNoInfra,
     CacheInsertion,
     CacheRetrieval,
@@ -45,16 +45,16 @@ from prefect.server.orchestration.core_policy import (
     UpdateFlowRunTrackerOnTasks,
     WaitForScheduledTime,
 )
-from prefect.server.orchestration.rules import (
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     TERMINAL_STATES,
     BaseOrchestrationRule,
 )
-from prefect.server.schemas import actions, states
-from prefect.server.schemas.responses import SetStateStatus
-from prefect.server.schemas.states import StateType
-from prefect.settings import PREFECT_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS
-from prefect.testing.utilities import AsyncMock
+from syntask.server.schemas import actions, states
+from syntask.server.schemas.responses import SetStateStatus
+from syntask.server.schemas.states import StateType
+from syntask.settings import SYNTASK_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS
+from syntask.testing.utilities import AsyncMock
 
 # Convert constants from sets to lists for deterministic ordering of tests
 ALL_ORCHESTRATION_STATES = list(
@@ -497,11 +497,11 @@ class TestFlowRetryingRule:
         ]
         read_task_runs = AsyncMock(side_effect=lambda *args, **kwargs: failed_task_runs)
         monkeypatch.setattr(
-            "prefect.server.models.task_runs.read_task_runs", read_task_runs
+            "syntask.server.models.task_runs.read_task_runs", read_task_runs
         )
         set_task_run_state = AsyncMock()
         monkeypatch.setattr(
-            "prefect.server.models.task_runs.set_task_run_state", set_task_run_state
+            "syntask.server.models.task_runs.set_task_run_state", set_task_run_state
         )
 
         retry_policy = [RetryFailedFlows]
@@ -723,7 +723,7 @@ class TestUpdatingFlowRunTrackerOnTasks:
                         rule(ctx, *intended_transition)
                     )
                     monkeypatch.setattr(
-                        "prefect.server.orchestration.rules.TaskOrchestrationContext.flow_run",
+                        "syntask.server.orchestration.rules.TaskOrchestrationContext.flow_run",
                         missing_flow_run,
                     )
 
@@ -734,7 +734,7 @@ class TestUpdatingFlowRunTrackerOnTasks:
 
 class TestPermitRerunningFailedTaskRuns:
     """
-    Following https://github.com/synopkg/synopkg/pull/9152 some of these test names
+    Following https://github.com/synopkg/syntask/pull/9152 some of these test names
     may be stale however they are retained to simplify understanding of changed
     behavior. Generally, failed task runs can just retry whenever they want now.
     """
@@ -1022,7 +1022,7 @@ class TestTaskRetryingRule:
             return average_interval * (1 + clamping_factor)
 
         monkeypatch.setattr(
-            "prefect.server.orchestration.core_policy.clamped_poisson_interval",
+            "syntask.server.orchestration.core_policy.clamped_poisson_interval",
             randomizer,
         )
 
@@ -1784,7 +1784,7 @@ class TestTaskConcurrencyLimits:
                 ctx = await stack.enter_async_context(rule(ctx, *running_transition))
             await ctx.validate_proposed_state()
 
-        # instead of a WAIT response, Prefect should direct the client to ABORT
+        # instead of a WAIT response, Syntask should direct the client to ABORT
         assert ctx.response_status == SetStateStatus.ABORT
 
     async def test_returning_concurrency_slots_on_fizzle(
@@ -3532,12 +3532,12 @@ class TestFlowConcurrencyLimits:
         )
 
         with mock.patch(
-            "prefect.server.orchestration.core_policy.pendulum.now"
+            "syntask.server.orchestration.core_policy.pendulum.now"
         ) as mock_pendulum_now:
             expected_now: pendulum.DateTime = pendulum.parse("2024-01-01T00:00:00Z")  # type: ignore
             mock_pendulum_now.return_value = expected_now
             expected_scheduled_time = mock_pendulum_now.return_value.add(
-                seconds=PREFECT_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
+                seconds=SYNTASK_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
             )
 
             async with contextlib.AsyncExitStack() as stack:
@@ -3591,12 +3591,12 @@ class TestFlowConcurrencyLimits:
             )
 
             with mock.patch(
-                "prefect.server.orchestration.core_policy.pendulum.now"
+                "syntask.server.orchestration.core_policy.pendulum.now"
             ) as mock_pendulum_now:
                 expected_now: pendulum.DateTime = pendulum.parse("2024-01-01T00:00:00Z")  # type: ignore
                 mock_pendulum_now.return_value = expected_now
                 expected_scheduled_time = mock_pendulum_now.return_value.add(
-                    seconds=PREFECT_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
+                    seconds=SYNTASK_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
                 )
                 async with contextlib.AsyncExitStack() as stack:
                     ctx2 = await stack.enter_async_context(
@@ -3724,12 +3724,12 @@ class TestFlowConcurrencyLimits:
         )
 
         with mock.patch(
-            "prefect.server.orchestration.core_policy.pendulum.now"
+            "syntask.server.orchestration.core_policy.pendulum.now"
         ) as mock_pendulum_now:
             expected_now: pendulum.DateTime = pendulum.parse("2024-01-01T00:00:00Z")  # type: ignore
             mock_pendulum_now.return_value = expected_now
             expected_scheduled_time = mock_pendulum_now.return_value.add(
-                seconds=PREFECT_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
+                seconds=SYNTASK_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
             )
         async with contextlib.AsyncExitStack() as stack:
             ctx2 = await stack.enter_async_context(
@@ -3809,12 +3809,12 @@ class TestFlowConcurrencyLimits:
         )
 
         with mock.patch(
-            "prefect.server.orchestration.core_policy.pendulum.now"
+            "syntask.server.orchestration.core_policy.pendulum.now"
         ) as mock_pendulum_now:
             expected_now: pendulum.DateTime = pendulum.parse("2024-01-01T00:00:00Z")  # type: ignore
             mock_pendulum_now.return_value = expected_now
             expected_scheduled_time = mock_pendulum_now.return_value.add(
-                seconds=PREFECT_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
+                seconds=SYNTASK_DEPLOYMENT_CONCURRENCY_SLOT_WAIT_SECONDS.value()
             )
             async with contextlib.AsyncExitStack() as stack:
                 ctx2 = await stack.enter_async_context(
@@ -4198,7 +4198,7 @@ class TestFlowConcurrencyLimits:
             raise Exception("Simulated error")
 
         with mock.patch(
-            "prefect.server.models.deployments.read_deployment",
+            "syntask.server.models.deployments.read_deployment",
             mock_read_deployment_concurrency_limit,
         ):
             async with contextlib.AsyncExitStack() as stack:

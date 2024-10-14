@@ -1,9 +1,9 @@
 """
-Prefect settings are defined using `BaseSettings` from `pydantic_settings`. `BaseSettings` can load setting values
+Syntask settings are defined using `BaseSettings` from `pydantic_settings`. `BaseSettings` can load setting values
 from system environment variables and each additionally specified `env_file`.
 
-The recommended user-facing way to access Prefect settings at this time is to import specific setting objects directly,
-like `from prefect.settings import PREFECT_API_URL; print(PREFECT_API_URL.value())`.
+The recommended user-facing way to access Syntask settings at this time is to import specific setting objects directly,
+like `from syntask.settings import SYNTASK_API_URL; print(SYNTASK_API_URL.value())`.
 
 Importantly, we replace the `callback` mechanism for updating settings with an "after" model_validator that updates dependent settings.
 After https://github.com/pydantic/pydantic/issues/9789 is resolved, we will be able to define context-aware defaults
@@ -60,14 +60,14 @@ from pydantic_settings import (
 )
 from typing_extensions import Literal, Self
 
-from prefect.exceptions import ProfileSettingsValidationError
-from prefect.types import ClientRetryExtraCodes, LogLevel
-from prefect.utilities.collections import visit_collection
-from prefect.utilities.pydantic import handle_secret_render
+from syntask.exceptions import ProfileSettingsValidationError
+from syntask.types import ClientRetryExtraCodes, LogLevel
+from syntask.utilities.collections import visit_collection
+from syntask.utilities.pydantic import handle_secret_render
 
 T = TypeVar("T")
 
-DEFAULT_PREFECT_HOME = Path.home() / ".prefect"
+DEFAULT_SYNTASK_HOME = Path.home() / ".syntask"
 DEFAULT_PROFILES_PATH = Path(__file__).parent.joinpath("profiles.toml")
 _SECRET_TYPES: Tuple[Type, ...] = (Secret, SecretStr)
 
@@ -76,12 +76,12 @@ def env_var_to_attr_name(env_var: str) -> str:
     """
     Convert an environment variable name to an attribute name.
     """
-    return env_var.replace("PREFECT_", "").lower()
+    return env_var.replace("SYNTASK_", "").lower()
 
 
 def is_test_mode() -> bool:
     """Check if the current process is in test mode."""
-    return bool(os.getenv("PREFECT_TEST_MODE") or os.getenv("PREFECT_UNIT_TEST_MODE"))
+    return bool(os.getenv("SYNTASK_TEST_MODE") or os.getenv("SYNTASK_UNIT_TEST_MODE"))
 
 
 class Setting:
@@ -113,8 +113,8 @@ class Setting:
         return self._default
 
     def value(self: Self) -> Any:
-        if self.name == "PREFECT_TEST_SETTING":
-            if "PREFECT_TEST_MODE" in os.environ:
+        if self.name == "SYNTASK_TEST_SETTING":
+            if "SYNTASK_TEST_MODE" in os.environ:
                 return get_current_settings().test_setting
             else:
                 return None
@@ -189,7 +189,7 @@ def default_cloud_ui_url(settings) -> Optional[str]:
     # Otherwise, infer a value from the API URL
     ui_url = api_url = settings.cloud_api_url
 
-    if re.match(r"^https://api[\.\w]*.prefect.[^\.]+/", api_url):
+    if re.match(r"^https://api[\.\w]*.syntask.[^\.]+/", api_url):
         ui_url = ui_url.replace("https://api", "https://app", 1)
 
     if ui_url.endswith("/api"):
@@ -204,8 +204,8 @@ def max_log_size_smaller_than_batch_size(values):
     """
     if values["logging_to_api_batch_size"] < values["logging_to_api_max_log_size"]:
         raise ValueError(
-            "`PREFECT_LOGGING_TO_API_MAX_LOG_SIZE` cannot be larger than"
-            " `PREFECT_LOGGING_TO_API_BATCH_SIZE`"
+            "`SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE` cannot be larger than"
+            " `SYNTASK_LOGGING_TO_API_BATCH_SIZE`"
         )
     return values
 
@@ -227,13 +227,13 @@ def warn_on_database_password_value_without_usage(values):
     if (
         db_password
         and api_db_connection_url is not None
-        and ("PREFECT_API_DATABASE_PASSWORD" not in api_db_connection_url)
+        and ("SYNTASK_API_DATABASE_PASSWORD" not in api_db_connection_url)
         and db_password not in api_db_connection_url
         and quote_plus(db_password) not in api_db_connection_url
     ):
         warnings.warn(
-            "PREFECT_API_DATABASE_PASSWORD is set but not included in the "
-            "PREFECT_API_DATABASE_CONNECTION_URL. "
+            "SYNTASK_API_DATABASE_PASSWORD is set but not included in the "
+            "SYNTASK_API_DATABASE_CONNECTION_URL. "
             "The provided password will be ignored."
         )
     return values
@@ -246,15 +246,15 @@ def warn_on_misconfigured_api_url(values):
     api_url = values["api_url"]
     if api_url is not None:
         misconfigured_mappings = {
-            "app.prefect.cloud": (
-                "`PREFECT_API_URL` points to `app.prefect.cloud`. Did you"
-                " mean `api.prefect.cloud`?"
+            "app.syntask.cloud": (
+                "`SYNTASK_API_URL` points to `app.syntask.cloud`. Did you"
+                " mean `api.syntask.cloud`?"
             ),
             "account/": (
-                "`PREFECT_API_URL` uses `/account/` but should use `/accounts/`."
+                "`SYNTASK_API_URL` uses `/account/` but should use `/accounts/`."
             ),
             "workspace/": (
-                "`PREFECT_API_URL` uses `/workspace/` but should use `/workspaces/`."
+                "`SYNTASK_API_URL` uses `/workspace/` but should use `/workspaces/`."
             ),
         }
         warnings_list = []
@@ -266,11 +266,11 @@ def warn_on_misconfigured_api_url(values):
         parsed_url = urlparse(api_url)
         if parsed_url.path and not parsed_url.path.startswith("/api"):
             warnings_list.append(
-                "`PREFECT_API_URL` should have `/api` after the base URL."
+                "`SYNTASK_API_URL` should have `/api` after the base URL."
             )
 
         if warnings_list:
-            example = 'e.g. PREFECT_API_URL="https://api.prefect.cloud/api/accounts/[ACCOUNT-ID]/workspaces/[WORKSPACE-ID]"'
+            example = 'e.g. SYNTASK_API_URL="https://api.syntask.cloud/api/accounts/[ACCOUNT-ID]/workspaces/[WORKSPACE-ID]"'
             warnings_list.append(example)
 
             warnings.warn("\n".join(warnings_list), stacklevel=2)
@@ -313,12 +313,12 @@ def default_database_connection_url(settings: "Settings") -> SecretStr:
         if settings.api_database_name:
             value = f"{settings.api_database_driver}:///{settings.api_database_name}"
         else:
-            value = f"sqlite+aiosqlite:///{settings.home}/prefect.db"
+            value = f"sqlite+aiosqlite:///{settings.home}/syntask.db"
 
     elif settings.api_database_driver:
         raise ValueError(f"Unsupported database driver: {settings.api_database_driver}")
 
-    value = value if value else f"sqlite+aiosqlite:///{settings.home}/prefect.db"
+    value = value if value else f"sqlite+aiosqlite:///{settings.home}/syntask.db"
     return SecretStr(value)
 
 
@@ -331,11 +331,11 @@ def _get_profiles_path() -> Path:
 
     if is_test_mode():
         return DEFAULT_PROFILES_PATH
-    if env_path := os.getenv("PREFECT_PROFILES_PATH"):
+    if env_path := os.getenv("SYNTASK_PROFILES_PATH"):
         return Path(env_path)
-    if not (DEFAULT_PREFECT_HOME / "profiles.toml").exists():
+    if not (DEFAULT_SYNTASK_HOME / "profiles.toml").exists():
         return DEFAULT_PROFILES_PATH
-    return DEFAULT_PREFECT_HOME / "profiles.toml"
+    return DEFAULT_SYNTASK_HOME / "profiles.toml"
 
 
 class ProfileSettingsTomlLoader(PydanticBaseSettingsSource):
@@ -366,14 +366,14 @@ class ProfileSettingsTomlLoader(PydanticBaseSettingsSource):
             return {}
 
         if (
-            sys.argv[0].endswith("/prefect")
+            sys.argv[0].endswith("/syntask")
             and len(sys.argv) >= 3
             and sys.argv[1] == "--profile"
         ):
             active_profile = sys.argv[2]
 
         else:
-            active_profile = os.environ.get("PREFECT_PROFILE") or all_profile_data.get(
+            active_profile = os.environ.get("SYNTASK_PROFILE") or all_profile_data.get(
                 "active"
             )
 
@@ -388,7 +388,7 @@ class ProfileSettingsTomlLoader(PydanticBaseSettingsSource):
         self, field: FieldInfo, field_name: str
     ) -> Tuple[Any, str, bool]:
         """Concrete implementation to get the field value from the profile settings"""
-        value = self.profile_settings.get(f"PREFECT_{field_name.upper()}")
+        value = self.profile_settings.get(f"SYNTASK_{field_name.upper()}")
         return value, field_name, self.field_is_complex(field)
 
     def __call__(self) -> Dict[str, Any]:
@@ -412,14 +412,14 @@ class ProfileSettingsTomlLoader(PydanticBaseSettingsSource):
 
 class Settings(BaseSettings):
     """
-    Settings for Prefect using Pydantic settings.
+    Settings for Syntask using Pydantic settings.
 
     See https://docs.pydantic.dev/latest/concepts/pydantic_settings
     """
 
     model_config = SettingsConfigDict(
         env_file=".env",
-        env_prefix="PREFECT_",
+        env_prefix="SYNTASK_",
         extra="ignore",
     )
 
@@ -433,7 +433,7 @@ class Settings(BaseSettings):
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> Tuple[PydanticBaseSettingsSource, ...]:
         """
-        Define an order for Prefect settings sources.
+        Define an order for Syntask settings sources.
 
         The order of the returned callables decides the priority of inputs; first item is the highest priority.
 
@@ -506,11 +506,11 @@ class Settings(BaseSettings):
 
     api_url: Optional[str] = Field(
         default=None,
-        description="The URL of the Prefect API. If not set, the client will attempt to infer it.",
+        description="The URL of the Syntask API. If not set, the client will attempt to infer it.",
     )
     api_key: Optional[SecretStr] = Field(
         default=None,
-        description="The API key used for authentication with the Prefect API. Should be kept secret.",
+        description="The API key used for authentication with the Syntask API. Should be kept secret.",
     )
 
     api_tls_insecure_skip_verify: bool = Field(
@@ -570,8 +570,8 @@ class Settings(BaseSettings):
         default=None,
         description="""
         A database connection URL in a SQLAlchemy-compatible
-        format. Prefect currently supports SQLite and Postgres. Note that all
-        Prefect database engines must use an async driver - for SQLite, use
+        format. Syntask currently supports SQLite and Postgres. Note that all
+        Syntask database engines must use an async driver - for SQLite, use
         `sqlite+aiosqlite` and for Postgres use `postgresql+asyncpg`.
 
         SQLite in-memory databases can be used by providing the url
@@ -582,14 +582,14 @@ class Settings(BaseSettings):
         """,
     )
 
-    api_database_driver: Optional[
-        Literal["postgresql+asyncpg", "sqlite+aiosqlite"]
-    ] = Field(
-        default=None,
-        description=(
-            "The database driver to use when connecting to the database. "
-            "If not set, the driver will be inferred from the connection URL."
-        ),
+    api_database_driver: Optional[Literal["postgresql+asyncpg", "sqlite+aiosqlite"]] = (
+        Field(
+            default=None,
+            description=(
+                "The database driver to use when connecting to the database. "
+                "If not set, the driver will be inferred from the connection URL."
+            ),
+        )
     )
 
     api_database_host: Optional[str] = Field(
@@ -609,7 +609,7 @@ class Settings(BaseSettings):
 
     api_database_name: Optional[str] = Field(
         default=None,
-        description="The name of the Prefect database on the remote server, or the path to the database file for SQLite.",
+        description="The name of the Syntask database on the remote server, or the path to the database file for SQLite.",
     )
 
     api_database_password: Optional[SecretStr] = Field(
@@ -823,13 +823,13 @@ class Settings(BaseSettings):
     # Cloud settings
 
     cloud_api_url: str = Field(
-        default="https://api.prefect.cloud/api",
-        description="API URL for Prefect Cloud. Used for authentication.",
+        default="https://api.syntask.cloud/api",
+        description="API URL for Syntask Cloud. Used for authentication.",
     )
 
     cloud_ui_url: Optional[str] = Field(
         default=None,
-        description="The URL of the Prefect Cloud UI. If not set, the client will attempt to infer it.",
+        description="The URL of the Syntask Cloud UI. If not set, the client will attempt to infer it.",
     )
 
     ###########################################################################
@@ -837,17 +837,17 @@ class Settings(BaseSettings):
 
     logging_level: LogLevel = Field(
         default="INFO",
-        description="The default logging level for Prefect loggers.",
+        description="The default logging level for Syntask loggers.",
     )
 
     logging_internal_level: LogLevel = Field(
         default="ERROR",
-        description="The default logging level for Prefect's internal machinery loggers.",
+        description="The default logging level for Syntask's internal machinery loggers.",
     )
 
     logging_server_level: LogLevel = Field(
         default="WARNING",
-        description="The default logging level for the Prefect API server.",
+        description="The default logging level for the Syntask API server.",
     )
 
     logging_settings_path: Optional[Path] = Field(
@@ -860,12 +860,12 @@ class Settings(BaseSettings):
         AfterValidator(lambda v: [n.strip() for n in v.split(",")] if v else []),
     ] = Field(
         default=None,
-        description="Additional loggers to attach to Prefect logging at runtime.",
+        description="Additional loggers to attach to Syntask logging at runtime.",
     )
 
     logging_log_prints: bool = Field(
         default=False,
-        description="If `True`, `print` statements in flows and tasks will be redirected to the Prefect logger for the given run.",
+        description="If `True`, `print` statements in flows and tasks will be redirected to the Syntask logger for the given run.",
     )
 
     logging_to_api_enabled: bool = Field(
@@ -946,7 +946,7 @@ class Settings(BaseSettings):
         When the API is hosted behind a load balancer, you may want to set this to a value
         greater than the load balancer's idle timeout.
 
-        Note this setting only applies when calling `prefect server start`; if hosting the
+        Note this setting only applies when calling `syntask server start`; if hosting the
         API with another tool you will need to configure this there instead.
         """,
     )
@@ -954,7 +954,7 @@ class Settings(BaseSettings):
     server_csrf_protection_enabled: bool = Field(
         default=False,
         description="""
-        Controls the activation of CSRF protection for the Prefect server API.
+        Controls the activation of CSRF protection for the Syntask server API.
 
         When enabled (`True`), the server enforces CSRF validation checks on incoming
         state-changing requests (POST, PUT, PATCH, DELETE), requiring a valid CSRF
@@ -966,7 +966,7 @@ class Settings(BaseSettings):
         API is exposed to web clients to safeguard against CSRF attacks.
 
         Note: Enabling this setting requires corresponding support in the client for
-        CSRF token management. See PREFECT_CLIENT_CSRF_SUPPORT_ENABLED for more.
+        CSRF token management. See SYNTASK_CLIENT_CSRF_SUPPORT_ENABLED for more.
         """,
     )
 
@@ -1027,7 +1027,7 @@ class Settings(BaseSettings):
     server_analytics_enabled: bool = Field(
         default=True,
         description="""
-        When enabled, Prefect sends anonymous data (e.g. count of flow runs, package version)
+        When enabled, Syntask sends anonymous data (e.g. count of flow runs, package version)
         on server startup to help us improve our product.
         """,
     )
@@ -1037,22 +1037,22 @@ class Settings(BaseSettings):
 
     ui_enabled: bool = Field(
         default=True,
-        description="Whether or not to serve the Prefect UI.",
+        description="Whether or not to serve the Syntask UI.",
     )
 
     ui_url: Optional[str] = Field(
         default=None,
-        description="The URL of the Prefect UI. If not set, the client will attempt to infer it.",
+        description="The URL of the Syntask UI. If not set, the client will attempt to infer it.",
     )
 
     ui_api_url: Optional[str] = Field(
         default=None,
-        description="The connection url for communication from the UI to the API. Defaults to `PREFECT_API_URL` if set. Otherwise, the default URL is generated from `PREFECT_SERVER_API_HOST` and `PREFECT_SERVER_API_PORT`.",
+        description="The connection url for communication from the UI to the API. Defaults to `SYNTASK_API_URL` if set. Otherwise, the default URL is generated from `SYNTASK_SERVER_API_HOST` and `SYNTASK_SERVER_API_PORT`.",
     )
 
     ui_serve_base: str = Field(
         default="/",
-        description="The base URL path to serve the Prefect UI from.",
+        description="The base URL path to serve the Syntask UI from.",
     )
 
     ui_static_directory: Optional[str] = Field(
@@ -1154,8 +1154,8 @@ class Settings(BaseSettings):
     # uncategorized
 
     home: Annotated[Path, BeforeValidator(lambda x: Path(x).expanduser())] = Field(
-        default=Path("~") / ".prefect",
-        description="The path to the Prefect home directory. Defaults to ~/.prefect",
+        default=Path("~") / ".syntask",
+        description="The path to the Syntask home directory. Defaults to ~/.syntask",
     )
     debug_mode: bool = Field(
         default=False,
@@ -1165,8 +1165,8 @@ class Settings(BaseSettings):
     silence_api_url_misconfiguration: bool = Field(
         default=False,
         description="""
-        If `True`, disable the warning when a user accidentally misconfigure its `PREFECT_API_URL`
-        Sometimes when a user manually set `PREFECT_API_URL` to a custom url,reverse-proxy for example,
+        If `True`, disable the warning when a user accidentally misconfigure its `SYNTASK_API_URL`
+        Sometimes when a user manually set `SYNTASK_API_URL` to a custom url,reverse-proxy for example,
         we would like to silence this warning so we will set it to `FALSE`.
         """,
     )
@@ -1177,7 +1177,7 @@ class Settings(BaseSettings):
         description="""
         The maximum number of retries to perform on failed HTTP requests.
         Defaults to 5. Set to 0 to disable retries.
-        See `PREFECT_CLIENT_RETRY_EXTRA_CODES` for details on which HTTP status codes are
+        See `SYNTASK_CLIENT_RETRY_EXTRA_CODES` for details on which HTTP status codes are
         retried.
         """,
     )
@@ -1206,7 +1206,7 @@ class Settings(BaseSettings):
     client_csrf_support_enabled: bool = Field(
         default=True,
         description="""
-        Determines if CSRF token handling is active in the Prefect client for API
+        Determines if CSRF token handling is active in the Syntask client for API
         requests.
 
         When enabled (`True`), the client automatically manages CSRF tokens by
@@ -1274,19 +1274,19 @@ class Settings(BaseSettings):
 
     sqlalchemy_pool_size: Optional[int] = Field(
         default=None,
-        description="Controls connection pool size when using a PostgreSQL database with the Prefect API. If not set, the default SQLAlchemy pool size will be used.",
+        description="Controls connection pool size when using a PostgreSQL database with the Syntask API. If not set, the default SQLAlchemy pool size will be used.",
     )
 
     sqlalchemy_max_overflow: Optional[int] = Field(
         default=None,
-        description="Controls maximum overflow of the connection pool when using a PostgreSQL database with the Prefect API. If not set, the default SQLAlchemy maximum overflow value will be used.",
+        description="Controls maximum overflow of the connection pool when using a PostgreSQL database with the Syntask API. If not set, the default SQLAlchemy maximum overflow value will be used.",
     )
 
     async_fetch_state_result: bool = Field(
         default=False,
         description="""
         Determines whether `State.result()` fetches results automatically or not.
-        In Prefect 2.6.0, the `State.result()` method was updated to be async
+        In Syntask 2.6.0, the `State.result()` method was updated to be async
         to facilitate automatic retrieval of results from storage which means when
         writing async code you must `await` the call. For backwards compatibility,
         the result is not retrieved by default for async users. You may opt into this
@@ -1415,20 +1415,20 @@ class Settings(BaseSettings):
     )
 
     messaging_broker: str = Field(
-        default="prefect.server.utilities.messaging.memory",
+        default="syntask.server.utilities.messaging.memory",
         description="Which message broker implementation to use for the messaging system, should point to a module that exports a Publisher and Consumer class.",
     )
 
     messaging_cache: str = Field(
-        default="prefect.server.utilities.messaging.memory",
+        default="syntask.server.utilities.messaging.memory",
         description="Which cache implementation to use for the events system.  Should point to a module that exports a Cache class.",
     )
 
     ###########################################################################
-    # allow deprecated access to PREFECT_SOME_SETTING_NAME
+    # allow deprecated access to SYNTASK_SOME_SETTING_NAME
 
     def __getattribute__(self, name: str) -> Any:
-        if name.startswith("PREFECT_"):
+        if name.startswith("SYNTASK_"):
             field_name = env_var_to_attr_name(name)
             warnings.warn(
                 f"Accessing `Settings().{name}` is deprecated. Use `Settings().{field_name}` instead.",
@@ -1464,7 +1464,7 @@ class Settings(BaseSettings):
                     f"http://{self.server_api_host}:{self.server_api_port}"
                 )
                 self.__pydantic_fields_set__.remove("ui_api_url")
-        if self.profiles_path is None or "PREFECT_HOME" in str(self.profiles_path):
+        if self.profiles_path is None or "SYNTASK_HOME" in str(self.profiles_path):
             self.profiles_path = Path(f"{self.home}/profiles.toml")
             self.__pydantic_fields_set__.remove("profiles_path")
         if self.local_storage_path is None:
@@ -1486,7 +1486,7 @@ class Settings(BaseSettings):
         if self.api_database_connection_url is None:
             self.api_database_connection_url = default_database_connection_url(self)
             self.__pydantic_fields_set__.remove("api_database_connection_url")
-        if "PREFECT_API_DATABASE_PASSWORD" in (
+        if "SYNTASK_API_DATABASE_PASSWORD" in (
             db_url := (
                 self.api_database_connection_url.get_secret_value()
                 if isinstance(self.api_database_connection_url, SecretStr)
@@ -1495,11 +1495,11 @@ class Settings(BaseSettings):
         ):
             if self.api_database_password is None:
                 raise ValueError(
-                    "database password is None - please set PREFECT_API_DATABASE_PASSWORD"
+                    "database password is None - please set SYNTASK_API_DATABASE_PASSWORD"
                 )
             self.api_database_connection_url = SecretStr(
                 db_url.replace(
-                    "${PREFECT_API_DATABASE_PASSWORD}",
+                    "${SYNTASK_API_DATABASE_PASSWORD}",
                     self.api_database_password.get_secret_value(),
                 )
                 if self.api_database_password
@@ -1524,7 +1524,7 @@ class Settings(BaseSettings):
     @classmethod
     def valid_setting_names(cls) -> Set[str]:
         """
-        A set of valid setting names, e.g. "PREFECT_API_URL" or "PREFECT_API_KEY".
+        A set of valid setting names, e.g. "SYNTASK_API_URL" or "SYNTASK_API_KEY".
         """
         return set(
             f"{cls.model_config.get('env_prefix')}{key.upper()}"
@@ -1659,7 +1659,7 @@ def get_current_settings() -> Settings:
     Returns a settings object populated with values from the current settings context
     or, if no settings context is active, the environment.
     """
-    from prefect.context import SettingsContext
+    from syntask.context import SettingsContext
 
     settings_context = SettingsContext.get()
     if settings_context is not None:
@@ -1680,24 +1680,24 @@ def temporary_settings(
     See `Settings.copy_with_update` for details on different argument behavior.
 
     Examples:
-        >>> from prefect.settings import PREFECT_API_URL
+        >>> from syntask.settings import SYNTASK_API_URL
         >>>
-        >>> with temporary_settings(updates={PREFECT_API_URL: "foo"}):
-        >>>    assert PREFECT_API_URL.value() == "foo"
+        >>> with temporary_settings(updates={SYNTASK_API_URL: "foo"}):
+        >>>    assert SYNTASK_API_URL.value() == "foo"
         >>>
-        >>>    with temporary_settings(set_defaults={PREFECT_API_URL: "bar"}):
-        >>>         assert PREFECT_API_URL.value() == "foo"
+        >>>    with temporary_settings(set_defaults={SYNTASK_API_URL: "bar"}):
+        >>>         assert SYNTASK_API_URL.value() == "foo"
         >>>
-        >>>    with temporary_settings(restore_defaults={PREFECT_API_URL}):
-        >>>         assert PREFECT_API_URL.value() is None
+        >>>    with temporary_settings(restore_defaults={SYNTASK_API_URL}):
+        >>>         assert SYNTASK_API_URL.value() is None
         >>>
-        >>>         with temporary_settings(set_defaults={PREFECT_API_URL: "bar"})
-        >>>             assert PREFECT_API_URL.value() == "bar"
-        >>> assert PREFECT_API_URL.value() is None
+        >>>         with temporary_settings(set_defaults={SYNTASK_API_URL: "bar"})
+        >>>             assert SYNTASK_API_URL.value() == "bar"
+        >>> assert SYNTASK_API_URL.value() is None
     """
-    import prefect.context
+    import syntask.context
 
-    context = prefect.context.get_settings_context()
+    context = syntask.context.get_settings_context()
 
     if not restore_defaults:
         restore_defaults = []
@@ -1706,7 +1706,7 @@ def temporary_settings(
         updates=updates, set_defaults=set_defaults, restore_defaults=restore_defaults
     )
 
-    with prefect.context.SettingsContext(
+    with syntask.context.SettingsContext(
         profile=context.profile, settings=new_settings
     ):
         yield new_settings
@@ -1947,7 +1947,7 @@ def load_profiles(include_defaults: bool = True) -> ProfilesCollection:
 
     if current_settings.profiles_path is None:
         raise RuntimeError(
-            "No profiles path set; please ensure `PREFECT_PROFILES_PATH` is set."
+            "No profiles path set; please ensure `SYNTASK_PROFILES_PATH` is set."
         )
 
     if not include_defaults:
@@ -1983,10 +1983,10 @@ def load_current_profile():
     This will _not_ include settings from the current settings context. Only settings
     that have been persisted to the profiles file will be saved.
     """
-    import prefect.context
+    import syntask.context
 
     profiles = load_profiles()
-    context = prefect.context.get_settings_context()
+    context = syntask.context.get_settings_context()
 
     if context:
         profiles.set_active(context.profile.name)
@@ -2029,12 +2029,12 @@ def update_current_profile(
     Returns:
         The new profile.
     """
-    import prefect.context
+    import syntask.context
 
-    current_profile = prefect.context.get_settings_context().profile
+    current_profile = syntask.context.get_settings_context().profile
 
     if not current_profile:
-        from prefect.exceptions import MissingProfileError
+        from syntask.exceptions import MissingProfileError
 
         raise MissingProfileError("No profile is currently in use.")
 
@@ -2062,7 +2062,7 @@ class _SettingsDict(dict):
     """allow either `field_name` or `ENV_VAR_NAME` access
     ```
     d = _SettingsDict(Settings)
-    d["api_url"] == d["PREFECT_API_URL"]
+    d["api_url"] == d["SYNTASK_API_URL"]
     ```
     """
 
@@ -2083,7 +2083,7 @@ SETTING_VARIABLES: dict[str, Setting] = _SettingsDict(Settings)
 def __getattr__(name: str) -> Setting:
     if name in Settings.valid_setting_names():
         return SETTING_VARIABLES[name]
-    raise AttributeError(f"{name} is not a Prefect setting.")
+    raise AttributeError(f"{name} is not a Syntask setting.")
 
 
 __all__ = [  # noqa: F822
@@ -2100,7 +2100,7 @@ __all__ = [  # noqa: F822
     "temporary_settings",
     "DEFAULT_PROFILES_PATH",
     # add public settings here for auto-completion
-    "PREFECT_API_KEY",  # type: ignore
-    "PREFECT_API_URL",  # type: ignore
-    "PREFECT_UI_URL",  # type: ignore
+    "SYNTASK_API_KEY",  # type: ignore
+    "SYNTASK_API_URL",  # type: ignore
+    "SYNTASK_UI_URL",  # type: ignore
 ]

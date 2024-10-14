@@ -8,41 +8,41 @@ import pytest
 import respx
 from httpx import Response
 
-from prefect import flow
-from prefect.context import FlowRunContext
-from prefect.deployments import run_deployment
-from prefect.server.schemas.core import TaskRunResult
-from prefect.settings import (
-    PREFECT_API_URL,
+from syntask import flow
+from syntask.context import FlowRunContext
+from syntask.deployments import run_deployment
+from syntask.server.schemas.core import TaskRunResult
+from syntask.settings import (
+    SYNTASK_API_URL,
 )
-from prefect.tasks import task
-from prefect.utilities.slugify import slugify
+from syntask.tasks import task
+from syntask.utilities.slugify import slugify
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 class TestRunDeployment:
     @pytest.fixture
-    async def test_deployment(self, prefect_client):
-        flow_id = await prefect_client.create_flow_from_name("foo")
+    async def test_deployment(self, syntask_client):
+        flow_id = await syntask_client.create_flow_from_name("foo")
 
-        deployment_id = await prefect_client.create_deployment(
+        deployment_id = await syntask_client.create_deployment(
             name="foo-deployment", flow_id=flow_id, parameter_openapi_schema={}
         )
-        deployment = await prefect_client.read_deployment(deployment_id)
+        deployment = await syntask_client.read_deployment(deployment_id)
 
         return deployment
 
     async def test_run_deployment_with_ephemeral_api(
-        self, prefect_client, test_deployment
+        self, syntask_client, test_deployment
     ):
         deployment = test_deployment
         flow_run = await run_deployment(
             f"foo/{deployment.name}",
             timeout=0,
             poll_interval=0,
-            client=prefect_client,
+            client=syntask_client,
         )
         assert flow_run.deployment_id == deployment.id
         assert flow_run.state
@@ -50,7 +50,7 @@ class TestRunDeployment:
     async def test_run_deployment_with_deployment_id_str(
         self,
         test_deployment,
-        prefect_client,
+        syntask_client,
     ):
         deployment = test_deployment
 
@@ -58,7 +58,7 @@ class TestRunDeployment:
             f"{deployment.id}",
             timeout=0,
             poll_interval=0,
-            client=prefect_client,
+            client=syntask_client,
         )
         assert flow_run.deployment_id == deployment.id
         assert flow_run.state
@@ -66,7 +66,7 @@ class TestRunDeployment:
     async def test_run_deployment_with_deployment_id_uuid(
         self,
         test_deployment,
-        prefect_client,
+        syntask_client,
     ):
         deployment = test_deployment
 
@@ -74,7 +74,7 @@ class TestRunDeployment:
             deployment.id,
             timeout=0,
             poll_interval=0,
-            client=prefect_client,
+            client=syntask_client,
         )
         assert flow_run.deployment_id == deployment.id
         assert flow_run.state
@@ -82,7 +82,7 @@ class TestRunDeployment:
     async def test_run_deployment_with_job_vars_creates_run_with_job_vars(
         self,
         test_deployment,
-        prefect_client,
+        syntask_client,
     ):
         # This can be removed once the flow run infra overrides is no longer an experiment
         deployment = test_deployment
@@ -92,10 +92,10 @@ class TestRunDeployment:
             deployment.id,
             timeout=0,
             job_variables=job_vars,
-            client=prefect_client,
+            client=syntask_client,
         )
         assert flow_run.job_variables == job_vars
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
         assert flow_run.job_variables == job_vars
 
     async def test_returns_flow_run_on_timeout(
@@ -111,13 +111,13 @@ class TestRunDeployment:
         }
 
         with respx.mock(
-            base_url=PREFECT_API_URL.value(), assert_all_mocked=True
+            base_url=SYNTASK_API_URL.value(), assert_all_mocked=True
         ) as router:
             router.get("/csrf-token", params={"client": mock.ANY}).pass_through()
             router.get(f"/deployments/name/foo/{deployment.name}").pass_through()
             router.post(f"/deployments/{deployment.id}/create_flow_run").pass_through()
             flow_polls = router.request(
-                "GET", re.compile(PREFECT_API_URL.value() + "/flow_runs/.*")
+                "GET", re.compile(SYNTASK_API_URL.value() + "/flow_runs/.*")
             ).mock(
                 return_value=Response(
                     200, json={**mock_flowrun_response, "state": {"type": "SCHEDULED"}}
@@ -143,7 +143,7 @@ class TestRunDeployment:
         }
 
         with respx.mock(
-            base_url=PREFECT_API_URL.value(),
+            base_url=SYNTASK_API_URL.value(),
             assert_all_mocked=True,
             assert_all_called=False,
         ) as router:
@@ -151,7 +151,7 @@ class TestRunDeployment:
             router.get(f"/deployments/name/foo/{deployment.name}").pass_through()
             router.post(f"/deployments/{deployment.id}/create_flow_run").pass_through()
             flow_polls = router.request(
-                "GET", re.compile(PREFECT_API_URL.value() + "/flow_runs/.*")
+                "GET", re.compile(SYNTASK_API_URL.value() + "/flow_runs/.*")
             ).mock(
                 return_value=Response(
                     200, json={**mock_flowrun_response, "state": {"type": "SCHEDULED"}}
@@ -188,7 +188,7 @@ class TestRunDeployment:
         )
 
         with respx.mock(
-            base_url=PREFECT_API_URL.value(),
+            base_url=SYNTASK_API_URL.value(),
             assert_all_mocked=True,
             assert_all_called=False,
         ) as router:
@@ -196,7 +196,7 @@ class TestRunDeployment:
             router.get(f"/deployments/name/foo/{deployment.name}").pass_through()
             router.post(f"/deployments/{deployment.id}/create_flow_run").pass_through()
             flow_polls = router.request(
-                "GET", re.compile(PREFECT_API_URL.value() + "/flow_runs/.*")
+                "GET", re.compile(SYNTASK_API_URL.value() + "/flow_runs/.*")
             ).mock(side_effect=side_effects)
 
             await run_deployment(
@@ -250,12 +250,12 @@ class TestRunDeployment:
 
         flow_run = await run_deployment(
             f"foo/{deployment.name}",
-            tags=["I", "love", "prefect"],
+            tags=["I", "love", "syntask"],
             timeout=0,
             poll_interval=0,
         )
 
-        assert sorted(flow_run.tags) == ["I", "love", "prefect"]
+        assert sorted(flow_run.tags) == ["I", "love", "syntask"]
 
     async def test_accepts_idempotency_key(self, test_deployment):
         deployment = test_deployment
@@ -277,7 +277,7 @@ class TestRunDeployment:
         assert flow_run_a.id == flow_run_b.id
 
     async def test_links_to_parent_flow_run_when_used_in_flow_by_default(
-        self, test_deployment, use_hosted_api_server, prefect_client: "PrefectClient"
+        self, test_deployment, use_hosted_api_server, syntask_client: "SyntaskClient"
     ):
         my_deployment = test_deployment
 
@@ -292,14 +292,14 @@ class TestRunDeployment:
         parent_state = await foo(return_state=True)
         child_flow_run = await parent_state.result()
         assert child_flow_run.parent_task_run_id is not None
-        task_run = await prefect_client.read_task_run(child_flow_run.parent_task_run_id)
+        task_run = await syntask_client.read_task_run(child_flow_run.parent_task_run_id)
         assert task_run.flow_run_id == parent_state.state_details.flow_run_id
         deployment_name = f"foo/{my_deployment.name}"
         assert isinstance(deployment_name, str)
         assert slugify(deployment_name) in task_run.task_key
 
     async def test_optionally_does_not_link_to_parent_flow_run_when_used_in_flow(
-        self, test_deployment, use_hosted_api_server, prefect_client: "PrefectClient"
+        self, test_deployment, use_hosted_api_server, syntask_client: "SyntaskClient"
     ):
         deployment = test_deployment
 
@@ -318,11 +318,11 @@ class TestRunDeployment:
 
     @pytest.mark.usefixtures("use_hosted_api_server")
     async def test_links_to_parent_flow_run_when_used_in_task_without_flow_context(
-        self, test_deployment, prefect_client
+        self, test_deployment, syntask_client
     ):
         """
         Regression test for deployments in a task on Dask and Ray task runners
-        which do not have access to the flow run context - https://github.com/synopkg/synopkg/issues/9135
+        which do not have access to the flow run context - https://github.com/synopkg/syntask/issues/9135
         """
         deployment = test_deployment
 
@@ -344,12 +344,12 @@ class TestRunDeployment:
         parent_state = await foo(return_state=True)
         child_flow_run = await parent_state.result()
         assert child_flow_run.parent_task_run_id is not None
-        task_run = await prefect_client.read_task_run(child_flow_run.parent_task_run_id)
+        task_run = await syntask_client.read_task_run(child_flow_run.parent_task_run_id)
         assert task_run.flow_run_id == parent_state.state_details.flow_run_id
         assert slugify(f"foo/{deployment.name}") in task_run.task_key
 
     async def test_tracks_dependencies_when_used_in_flow(
-        self, test_deployment, use_hosted_api_server, prefect_client, events_pipeline
+        self, test_deployment, use_hosted_api_server, syntask_client, events_pipeline
     ):
         deployment = test_deployment
 
@@ -373,7 +373,7 @@ class TestRunDeployment:
         upstream_task_state, child_flow_run = await parent_state.result()
         assert child_flow_run.parent_task_run_id is not None
 
-        task_run = await prefect_client.read_task_run(child_flow_run.parent_task_run_id)
+        task_run = await syntask_client.read_task_run(child_flow_run.parent_task_run_id)
         assert task_run.task_inputs == {
             "x": [
                 TaskRunResult(

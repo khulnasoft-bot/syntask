@@ -7,17 +7,17 @@ import pytest
 from starlette import status
 from tests.cli.cloud.test_cloud import gen_test_workspace
 
-from prefect.client.schemas.objects import IPAllowlist, IPAllowlistEntry
-from prefect.context import use_profile
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
+from syntask.client.schemas.objects import IPAllowlist, IPAllowlistEntry
+from syntask.context import use_profile
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
     Profile,
     ProfilesCollection,
     save_profiles,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 SAMPLE_ALLOWLIST = IPAllowlist(
     entries=[
@@ -56,8 +56,8 @@ def workspace_with_logged_in_profile():
                 Profile(
                     name=profile_name,
                     settings={
-                        PREFECT_API_URL: foo_workspace.api_url(),
-                        PREFECT_API_KEY: "foo",
+                        SYNTASK_API_URL: foo_workspace.api_url(),
+                        SYNTASK_API_KEY: "foo",
                     },
                 )
             ],
@@ -72,7 +72,7 @@ def workspace_with_logged_in_profile():
 def account_with_ip_allowlisting_enabled(respx_mock, workspace_with_logged_in_profile):
     workspace, profile = workspace_with_logged_in_profile
     respx_mock.get(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -89,7 +89,7 @@ def test_ip_allowlist_requires_access_to_ip_allowlisting(
 ):
     workspace, profile = workspace_with_logged_in_profile
     respx_mock.get(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -109,7 +109,7 @@ def test_ip_allowlist_requires_access_to_ip_allowlisting(
 def test_ip_allowlist_enable(respx_mock, workspace_with_logged_in_profile):
     workspace, profile = workspace_with_logged_in_profile
     respx_mock.get(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -117,7 +117,7 @@ def test_ip_allowlist_enable(respx_mock, workspace_with_logged_in_profile):
         )
     )
     respx_mock.get(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist/my_access"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist/my_access"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -126,7 +126,7 @@ def test_ip_allowlist_enable(respx_mock, workspace_with_logged_in_profile):
     )
 
     respx_mock.patch(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings",
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings",
         json={"enforce_ip_allowlist": True},
     ).mock(
         return_value=httpx.Response(
@@ -148,7 +148,7 @@ def test_ip_allowlist_enable_already_enabled(
 ):
     workspace, profile = workspace_with_logged_in_profile
     respx_mock.get(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -171,7 +171,7 @@ def test_ip_allowlist_enable_aborts_if_would_block_current_user(
 ):
     workspace, profile = workspace_with_logged_in_profile
     respx_mock.get(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -179,7 +179,7 @@ def test_ip_allowlist_enable_aborts_if_would_block_current_user(
         )
     )
     respx_mock.get(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist/my_access"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist/my_access"
     ).mock(
         return_value=httpx.Response(
             status.HTTP_200_OK,
@@ -199,7 +199,7 @@ def test_ip_allowlist_enable_aborts_if_would_block_current_user(
 def test_ip_allowlist_disable(respx_mock, workspace_with_logged_in_profile):
     workspace, profile = workspace_with_logged_in_profile
     respx_mock.patch(
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings",
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/settings",
         json={"enforce_ip_allowlist": False},
     ).mock(
         return_value=httpx.Response(
@@ -219,7 +219,7 @@ def test_ip_allowlist_disable(respx_mock, workspace_with_logged_in_profile):
 def test_ip_allowlist_ls(respx_mock, workspace_with_logged_in_profile):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     respx_mock.get(url).mock(
         return_value=httpx.Response(
@@ -244,7 +244,7 @@ def test_ip_allowlist_ls(respx_mock, workspace_with_logged_in_profile):
 def test_ip_allowlist_ls_empty_list(respx_mock, workspace_with_logged_in_profile):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     respx_mock.get(url).mock(
         return_value=httpx.Response(
@@ -268,7 +268,7 @@ def test_ip_allowlist_add(
 ):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     respx_mock.get(url).mock(
         return_value=httpx.Response(
@@ -326,7 +326,7 @@ def test_ip_allowlist_add_existing_ip_entry(
     )
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     respx_mock.get(url).mock(
         return_value=httpx.Response(
@@ -360,7 +360,7 @@ def test_ip_allowlist_add_existing_ip_entry(
 def test_ip_allowlist_remove(workspace_with_logged_in_profile, respx_mock):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     respx_mock.get(url).mock(
         return_value=httpx.Response(
@@ -396,7 +396,7 @@ def test_ip_allowlist_handles_422_on_removal_of_own_ip_address(
 ):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     my_ip_entry = IPAllowlistEntry(
         ip_network="127.0.0.1",  # type: ignore
@@ -442,7 +442,7 @@ def test_ip_allowlist_handles_422_on_removal_of_own_ip_address(
 def test_ip_allowlist_toggle(workspace_with_logged_in_profile, respx_mock):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     respx_mock.get(url).mock(
         return_value=httpx.Response(
@@ -484,7 +484,7 @@ def test_ip_allowlist_toggle_nonexistent_entry(
 ):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     respx_mock.get(url).mock(
         return_value=httpx.Response(
@@ -513,7 +513,7 @@ def test_ip_allowlist_toggle_handles_422_on_disable_of_own_ip_address(
 ):
     workspace, profile = workspace_with_logged_in_profile
     url = (
-        f"{PREFECT_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
+        f"{SYNTASK_CLOUD_API_URL.value()}/accounts/{workspace.account_id}/ip_allowlist"
     )
     my_ip_entry = IPAllowlistEntry(
         ip_network="127.0.0.1",  # type: ignore

@@ -42,36 +42,36 @@ from pydantic import (
 )
 from typing_extensions import Self, TypeAlias
 
-from prefect.blocks.abstract import NotificationBlock, NotificationError
-from prefect.blocks.core import Block
-from prefect.blocks.webhook import Webhook
-from prefect.logging import get_logger
-from prefect.server.events.clients import (
-    PrefectServerEventsAPIClient,
-    PrefectServerEventsClient,
+from syntask.blocks.abstract import NotificationBlock, NotificationError
+from syntask.blocks.core import Block
+from syntask.blocks.webhook import Webhook
+from syntask.logging import get_logger
+from syntask.server.events.clients import (
+    SyntaskServerEventsAPIClient,
+    SyntaskServerEventsClient,
 )
-from prefect.server.events.schemas.events import Event, RelatedResource, Resource
-from prefect.server.events.schemas.labelling import LabelDiver
-from prefect.server.schemas.actions import DeploymentFlowRunCreate, StateCreate
-from prefect.server.schemas.core import (
+from syntask.server.events.schemas.events import Event, RelatedResource, Resource
+from syntask.server.events.schemas.labelling import LabelDiver
+from syntask.server.schemas.actions import DeploymentFlowRunCreate, StateCreate
+from syntask.server.schemas.core import (
     BlockDocument,
     ConcurrencyLimitV2,
     Flow,
     TaskRun,
     WorkPool,
 )
-from prefect.server.schemas.responses import (
+from syntask.server.schemas.responses import (
     DeploymentResponse,
     FlowRunResponse,
     OrchestrationResult,
     StateAcceptDetails,
     WorkQueueWithStatus,
 )
-from prefect.server.schemas.states import Scheduled, State, StateType, Suspended
-from prefect.server.utilities.http import should_redact_header
-from prefect.server.utilities.messaging import Message, MessageHandler
-from prefect.server.utilities.schemas import PrefectBaseModel
-from prefect.server.utilities.user_templates import (
+from syntask.server.schemas.states import Scheduled, State, StateType, Suspended
+from syntask.server.utilities.http import should_redact_header
+from syntask.server.utilities.messaging import Message, MessageHandler
+from syntask.server.utilities.schemas import SyntaskBaseModel
+from syntask.server.utilities.user_templates import (
     TemplateSecurityError,
     matching_types_in_templates,
     maybe_template,
@@ -79,8 +79,8 @@ from prefect.server.utilities.user_templates import (
     render_user_template,
     validate_user_template,
 )
-from prefect.types import StrictVariableValue
-from prefect.utilities.schema_tools.hydration import (
+from syntask.types import StrictVariableValue
+from syntask.utilities.schema_tools.hydration import (
     HydrationContext,
     HydrationError,
     Placeholder,
@@ -88,11 +88,11 @@ from prefect.utilities.schema_tools.hydration import (
     WorkspaceVariable,
     hydrate,
 )
-from prefect.utilities.text import truncated_to
+from syntask.utilities.text import truncated_to
 
 if TYPE_CHECKING:  # pragma: no cover
-    from prefect.server.api.clients import OrchestrationClient
-    from prefect.server.events.schemas.automations import TriggeredAction
+    from syntask.server.api.clients import OrchestrationClient
+    from syntask.server.events.schemas.automations import TriggeredAction
 
 logger = get_logger(__name__)
 
@@ -102,7 +102,7 @@ class ActionFailed(Exception):
         self.reason = reason
 
 
-class Action(PrefectBaseModel, abc.ABC):
+class Action(SyntaskBaseModel, abc.ABC):
     """An Action that may be performed when an Automation is triggered"""
 
     type: str
@@ -119,13 +119,13 @@ class Action(PrefectBaseModel, abc.ABC):
         """Perform the requested Action"""
 
     async def fail(self, triggered_action: "TriggeredAction", reason: str) -> None:
-        from prefect.server.events.schemas.automations import EventTrigger
+        from syntask.server.events.schemas.automations import EventTrigger
 
         automation = triggered_action.automation
         action = triggered_action.action
         action_index = triggered_action.action_index
 
-        automation_resource_id = f"prefect.automation.{automation.id}"
+        automation_resource_id = f"syntask.automation.{automation.id}"
 
         action_details = {
             "action_index": action_index,
@@ -134,13 +134,13 @@ class Action(PrefectBaseModel, abc.ABC):
         }
         resource = Resource(
             {
-                "prefect.resource.id": automation_resource_id,
-                "prefect.resource.name": automation.name,
-                "prefect.trigger-type": automation.trigger.type,
+                "syntask.resource.id": automation_resource_id,
+                "syntask.resource.name": automation.name,
+                "syntask.trigger-type": automation.trigger.type,
             }
         )
         if isinstance(automation.trigger, EventTrigger):
-            resource["prefect.posture"] = automation.trigger.posture
+            resource["syntask.posture"] = automation.trigger.posture
 
         logger.warning(
             "Action failed: %r",
@@ -148,12 +148,12 @@ class Action(PrefectBaseModel, abc.ABC):
             extra={**self.logging_context(triggered_action)},
         )
 
-        async with PrefectServerEventsClient() as events:
+        async with SyntaskServerEventsClient() as events:
             triggered_event_id = uuid4()
             await events.emit(
                 Event(
                     occurred=triggered_action.triggered,
-                    event="prefect.automation.action.triggered",
+                    event="syntask.automation.action.triggered",
                     resource=resource,
                     related=self._resulting_related_resources,
                     payload=action_details,
@@ -163,7 +163,7 @@ class Action(PrefectBaseModel, abc.ABC):
             await events.emit(
                 Event(
                     occurred=pendulum.now("UTC"),
-                    event="prefect.automation.action.failed",
+                    event="syntask.automation.action.failed",
                     resource=resource,
                     related=self._resulting_related_resources,
                     payload={
@@ -177,13 +177,13 @@ class Action(PrefectBaseModel, abc.ABC):
             )
 
     async def succeed(self, triggered_action: "TriggeredAction") -> None:
-        from prefect.server.events.schemas.automations import EventTrigger
+        from syntask.server.events.schemas.automations import EventTrigger
 
         automation = triggered_action.automation
         action = triggered_action.action
         action_index = triggered_action.action_index
 
-        automation_resource_id = f"prefect.automation.{automation.id}"
+        automation_resource_id = f"syntask.automation.{automation.id}"
 
         action_details = {
             "action_index": action_index,
@@ -192,24 +192,24 @@ class Action(PrefectBaseModel, abc.ABC):
         }
         resource = Resource(
             {
-                "prefect.resource.id": automation_resource_id,
-                "prefect.resource.name": automation.name,
-                "prefect.trigger-type": automation.trigger.type,
+                "syntask.resource.id": automation_resource_id,
+                "syntask.resource.name": automation.name,
+                "syntask.trigger-type": automation.trigger.type,
             }
         )
         if isinstance(automation.trigger, EventTrigger):
-            resource["prefect.posture"] = automation.trigger.posture
+            resource["syntask.posture"] = automation.trigger.posture
 
-        async with PrefectServerEventsClient() as events:
+        async with SyntaskServerEventsClient() as events:
             triggered_event_id = uuid4()
             await events.emit(
                 Event(
                     occurred=triggered_action.triggered,
-                    event="prefect.automation.action.triggered",
+                    event="syntask.automation.action.triggered",
                     resource={
-                        "prefect.resource.id": automation_resource_id,
-                        "prefect.resource.name": automation.name,
-                        "prefect.trigger-type": automation.trigger.type,
+                        "syntask.resource.id": automation_resource_id,
+                        "syntask.resource.name": automation.name,
+                        "syntask.trigger-type": automation.trigger.type,
                     },
                     related=self._resulting_related_resources,
                     payload=action_details,
@@ -219,11 +219,11 @@ class Action(PrefectBaseModel, abc.ABC):
             await events.emit(
                 Event(
                     occurred=pendulum.now("UTC"),
-                    event="prefect.automation.action.executed",
+                    event="syntask.automation.action.executed",
                     resource={
-                        "prefect.resource.id": automation_resource_id,
-                        "prefect.resource.name": automation.name,
-                        "prefect.trigger-type": automation.trigger.type,
+                        "syntask.resource.id": automation_resource_id,
+                        "syntask.resource.name": automation.name,
+                        "syntask.trigger-type": automation.trigger.type,
                     },
                     related=self._resulting_related_resources,
                     payload={
@@ -270,7 +270,7 @@ class EmitEventAction(Action):
 
         self._result_details["emitted_event"] = str(event.id)
 
-        async with PrefectServerEventsClient() as events:
+        async with SyntaskServerEventsClient() as events:
             await events.emit(event)
 
     @abc.abstractmethod
@@ -285,12 +285,12 @@ class ExternalDataAction(Action):
     async def orchestration_client(
         self, triggered_action: "TriggeredAction"
     ) -> "OrchestrationClient":
-        from prefect.server.api.clients import OrchestrationClient
+        from syntask.server.api.clients import OrchestrationClient
 
         return OrchestrationClient(
             additional_headers={
-                "Prefect-Automation-ID": str(triggered_action.automation.id),
-                "Prefect-Automation-Name": (
+                "Syntask-Automation-ID": str(triggered_action.automation.id),
+                "Syntask-Automation-Name": (
                     b64encode(triggered_action.automation.name.encode()).decode()
                 ),
             },
@@ -298,11 +298,11 @@ class ExternalDataAction(Action):
 
     async def events_api_client(
         self, triggered_action: "TriggeredAction"
-    ) -> PrefectServerEventsAPIClient:
-        return PrefectServerEventsAPIClient(
+    ) -> SyntaskServerEventsAPIClient:
+        return SyntaskServerEventsAPIClient(
             additional_headers={
-                "Prefect-Automation-ID": str(triggered_action.automation.id),
-                "Prefect-Automation-Name": (
+                "Syntask-Automation-ID": str(triggered_action.automation.id),
+                "Syntask-Automation-Name": (
                     b64encode(triggered_action.automation.name.encode()).decode()
                 ),
             },
@@ -367,7 +367,7 @@ def _id_of_first_resource_of_kind(event: "Event", expected_kind: str) -> Optiona
 
 
 WorkspaceVariables: TypeAlias = Dict[str, StrictVariableValue]
-TemplateContextObject: TypeAlias = Union[PrefectBaseModel, WorkspaceVariables, None]
+TemplateContextObject: TypeAlias = Union[SyntaskBaseModel, WorkspaceVariables, None]
 
 
 class JinjaTemplateAction(ExternalDataAction):
@@ -383,7 +383,7 @@ class JinjaTemplateAction(ExternalDataAction):
     def _register_filters_if_needed(cls) -> None:
         if not cls._registered_filters:
             # Register our event-related filters
-            from prefect.server.events.jinja_filters import all_filters
+            from syntask.server.events.jinja_filters import all_filters
 
             register_user_template_filters(all_filters)
             cls._registered_filters = True
@@ -423,11 +423,11 @@ class JinjaTemplateAction(ExternalDataAction):
 
     def instantiate_object(
         self,
-        model: Type[PrefectBaseModel],
+        model: Type[SyntaskBaseModel],
         data: Dict[str, Any],
         triggered_action: "TriggeredAction",
         resource: Optional["Resource"] = None,
-    ) -> PrefectBaseModel:
+    ) -> SyntaskBaseModel:
         object = model.model_validate(data)
 
         if isinstance(object, FlowRunResponse) or isinstance(object, TaskRun):
@@ -436,21 +436,21 @@ class JinjaTemplateAction(ExternalDataAction):
             # changed again from what's contained in the event. Use the event's
             # data to rebuild the state object and attach it to the object
             # received from the API.
-            # https://github.com/PrefectHQ/nebula/issues/3310
+            # https://github.com/SynoPKG/nebula/issues/3310
             state_fields = [
-                "prefect.state-message",
-                "prefect.state-name",
-                "prefect.state-timestamp",
-                "prefect.state-type",
+                "syntask.state-message",
+                "syntask.state-name",
+                "syntask.state-timestamp",
+                "syntask.state-type",
             ]
 
             if resource and all(field in resource for field in state_fields):
                 try:
                     object.state = State(
-                        message=resource["prefect.state-message"],
-                        name=resource["prefect.state-name"],
-                        timestamp=pendulum.parse(resource["prefect.state-timestamp"]),
-                        type=StateType(resource["prefect.state-type"]),
+                        message=resource["syntask.state-message"],
+                        name=resource["syntask.state-name"],
+                        timestamp=pendulum.parse(resource["syntask.state-timestamp"]),
+                        type=StateType(resource["syntask.state-type"]),
                     )
                 except Exception:
                     logger.exception(
@@ -462,12 +462,12 @@ class JinjaTemplateAction(ExternalDataAction):
 
         return object
 
-    async def _get_object_from_prefect_api(
+    async def _get_object_from_syntask_api(
         self,
         orchestration_client: "OrchestrationClient",
         triggered_action: "TriggeredAction",
         resource: Optional["Resource"],
-    ) -> Optional[PrefectBaseModel]:
+    ) -> Optional[SyntaskBaseModel]:
         if not resource:
             return None
 
@@ -479,32 +479,32 @@ class JinjaTemplateAction(ExternalDataAction):
         kind_to_model_and_methods: Dict[
             str,
             Tuple[
-                Type[PrefectBaseModel],
+                Type[SyntaskBaseModel],
                 List[Callable[..., Coroutine[Any, Any, Response]]],
             ],
         ] = {
-            "prefect.deployment": (
+            "syntask.deployment": (
                 DeploymentResponse,
                 [orchestration_client.read_deployment_raw],
             ),
-            "prefect.flow": (Flow, [orchestration_client.read_flow_raw]),
-            "prefect.flow-run": (
+            "syntask.flow": (Flow, [orchestration_client.read_flow_raw]),
+            "syntask.flow-run": (
                 FlowRunResponse,
                 [orchestration_client.read_flow_run_raw],
             ),
-            "prefect.task-run": (TaskRun, [orchestration_client.read_task_run_raw]),
-            "prefect.work-pool": (
+            "syntask.task-run": (TaskRun, [orchestration_client.read_task_run_raw]),
+            "syntask.work-pool": (
                 WorkPool,
                 [orchestration_client.read_work_pool_raw],
             ),
-            "prefect.work-queue": (
+            "syntask.work-queue": (
                 WorkQueueWithStatus,
                 [
                     orchestration_client.read_work_queue_raw,
                     orchestration_client.read_work_queue_status_raw,
                 ],
             ),
-            "prefect.concurrency-limit": (
+            "syntask.concurrency-limit": (
                 ConcurrencyLimitV2,
                 [orchestration_client.read_concurrency_limit_v2_raw],
             ),
@@ -568,12 +568,12 @@ class JinjaTemplateAction(ExternalDataAction):
             for type_ in needed_types:
                 if type_ in orchestration_types:
                     calls.append(
-                        self._get_object_from_prefect_api(
+                        self._get_object_from_syntask_api(
                             orchestration,
                             triggered_action,
                             _first_resource_of_kind(
                                 triggered_action.triggering_event,
-                                f"prefect.{type_.replace('_', '-')}",
+                                f"syntask.{type_.replace('_', '-')}",
                             ),
                         )
                     )
@@ -651,7 +651,7 @@ class DeploymentAction(Action):
             raise ActionFailed("No event to infer the deployment")
 
         assert event
-        if id := _id_of_first_resource_of_kind(event, "prefect.deployment"):
+        if id := _id_of_first_resource_of_kind(event, "syntask.deployment"):
             return id
 
         raise ActionFailed("No deployment could be inferred")
@@ -668,8 +668,8 @@ class DeploymentCommandAction(DeploymentAction, ExternalDataAction):
         self._resulting_related_resources.append(
             RelatedResource.model_validate(
                 {
-                    "prefect.resource.id": f"prefect.deployment.{deployment_id}",
-                    "prefect.resource.role": "target",
+                    "syntask.resource.id": f"syntask.deployment.{deployment_id}",
+                    "syntask.resource.role": "target",
                 }
             )
         )
@@ -754,9 +754,9 @@ class RunDeployment(JinjaTemplateAction, DeploymentCommandAction):
             self._resulting_related_resources.append(
                 RelatedResource.model_validate(
                     {
-                        "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-                        "prefect.resource.role": "flow-run",
-                        "prefect.resource.name": flow_run.name,
+                        "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+                        "syntask.resource.role": "flow-run",
+                        "syntask.resource.name": flow_run.name,
                     }
                 )
             )
@@ -894,8 +894,8 @@ class RunDeployment(JinjaTemplateAction, DeploymentCommandAction):
         """
         for key, value in parameters.items():
             if isinstance(value, dict):
-                # if we already have a __prefect_kind, don't upgrade or recurse
-                if "__prefect_kind" in value:
+                # if we already have a __syntask_kind, don't upgrade or recurse
+                if "__syntask_kind" in value:
                     continue
                 cls._upgrade_v1_templates(value)
             elif isinstance(value, list):
@@ -903,9 +903,9 @@ class RunDeployment(JinjaTemplateAction, DeploymentCommandAction):
                     if isinstance(item, dict):
                         cls._upgrade_v1_templates(item)
                     elif isinstance(item, str) and maybe_template(item):
-                        value[i] = {"__prefect_kind": "jinja", "template": item}
+                        value[i] = {"__syntask_kind": "jinja", "template": item}
             elif isinstance(value, str) and maybe_template(value):
-                parameters[key] = {"__prefect_kind": "jinja", "template": value}
+                parameters[key] = {"__syntask_kind": "jinja", "template": value}
 
     def _collect_placeholders(
         self, parameters: Union[Dict[str, Any], Placeholder]
@@ -972,13 +972,13 @@ class FlowRunAction(ExternalDataAction):
         # Proactive triggers won't have an event, but they might be tracking
         # buckets per-resource, so check for that first
         labels = triggered_action.triggering_labels
-        if triggering_resource_id := labels.get("prefect.resource.id"):
-            if id := _id_from_resource_id(triggering_resource_id, "prefect.flow-run"):
+        if triggering_resource_id := labels.get("syntask.resource.id"):
+            if id := _id_from_resource_id(triggering_resource_id, "syntask.flow-run"):
                 return id
 
         event = triggered_action.triggering_event
         if event:
-            if id := _id_of_first_resource_of_kind(event, "prefect.flow-run"):
+            if id := _id_of_first_resource_of_kind(event, "syntask.flow-run"):
                 return id
 
         raise ActionFailed("No flow run could be inferred")
@@ -997,8 +997,8 @@ class FlowRunStateChangeAction(FlowRunAction):
         self._resulting_related_resources.append(
             RelatedResource.model_validate(
                 {
-                    "prefect.resource.id": f"prefect.flow-run.{flow_run_id}",
-                    "prefect.resource.role": "target",
+                    "syntask.resource.id": f"syntask.flow-run.{flow_run_id}",
+                    "syntask.resource.role": "target",
                 }
             )
         )
@@ -1098,8 +1098,8 @@ class ResumeFlowRun(FlowRunAction):
         self._resulting_related_resources.append(
             RelatedResource.model_validate(
                 {
-                    "prefect.resource.id": f"prefect.flow-run.{flow_run_id}",
-                    "prefect.resource.role": "target",
+                    "syntask.resource.id": f"syntask.flow-run.{flow_run_id}",
+                    "syntask.resource.role": "target",
                 }
             )
         )
@@ -1183,15 +1183,15 @@ class CallWebhook(JinjaTemplateAction):
             self._resulting_related_resources += [
                 RelatedResource.model_validate(
                     {
-                        "prefect.resource.id": f"prefect.block-document.{self.block_document_id}",
-                        "prefect.resource.role": "block",
-                        "prefect.resource.name": block_document.name,
+                        "syntask.resource.id": f"syntask.block-document.{self.block_document_id}",
+                        "syntask.resource.role": "block",
+                        "syntask.resource.name": block_document.name,
                     }
                 ),
                 RelatedResource.model_validate(
                     {
-                        "prefect.resource.id": f"prefect.block-type.{block.get_block_type_slug()}",
-                        "prefect.resource.role": "block-type",
+                        "syntask.resource.id": f"syntask.block-type.{block.get_block_type_slug()}",
+                        "syntask.resource.role": "block-type",
                     }
                 ),
             ]
@@ -1229,7 +1229,7 @@ class SendNotification(JinjaTemplateAction):
     block_document_id: UUID = Field(
         description="The identifier of the notification block to use"
     )
-    subject: str = Field("Prefect automated notification")
+    subject: str = Field("Syntask automated notification")
     body: str = Field(description="The text of the notification to send")
 
     @field_validator("subject", "body")
@@ -1256,15 +1256,15 @@ class SendNotification(JinjaTemplateAction):
             self._resulting_related_resources += [
                 RelatedResource.model_validate(
                     {
-                        "prefect.resource.id": f"prefect.block-document.{self.block_document_id}",
-                        "prefect.resource.role": "block",
-                        "prefect.resource.name": block_document.name,
+                        "syntask.resource.id": f"syntask.block-document.{self.block_document_id}",
+                        "syntask.resource.role": "block",
+                        "syntask.resource.name": block_document.name,
                     }
                 ),
                 RelatedResource.model_validate(
                     {
-                        "prefect.resource.id": f"prefect.block-type.{block.get_block_type_slug()}",
-                        "prefect.resource.role": "block-type",
+                        "syntask.resource.id": f"syntask.block-type.{block.get_block_type_slug()}",
+                        "syntask.resource.role": "block-type",
                     }
                 ),
             ]
@@ -1326,7 +1326,7 @@ class WorkPoolAction(Action):
             raise ActionFailed("No event to infer the work pool")
 
         assert event
-        if id := _id_of_first_resource_of_kind(event, "prefect.work-pool"):
+        if id := _id_of_first_resource_of_kind(event, "syntask.work-pool"):
             return id
 
         raise ActionFailed("No work pool could be inferred")
@@ -1357,9 +1357,9 @@ class WorkPoolCommandAction(WorkPoolAction, ExternalDataAction):
         self._resulting_related_resources += [
             RelatedResource.model_validate(
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.name": work_pool.name,
-                    "prefect.resource.role": "target",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.name": work_pool.name,
+                    "syntask.resource.role": "target",
                 }
             )
         ]
@@ -1460,7 +1460,7 @@ class WorkQueueAction(Action):
             raise ActionFailed("No event to infer the work queue")
 
         assert event
-        if id := _id_of_first_resource_of_kind(event, "prefect.work-queue"):
+        if id := _id_of_first_resource_of_kind(event, "syntask.work-queue"):
             return id
 
         raise ActionFailed("No work queue could be inferred")
@@ -1475,8 +1475,8 @@ class WorkQueueCommandAction(WorkQueueAction, ExternalDataAction):
         self._resulting_related_resources += [
             RelatedResource.model_validate(
                 {
-                    "prefect.resource.id": f"prefect.work-queue.{work_queue_id}",
-                    "prefect.resource.role": "target",
+                    "syntask.resource.id": f"syntask.work-queue.{work_queue_id}",
+                    "syntask.resource.role": "target",
                 }
             )
         ]
@@ -1579,7 +1579,7 @@ class AutomationAction(Action):
             raise ActionFailed("No event to infer the automation")
 
         assert event
-        if id := _id_of_first_resource_of_kind(event, "prefect.automation"):
+        if id := _id_of_first_resource_of_kind(event, "syntask.automation"):
             return id
 
         raise ActionFailed("No automation could be inferred")
@@ -1594,8 +1594,8 @@ class AutomationCommandAction(AutomationAction, ExternalDataAction):
         self._resulting_related_resources += [
             RelatedResource.model_validate(
                 {
-                    "prefect.resource.id": f"prefect.automation.{automation_id}",
-                    "prefect.resource.role": "target",
+                    "syntask.resource.id": f"syntask.automation.{automation_id}",
+                    "syntask.resource.role": "target",
                 }
             )
         ]
@@ -1618,7 +1618,7 @@ class AutomationCommandAction(AutomationAction, ExternalDataAction):
     @abc.abstractmethod
     async def command(
         self,
-        events: PrefectServerEventsAPIClient,
+        events: SyntaskServerEventsAPIClient,
         automation_id: UUID,
         triggered_action: "TriggeredAction",
     ) -> Response:
@@ -1634,7 +1634,7 @@ class PauseAutomation(AutomationCommandAction):
 
     async def command(
         self,
-        events: PrefectServerEventsAPIClient,
+        events: SyntaskServerEventsAPIClient,
         automation_id: UUID,
         triggered_action: "TriggeredAction",
     ) -> Response:
@@ -1650,7 +1650,7 @@ class ResumeAutomation(AutomationCommandAction):
 
     async def command(
         self,
-        events: PrefectServerEventsAPIClient,
+        events: SyntaskServerEventsAPIClient,
         automation_id: UUID,
         triggered_action: "TriggeredAction",
     ) -> Response:
@@ -1695,7 +1695,7 @@ async def action_has_already_happened(id: UUID) -> bool:
 
 @asynccontextmanager
 async def consumer() -> AsyncGenerator[MessageHandler, None]:
-    from prefect.server.events.schemas.automations import TriggeredAction
+    from syntask.server.events.schemas.automations import TriggeredAction
 
     async def message_handler(message: Message):
         if not message.data:

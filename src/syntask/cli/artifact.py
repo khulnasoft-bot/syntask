@@ -5,15 +5,15 @@ import typer
 from rich.pretty import Pretty
 from rich.table import Table
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.filters import ArtifactFilter, ArtifactFilterKey
-from prefect.client.schemas.sorting import ArtifactCollectionSort, ArtifactSort
-from prefect.exceptions import ObjectNotFound
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.filters import ArtifactFilter, ArtifactFilterKey
+from syntask.client.schemas.sorting import ArtifactCollectionSort, ArtifactSort
+from syntask.exceptions import ObjectNotFound
 
-artifact_app = PrefectTyper(name="artifact", help="Inspect and delete artifacts.")
+artifact_app = SyntaskTyper(name="artifact", help="Inspect and delete artifacts.")
 app.add_typer(artifact_app)
 
 
@@ -36,7 +36,7 @@ async def list_artifacts(
     """
     table = Table(
         title="Artifacts",
-        caption="List Artifacts using `prefect artifact ls`",
+        caption="List Artifacts using `syntask artifact ls`",
         show_header=True,
     )
 
@@ -93,7 +93,7 @@ async def inspect(
             key: the key of the artifact to inspect
 
         Examples:
-            $ prefect artifact inspect "my-artifact"
+            $ syntask artifact inspect "my-artifact"
            [
             {
                 'id': 'ba1d67be-0bd7-452e-8110-247fe5e6d8cc',
@@ -152,7 +152,7 @@ async def delete(
         key: the key of the artifact to delete
 
     Examples:
-        $ prefect artifact delete "my-artifact"
+        $ syntask artifact delete "my-artifact"
     """
     if key and artifact_id:
         exit_with_error("Please provide either a key or an artifact_id but not both.")

@@ -28,13 +28,13 @@ from packaging import version
 from starlette import status
 from typing_extensions import ParamSpec
 
-import prefect
-import prefect.exceptions
-import prefect.settings
-import prefect.states
-from prefect.client.constants import SERVER_API_VERSION
-from prefect.client.schemas import FlowRun, OrchestrationResult, TaskRun, sorting
-from prefect.client.schemas.actions import (
+import syntask
+import syntask.exceptions
+import syntask.settings
+import syntask.states
+from syntask.client.constants import SERVER_API_VERSION
+from syntask.client.schemas import FlowRun, OrchestrationResult, TaskRun, sorting
+from syntask.client.schemas.actions import (
     ArtifactCreate,
     ArtifactUpdate,
     BlockDocumentCreate,
@@ -65,7 +65,7 @@ from prefect.client.schemas.actions import (
     WorkQueueCreate,
     WorkQueueUpdate,
 )
-from prefect.client.schemas.filters import (
+from syntask.client.schemas.filters import (
     ArtifactCollectionFilter,
     ArtifactFilter,
     DeploymentFilter,
@@ -79,7 +79,7 @@ from prefect.client.schemas.filters import (
     WorkQueueFilter,
     WorkQueueFilterName,
 )
-from prefect.client.schemas.objects import (
+from syntask.client.schemas.objects import (
     Artifact,
     ArtifactCollection,
     BlockDocument,
@@ -103,14 +103,14 @@ from prefect.client.schemas.objects import (
     WorkQueue,
     WorkQueueStatusDetail,
 )
-from prefect.client.schemas.responses import (
+from syntask.client.schemas.responses import (
     DeploymentResponse,
     FlowRunResponse,
     GlobalConcurrencyLimitResponse,
     WorkerFlowRunResponse,
 )
-from prefect.client.schemas.schedules import SCHEDULE_TYPES
-from prefect.client.schemas.sorting import (
+from syntask.client.schemas.schedules import SCHEDULE_TYPES
+from syntask.client.schemas.sorting import (
     ArtifactCollectionSort,
     ArtifactSort,
     DeploymentSort,
@@ -119,32 +119,32 @@ from prefect.client.schemas.sorting import (
     LogSort,
     TaskRunSort,
 )
-from prefect.events import filters
-from prefect.events.schemas.automations import Automation, AutomationCore
-from prefect.logging import get_logger
-from prefect.settings import (
-    PREFECT_API_DATABASE_CONNECTION_URL,
-    PREFECT_API_ENABLE_HTTP2,
-    PREFECT_API_KEY,
-    PREFECT_API_REQUEST_TIMEOUT,
-    PREFECT_API_SSL_CERT_FILE,
-    PREFECT_API_TLS_INSECURE_SKIP_VERIFY,
-    PREFECT_API_URL,
-    PREFECT_CLIENT_CSRF_SUPPORT_ENABLED,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
-    PREFECT_UNIT_TEST_MODE,
+from syntask.events import filters
+from syntask.events.schemas.automations import Automation, AutomationCore
+from syntask.logging import get_logger
+from syntask.settings import (
+    SYNTASK_API_DATABASE_CONNECTION_URL,
+    SYNTASK_API_ENABLE_HTTP2,
+    SYNTASK_API_KEY,
+    SYNTASK_API_REQUEST_TIMEOUT,
+    SYNTASK_API_SSL_CERT_FILE,
+    SYNTASK_API_TLS_INSECURE_SKIP_VERIFY,
+    SYNTASK_API_URL,
+    SYNTASK_CLIENT_CSRF_SUPPORT_ENABLED,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
+    SYNTASK_UNIT_TEST_MODE,
 )
 
 if TYPE_CHECKING:
-    from prefect.flows import Flow as FlowObject
-    from prefect.tasks import Task as TaskObject
+    from syntask.flows import Flow as FlowObject
+    from syntask.tasks import Task as TaskObject
 
-from prefect.client.base import (
+from syntask.client.base import (
     ASGIApp,
-    PrefectHttpxAsyncClient,
-    PrefectHttpxSyncClient,
     ServerType,
+    SyntaskHttpxAsyncClient,
+    SyntaskHttpxSyncClient,
     app_lifespan_context,
 )
 
@@ -155,22 +155,20 @@ R = TypeVar("R")
 @overload
 def get_client(
     httpx_settings: Optional[Dict[str, Any]] = None, sync_client: Literal[False] = False
-) -> "PrefectClient":
-    ...
+) -> "SyntaskClient": ...
 
 
 @overload
 def get_client(
     httpx_settings: Optional[Dict[str, Any]] = None, sync_client: Literal[True] = True
-) -> "SyncPrefectClient":
-    ...
+) -> "SyncSyntaskClient": ...
 
 
 def get_client(
     httpx_settings: Optional[Dict[str, Any]] = None, sync_client: bool = False
 ):
     """
-    Retrieve a HTTP client for communicating with the Prefect REST API.
+    Retrieve a HTTP client for communicating with the Syntask REST API.
 
     The client must be context managed; for example:
 
@@ -186,7 +184,7 @@ def get_client(
         client.hello()
     ```
     """
-    import prefect.context
+    import syntask.context
 
     # try to load clients from a client context, if possible
     # only load clients that match the provided config / loop
@@ -196,11 +194,11 @@ def get_client(
         loop = None
 
     if sync_client:
-        if client_ctx := prefect.context.SyncClientContext.get():
+        if client_ctx := syntask.context.SyncClientContext.get():
             if client_ctx.client and client_ctx._httpx_settings == httpx_settings:
                 return client_ctx.client
     else:
-        if client_ctx := prefect.context.AsyncClientContext.get():
+        if client_ctx := syntask.context.AsyncClientContext.get():
             if (
                 client_ctx.client
                 and client_ctx._httpx_settings == httpx_settings
@@ -208,12 +206,12 @@ def get_client(
             ):
                 return client_ctx.client
 
-    api = PREFECT_API_URL.value()
+    api = SYNTASK_API_URL.value()
     server_type = None
 
-    if not api and PREFECT_SERVER_ALLOW_EPHEMERAL_MODE:
+    if not api and SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE:
         # create an ephemeral API if none was provided
-        from prefect.server.api.server import SubprocessASGIServer
+        from syntask.server.api.server import SubprocessASGIServer
 
         server = SubprocessASGIServer()
         server.start()
@@ -221,30 +219,30 @@ def get_client(
 
         api = server.api_url
         server_type = ServerType.EPHEMERAL
-    elif not api and not PREFECT_SERVER_ALLOW_EPHEMERAL_MODE:
+    elif not api and not SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE:
         raise ValueError(
-            "No Prefect API URL provided. Please set PREFECT_API_URL to the address of a running Prefect server."
+            "No Syntask API URL provided. Please set SYNTASK_API_URL to the address of a running Syntask server."
         )
 
     if sync_client:
-        return SyncPrefectClient(
+        return SyncSyntaskClient(
             api,
-            api_key=PREFECT_API_KEY.value(),
+            api_key=SYNTASK_API_KEY.value(),
             httpx_settings=httpx_settings,
             server_type=server_type,
         )
     else:
-        return PrefectClient(
+        return SyntaskClient(
             api,
-            api_key=PREFECT_API_KEY.value(),
+            api_key=SYNTASK_API_KEY.value(),
             httpx_settings=httpx_settings,
             server_type=server_type,
         )
 
 
-class PrefectClient:
+class SyntaskClient:
     """
-    An asynchronous client for interacting with the [Prefect REST API](/api-ref/rest-api/).
+    An asynchronous client for interacting with the [Syntask REST API](/api-ref/rest-api/).
 
     Args:
         api: the REST API URL or FastAPI application to connect to
@@ -255,7 +253,7 @@ class PrefectClient:
 
     Examples:
 
-        Say hello to a Prefect REST API
+        Say hello to a Syntask REST API
 
         <div class="terminal">
         ```
@@ -280,17 +278,17 @@ class PrefectClient:
         httpx_settings = httpx_settings.copy() if httpx_settings else {}
         httpx_settings.setdefault("headers", {})
 
-        if PREFECT_API_TLS_INSECURE_SKIP_VERIFY:
+        if SYNTASK_API_TLS_INSECURE_SKIP_VERIFY:
             httpx_settings.setdefault("verify", False)
         else:
-            cert_file = PREFECT_API_SSL_CERT_FILE.value()
+            cert_file = SYNTASK_API_SSL_CERT_FILE.value()
             if not cert_file:
                 cert_file = certifi.where()
             httpx_settings.setdefault("verify", cert_file)
 
         if api_version is None:
             api_version = SERVER_API_VERSION
-        httpx_settings["headers"].setdefault("X-PREFECT-API-VERSION", api_version)
+        httpx_settings["headers"].setdefault("X-SYNTASK-API-VERSION", api_version)
         if api_key:
             httpx_settings["headers"].setdefault("Authorization", f"Bearer {api_key}")
 
@@ -325,7 +323,7 @@ class PrefectClient:
                     # Limiting concurrency results in more stable performance.
                     max_connections=16,
                     max_keepalive_connections=8,
-                    # The Prefect Cloud LB will keep connections alive for 30s.
+                    # The Syntask Cloud LB will keep connections alive for 30s.
                     # Only allow the client to keep connections alive for 25s.
                     keepalive_expiry=25,
                 ),
@@ -336,14 +334,14 @@ class PrefectClient:
             # and responses will be transported over HTTP/2, since both the client and the server
             # need to support HTTP/2. If you connect to a server that only supports HTTP/1.1 the
             # client will use a standard HTTP/1.1 connection instead.
-            httpx_settings.setdefault("http2", PREFECT_API_ENABLE_HTTP2.value())
+            httpx_settings.setdefault("http2", SYNTASK_API_ENABLE_HTTP2.value())
 
             if server_type:
                 self.server_type = server_type
             else:
                 self.server_type = (
                     ServerType.CLOUD
-                    if api.startswith(PREFECT_CLOUD_API_URL.value())
+                    if api.startswith(SYNTASK_CLOUD_API_URL.value())
                     else ServerType.SERVER
                 )
 
@@ -357,7 +355,7 @@ class PrefectClient:
             # around this, we create an ASGI transport with application exceptions
             # disabled instead of using the application directly.
             # refs:
-            # - https://github.com/synopkg/synopkg/pull/9637
+            # - https://github.com/synopkg/syntask/pull/9637
             # - https://github.com/encode/starlette/blob/d3a11205ed35f8e5a58a711db0ff59c86fa7bb31/starlette/middleware/errors.py#L184
             # - https://github.com/tiangolo/fastapi/blob/8cc967a7605d3883bd04ceb5d25cc94ae079612f/fastapi/applications.py#L163-L164
             httpx_settings.setdefault(
@@ -366,7 +364,7 @@ class PrefectClient:
                     app=self._ephemeral_app, raise_app_exceptions=False
                 ),
             )
-            httpx_settings.setdefault("base_url", "http://ephemeral-prefect/api")
+            httpx_settings.setdefault("base_url", "http://ephemeral-syntask/api")
 
         else:
             raise TypeError(
@@ -378,22 +376,22 @@ class PrefectClient:
         httpx_settings.setdefault(
             "timeout",
             httpx.Timeout(
-                connect=PREFECT_API_REQUEST_TIMEOUT.value(),
-                read=PREFECT_API_REQUEST_TIMEOUT.value(),
-                write=PREFECT_API_REQUEST_TIMEOUT.value(),
-                pool=PREFECT_API_REQUEST_TIMEOUT.value(),
+                connect=SYNTASK_API_REQUEST_TIMEOUT.value(),
+                read=SYNTASK_API_REQUEST_TIMEOUT.value(),
+                write=SYNTASK_API_REQUEST_TIMEOUT.value(),
+                pool=SYNTASK_API_REQUEST_TIMEOUT.value(),
             ),
         )
 
-        if not PREFECT_UNIT_TEST_MODE:
+        if not SYNTASK_UNIT_TEST_MODE:
             httpx_settings.setdefault("follow_redirects", True)
 
         enable_csrf_support = (
             self.server_type != ServerType.CLOUD
-            and PREFECT_CLIENT_CSRF_SUPPORT_ENABLED.value()
+            and SYNTASK_CLIENT_CSRF_SUPPORT_ENABLED.value()
         )
 
-        self._client = PrefectHttpxAsyncClient(
+        self._client = SyntaskHttpxAsyncClient(
             **httpx_settings, enable_csrf_support=enable_csrf_support
         )
         self._loop = None
@@ -451,10 +449,10 @@ class PrefectClient:
 
     async def create_flow(self, flow: "FlowObject") -> UUID:
         """
-        Create a flow in the Prefect API.
+        Create a flow in the Syntask API.
 
         Args:
-            flow: a [Flow][prefect.flows.Flow] object
+            flow: a [Flow][syntask.flows.Flow] object
 
         Raises:
             httpx.RequestError: if a flow was not created for any reason
@@ -466,7 +464,7 @@ class PrefectClient:
 
     async def create_flow_from_name(self, flow_name: str) -> UUID:
         """
-        Create a flow in the Prefect API.
+        Create a flow in the Syntask API.
 
         Args:
             flow_name: the name of the new flow
@@ -491,13 +489,13 @@ class PrefectClient:
 
     async def read_flow(self, flow_id: UUID) -> Flow:
         """
-        Query the Prefect API for a flow by id.
+        Query the Syntask API for a flow by id.
 
         Args:
             flow_id: the flow ID of interest
 
         Returns:
-            a [Flow model][prefect.client.schemas.objects.Flow] representation of the flow
+            a [Flow model][syntask.client.schemas.objects.Flow] representation of the flow
         """
         response = await self._client.get(f"/flows/{flow_id}")
         return Flow.model_validate(response.json())
@@ -516,7 +514,7 @@ class PrefectClient:
         offset: int = 0,
     ) -> List[Flow]:
         """
-        Query the Prefect API for flows. Only flows matching all criteria will
+        Query the Syntask API for flows. Only flows matching all criteria will
         be returned.
 
         Args:
@@ -565,7 +563,7 @@ class PrefectClient:
         flow_name: str,
     ) -> Flow:
         """
-        Query the Prefect API for a flow by name.
+        Query the Syntask API for a flow by name.
 
         Args:
             flow_name: the name of a flow
@@ -582,7 +580,7 @@ class PrefectClient:
         *,
         parameters: Optional[Dict[str, Any]] = None,
         context: Optional[Dict[str, Any]] = None,
-        state: Optional[prefect.states.State] = None,
+        state: Optional[syntask.states.State] = None,
         name: Optional[str] = None,
         tags: Optional[Iterable[str]] = None,
         idempotency_key: Optional[str] = None,
@@ -615,14 +613,14 @@ class PrefectClient:
             job_variables: Optional variables that will be supplied to the flow run job.
 
         Raises:
-            httpx.RequestError: if the Prefect API does not successfully create a run for any reason
+            httpx.RequestError: if the Syntask API does not successfully create a run for any reason
 
         Returns:
             The flow run model
         """
         parameters = parameters or {}
         context = context or {}
-        state = state or prefect.states.Scheduled()
+        state = state or syntask.states.Scheduled()
         tags = tags or []
 
         flow_run_create = DeploymentFlowRunCreate(
@@ -654,7 +652,7 @@ class PrefectClient:
         context: Optional[Dict[str, Any]] = None,
         tags: Optional[Iterable[str]] = None,
         parent_task_run_id: Optional[UUID] = None,
-        state: Optional["prefect.states.State"] = None,
+        state: Optional["syntask.states.State"] = None,
     ) -> FlowRun:
         """
         Create a flow run for a flow.
@@ -671,7 +669,7 @@ class PrefectClient:
                 `Scheduled` for now. Should always be a `Scheduled` type.
 
         Raises:
-            httpx.RequestError: if the Prefect API does not successfully create a run for any reason
+            httpx.RequestError: if the Syntask API does not successfully create a run for any reason
 
         Returns:
             The flow run model
@@ -680,7 +678,7 @@ class PrefectClient:
         context = context or {}
 
         if state is None:
-            state = prefect.states.Pending()
+            state = syntask.states.Pending()
 
         # Retrieve the flow id
         flow_id = await self.create_flow(flow)
@@ -773,14 +771,14 @@ class PrefectClient:
         Args:
             flow_run_id: The flow run UUID of interest.
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If requests fails
         """
         try:
             await self._client.delete(f"/flow_runs/{flow_run_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -790,7 +788,7 @@ class PrefectClient:
         concurrency_limit: int,
     ) -> UUID:
         """
-        Create a tag concurrency limit in the Prefect API. These limits govern concurrently
+        Create a tag concurrency limit in the Syntask API. These limits govern concurrently
         running tasks.
 
         Args:
@@ -831,7 +829,7 @@ class PrefectClient:
             tag: a tag the concurrency limit is applied to
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: if the concurrency limit was not created for any reason
 
         Returns:
@@ -843,7 +841,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -897,7 +895,7 @@ class PrefectClient:
                 slots will never be released.
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If request fails
 
         """
@@ -911,7 +909,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -926,7 +924,7 @@ class PrefectClient:
             tag: a tag the concurrency limit is applied to
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If request fails
 
         """
@@ -936,7 +934,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -1012,7 +1010,7 @@ class PrefectClient:
             work_pool_name: The name of the work pool to use for this queue.
 
         Raises:
-            prefect.exceptions.ObjectAlreadyExists: If request returns 409
+            syntask.exceptions.ObjectAlreadyExists: If request returns 409
             httpx.RequestError: If request fails
 
         Returns:
@@ -1038,9 +1036,9 @@ class PrefectClient:
                 response = await self._client.post("/work_queues/", json=data)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_409_CONFLICT:
-                raise prefect.exceptions.ObjectAlreadyExists(http_exc=e) from e
+                raise syntask.exceptions.ObjectAlreadyExists(http_exc=e) from e
             elif e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return WorkQueue.model_validate(response.json())
@@ -1059,7 +1057,7 @@ class PrefectClient:
                 the queue belongs to.
 
         Raises:
-            prefect.exceptions.ObjectNotFound: if no work queue is found
+            syntask.exceptions.ObjectNotFound: if no work queue is found
             httpx.HTTPStatusError: other status errors
 
         Returns:
@@ -1074,7 +1072,7 @@ class PrefectClient:
                 response = await self._client.get(f"/work_queues/name/{name}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -1090,7 +1088,7 @@ class PrefectClient:
 
         Raises:
             ValueError: if no kwargs are provided
-            prefect.exceptions.ObjectNotFound: if request returns 404
+            syntask.exceptions.ObjectNotFound: if request returns 404
             httpx.RequestError: if the request fails
 
         """
@@ -1102,7 +1100,7 @@ class PrefectClient:
             await self._client.patch(f"/work_queues/{id}", json=data)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -1122,7 +1120,7 @@ class PrefectClient:
                 Defaults to now.
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If request fails
 
         Returns:
@@ -1141,7 +1139,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return pydantic.TypeAdapter(List[FlowRun]).validate_python(response.json())
@@ -1157,7 +1155,7 @@ class PrefectClient:
             id: the id of the work queue to load
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If request fails
 
         Returns:
@@ -1167,7 +1165,7 @@ class PrefectClient:
             response = await self._client.get(f"/work_queues/{id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return WorkQueue.model_validate(response.json())
@@ -1183,7 +1181,7 @@ class PrefectClient:
             id: the id of the work queue to load
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If request fails
 
         Returns:
@@ -1193,7 +1191,7 @@ class PrefectClient:
             response = await self._client.get(f"/work_queues/{id}/status")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return WorkQueueStatusDetail.model_validate(response.json())
@@ -1204,7 +1202,7 @@ class PrefectClient:
         work_pool_name: Optional[str] = None,
     ) -> List[WorkQueue]:
         """
-        Query the Prefect API for work queues with names with a specific prefix.
+        Query the Syntask API for work queues with names with a specific prefix.
 
         Args:
             prefixes: a list of strings used to match work queue name prefixes
@@ -1245,7 +1243,7 @@ class PrefectClient:
             id: the id of the work queue to delete
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If requests fails
         """
         try:
@@ -1254,13 +1252,13 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
     async def create_block_type(self, block_type: BlockTypeCreate) -> BlockType:
         """
-        Create a block type in the Prefect API.
+        Create a block type in the Syntask API.
         """
         try:
             response = await self._client.post(
@@ -1271,14 +1269,14 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_409_CONFLICT:
-                raise prefect.exceptions.ObjectAlreadyExists(http_exc=e) from e
+                raise syntask.exceptions.ObjectAlreadyExists(http_exc=e) from e
             else:
                 raise
         return BlockType.model_validate(response.json())
 
     async def create_block_schema(self, block_schema: BlockSchemaCreate) -> BlockSchema:
         """
-        Create a block schema in the Prefect API.
+        Create a block schema in the Syntask API.
         """
         try:
             response = await self._client.post(
@@ -1291,7 +1289,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_409_CONFLICT:
-                raise prefect.exceptions.ObjectAlreadyExists(http_exc=e) from e
+                raise syntask.exceptions.ObjectAlreadyExists(http_exc=e) from e
             else:
                 raise
         return BlockSchema.model_validate(response.json())
@@ -1302,7 +1300,7 @@ class PrefectClient:
         include_secrets: bool = True,
     ) -> BlockDocument:
         """
-        Create a block document in the Prefect API. This data is used to configure a
+        Create a block document in the Syntask API. This data is used to configure a
         corresponding Block.
 
         Args:
@@ -1325,7 +1323,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_409_CONFLICT:
-                raise prefect.exceptions.ObjectAlreadyExists(http_exc=e) from e
+                raise syntask.exceptions.ObjectAlreadyExists(http_exc=e) from e
             else:
                 raise
         return BlockDocument.model_validate(response.json())
@@ -1336,7 +1334,7 @@ class PrefectClient:
         block_document: BlockDocumentUpdate,
     ):
         """
-        Update a block document in the Prefect API.
+        Update a block document in the Syntask API.
         """
         try:
             await self._client.patch(
@@ -1349,7 +1347,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -1361,7 +1359,7 @@ class PrefectClient:
             await self._client.delete(f"/block_documents/{block_document_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -1373,7 +1371,7 @@ class PrefectClient:
             response = await self._client.get(f"/block_types/slug/{slug}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return BlockType.model_validate(response.json())
@@ -1391,14 +1389,14 @@ class PrefectClient:
             response = await self._client.get(url)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return BlockSchema.model_validate(response.json())
 
     async def update_block_type(self, block_type_id: UUID, block_type: BlockTypeUpdate):
         """
-        Update a block document in the Prefect API.
+        Update a block document in the Syntask API.
         """
         try:
             await self._client.patch(
@@ -1411,7 +1409,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -1423,13 +1421,13 @@ class PrefectClient:
             await self._client.delete(f"/block_types/{block_type_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             elif (
                 e.response.status_code == status.HTTP_403_FORBIDDEN
                 and e.response.json()["detail"]
                 == "protected block types cannot be deleted."
             ):
-                raise prefect.exceptions.ProtectedBlockError(
+                raise syntask.exceptions.ProtectedBlockError(
                     "Protected block types cannot be deleted."
                 ) from e
             else:
@@ -1522,7 +1520,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return BlockDocument.model_validate(response.json())
@@ -1560,7 +1558,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return BlockDocument.model_validate(response.json())
@@ -1670,7 +1668,7 @@ class PrefectClient:
                 to use for this deployment
             job_variables: A dictionary of dot delimited infrastructure overrides that
                 will be applied at runtime; for example `env.CONFIG_KEY=config_value` or
-                `namespace='prefect'`. This argument was previously named `infra_overrides`.
+                `namespace='syntask'`. This argument was previously named `infra_overrides`.
                 Both arguments are supported for backwards compatibility.
 
         Raises:
@@ -1769,13 +1767,13 @@ class PrefectClient:
         deployment_id: UUID,
     ) -> DeploymentResponse:
         """
-        Query the Prefect API for a deployment by id.
+        Query the Syntask API for a deployment by id.
 
         Args:
             deployment_id: the deployment ID of interest
 
         Returns:
-            a [Deployment model][prefect.client.schemas.objects.Deployment] representation of the deployment
+            a [Deployment model][syntask.client.schemas.objects.Deployment] representation of the deployment
         """
         if not isinstance(deployment_id, UUID):
             try:
@@ -1787,7 +1785,7 @@ class PrefectClient:
             response = await self._client.get(f"/deployments/{deployment_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return DeploymentResponse.model_validate(response.json())
@@ -1797,13 +1795,13 @@ class PrefectClient:
         name: str,
     ) -> DeploymentResponse:
         """
-        Query the Prefect API for a deployment by name.
+        Query the Syntask API for a deployment by name.
 
         Args:
             name: A deployed flow's name: <FLOW_NAME>/<DEPLOYMENT_NAME>
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If request fails
 
         Returns:
@@ -1813,7 +1811,7 @@ class PrefectClient:
             response = await self._client.get(f"/deployments/name/{name}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                from prefect.utilities.text import fuzzy_match_string
+                from syntask.utilities.text import fuzzy_match_string
 
                 deployments = await self.read_deployments()
                 flow_name_map = {
@@ -1826,7 +1824,7 @@ class PrefectClient:
                     )
                 }
 
-                raise prefect.exceptions.ObjectNotFound(
+                raise syntask.exceptions.ObjectNotFound(
                     http_exc=e,
                     help_message=(
                         f"Deployment {name!r} not found; did you mean {fuzzy_match!r}?"
@@ -1839,7 +1837,7 @@ class PrefectClient:
                                 ],
                             )
                         )
-                        else f"Deployment {name!r} not found. Try `prefect deployment ls` to find available deployments."
+                        else f"Deployment {name!r} not found. Try `syntask deployment ls` to find available deployments."
                     ),
                 ) from e
             else:
@@ -1861,7 +1859,7 @@ class PrefectClient:
         offset: int = 0,
     ) -> List[DeploymentResponse]:
         """
-        Query the Prefect API for deployments. Only deployments matching all
+        Query the Syntask API for deployments. Only deployments matching all
         the provided criteria will be returned.
 
         Args:
@@ -1917,14 +1915,14 @@ class PrefectClient:
         Args:
             deployment_id: The deployment id of interest.
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If requests fails
         """
         try:
             await self._client.delete(f"/deployments/{deployment_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -1968,7 +1966,7 @@ class PrefectClient:
         deployment_id: UUID,
     ) -> List[DeploymentSchedule]:
         """
-        Query the Prefect API for a deployment's schedules.
+        Query the Syntask API for a deployment's schedules.
 
         Args:
             deployment_id: the deployment ID
@@ -1980,7 +1978,7 @@ class PrefectClient:
             response = await self._client.get(f"/deployments/{deployment_id}/schedules")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return pydantic.TypeAdapter(List[DeploymentSchedule]).validate_python(
@@ -2018,7 +2016,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2043,13 +2041,13 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
     async def read_flow_run(self, flow_run_id: UUID) -> FlowRun:
         """
-        Query the Prefect API for a flow run by id.
+        Query the Syntask API for a flow run by id.
 
         Args:
             flow_run_id: the flow run ID of interest
@@ -2061,7 +2059,7 @@ class PrefectClient:
             response = await self._client.get(f"/flow_runs/{flow_run_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return FlowRun.model_validate(response.json())
@@ -2102,7 +2100,7 @@ class PrefectClient:
         offset: int = 0,
     ) -> List[FlowRun]:
         """
-        Query the Prefect API for flow runs. Only flow runs matching all criteria will
+        Query the Syntask API for flow runs. Only flow runs matching all criteria will
         be returned.
 
         Args:
@@ -2150,7 +2148,7 @@ class PrefectClient:
     async def set_flow_run_state(
         self,
         flow_run_id: UUID,
-        state: "prefect.states.State",
+        state: "syntask.states.State",
         force: bool = False,
     ) -> OrchestrationResult:
         """
@@ -2160,7 +2158,7 @@ class PrefectClient:
             flow_run_id: the id of the flow run
             state: the state to set
             force: if True, disregard orchestration logic when setting the state,
-                forcing the Prefect API to accept the state
+                forcing the Syntask API to accept the state
 
         Returns:
             an OrchestrationResult model representation of state orchestration output
@@ -2181,7 +2179,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2189,7 +2187,7 @@ class PrefectClient:
 
     async def read_flow_run_states(
         self, flow_run_id: UUID
-    ) -> List[prefect.states.State]:
+    ) -> List[syntask.states.State]:
         """
         Query for the states of a flow run
 
@@ -2203,7 +2201,7 @@ class PrefectClient:
         response = await self._client.get(
             "/flow_run_states/", params=dict(flow_run_id=str(flow_run_id))
         )
-        return pydantic.TypeAdapter(List[prefect.states.State]).validate_python(
+        return pydantic.TypeAdapter(List[syntask.states.State]).validate_python(
             response.json()
         )
 
@@ -2222,7 +2220,7 @@ class PrefectClient:
         id: Optional[UUID] = None,
         name: Optional[str] = None,
         extra_tags: Optional[Iterable[str]] = None,
-        state: Optional[prefect.states.State[R]] = None,
+        state: Optional[syntask.states.State[R]] = None,
         task_inputs: Optional[
             Dict[
                 str,
@@ -2258,7 +2256,7 @@ class PrefectClient:
         tags = set(task.tags).union(extra_tags or [])
 
         if state is None:
-            state = prefect.states.Pending()
+            state = syntask.states.Pending()
 
         task_run_data = TaskRunCreate(
             id=id,
@@ -2283,7 +2281,7 @@ class PrefectClient:
 
     async def read_task_run(self, task_run_id: UUID) -> TaskRun:
         """
-        Query the Prefect API for a task run by id.
+        Query the Syntask API for a task run by id.
 
         Args:
             task_run_id: the task run ID of interest
@@ -2296,7 +2294,7 @@ class PrefectClient:
             return TaskRun.model_validate(response.json())
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2312,7 +2310,7 @@ class PrefectClient:
         offset: int = 0,
     ) -> List[TaskRun]:
         """
-        Query the Prefect API for task runs. Only task runs matching all criteria will
+        Query the Syntask API for task runs. Only task runs matching all criteria will
         be returned.
 
         Args:
@@ -2355,21 +2353,21 @@ class PrefectClient:
         Args:
             task_run_id: the task run ID of interest
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If requests fails
         """
         try:
             await self._client.delete(f"/task_runs/{task_run_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
     async def set_task_run_state(
         self,
         task_run_id: UUID,
-        state: prefect.states.State,
+        state: syntask.states.State,
         force: bool = False,
     ) -> OrchestrationResult:
         """
@@ -2379,7 +2377,7 @@ class PrefectClient:
             task_run_id: the id of the task run
             state: the state to set
             force: if True, disregard orchestration logic when setting the state,
-                forcing the Prefect API to accept the state
+                forcing the Syntask API to accept the state
 
         Returns:
             an OrchestrationResult model representation of state orchestration output
@@ -2394,7 +2392,7 @@ class PrefectClient:
 
     async def read_task_run_states(
         self, task_run_id: UUID
-    ) -> List[prefect.states.State]:
+    ) -> List[syntask.states.State]:
         """
         Query for the states of a task run
 
@@ -2407,7 +2405,7 @@ class PrefectClient:
         response = await self._client.get(
             "/task_run_states/", params=dict(task_run_id=str(task_run_id))
         )
-        return pydantic.TypeAdapter(List[prefect.states.State]).validate_python(
+        return pydantic.TypeAdapter(List[syntask.states.State]).validate_python(
             response.json()
         )
 
@@ -2475,14 +2473,14 @@ class PrefectClient:
         Args:
             id: UUID of the flow run notification policy to delete.
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If requests fails
         """
         try:
             await self._client.delete(f"/flow_run_notification_policies/{id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2506,7 +2504,7 @@ class PrefectClient:
             state_names: List of state names
             message_template: Notification message template
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If requests fails
         """
         params = {}
@@ -2530,7 +2528,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2541,7 +2539,7 @@ class PrefectClient:
         offset: int = 0,
     ) -> List[FlowRunNotificationPolicy]:
         """
-        Query the Prefect API for flow run notification policies. Only policies matching all criteria will
+        Query the Syntask API for flow run notification policies. Only policies matching all criteria will
         be returned.
 
         Args:
@@ -2658,7 +2656,7 @@ class PrefectClient:
             return WorkPool.model_validate(response.json())
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2728,7 +2726,7 @@ class PrefectClient:
                     )
                     response = await self._client.get(f"/work_pools/{work_pool.name}")
                 else:
-                    raise prefect.exceptions.ObjectAlreadyExists(http_exc=e) from e
+                    raise syntask.exceptions.ObjectAlreadyExists(http_exc=e) from e
             else:
                 raise
 
@@ -2753,7 +2751,7 @@ class PrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2771,7 +2769,7 @@ class PrefectClient:
             await self._client.delete(f"/work_pools/{work_pool_name}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -2812,7 +2810,7 @@ class PrefectClient:
                 )
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                    raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                    raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
                 else:
                     raise
         else:
@@ -2926,7 +2924,7 @@ class PrefectClient:
         offset: int = 0,
     ) -> List[Artifact]:
         """
-        Query the Prefect API for artifacts. Only artifacts matching all criteria will
+        Query the Syntask API for artifacts. Only artifacts matching all criteria will
         be returned.
         Args:
             artifact_filter: filter criteria for artifacts
@@ -2966,7 +2964,7 @@ class PrefectClient:
         offset: int = 0,
     ) -> List[ArtifactCollection]:
         """
-        Query the Prefect API for artifacts. Only artifacts matching all criteria will
+        Query the Syntask API for artifacts. Only artifacts matching all criteria will
         be returned.
         Args:
             artifact_filter: filter criteria for artifacts
@@ -3008,7 +3006,7 @@ class PrefectClient:
             await self._client.delete(f"/artifacts/{artifact_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -3058,7 +3056,7 @@ class PrefectClient:
             await self._client.delete(f"/variables/name/{name}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -3068,7 +3066,7 @@ class PrefectClient:
         return pydantic.TypeAdapter(List[Variable]).validate_python(response.json())
 
     async def read_worker_metadata(self) -> Dict[str, Any]:
-        """Reads worker metadata stored in Prefect collection registry."""
+        """Reads worker metadata stored in Syntask collection registry."""
         response = await self._client.get("collections/views/aggregate-worker-metadata")
         response.raise_for_status()
         return response.json()
@@ -3135,7 +3133,7 @@ class PrefectClient:
             return response
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -3147,7 +3145,7 @@ class PrefectClient:
             return response
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -3159,7 +3157,7 @@ class PrefectClient:
             return GlobalConcurrencyLimitResponse.model_validate(response.json())
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -3172,7 +3170,7 @@ class PrefectClient:
         """
         try:
             existing_limit = await self.read_global_concurrency_limit_by_name(name)
-        except prefect.exceptions.ObjectNotFound:
+        except syntask.exceptions.ObjectNotFound:
             existing_limit = None
 
         if not existing_limit:
@@ -3261,7 +3259,7 @@ class PrefectClient:
         response.raise_for_status()
 
     async def create_automation(self, automation: AutomationCore) -> UUID:
-        """Creates an automation in Prefect Cloud."""
+        """Creates an automation in Syntask Cloud."""
         response = await self._client.post(
             "/automations/",
             json=automation.model_dump(mode="json"),
@@ -3270,7 +3268,7 @@ class PrefectClient:
         return UUID(response.json()["id"])
 
     async def update_automation(self, automation_id: UUID, automation: AutomationCore):
-        """Updates an automation in Prefect Cloud."""
+        """Updates an automation in Syntask Cloud."""
         response = await self._client.put(
             f"/automations/{automation_id}",
             json=automation.model_dump(mode="json", exclude_unset=True),
@@ -3297,9 +3295,9 @@ class PrefectClient:
             try:
                 automation = await self.read_automation(id)
                 return automation
-            except prefect.exceptions.HTTPStatusError as e:
+            except syntask.exceptions.HTTPStatusError as e:
                 if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                    raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                    raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
 
         automations = await self.read_automations()
 
@@ -3324,7 +3322,7 @@ class PrefectClient:
 
     async def read_automations_by_name(self, name: str) -> List[Automation]:
         """
-        Query the Prefect API for an automation by name. Only automations matching the provided name will be returned.
+        Query the Syntask API for an automation by name. Only automations matching the provided name will be returned.
 
         Args:
             name: the name of the automation to query
@@ -3382,7 +3380,7 @@ class PrefectClient:
         return res.json()
 
     def client_version(self) -> str:
-        return prefect.__version__
+        return syntask.__version__
 
     async def raise_for_api_version_mismatch(self):
         # Cloud is always compatible as a server
@@ -3438,7 +3436,7 @@ class PrefectClient:
         if self._ephemeral_app:
             self.logger.debug(
                 "Using ephemeral application with database at "
-                f"{PREFECT_API_DATABASE_CONNECTION_URL.value()}"
+                f"{SYNTASK_API_DATABASE_CONNECTION_URL.value()}"
             )
         else:
             self.logger.debug(f"Connecting to API at {self.api_url}")
@@ -3463,17 +3461,17 @@ class PrefectClient:
 
     def __enter__(self):
         raise RuntimeError(
-            "The `PrefectClient` must be entered with an async context. Use 'async "
-            "with PrefectClient(...)' not 'with PrefectClient(...)'"
+            "The `SyntaskClient` must be entered with an async context. Use 'async "
+            "with SyntaskClient(...)' not 'with SyntaskClient(...)'"
         )
 
     def __exit__(self, *_):
         assert False, "This should never be called but must be defined for __enter__"
 
 
-class SyncPrefectClient:
+class SyncSyntaskClient:
     """
-    A synchronous client for interacting with the [Prefect REST API](/api-ref/rest-api/).
+    A synchronous client for interacting with the [Syntask REST API](/api-ref/rest-api/).
 
     Args:
         api: the REST API URL or FastAPI application to connect to
@@ -3484,7 +3482,7 @@ class SyncPrefectClient:
 
     Examples:
 
-        Say hello to a Prefect REST API
+        Say hello to a Syntask REST API
 
         <div class="terminal">
         ```
@@ -3509,17 +3507,17 @@ class SyncPrefectClient:
         httpx_settings = httpx_settings.copy() if httpx_settings else {}
         httpx_settings.setdefault("headers", {})
 
-        if PREFECT_API_TLS_INSECURE_SKIP_VERIFY:
+        if SYNTASK_API_TLS_INSECURE_SKIP_VERIFY:
             httpx_settings.setdefault("verify", False)
         else:
-            cert_file = PREFECT_API_SSL_CERT_FILE.value()
+            cert_file = SYNTASK_API_SSL_CERT_FILE.value()
             if not cert_file:
                 cert_file = certifi.where()
             httpx_settings.setdefault("verify", cert_file)
 
         if api_version is None:
             api_version = SERVER_API_VERSION
-        httpx_settings["headers"].setdefault("X-PREFECT-API-VERSION", api_version)
+        httpx_settings["headers"].setdefault("X-SYNTASK-API-VERSION", api_version)
         if api_key:
             httpx_settings["headers"].setdefault("Authorization", f"Bearer {api_key}")
 
@@ -3550,7 +3548,7 @@ class SyncPrefectClient:
                     # Limiting concurrency results in more stable performance.
                     max_connections=16,
                     max_keepalive_connections=8,
-                    # The Prefect Cloud LB will keep connections alive for 30s.
+                    # The Syntask Cloud LB will keep connections alive for 30s.
                     # Only allow the client to keep connections alive for 25s.
                     keepalive_expiry=25,
                 ),
@@ -3561,14 +3559,14 @@ class SyncPrefectClient:
             # and responses will be transported over HTTP/2, since both the client and the server
             # need to support HTTP/2. If you connect to a server that only supports HTTP/1.1 the
             # client will use a standard HTTP/1.1 connection instead.
-            httpx_settings.setdefault("http2", PREFECT_API_ENABLE_HTTP2.value())
+            httpx_settings.setdefault("http2", SYNTASK_API_ENABLE_HTTP2.value())
 
             if server_type:
                 self.server_type = server_type
             else:
                 self.server_type = (
                     ServerType.CLOUD
-                    if api.startswith(PREFECT_CLOUD_API_URL.value())
+                    if api.startswith(SYNTASK_CLOUD_API_URL.value())
                     else ServerType.SERVER
                 )
 
@@ -3587,22 +3585,22 @@ class SyncPrefectClient:
         httpx_settings.setdefault(
             "timeout",
             httpx.Timeout(
-                connect=PREFECT_API_REQUEST_TIMEOUT.value(),
-                read=PREFECT_API_REQUEST_TIMEOUT.value(),
-                write=PREFECT_API_REQUEST_TIMEOUT.value(),
-                pool=PREFECT_API_REQUEST_TIMEOUT.value(),
+                connect=SYNTASK_API_REQUEST_TIMEOUT.value(),
+                read=SYNTASK_API_REQUEST_TIMEOUT.value(),
+                write=SYNTASK_API_REQUEST_TIMEOUT.value(),
+                pool=SYNTASK_API_REQUEST_TIMEOUT.value(),
             ),
         )
 
-        if not PREFECT_UNIT_TEST_MODE:
+        if not SYNTASK_UNIT_TEST_MODE:
             httpx_settings.setdefault("follow_redirects", True)
 
         enable_csrf_support = (
             self.server_type != ServerType.CLOUD
-            and PREFECT_CLIENT_CSRF_SUPPORT_ENABLED.value()
+            and SYNTASK_CLIENT_CSRF_SUPPORT_ENABLED.value()
         )
 
-        self._client = PrefectHttpxSyncClient(
+        self._client = SyntaskHttpxSyncClient(
             **httpx_settings, enable_csrf_support=enable_csrf_support
         )
 
@@ -3638,7 +3636,7 @@ class SyncPrefectClient:
 
     # Context management ----------------------------------------------------------------
 
-    def __enter__(self) -> "SyncPrefectClient":
+    def __enter__(self) -> "SyncSyntaskClient":
         """
         Start the client.
 
@@ -3701,7 +3699,7 @@ class SyncPrefectClient:
         return res.json()
 
     def client_version(self) -> str:
-        return prefect.__version__
+        return syntask.__version__
 
     def raise_for_api_version_mismatch(self):
         # Cloud is always compatible as a server
@@ -3724,10 +3722,10 @@ class SyncPrefectClient:
 
     def create_flow(self, flow: "FlowObject") -> UUID:
         """
-        Create a flow in the Prefect API.
+        Create a flow in the Syntask API.
 
         Args:
-            flow: a [Flow][prefect.flows.Flow] object
+            flow: a [Flow][syntask.flows.Flow] object
 
         Raises:
             httpx.RequestError: if a flow was not created for any reason
@@ -3739,7 +3737,7 @@ class SyncPrefectClient:
 
     def create_flow_from_name(self, flow_name: str) -> UUID:
         """
-        Create a flow in the Prefect API.
+        Create a flow in the Syntask API.
 
         Args:
             flow_name: the name of the new flow
@@ -3768,7 +3766,7 @@ class SyncPrefectClient:
         context: Optional[Dict[str, Any]] = None,
         tags: Optional[Iterable[str]] = None,
         parent_task_run_id: Optional[UUID] = None,
-        state: Optional["prefect.states.State"] = None,
+        state: Optional["syntask.states.State"] = None,
     ) -> FlowRun:
         """
         Create a flow run for a flow.
@@ -3785,7 +3783,7 @@ class SyncPrefectClient:
                 `Scheduled` for now. Should always be a `Scheduled` type.
 
         Raises:
-            httpx.RequestError: if the Prefect API does not successfully create a run for any reason
+            httpx.RequestError: if the Syntask API does not successfully create a run for any reason
 
         Returns:
             The flow run model
@@ -3794,7 +3792,7 @@ class SyncPrefectClient:
         context = context or {}
 
         if state is None:
-            state = prefect.states.Pending()
+            state = syntask.states.Pending()
 
         # Retrieve the flow id
         flow_id = self.create_flow(flow)
@@ -3881,7 +3879,7 @@ class SyncPrefectClient:
 
     def read_flow_run(self, flow_run_id: UUID) -> FlowRun:
         """
-        Query the Prefect API for a flow run by id.
+        Query the Syntask API for a flow run by id.
 
         Args:
             flow_run_id: the flow run ID of interest
@@ -3893,7 +3891,7 @@ class SyncPrefectClient:
             response = self._client.get(f"/flow_runs/{flow_run_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return FlowRun.model_validate(response.json())
@@ -3912,7 +3910,7 @@ class SyncPrefectClient:
         offset: int = 0,
     ) -> List[FlowRun]:
         """
-        Query the Prefect API for flow runs. Only flow runs matching all criteria will
+        Query the Syntask API for flow runs. Only flow runs matching all criteria will
         be returned.
 
         Args:
@@ -3960,7 +3958,7 @@ class SyncPrefectClient:
     def set_flow_run_state(
         self,
         flow_run_id: UUID,
-        state: "prefect.states.State",
+        state: "syntask.states.State",
         force: bool = False,
     ) -> OrchestrationResult:
         """
@@ -3970,7 +3968,7 @@ class SyncPrefectClient:
             flow_run_id: the id of the flow run
             state: the state to set
             force: if True, disregard orchestration logic when setting the state,
-                forcing the Prefect API to accept the state
+                forcing the Syntask API to accept the state
 
         Returns:
             an OrchestrationResult model representation of state orchestration output
@@ -3988,7 +3986,7 @@ class SyncPrefectClient:
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -4016,7 +4014,7 @@ class SyncPrefectClient:
         id: Optional[UUID] = None,
         name: Optional[str] = None,
         extra_tags: Optional[Iterable[str]] = None,
-        state: Optional[prefect.states.State[R]] = None,
+        state: Optional[syntask.states.State[R]] = None,
         task_inputs: Optional[
             Dict[
                 str,
@@ -4052,7 +4050,7 @@ class SyncPrefectClient:
         tags = set(task.tags).union(extra_tags or [])
 
         if state is None:
-            state = prefect.states.Pending()
+            state = syntask.states.Pending()
 
         task_run_data = TaskRunCreate(
             id=id,
@@ -4078,7 +4076,7 @@ class SyncPrefectClient:
 
     def read_task_run(self, task_run_id: UUID) -> TaskRun:
         """
-        Query the Prefect API for a task run by id.
+        Query the Syntask API for a task run by id.
 
         Args:
             task_run_id: the task run ID of interest
@@ -4091,7 +4089,7 @@ class SyncPrefectClient:
             return TaskRun.model_validate(response.json())
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 
@@ -4107,7 +4105,7 @@ class SyncPrefectClient:
         offset: int = 0,
     ) -> List[TaskRun]:
         """
-        Query the Prefect API for task runs. Only task runs matching all criteria will
+        Query the Syntask API for task runs. Only task runs matching all criteria will
         be returned.
 
         Args:
@@ -4146,7 +4144,7 @@ class SyncPrefectClient:
     def set_task_run_state(
         self,
         task_run_id: UUID,
-        state: prefect.states.State,
+        state: syntask.states.State,
         force: bool = False,
     ) -> OrchestrationResult:
         """
@@ -4156,7 +4154,7 @@ class SyncPrefectClient:
             task_run_id: the id of the task run
             state: the state to set
             force: if True, disregard orchestration logic when setting the state,
-                forcing the Prefect API to accept the state
+                forcing the Syntask API to accept the state
 
         Returns:
             an OrchestrationResult model representation of state orchestration output
@@ -4169,7 +4167,7 @@ class SyncPrefectClient:
         )
         return OrchestrationResult.model_validate(response.json())
 
-    def read_task_run_states(self, task_run_id: UUID) -> List[prefect.states.State]:
+    def read_task_run_states(self, task_run_id: UUID) -> List[syntask.states.State]:
         """
         Query for the states of a task run
 
@@ -4182,7 +4180,7 @@ class SyncPrefectClient:
         response = self._client.get(
             "/task_run_states/", params=dict(task_run_id=str(task_run_id))
         )
-        return pydantic.TypeAdapter(List[prefect.states.State]).validate_python(
+        return pydantic.TypeAdapter(List[syntask.states.State]).validate_python(
             response.json()
         )
 
@@ -4191,19 +4189,19 @@ class SyncPrefectClient:
         deployment_id: UUID,
     ) -> DeploymentResponse:
         """
-        Query the Prefect API for a deployment by id.
+        Query the Syntask API for a deployment by id.
 
         Args:
             deployment_id: the deployment ID of interest
 
         Returns:
-            a [Deployment model][prefect.client.schemas.objects.Deployment] representation of the deployment
+            a [Deployment model][syntask.client.schemas.objects.Deployment] representation of the deployment
         """
         try:
             response = self._client.get(f"/deployments/{deployment_id}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
         return DeploymentResponse.model_validate(response.json())
@@ -4213,13 +4211,13 @@ class SyncPrefectClient:
         name: str,
     ) -> DeploymentResponse:
         """
-        Query the Prefect API for a deployment by name.
+        Query the Syntask API for a deployment by name.
 
         Args:
             name: A deployed flow's name: <FLOW_NAME>/<DEPLOYMENT_NAME>
 
         Raises:
-            prefect.exceptions.ObjectNotFound: If request returns 404
+            syntask.exceptions.ObjectNotFound: If request returns 404
             httpx.RequestError: If request fails
 
         Returns:
@@ -4229,7 +4227,7 @@ class SyncPrefectClient:
             response = self._client.get(f"/deployments/name/{name}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == status.HTTP_404_NOT_FOUND:
-                raise prefect.exceptions.ObjectNotFound(http_exc=e) from e
+                raise syntask.exceptions.ObjectNotFound(http_exc=e) from e
             else:
                 raise
 

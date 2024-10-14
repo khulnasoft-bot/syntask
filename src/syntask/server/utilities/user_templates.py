@@ -6,7 +6,7 @@ import jinja2.sandbox
 from jinja2 import ChainableUndefined, nodes
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 
-from prefect.logging import get_logger
+from syntask.logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -7,12 +7,12 @@ from uuid import UUID, uuid4
 import pendulum
 import pytest
 
-from prefect.blocks.abstract import NotificationBlock
-from prefect.blocks.core import Block
-from prefect.blocks.notifications import NotificationError
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.blocks.abstract import NotificationBlock
+from syntask.blocks.core import Block
+from syntask.blocks.notifications import NotificationError
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -20,7 +20,7 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ async def tell_me_about_the_culprit(
         trigger=EventTrigger(
             expect={"animal.ingested"},
             match_related={
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "genus": "Hemerocallis",
                 "species": "fulva",
             },
@@ -122,7 +122,7 @@ async def test_sending_notification(
 
     notify.assert_called_once_with(
         body="If my lilies get nibbled, tell me about it",
-        subject="Prefect automated notification",
+        subject="Syntask automated notification",
     )
 
 
@@ -207,19 +207,19 @@ async def test_success_event(
     assert AssertingEventsClient.last
     (triggered_event, executed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.block-document.{email_me_block_id}",
-                "prefect.resource.role": "block",
-                "prefect.resource.name": "debug-print-notification",
+                "syntask.resource.id": f"syntask.block-document.{email_me_block_id}",
+                "syntask.resource.role": "block",
+                "syntask.resource.name": "debug-print-notification",
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.block-type.debug-print-notification",
-                "prefect.resource.role": "block-type",
+                "syntask.resource.id": "syntask.block-type.debug-print-notification",
+                "syntask.resource.role": "block-type",
             }
         ),
     ]
@@ -229,19 +229,19 @@ async def test_success_event(
         "invocation": str(notify_me.id),
     }
 
-    assert executed_event.event == "prefect.automation.action.executed"
+    assert executed_event.event == "syntask.automation.action.executed"
     assert executed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.block-document.{email_me_block_id}",
-                "prefect.resource.role": "block",
-                "prefect.resource.name": "debug-print-notification",
+                "syntask.resource.id": f"syntask.block-document.{email_me_block_id}",
+                "syntask.resource.role": "block",
+                "syntask.resource.name": "debug-print-notification",
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.block-type.debug-print-notification",
-                "prefect.resource.role": "block-type",
+                "syntask.resource.id": "syntask.block-type.debug-print-notification",
+                "syntask.resource.role": "block-type",
             }
         ),
     ]
@@ -272,19 +272,19 @@ async def test_captures_notification_failures(
     assert AssertingEventsClient.last
     (triggered_event, failed_event) = AssertingEventsClient.last.events
 
-    assert triggered_event.event == "prefect.automation.action.triggered"
+    assert triggered_event.event == "syntask.automation.action.triggered"
     assert triggered_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.block-document.{email_me_block_id}",
-                "prefect.resource.role": "block",
-                "prefect.resource.name": "debug-print-notification",
+                "syntask.resource.id": f"syntask.block-document.{email_me_block_id}",
+                "syntask.resource.role": "block",
+                "syntask.resource.name": "debug-print-notification",
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.block-type.debug-print-notification",
-                "prefect.resource.role": "block-type",
+                "syntask.resource.id": "syntask.block-type.debug-print-notification",
+                "syntask.resource.role": "block-type",
             }
         ),
     ]
@@ -294,19 +294,19 @@ async def test_captures_notification_failures(
         "invocation": str(notify_me.id),
     }
 
-    assert failed_event.event == "prefect.automation.action.failed"
+    assert failed_event.event == "syntask.automation.action.failed"
     assert failed_event.related == [
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": f"prefect.block-document.{email_me_block_id}",
-                "prefect.resource.role": "block",
-                "prefect.resource.name": "debug-print-notification",
+                "syntask.resource.id": f"syntask.block-document.{email_me_block_id}",
+                "syntask.resource.role": "block",
+                "syntask.resource.name": "debug-print-notification",
             }
         ),
         RelatedResource.model_validate(
             {
-                "prefect.resource.id": "prefect.block-type.debug-print-notification",
-                "prefect.resource.role": "block-type",
+                "syntask.resource.id": "syntask.block-type.debug-print-notification",
+                "syntask.resource.role": "block-type",
             }
         ),
     ]

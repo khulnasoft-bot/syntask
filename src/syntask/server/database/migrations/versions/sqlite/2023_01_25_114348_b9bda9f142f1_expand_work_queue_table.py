@@ -9,7 +9,7 @@ Create Date: 2023-01-25 11:43:48.160070
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "b9bda9f142f1"
@@ -42,7 +42,7 @@ def upgrade():
         )
         batch_op.add_column(
             sa.Column(
-                "work_pool_id", prefect.server.utilities.database.UUID(), nullable=True
+                "work_pool_id", syntask.server.utilities.database.UUID(), nullable=True
             )
         )
         batch_op.create_foreign_key(
@@ -68,7 +68,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "work_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )
@@ -89,7 +89,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "work_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )
@@ -155,7 +155,7 @@ def downgrade():
         batch_op.add_column(
             sa.Column(
                 "work_pool_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )
@@ -176,7 +176,7 @@ def downgrade():
         batch_op.add_column(
             sa.Column(
                 "work_pool_queue_id",
-                prefect.server.utilities.database.UUID(),
+                syntask.server.utilities.database.UUID(),
                 nullable=True,
             )
         )

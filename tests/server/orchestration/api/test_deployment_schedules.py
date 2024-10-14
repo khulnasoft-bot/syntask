@@ -8,8 +8,8 @@ import sqlalchemy as sa
 from fastapi import status
 from httpx import AsyncClient
 
-from prefect.server import models, schemas
-from prefect.server.database.interface import PrefectDBInterface
+from syntask.server import models, schemas
+from syntask.server.database.interface import SyntaskDBInterface
 from tests.server import AsyncSessionGetter
 
 
@@ -275,7 +275,7 @@ class TestUpdateDeploymentSchedule:
 
     async def test_updating_schedule_removes_scheduled_runs(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         get_server_session: AsyncSessionGetter,
         client: AsyncClient,
         deployment_with_schedules,
@@ -378,7 +378,7 @@ class TestDeleteDeploymentSchedule:
 
     async def test_deletes_schedule_runs(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         get_server_session: AsyncSessionGetter,
         client: AsyncClient,
         deployment_with_schedules,

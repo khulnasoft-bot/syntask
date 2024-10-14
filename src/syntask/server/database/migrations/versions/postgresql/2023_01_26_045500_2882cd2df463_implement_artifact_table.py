@@ -9,7 +9,7 @@ Create Date: 2023-01-26 04:55:00.358638
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "2882cd2df463"
@@ -23,19 +23,19 @@ def upgrade():
         "artifact",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -44,16 +44,16 @@ def upgrade():
         sa.Column("data", sa.JSON(), nullable=True),
         sa.Column("metadata_", sa.JSON(), nullable=True),
         sa.Column(
-            "task_run_id", prefect.server.utilities.database.UUID(), nullable=True
+            "task_run_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.Column(
-            "task_run_state_id", prefect.server.utilities.database.UUID(), nullable=True
+            "task_run_state_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.Column(
-            "flow_run_id", prefect.server.utilities.database.UUID(), nullable=True
+            "flow_run_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.Column(
-            "flow_run_state_id", prefect.server.utilities.database.UUID(), nullable=True
+            "flow_run_state_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.ForeignKeyConstraint(
             ["flow_run_id"],
@@ -102,7 +102,7 @@ def upgrade():
         "flow_run_state",
         sa.Column(
             "result_artifact_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=True,
         ),
     )
@@ -125,7 +125,7 @@ def upgrade():
         "task_run_state",
         sa.Column(
             "result_artifact_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=True,
         ),
     )

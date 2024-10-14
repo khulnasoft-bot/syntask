@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 from fastapi.params import Depends
 
-from prefect.server.api import dependencies
+from syntask.server.api import dependencies
 
 ORCHESTRATION_DEPENDENCIES = {
     "task_policy_provider": None,
@@ -28,7 +28,7 @@ async def provide_task_policy():
     policy_provider = ORCHESTRATION_DEPENDENCIES.get("task_policy_provider")
 
     if policy_provider is None:
-        from prefect.server.orchestration.core_policy import CoreTaskPolicy
+        from syntask.server.orchestration.core_policy import CoreTaskPolicy
 
         return CoreTaskPolicy
 
@@ -36,12 +36,12 @@ async def provide_task_policy():
 
 
 async def provide_flow_policy(
-    client_version=Depends(dependencies.get_prefect_client_version),
+    client_version=Depends(dependencies.get_syntask_client_version),
 ):
     policy_provider = ORCHESTRATION_DEPENDENCIES.get("flow_policy_provider")
 
     if policy_provider is None:
-        from prefect.server.orchestration.core_policy import (
+        from syntask.server.orchestration.core_policy import (
             CoreFlowPolicy,
             CoreFlowPolicyWithoutDeploymentConcurrency,
         )
@@ -114,14 +114,14 @@ def temporary_task_orchestration_parameters(tmp_orchestration_parameters):
         return tmp_orchestration_parameters
 
     try:
-        ORCHESTRATION_DEPENDENCIES[
-            "task_orchestration_parameters_provider"
-        ] = parameter_lambda
+        ORCHESTRATION_DEPENDENCIES["task_orchestration_parameters_provider"] = (
+            parameter_lambda
+        )
         yield
     finally:
-        ORCHESTRATION_DEPENDENCIES[
-            "task_orchestration_parameters_provider"
-        ] = starting_task_orchestration_parameters
+        ORCHESTRATION_DEPENDENCIES["task_orchestration_parameters_provider"] = (
+            starting_task_orchestration_parameters
+        )
 
 
 @contextmanager
@@ -134,11 +134,11 @@ def temporary_flow_orchestration_parameters(tmp_orchestration_parameters):
         return tmp_orchestration_parameters
 
     try:
-        ORCHESTRATION_DEPENDENCIES[
-            "flow_orchestration_parameters_provider"
-        ] = parameter_lambda
+        ORCHESTRATION_DEPENDENCIES["flow_orchestration_parameters_provider"] = (
+            parameter_lambda
+        )
         yield
     finally:
-        ORCHESTRATION_DEPENDENCIES[
-            "flow_orchestration_parameters_provider"
-        ] = starting_flow_orchestration_parameters
+        ORCHESTRATION_DEPENDENCIES["flow_orchestration_parameters_provider"] = (
+            starting_flow_orchestration_parameters
+        )

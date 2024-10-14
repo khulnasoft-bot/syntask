@@ -6,29 +6,29 @@ from typing import List, Optional, Type
 
 import typer
 
-from prefect._internal.integrations import KNOWN_EXTRAS_FOR_PACKAGES
-from prefect.cli._prompts import confirm
-from prefect.cli._types import PrefectTyper, SettingsOption
-from prefect.cli._utilities import exit_with_error
-from prefect.cli.root import app, is_interactive
-from prefect.client.collections import get_collections_metadata_client
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.filters import WorkQueueFilter, WorkQueueFilterName
-from prefect.exceptions import ObjectNotFound
-from prefect.plugins import load_prefect_collections
-from prefect.settings import (
-    PREFECT_WORKER_HEARTBEAT_SECONDS,
-    PREFECT_WORKER_PREFETCH_SECONDS,
+from syntask._internal.integrations import KNOWN_EXTRAS_FOR_PACKAGES
+from syntask.cli._prompts import confirm
+from syntask.cli._types import SettingsOption, SyntaskTyper
+from syntask.cli._utilities import exit_with_error
+from syntask.cli.root import app, is_interactive
+from syntask.client.collections import get_collections_metadata_client
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.filters import WorkQueueFilter, WorkQueueFilterName
+from syntask.exceptions import ObjectNotFound
+from syntask.plugins import load_syntask_collections
+from syntask.settings import (
+    SYNTASK_WORKER_HEARTBEAT_SECONDS,
+    SYNTASK_WORKER_PREFETCH_SECONDS,
 )
-from prefect.utilities.dispatch import lookup_type
-from prefect.utilities.processutils import (
+from syntask.utilities.dispatch import lookup_type
+from syntask.utilities.processutils import (
     get_sys_executable,
     run_process,
     setup_signal_handlers_worker,
 )
-from prefect.workers.base import BaseWorker
+from syntask.workers.base import BaseWorker
 
-worker_app = PrefectTyper(name="worker", help="Start and interact with workers.")
+worker_app = SyntaskTyper(name="worker", help="Start and interact with workers.")
 app.add_typer(worker_app)
 
 
@@ -76,7 +76,7 @@ async def start(
         ),
     ),
     prefetch_seconds: int = SettingsOption(
-        PREFECT_WORKER_PREFETCH_SECONDS,
+        SYNTASK_WORKER_PREFETCH_SECONDS,
         help="Number of seconds to look into the future for scheduled flow runs.",
     ),
     run_once: bool = typer.Option(
@@ -94,7 +94,7 @@ async def start(
     install_policy: InstallPolicy = typer.Option(
         InstallPolicy.PROMPT.value,
         "--install-policy",
-        help="Install policy to use workers from Prefect integration packages.",
+        help="Install policy to use workers from Syntask integration packages.",
         case_sensitive=False,
     ),
     base_job_template: typer.FileText = typer.Option(
@@ -102,7 +102,7 @@ async def start(
         "--base-job-template",
         help=(
             "The path to a JSON file containing the base job template to use. If"
-            " unspecified, Prefect will use the default base job template for the given"
+            " unspecified, Syntask will use the default base job template for the given"
             " worker type. If the work pool already exists, this will be ignored."
         ),
     ),
@@ -160,7 +160,7 @@ async def start(
         work_queues=work_queues,
         limit=limit,
         prefetch_seconds=prefetch_seconds,
-        heartbeat_interval_seconds=int(PREFECT_WORKER_HEARTBEAT_SECONDS.value()),
+        heartbeat_interval_seconds=int(SYNTASK_WORKER_HEARTBEAT_SECONDS.value()),
         base_job_template=template_contents,
     )
     try:
@@ -242,7 +242,7 @@ async def _retrieve_worker_type_from_pool(work_pool_name: Optional[str] = None) 
 
 def _load_worker_class(worker_type: str) -> Optional[Type[BaseWorker]]:
     try:
-        load_prefect_collections()
+        load_syntask_collections()
         return lookup_type(BaseWorker, worker_type)
     except KeyError:
         return None
@@ -267,7 +267,7 @@ async def _find_package_for_worker_type(worker_type: str) -> Optional[str]:
         worker_type: package_name
         for package_name, worker_dict in worker_metadata.items()
         for worker_type in worker_dict
-        if worker_type != "prefect-agent"
+        if worker_type != "syntask-agent"
     }
     try:
         return worker_types_with_packages[worker_type]
@@ -290,10 +290,10 @@ async def _get_worker_class(
     if worker_type is None:
         worker_type = await _retrieve_worker_type_from_pool(work_pool_name)
 
-    if worker_type == "prefect-agent":
+    if worker_type == "syntask-agent":
         exit_with_error(
-            "'prefect-agent' typed work pools work with Prefect Agents instead of"
-            " Workers. Please use the 'prefect agent start' to start a Prefect Agent."
+            "'syntask-agent' typed work pools work with Syntask Agents instead of"
+            " Workers. Please use the 'syntask agent start' to start a Syntask Agent."
         )
 
     if install_policy == InstallPolicy.ALWAYS:
@@ -315,7 +315,7 @@ async def _get_worker_class(
             # Confirm with the user for installation in an interactive session
             elif install_policy == InstallPolicy.PROMPT and is_interactive():
                 message = (
-                    "Could not find the Prefect integration library for the"
+                    "Could not find the Syntask integration library for the"
                     f" {worker_type} worker in the current environment."
                     " Install the library now?"
                 )

@@ -43,11 +43,11 @@ from fastapi import HTTPException, status
 from sqlalchemy.exc import DBAPIError, NoInspectionAvailable
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.logging import get_logger
-from prefect.server import models, schemas
-from prefect.server.events.actions import RunDeployment
-from prefect.server.schemas.core import Deployment, WorkPool
-from prefect.utilities.schema_tools import ValidationError, is_valid_schema, validate
+from syntask.logging import get_logger
+from syntask.server import models, schemas
+from syntask.server.events.actions import RunDeployment
+from syntask.server.schemas.core import Deployment, WorkPool
+from syntask.utilities.schema_tools import ValidationError, is_valid_schema, validate
 
 logger = get_logger("server.api.validation")
 

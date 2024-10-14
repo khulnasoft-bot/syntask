@@ -1,10 +1,10 @@
 ---
 title: Run tasks in the background
-description: See examples of using Prefect tasks and the task worker.
+description: See examples of using Syntask tasks and the task worker.
 ---
 
-Prefect tasks help you quickly execute small, discrete units of work. _Deferred_ Prefect tasks run in a 
-background process using a Prefect task worker. Use deferred tasks to move work out of the foreground of your 
+Syntask tasks help you quickly execute small, discrete units of work. _Deferred_ Syntask tasks run in a 
+background process using a Syntask task worker. Use deferred tasks to move work out of the foreground of your 
 application and distribute concurrent execution across multiple processes or machines.
 
 For example, if you have a web application, deferred tasks allow you to offload processes such as sending emails, processing 
@@ -12,7 +12,7 @@ images, or inserting data into a database.
 
 ## Using deferred tasks
 
-Prefect tasks are Python functions that can be run immediately or deferred for background execution.
+Syntask tasks are Python functions that can be run immediately or deferred for background execution.
 
 Define a task by adding the `@task` decorator to a Python function, and use the `delay` method to 
 run the task in the background.
@@ -22,10 +22,10 @@ the task. This process is similar to a Celery worker or an arq worker.
 
 ### Defining a task
 
-Add the `@task` decorator to a Python function to define a Prefect task:
+Add the `@task` decorator to a Python function to define a Syntask task:
 
 ```python
-from prefect import task
+from syntask import task
 
 @task
 def my_background_task(name: str):
@@ -40,11 +40,11 @@ You can call a task to run it immediately, or you can defer the task by scheduli
 
 <Note>
 You can submit tasks to a _task runner_ such as Ray or Dask within 
-a workflow, which in Prefect is called a _flow_. However, this guide focuses on deferring task execution outside of 
+a workflow, which in Syntask is called a _flow_. However, this guide focuses on deferring task execution outside of 
 workflows. For example, by calling `my_task.delay()` within a web application.
 </Note>
 
-However you run a task, Prefect uses your task configuration to manage and control task execution.
+However you run a task, Syntask uses your task configuration to manage and control task execution.
 The following example shows both methods of calling a task and using `delay`:
 
 ```python
@@ -62,18 +62,18 @@ my_background_task.delay("Agrajag")
 
 To run tasks in a separate process or container, start a task worker.
 
-The task worker continually receives instructions to execute deferred tasks from Prefect's API, executes them, and 
+The task worker continually receives instructions to execute deferred tasks from Syntask's API, executes them, and 
 reports the results back to the API.
 
 <Note>
 Task workers only run deferred tasks, not tasks you call directly as normal Python functions.
 </Note>
 
-Run a task worker by passing tasks into the `prefect.task_worker.serve()` method:
+Run a task worker by passing tasks into the `syntask.task_worker.serve()` method:
 
 ```python tasks.py
-from prefect import task
-from prefect.task_worker import serve
+from syntask import task
+from syntask.task_worker import serve
 
 
 @task
@@ -91,19 +91,19 @@ if __name__ == "__main__":
 The task worker begins listening for scheduled tasks. If tasks were scheduled before the task worker started, 
 it will begin processing them.
 
-You can also use the helper CLI command `prefect task serve` to start a task worker:
+You can also use the helper CLI command `syntask task serve` to start a task worker:
 
 ```bash
-prefect task serve my_task.py:my_background_task
+syntask task serve my_task.py:my_background_task
 ```
 
-## Guided exploration of deferred tasks and task workers in Prefect
+## Guided exploration of deferred tasks and task workers in Syntask
 
-Here are some examples of using deferred tasks and task workers in Prefect.
+Here are some examples of using deferred tasks and task workers in Syntask.
 
 You will:
 
-- run a Prefect task in the foreground by calling it
+- run a Syntask task in the foreground by calling it
 - start a task worker and defer tasks so that they run in the background
 - create a basic FastAPI application that defers tasks when you hit an endpoint
 - use Docker in two examples that mimic real use cases
@@ -130,34 +130,34 @@ conda activate python-tasks
 #### Step 2: Install Python dependencies
 
 ```bash
-pip install -U prefect marvin fastapi==0.107
+pip install -U syntask marvin fastapi==0.107
 ```
 
-#### Step 3: Connect to Prefect Cloud or a self-hosted Prefect server
+#### Step 3: Connect to Syntask Cloud or a self-hosted Syntask server
 
-Use either Prefect Cloud or a self-hosted Prefect server for these examples.
+Use either Syntask Cloud or a self-hosted Syntask server for these examples.
 
-You must have `PREFECT_API_URL` set to send tasks to task workers.
+You must have `SYNTASK_API_URL` set to send tasks to task workers.
 
-If you're using a Prefect server with a SQLite backing database (the default database), 
-save this value to your active Prefect Profile with the following command:
+If you're using a Syntask server with a SQLite backing database (the default database), 
+save this value to your active Syntask Profile with the following command:
 
 ```bash
-prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
+syntask config set SYNTASK_API_URL=http://127.0.0.1:4200/api
 ```
 
-If using Prefect Cloud, set the `PREFECT_API_URL` value to the Prefect Cloud API URL and add your 
+If using Syntask Cloud, set the `SYNTASK_API_URL` value to the Syntask Cloud API URL and add your 
 [API key](https://docs.syntask.khulnasoft.com/cloud/users/api-keys/).
 
-The examples that use docker (examples 4 and 5) use a Prefect server by default.
-You can switch to Prefect Cloud by changing the `PREFECT_API_URL` and adding a variable for your API key in the 
+The examples that use docker (examples 4 and 5) use a Syntask server by default.
+You can switch to Syntask Cloud by changing the `SYNTASK_API_URL` and adding a variable for your API key in the 
 `docker-compose.yaml`.
-Or use a Prefect server backed by a PostgreSQL database by setting the `PREFECT_API_DATABASE_CONNECTION_URL`.
+Or use a Syntask server backed by a PostgreSQL database by setting the `SYNTASK_API_DATABASE_CONNECTION_URL`.
 
-If using Prefect server instead of Prefect Cloud, start your server by running the following command:
+If using Syntask server instead of Syntask Cloud, start your server by running the following command:
 
 ```bash
-prefect server start 
+syntask server start 
 ```
 
 #### Step 4: Clone the repository (optional)
@@ -165,20 +165,20 @@ prefect server start
 Clone the repository to get the code files for the examples:
 
 ```bash
-git clone https://github.com/synopkg/synopkg-background-task-examples.git
+git clone https://github.com/synopkg/syntask-background-task-examples.git
 ```
 
 Move into the directory:
 
 ```bash
-cd prefect-background-task-examples
+cd syntask-background-task-examples
 ```
 
-### Example 1: Run a Prefect task in the foreground by calling it
+### Example 1: Run a Syntask task in the foreground by calling it
 
 <summary>Expand</summary>
 
-Add the `@task` decorator to any Python function to define a Prefect task.
+Add the `@task` decorator to any Python function to define a Syntask task.
 
 #### Step 1: Create a file with a task-decorated function 
 
@@ -186,7 +186,7 @@ Create a file and save the following code in it, or run the existing file in the
 basic-examples directory.
 
 ```python greeter.py
-from prefect import task 
+from syntask import task 
 
 @task(log_prints=True)
 def greet(name: str = "Marvin"):
@@ -207,14 +207,14 @@ You should see the task run in the terminal. This task runs in the foreground, m
 #### Optional
 
 You can see the task run in the UI.
-If you're using a self-hosted Prefect server instance, you can also see the task runs in the database.
+If you're using a self-hosted Syntask server instance, you can also see the task runs in the database.
 
 If you want to inspect the SQLite database, use your favorite interface.
 *DB Browser for SQLite* is explained below.
 
 Download it [here](https://sqlitebrowser.org/dl/), if needed. Install it and open it.
 
-Click *Connect*. Then navigate to your SQLite DB file. It's located in `~/.prefect` directory by default.
+Click *Connect*. Then navigate to your SQLite DB file. It's located in `~/.syntask` directory by default.
 
 Go to the `task_run` table to see all your task runs there.
 Scroll down to see your most recent task runs or filter for them.
@@ -225,15 +225,15 @@ Hit the refresh button for updates, if needed.
 
 To run tasks in a separate process or container, start a task worker, similar to how you would run a 
 Celery worker or an arq worker.
-The task worker continually receives scheduled tasks to execute from Prefect's API, executes them, and reports the 
+The task worker continually receives scheduled tasks to execute from Syntask's API, executes them, and reports the 
 results back to the API.
-Run a task worker by passing tasks into the `prefect.task_worker.serve()` method.
+Run a task worker by passing tasks into the `syntask.task_worker.serve()` method.
 
 #### Step 1: Define the task and task worker in a file 
 
 ```python task_worker.py
-from prefect import task
-from prefect.task_worker import serve
+from syntask import task
+from syntask.task_worker import serve
 
 
 @task
@@ -301,7 +301,7 @@ from task_worker import my_background_task
 
 if __name__ == "__main__":
     my_background_task.delay("Ford")
-    my_background_task.delay("Prefect")
+    my_background_task.delay("Syntask")
     my_background_task.delay("Slartibartfast")
 ```
 
@@ -309,7 +309,7 @@ Run the file to see the work get distributed across both task workers.
 
 #### Step 8: Shut down the task workers with *control* + *c*
 
-This guide showed you how to send tasks to multiple Prefect task workers running in the background.
+This guide showed you how to send tasks to multiple Syntask task workers running in the background.
 This allows you to observe these tasks executing in parallel and very quickly with web sockets, with no polling required.
 
-See additional examples in the [deferred tasks GitHub repository](https://github.com/synopkg/synopkg-background-task-examples.git).
+See additional examples in the [deferred tasks GitHub repository](https://github.com/synopkg/syntask-background-task-examples.git).

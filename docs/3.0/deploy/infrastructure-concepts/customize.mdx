@@ -3,7 +3,7 @@ title: Override job variables
 description: Learn how to override job variables on a work pool for a given deployment.
 ---
 
-There are two ways to deploy flows to work pools: with a [`prefect.yaml` file](/3.0/deploy/infrastructure-concepts/prefect-yaml) or using the [Python `deploy` method](/3.0/deploy/infrastructure-concepts/deploy-via-python). 
+There are two ways to deploy flows to work pools: with a [`syntask.yaml` file](/3.0/deploy/infrastructure-concepts/syntask-yaml) or using the [Python `deploy` method](/3.0/deploy/infrastructure-concepts/deploy-via-python). 
 In both cases, you can override job variables on a work pool for a given deployment.
 
 This guide explores common patterns for overriding job variables in 
@@ -47,7 +47,7 @@ With a `demo_flow.py` file like:
 
 ```python
 import os
-from prefect import flow, task
+from syntask import flow, task
 
 
 @task
@@ -68,9 +68,9 @@ def some_work():
 
     do_something_important(not_so_secret_value)
 ```
-### Use a `prefect.yaml` file
+### Use a `syntask.yaml` file
 
-Imagine you have the following deployment definition in a `prefect.yaml` file at the 
+Imagine you have the following deployment definition in a `syntask.yaml` file at the 
 root of your repository:
 
 ```yaml
@@ -85,18 +85,18 @@ deployments:
 <Note>
     While not the focus of this guide, this deployment definition uses a default "global" `pull` step, 
     because one is not explicitly defined on the deployment. For reference, here's what that would look like at 
-    the top of the `prefect.yaml` file:
+    the top of the `syntask.yaml` file:
     ```yaml
     pull:
-    - prefect.deployments.steps.git_clone: &clone_repo
-        repository: https://github.com/some-user/prefect-monorepo
+    - syntask.deployments.steps.git_clone: &clone_repo
+        repository: https://github.com/some-user/syntask-monorepo
         branch: main
     ```
 </Note>
 
 #### Hard-coded job variables
 To provide the `EXECUTION_ENVIRONMENT` and `MY_NOT_SO_SECRET_CONFIG` environment variables to this deployment, 
-you can add a `job_variables` section to your deployment definition in the `prefect.yaml` file:
+you can add a `job_variables` section to your deployment definition in the `syntask.yaml` file:
 
 ```yaml
 deployments:
@@ -111,7 +111,7 @@ deployments:
   schedule: null
 ```
 
-Then run `prefect deploy -n demo-deployment` to deploy the flow with these job variables.
+Then run `syntask deploy -n demo-deployment` to deploy the flow with these job variables.
 
 You should see the job variables in the `Configuration` tab of the deployment in the UI:
 
@@ -119,7 +119,7 @@ You should see the job variables in the `Configuration` tab of the deployment in
 
 #### Use existing environment variables
 To use environment variables that are already set in your local environment, you can template 
-these in the `prefect.yaml` file using the `{{ $ENV_VAR_NAME }}` syntax:
+these in the `syntask.yaml` file using the `{{ $ENV_VAR_NAME }}` syntax:
 
 ```yaml
 deployments:
@@ -135,7 +135,7 @@ deployments:
 ```
 
 <Note>
-    This assumes that the machine where `prefect deploy` is run would have these environment variables set.
+    This assumes that the machine where `syntask deploy` is run would have these environment variables set.
 
     ```bash
     export EXECUTION_ENVIRONMENT=staging
@@ -144,19 +144,19 @@ deployments:
    
 </Note>
 
-Run `prefect deploy -n demo-deployment` to deploy the flow with these job variables, 
+Run `syntask deploy -n demo-deployment` to deploy the flow with these job variables, 
 and you should see them in the UI under the `Configuration` tab.
 
 ### Use the `.deploy()` method
 If you're using the `.deploy()` method to deploy your flow, the process is similar. But instead of  
-`prefect.yaml` defining the job variables, you can pass them as a dictionary to the `job_variables` argument 
+`syntask.yaml` defining the job variables, you can pass them as a dictionary to the `job_variables` argument 
 of the `.deploy()` method.
 
 Add the following block to your `demo_project/daily_flow.py` file from the setup section:
 ```python
 if __name__ == "__main__":
     flow.from_source(
-        source="https://github.com/zzstoatzz/prefect-monorepo.git",
+        source="https://github.com/zzstoatzz/syntask-monorepo.git",
         entrypoint="src/demo_project/demo_flow.py:some_work"
     ).deploy(
         name="demo-deployment",
@@ -211,7 +211,7 @@ Custom runs allow you to pass in a dictionary of variables into your flow run in
 Similarly, runs kicked off through the CLI accept job variables with the `-jv` or `--job-variable` flag.
 
 ```bash
-prefect deployment run \
+syntask deployment run \
   --id "fb8e3073-c449-474b-b993-851fe5e80e53" \
   --job-variable MY_NEW_ENV_VAR=42 \
   --job-variable HELLO=THERE

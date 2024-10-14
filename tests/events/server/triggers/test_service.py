@@ -10,8 +10,8 @@ import pytest
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions, triggers
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions, triggers
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -20,8 +20,8 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.utilities.messaging import MessageHandler
-from prefect.server.utilities.messaging.memory import MemoryMessage
+from syntask.server.utilities.messaging import MessageHandler
+from syntask.server.utilities.messaging.memory import MemoryMessage
 
 
 async def test_acting_publishes_an_action_message_from_a_reactive_event(
@@ -95,21 +95,21 @@ async def test_acting_publishes_an_action_message_from_a_proactive_trigger(
 def load_automations(monkeypatch: pytest.MonkeyPatch) -> mock.AsyncMock:
     m = mock.AsyncMock()
     m.return_value = []
-    monkeypatch.setattr("prefect.server.events.triggers.load_automations", m)
+    monkeypatch.setattr("syntask.server.events.triggers.load_automations", m)
     return m
 
 
 @pytest.fixture(autouse=True)
 def periodic_evaluation(monkeypatch: pytest.MonkeyPatch) -> mock.AsyncMock:
     m = mock.AsyncMock(spec=triggers.periodic_evaluation)
-    monkeypatch.setattr("prefect.server.events.triggers.periodic_evaluation", m)
+    monkeypatch.setattr("syntask.server.events.triggers.periodic_evaluation", m)
     return m
 
 
 @pytest.fixture(autouse=True)
 def reactive_evaluation(monkeypatch: pytest.MonkeyPatch) -> mock.AsyncMock:
     m = mock.AsyncMock(spec=triggers.reactive_evaluation)
-    monkeypatch.setattr("prefect.server.events.triggers.reactive_evaluation", m)
+    monkeypatch.setattr("syntask.server.events.triggers.reactive_evaluation", m)
     return m
 
 
@@ -122,7 +122,7 @@ def open_automations_session(monkeypatch: pytest.MonkeyPatch) -> mock.Mock:
         yield mock_session
 
     monkeypatch.setattr(
-        "prefect.server.events.triggers.automations_session", automations_session
+        "syntask.server.events.triggers.automations_session", automations_session
     )
     return mock_session
 
@@ -138,7 +138,7 @@ def effective_automations(
             name="example automation 1",
             trigger=EventTrigger(
                 expect={"stuff.happened"},
-                match={"prefect.resource.id": "foo"},
+                match={"syntask.resource.id": "foo"},
                 posture=Posture.Reactive,
                 threshold=0,
                 within=timedelta(seconds=10),
@@ -152,7 +152,7 @@ def effective_automations(
             name="example automation 2",
             trigger=EventTrigger(
                 expect={"stuff.happened"},
-                match={"prefect.resource.id": "bar"},
+                match={"syntask.resource.id": "bar"},
                 posture=Posture.Reactive,
                 threshold=0,
                 within=timedelta(seconds=10),
@@ -216,7 +216,7 @@ async def test_runs_periodic_tasks(
     event = ReceivedEvent(
         occurred=frozen_time - timedelta(seconds=42),
         event="not.important",
-        resource={"prefect.resource.id": "not.important"},
+        resource={"syntask.resource.id": "not.important"},
         id=uuid4(),
     )
     await triggers.update_events_clock(event)
@@ -264,7 +264,7 @@ async def test_only_considers_messages_that_are_not_log_writes(
             MemoryMessage(
                 data=daddy_long_legs_walked.model_dump_json().encode(),
                 attributes={
-                    "event": "prefect.log.write",
+                    "event": "syntask.log.write",
                 },
             )
         )
@@ -281,7 +281,7 @@ async def test_only_considers_messages_with_event_ids(
     event = ReceivedEvent(
         occurred=start_of_test,
         event="things.happened",
-        resource={"prefect.resource.id": "something"},
+        resource={"syntask.resource.id": "something"},
         id=uuid4(),
     )
 
@@ -305,7 +305,7 @@ async def test_only_considers_messages_with_valid_event_ids(
     event = ReceivedEvent(
         occurred=start_of_test,
         event="things.happened",
-        resource={"prefect.resource.id": "something"},
+        resource={"syntask.resource.id": "something"},
         id=uuid4(),
     )
 
@@ -329,7 +329,7 @@ async def test_acks_early_arrivals(
     event = ReceivedEvent(
         occurred=start_of_test,
         event="things.happened",
-        resource={"prefect.resource.id": "something"},
+        resource={"syntask.resource.id": "something"},
         id=uuid4(),
     )
     reactive_evaluation.side_effect = triggers.EventArrivedEarly(event)
@@ -355,7 +355,7 @@ async def test_only_processes_event_once(
     event = ReceivedEvent(
         occurred=start_of_test,
         event="things.happened",
-        resource={"prefect.resource.id": "something"},
+        resource={"syntask.resource.id": "something"},
         id=uuid4(),
     )
     message = MemoryMessage(
@@ -402,7 +402,7 @@ async def test_event_clock_produces_accurate_offsets(
     event = ReceivedEvent(
         occurred=frozen_time - timedelta(seconds=42),
         event="not.important",
-        resource={"prefect.resource.id": "not.important"},
+        resource={"syntask.resource.id": "not.important"},
         id=uuid4(),
     )
     await triggers.update_events_clock(event)
@@ -415,7 +415,7 @@ async def test_event_clock_only_moves_forward(
     event = ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="things.happened",
-        resource={"prefect.resource.id": "something"},
+        resource={"syntask.resource.id": "something"},
         id=uuid4(),
     )
 
@@ -442,7 +442,7 @@ async def test_event_clock_avoids_the_future(
     event = ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="things.happened",
-        resource={"prefect.resource.id": "something"},
+        resource={"syntask.resource.id": "something"},
         id=uuid4(),
     )
 
@@ -473,7 +473,7 @@ async def test_offset_is_resilient_to_low_volume(
     event = ReceivedEvent(
         occurred=base_time - timedelta(seconds=42),
         event="things.happened",
-        resource={"prefect.resource.id": "something"},
+        resource={"syntask.resource.id": "something"},
         id=uuid4(),
     )
     await triggers.update_events_clock(event)

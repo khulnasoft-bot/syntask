@@ -4,9 +4,9 @@ from httpx import AsyncClient, AsyncHTTPTransport, Response
 from pydantic import Field, SecretStr
 from typing_extensions import Literal
 
-from prefect.blocks.core import Block
-from prefect.types import SecretDict
-from prefect.utilities.urls import validate_restricted_url
+from syntask.blocks.core import Block
+from syntask.types import SecretDict
+from syntask.utilities.urls import validate_restricted_url
 
 # Use a global HTTP transport to maintain a process-wide connection pool for
 # interservice requests

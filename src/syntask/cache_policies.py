@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, 
 
 from typing_extensions import Self
 
-from prefect.context import TaskRunContext
-from prefect.utilities.hashing import hash_objects
+from syntask.context import TaskRunContext
+from syntask.utilities.hashing import hash_objects
 
 if TYPE_CHECKING:
-    from prefect.filesystems import WritableFileSystem
-    from prefect.locking.protocol import LockManager
-    from prefect.transactions import IsolationLevel
+    from syntask.filesystems import WritableFileSystem
+    from syntask.locking.protocol import LockManager
+    from syntask.transactions import IsolationLevel
 
 
 @dataclass

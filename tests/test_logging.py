@@ -15,25 +15,25 @@ from rich.console import Console
 from rich.highlighter import NullHighlighter, ReprHighlighter
 from rich.style import Style
 
-import prefect
-import prefect.logging.configuration
-import prefect.settings
-from prefect import flow, task
-from prefect._internal.concurrency.api import create_call, from_sync
-from prefect.context import FlowRunContext, TaskRunContext
-from prefect.exceptions import MissingContextError
-from prefect.logging import LogEavesdropper
-from prefect.logging.configuration import (
+import syntask
+import syntask.logging.configuration
+import syntask.settings
+from syntask import flow, task
+from syntask._internal.concurrency.api import create_call, from_sync
+from syntask.context import FlowRunContext, TaskRunContext
+from syntask.exceptions import MissingContextError
+from syntask.logging import LogEavesdropper
+from syntask.logging.configuration import (
     DEFAULT_LOGGING_SETTINGS_PATH,
     load_logging_config,
     setup_logging,
 )
-from prefect.logging.filters import ObfuscateApiKeyFilter
-from prefect.logging.formatters import JsonFormatter
-from prefect.logging.handlers import APILogHandler, APILogWorker, PrefectConsoleHandler
-from prefect.logging.highlighters import PrefectConsoleHighlighter
-from prefect.logging.loggers import (
-    PrefectLogAdapter,
+from syntask.logging.filters import ObfuscateApiKeyFilter
+from syntask.logging.formatters import JsonFormatter
+from syntask.logging.handlers import APILogHandler, APILogWorker, SyntaskConsoleHandler
+from syntask.logging.highlighters import SyntaskConsoleHighlighter
+from syntask.logging.loggers import (
+    SyntaskLogAdapter,
     disable_logger,
     disable_run_logger,
     flow_run_logger,
@@ -42,24 +42,24 @@ from prefect.logging.loggers import (
     patch_print,
     task_run_logger,
 )
-from prefect.server.schemas.actions import LogCreate
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_LOGGING_COLORS,
-    PREFECT_LOGGING_LEVEL,
-    PREFECT_LOGGING_MARKUP,
-    PREFECT_LOGGING_SETTINGS_PATH,
-    PREFECT_LOGGING_TO_API_BATCH_INTERVAL,
-    PREFECT_LOGGING_TO_API_BATCH_SIZE,
-    PREFECT_LOGGING_TO_API_ENABLED,
-    PREFECT_LOGGING_TO_API_MAX_LOG_SIZE,
-    PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW,
-    PREFECT_TEST_MODE,
+from syntask.server.schemas.actions import LogCreate
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_LOGGING_COLORS,
+    SYNTASK_LOGGING_LEVEL,
+    SYNTASK_LOGGING_MARKUP,
+    SYNTASK_LOGGING_SETTINGS_PATH,
+    SYNTASK_LOGGING_TO_API_BATCH_INTERVAL,
+    SYNTASK_LOGGING_TO_API_BATCH_SIZE,
+    SYNTASK_LOGGING_TO_API_ENABLED,
+    SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE,
+    SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW,
+    SYNTASK_TEST_MODE,
     temporary_settings,
 )
-from prefect.testing.cli import temporary_console_width
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.names import obfuscate
+from syntask.testing.cli import temporary_console_width
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.names import obfuscate
 
 
 @pytest.fixture
@@ -67,20 +67,20 @@ def dictConfigMock(monkeypatch):
     mock = MagicMock()
     monkeypatch.setattr("logging.config.dictConfig", mock)
     # Reset the process global since we're testing `setup_logging`
-    old = prefect.logging.configuration.PROCESS_LOGGING_CONFIG
-    prefect.logging.configuration.PROCESS_LOGGING_CONFIG = None
+    old = syntask.logging.configuration.PROCESS_LOGGING_CONFIG
+    syntask.logging.configuration.PROCESS_LOGGING_CONFIG = None
     yield mock
-    prefect.logging.configuration.PROCESS_LOGGING_CONFIG = old
+    syntask.logging.configuration.PROCESS_LOGGING_CONFIG = old
 
 
 @pytest.fixture
-async def logger_test_deployment(prefect_client):
+async def logger_test_deployment(syntask_client):
     """
     A deployment with a flow that returns information about the given loggers
     """
 
-    @prefect.flow
-    def my_flow(loggers=["foo", "bar", "prefect"]):
+    @syntask.flow
+    def my_flow(loggers=["foo", "bar", "syntask"]):
         import logging
 
         settings = {}
@@ -95,9 +95,9 @@ async def logger_test_deployment(prefect_client):
 
         return settings
 
-    flow_id = await prefect_client.create_flow(my_flow)
+    flow_id = await syntask_client.create_flow(my_flow)
 
-    deployment_id = await prefect_client.create_deployment(
+    deployment_id = await syntask_client.create_deployment(
         flow_id=flow_id,
         name="logger_test_deployment",
     )
@@ -107,7 +107,7 @@ async def logger_test_deployment(prefect_client):
 
 def test_setup_logging_uses_default_path(tmp_path, dictConfigMock):
     with temporary_settings(
-        {PREFECT_LOGGING_SETTINGS_PATH: tmp_path.joinpath("does-not-exist.yaml")}
+        {SYNTASK_LOGGING_SETTINGS_PATH: tmp_path.joinpath("does-not-exist.yaml")}
     ):
         expected_config = load_logging_config(DEFAULT_LOGGING_SETTINGS_PATH)
         expected_config["incremental"] = False
@@ -129,7 +129,7 @@ def test_setup_logging_uses_settings_path_if_exists(tmp_path, dictConfigMock):
     config_file = tmp_path.joinpath("exists.yaml")
     config_file.write_text("foo: bar")
 
-    with temporary_settings({PREFECT_LOGGING_SETTINGS_PATH: config_file}):
+    with temporary_settings({SYNTASK_LOGGING_SETTINGS_PATH: config_file}):
         setup_logging()
         expected_config = load_logging_config(tmp_path.joinpath("exists.yaml"))
         expected_config["incremental"] = False
@@ -139,7 +139,7 @@ def test_setup_logging_uses_settings_path_if_exists(tmp_path, dictConfigMock):
 
 def test_setup_logging_uses_env_var_overrides(tmp_path, dictConfigMock, monkeypatch):
     with temporary_settings(
-        {PREFECT_LOGGING_SETTINGS_PATH: tmp_path.joinpath("does-not-exist.yaml")}
+        {SYNTASK_LOGGING_SETTINGS_PATH: tmp_path.joinpath("does-not-exist.yaml")}
     ):
         expected_config = load_logging_config(DEFAULT_LOGGING_SETTINGS_PATH)
     env = {}
@@ -147,31 +147,31 @@ def test_setup_logging_uses_env_var_overrides(tmp_path, dictConfigMock, monkeypa
     expected_config["incremental"] = False
 
     # Test setting a value for a simple key
-    env["PREFECT_LOGGING_HANDLERS_API_LEVEL"] = "API_LEVEL_VAL"
+    env["SYNTASK_LOGGING_HANDLERS_API_LEVEL"] = "API_LEVEL_VAL"
     expected_config["handlers"]["api"]["level"] = "API_LEVEL_VAL"
 
     # Test setting a value for the root logger
-    env["PREFECT_LOGGING_ROOT_LEVEL"] = "ROOT_LEVEL_VAL"
+    env["SYNTASK_LOGGING_ROOT_LEVEL"] = "ROOT_LEVEL_VAL"
     expected_config["root"]["level"] = "ROOT_LEVEL_VAL"
 
     # Test setting a value where the a key contains underscores
-    env["PREFECT_LOGGING_FORMATTERS_STANDARD_FLOW_RUN_FMT"] = "UNDERSCORE_KEY_VAL"
+    env["SYNTASK_LOGGING_FORMATTERS_STANDARD_FLOW_RUN_FMT"] = "UNDERSCORE_KEY_VAL"
     expected_config["formatters"]["standard"]["flow_run_fmt"] = "UNDERSCORE_KEY_VAL"
 
     # Test setting a value where the key contains a period
-    env["PREFECT_LOGGING_LOGGERS_PREFECT_EXTRA_LEVEL"] = "VAL"
+    env["SYNTASK_LOGGING_LOGGERS_SYNTASK_EXTRA_LEVEL"] = "VAL"
 
-    expected_config["loggers"]["prefect.extra"]["level"] = "VAL"
+    expected_config["loggers"]["syntask.extra"]["level"] = "VAL"
 
     # Test setting a value that does not exist in the yaml config and should not be
     # set in the expected_config since there is no value to override
-    env["PREFECT_LOGGING_FOO"] = "IGNORED"
+    env["SYNTASK_LOGGING_FOO"] = "IGNORED"
 
     for var, value in env.items():
         monkeypatch.setenv(var, value)
 
     with temporary_settings(
-        {PREFECT_LOGGING_SETTINGS_PATH: tmp_path.joinpath("does-not-exist.yaml")}
+        {SYNTASK_LOGGING_SETTINGS_PATH: tmp_path.joinpath("does-not-exist.yaml")}
     ):
         setup_logging()
 
@@ -179,34 +179,34 @@ def test_setup_logging_uses_env_var_overrides(tmp_path, dictConfigMock, monkeypa
 
 
 @pytest.mark.parametrize("name", ["default", None, ""])
-def test_get_logger_returns_prefect_logger_by_default(name):
+def test_get_logger_returns_syntask_logger_by_default(name):
     if name == "default":
         logger = get_logger()
     else:
         logger = get_logger(name)
 
-    assert logger.name == "prefect"
+    assert logger.name == "syntask"
 
 
-def test_get_logger_returns_prefect_child_logger():
+def test_get_logger_returns_syntask_child_logger():
     logger = get_logger("foo")
-    assert logger.name == "prefect.foo"
+    assert logger.name == "syntask.foo"
 
 
-def test_get_logger_does_not_duplicate_prefect_prefix():
-    logger = get_logger("prefect.foo")
-    assert logger.name == "prefect.foo"
+def test_get_logger_does_not_duplicate_syntask_prefix():
+    logger = get_logger("syntask.foo")
+    assert logger.name == "syntask.foo"
 
 
 def test_default_level_is_applied_to_interpolated_yaml_values(dictConfigMock):
     with temporary_settings(
-        {PREFECT_LOGGING_LEVEL: "WARNING", PREFECT_TEST_MODE: False}
+        {SYNTASK_LOGGING_LEVEL: "WARNING", SYNTASK_TEST_MODE: False}
     ):
         expected_config = load_logging_config(DEFAULT_LOGGING_SETTINGS_PATH)
         expected_config["incremental"] = False
 
-        assert expected_config["loggers"]["prefect"]["level"] == "WARNING"
-        assert expected_config["loggers"]["prefect.extra"]["level"] == "WARNING"
+        assert expected_config["loggers"]["syntask"]["level"] == "WARNING"
+        assert expected_config["loggers"]["syntask.extra"]["level"] == "WARNING"
 
         setup_logging()
 
@@ -216,7 +216,7 @@ def test_default_level_is_applied_to_interpolated_yaml_values(dictConfigMock):
 @pytest.fixture
 def mock_log_worker(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr("prefect.logging.handlers.APILogWorker", mock)
+    monkeypatch.setattr("syntask.logging.handlers.APILogWorker", mock)
     return mock
 
 
@@ -240,29 +240,29 @@ class TestAPILogHandler:
         mock_log_worker.drain_all.assert_not_called()
 
     async def test_logs_can_still_be_sent_after_close(
-        self, logger, handler, flow_run, prefect_client
+        self, logger, handler, flow_run, syntask_client
     ):
         logger.info("Test", extra={"flow_run_id": flow_run.id})
         handler.close()  # Close it
         logger.info("Test", extra={"flow_run_id": flow_run.id})
         await handler.aflush()
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert len(logs) == 2
 
     async def test_logs_can_still_be_sent_after_flush(
-        self, logger, handler, flow_run, prefect_client
+        self, logger, handler, flow_run, syntask_client
     ):
         logger.info("Test", extra={"flow_run_id": flow_run.id})
         await handler.aflush()
         logger.info("Test", extra={"flow_run_id": flow_run.id})
         await handler.aflush()
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert len(logs) == 2
 
     async def test_sync_flush_from_async_context(
-        self, logger, handler, flow_run, prefect_client
+        self, logger, handler, flow_run, syntask_client
     ):
         logger.info("Test", extra={"flow_run_id": flow_run.id})
         handler.flush()
@@ -270,7 +270,7 @@ class TestAPILogHandler:
         # Yield to the worker thread
         time.sleep(2)
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert len(logs) == 1
 
     def test_sync_flush_from_global_event_loop(self, logger, handler, flow_run):
@@ -429,7 +429,7 @@ class TestAPILogHandler:
         self, logger, mock_log_worker, task_run
     ):
         with temporary_settings(
-            updates={PREFECT_LOGGING_TO_API_ENABLED: "False"},
+            updates={SYNTASK_LOGGING_TO_API_ENABLED: "False"},
         ):
             with TaskRunContext.model_construct(task_run=task_run):
                 logger.info("test")
@@ -468,7 +468,7 @@ class TestAPILogHandler:
         self, logger, mock_log_worker, capsys
     ):
         with temporary_settings(
-            updates={PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW: "error"},
+            updates={SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW: "error"},
         ):
             with pytest.raises(
                 MissingContextError,
@@ -487,7 +487,7 @@ class TestAPILogHandler:
         logger,
     ):
         with temporary_settings(
-            updates={PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW: "error"},
+            updates={SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW: "error"},
         ):
             with pytest.raises(
                 MissingContextError,
@@ -502,7 +502,7 @@ class TestAPILogHandler:
         self, logger, mock_log_worker, capsys
     ):
         with temporary_settings(
-            updates={PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW: "ignore"},
+            updates={SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW: "ignore"},
         ):
             logger.info("test")
 
@@ -517,7 +517,7 @@ class TestAPILogHandler:
         logger,
     ):
         with temporary_settings(
-            updates={PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW: "ignore"},
+            updates={SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW: "ignore"},
         ):
             logger.info("test")
 
@@ -525,7 +525,7 @@ class TestAPILogHandler:
         self, logger, mock_log_worker, capsys
     ):
         with temporary_settings(
-            updates={PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW: "warn"},
+            updates={SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW: "warn"},
         ):
             # Warns in the main process
             with pytest.warns(
@@ -543,7 +543,7 @@ class TestAPILogHandler:
         self, logger
     ):
         with temporary_settings(
-            updates={PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW: "warn"},
+            updates={SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW: "warn"},
         ):
             with pytest.warns(
                 UserWarning,
@@ -575,7 +575,7 @@ class TestAPILogHandler:
         self, logger, mock_log_worker, capsys, monkeypatch
     ):
         monkeypatch.setattr(
-            "prefect.logging.handlers.APILogHandler.prepare",
+            "syntask.logging.handlers.APILogHandler.prepare",
             MagicMock(side_effect=RuntimeError("Oh no!")),
         )
         # No error raised
@@ -603,7 +603,7 @@ class TestAPILogHandler:
         self, task_run, logger, capsys, mock_log_worker
     ):
         with TaskRunContext.model_construct(task_run=task_run):
-            with temporary_settings(updates={PREFECT_LOGGING_TO_API_MAX_LOG_SIZE: "1"}):
+            with temporary_settings(updates={SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE: "1"}):
                 logger.info("test")
 
         mock_log_worker.instance().send.assert_not_called()
@@ -613,7 +613,7 @@ class TestAPILogHandler:
 
     def test_handler_knows_how_large_logs_are(self):
         dict_log = {
-            "name": "prefect.flow_runs",
+            "name": "syntask.flow_runs",
             "level": 20,
             "message": "Finished in state Completed()",
             "timestamp": "2023-02-08T17:55:52.993831+00:00",
@@ -643,16 +643,16 @@ class TestAPILogWorker:
             message="hello",
         ).model_dump(mode="json")
 
-    async def test_send_logs_single_record(self, log_dict, prefect_client, worker):
+    async def test_send_logs_single_record(self, log_dict, syntask_client, worker):
         worker.send(log_dict)
         await worker.drain()
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert len(logs) == 1
         assert logs[0].model_dump(include=log_dict.keys(), mode="json") == log_dict
 
-    async def test_send_logs_many_records(self, log_dict, prefect_client, worker):
+    async def test_send_logs_many_records(self, log_dict, syntask_client, worker):
         # Use the read limit as the count since we'd need multiple read calls otherwise
-        count = prefect.settings.PREFECT_API_DEFAULT_LIMIT.value()
+        count = syntask.settings.SYNTASK_API_DEFAULT_LIMIT.value()
         log_dict.pop("message")
 
         for i in range(count):
@@ -661,7 +661,7 @@ class TestAPILogWorker:
             worker.send(new_log)
         await worker.drain()
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert len(logs) == count
         for log in logs:
             assert (
@@ -676,7 +676,7 @@ class TestAPILogWorker:
         self, log_dict, capsys, monkeypatch, worker
     ):
         monkeypatch.setattr(
-            "prefect.client.orchestration.PrefectClient.create_logs",
+            "syntask.client.orchestration.SyntaskClient.create_logs",
             MagicMock(side_effect=ValueError("Test")),
         )
 
@@ -690,15 +690,15 @@ class TestAPILogWorker:
     async def test_send_logs_batches_by_size(self, log_dict, monkeypatch):
         mock_create_logs = AsyncMock()
         monkeypatch.setattr(
-            "prefect.client.orchestration.PrefectClient.create_logs", mock_create_logs
+            "syntask.client.orchestration.SyntaskClient.create_logs", mock_create_logs
         )
 
         log_size = APILogHandler()._get_payload_size(log_dict)
 
         with temporary_settings(
             updates={
-                PREFECT_LOGGING_TO_API_BATCH_SIZE: log_size + 1,
-                PREFECT_LOGGING_TO_API_MAX_LOG_SIZE: log_size,
+                SYNTASK_LOGGING_TO_API_BATCH_SIZE: log_size + 1,
+                SYNTASK_LOGGING_TO_API_MAX_LOG_SIZE: log_size,
             }
         ):
             worker = APILogWorker.instance()
@@ -710,11 +710,11 @@ class TestAPILogWorker:
         assert mock_create_logs.call_count == 3
 
     async def test_logs_are_sent_immediately_when_stopped(
-        self, log_dict, prefect_client
+        self, log_dict, syntask_client
     ):
         # Set a long interval
         start_time = time.time()
-        with temporary_settings(updates={PREFECT_LOGGING_TO_API_BATCH_INTERVAL: "10"}):
+        with temporary_settings(updates={SYNTASK_LOGGING_TO_API_BATCH_INTERVAL: "10"}):
             worker = APILogWorker.instance()
             worker.send(log_dict)
             worker.send(log_dict)
@@ -725,15 +725,15 @@ class TestAPILogWorker:
             end_time - start_time
         ) < 5  # An arbitrary time less than the 10s interval
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert len(logs) == 2
 
     async def test_logs_are_sent_immediately_when_flushed(
-        self, log_dict, prefect_client, worker
+        self, log_dict, syntask_client, worker
     ):
         # Set a long interval
         start_time = time.time()
-        with temporary_settings(updates={PREFECT_LOGGING_TO_API_BATCH_INTERVAL: "10"}):
+        with temporary_settings(updates={SYNTASK_LOGGING_TO_API_BATCH_INTERVAL: "10"}):
             worker.send(log_dict)
             worker.send(log_dict)
             await worker.drain()
@@ -743,13 +743,13 @@ class TestAPILogWorker:
             end_time - start_time
         ) < 5  # An arbitrary time less than the 10s interval
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert len(logs) == 2
 
 
 def test_flow_run_logger(flow_run):
     logger = flow_run_logger(flow_run)
-    assert logger.name == "prefect.flow_runs"
+    assert logger.name == "syntask.flow_runs"
     assert logger.extra == {
         "flow_run_name": flow_run.name,
         "flow_run_id": str(flow_run.id),
@@ -774,7 +774,7 @@ def test_flow_run_logger_with_kwargs(flow_run):
 
 def test_task_run_logger(task_run):
     logger = task_run_logger(task_run)
-    assert logger.name == "prefect.task_runs"
+    assert logger.name == "syntask.task_runs"
     assert logger.extra == {
         "task_run_name": task_run.name,
         "task_run_id": str(task_run.id),
@@ -832,7 +832,7 @@ def test_run_logger_with_flow_run_context_without_parent_flow_run_id(caplog):
         with caplog.at_level(logging.INFO):
             logger.info("test3141592")
 
-        assert "prefect.flow_runs" in caplog.text
+        assert "syntask.flow_runs" in caplog.text
         assert "test3141592" in caplog.text
 
         assert logger.extra["flow_run_id"] == "<unknown>"
@@ -841,7 +841,7 @@ def test_run_logger_with_flow_run_context_without_parent_flow_run_id(caplog):
 
 
 async def test_run_logger_with_task_run_context_without_parent_flow_run_id(
-    prefect_client, caplog
+    syntask_client, caplog
 ):
     """Test that get_run_logger works when passed a constructed TaskRunContext"""
 
@@ -849,12 +849,12 @@ async def test_run_logger_with_task_run_context_without_parent_flow_run_id(
     def foo():
         pass
 
-    task_run = await prefect_client.create_task_run(
+    task_run = await syntask_client.create_task_run(
         foo, flow_run_id=None, dynamic_key=""
     )
 
     task_run_context = TaskRunContext.model_construct(
-        task=foo, task_run=task_run, client=prefect_client
+        task=foo, task_run=task_run, client=syntask_client
     )
 
     logger = get_run_logger(task_run_context)
@@ -862,7 +862,7 @@ async def test_run_logger_with_task_run_context_without_parent_flow_run_id(
     with caplog.at_level(logging.INFO):
         logger.info("test3141592")
 
-    assert "prefect.task_runs" in caplog.text
+    assert "syntask.task_runs" in caplog.text
     assert "test3141592" in caplog.text
 
 
@@ -883,22 +883,22 @@ async def test_run_logger_with_explicit_context_of_invalid_type():
 
 
 async def test_run_logger_with_explicit_context(
-    prefect_client, flow_run, local_filesystem
+    syntask_client, flow_run, local_filesystem
 ):
     @task
     def foo():
         pass
 
-    task_run = await prefect_client.create_task_run(foo, flow_run.id, dynamic_key="")
+    task_run = await syntask_client.create_task_run(foo, flow_run.id, dynamic_key="")
     context = TaskRunContext.model_construct(
         task=foo,
         task_run=task_run,
-        client=prefect_client,
+        client=syntask_client,
     )
 
     logger = get_run_logger(context)
 
-    assert logger.name == "prefect.task_runs"
+    assert logger.name == "syntask.task_runs"
     assert logger.extra == {
         "task_name": foo.name,
         "task_run_id": str(task_run.id),
@@ -910,7 +910,7 @@ async def test_run_logger_with_explicit_context(
 
 
 async def test_run_logger_with_explicit_context_overrides_existing(
-    prefect_client, flow_run, local_filesystem
+    syntask_client, flow_run, local_filesystem
 ):
     @task
     def foo():
@@ -920,27 +920,27 @@ async def test_run_logger_with_explicit_context_overrides_existing(
     def bar():
         pass
 
-    task_run = await prefect_client.create_task_run(foo, flow_run.id, dynamic_key="")
+    task_run = await syntask_client.create_task_run(foo, flow_run.id, dynamic_key="")
     # Use `bar` instead of `foo` in context
     context = TaskRunContext.model_construct(
         task=bar,
         task_run=task_run,
-        client=prefect_client,
+        client=syntask_client,
     )
 
     logger = get_run_logger(context)
     assert logger.extra["task_name"] == bar.name
 
 
-async def test_run_logger_in_flow(prefect_client):
+async def test_run_logger_in_flow(syntask_client):
     @flow
     def test_flow():
         return get_run_logger()
 
     state = test_flow(return_state=True)
-    flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+    flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
     logger = await state.result()
-    assert logger.name == "prefect.flow_runs"
+    assert logger.name == "syntask.flow_runs"
     assert logger.extra == {
         "flow_name": test_flow.name,
         "flow_run_id": str(flow_run.id),
@@ -948,15 +948,15 @@ async def test_run_logger_in_flow(prefect_client):
     }
 
 
-async def test_run_logger_extra_data(prefect_client):
+async def test_run_logger_extra_data(syntask_client):
     @flow
     def test_flow():
         return get_run_logger(foo="test", flow_name="bar")
 
     state = test_flow(return_state=True)
-    flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+    flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
     logger = await state.result()
-    assert logger.name == "prefect.flow_runs"
+    assert logger.name == "syntask.flow_runs"
     assert logger.extra == {
         "flow_name": "bar",
         "foo": "test",
@@ -965,7 +965,7 @@ async def test_run_logger_extra_data(prefect_client):
     }
 
 
-async def test_run_logger_in_nested_flow(prefect_client):
+async def test_run_logger_in_nested_flow(syntask_client):
     @flow
     def child_flow():
         return get_run_logger()
@@ -975,9 +975,9 @@ async def test_run_logger_in_nested_flow(prefect_client):
         return child_flow(return_state=True)
 
     child_state = await test_flow(return_state=True).result()
-    flow_run = await prefect_client.read_flow_run(child_state.state_details.flow_run_id)
+    flow_run = await syntask_client.read_flow_run(child_state.state_details.flow_run_id)
     logger = await child_state.result()
-    assert logger.name == "prefect.flow_runs"
+    assert logger.name == "syntask.flow_runs"
     assert logger.extra == {
         "flow_name": child_flow.name,
         "flow_run_id": str(flow_run.id),
@@ -985,7 +985,7 @@ async def test_run_logger_in_nested_flow(prefect_client):
     }
 
 
-async def test_run_logger_in_task(prefect_client, events_pipeline):
+async def test_run_logger_in_task(syntask_client, events_pipeline):
     @task
     def test_task():
         return get_run_logger()
@@ -995,14 +995,14 @@ async def test_run_logger_in_task(prefect_client, events_pipeline):
         return test_task(return_state=True)
 
     flow_state = test_flow(return_state=True)
-    flow_run = await prefect_client.read_flow_run(flow_state.state_details.flow_run_id)
+    flow_run = await syntask_client.read_flow_run(flow_state.state_details.flow_run_id)
     task_state = await flow_state.result()
 
     await events_pipeline.process_events()
 
-    task_run = await prefect_client.read_task_run(task_state.state_details.task_run_id)
+    task_run = await syntask_client.read_task_run(task_state.state_details.task_run_id)
     logger = await task_state.result()
-    assert logger.name == "prefect.task_runs"
+    assert logger.name == "syntask.task_runs"
     assert logger.extra == {
         "task_name": test_task.name,
         "task_run_id": str(task_run.id),
@@ -1013,10 +1013,10 @@ async def test_run_logger_in_task(prefect_client, events_pipeline):
     }
 
 
-class TestPrefectConsoleHandler:
+class TestSyntaskConsoleHandler:
     @pytest.fixture
     def handler(self):
-        yield PrefectConsoleHandler()
+        yield SyntaskConsoleHandler()
 
     @pytest.fixture
     def logger(self, handler):
@@ -1027,16 +1027,16 @@ class TestPrefectConsoleHandler:
         logger.removeHandler(handler)
 
     def test_init_defaults(self):
-        handler = PrefectConsoleHandler()
+        handler = SyntaskConsoleHandler()
         console = handler.console
         assert isinstance(console, Console)
-        assert isinstance(console.highlighter, PrefectConsoleHighlighter)
+        assert isinstance(console.highlighter, SyntaskConsoleHighlighter)
         assert console._theme_stack._entries == [{}]  # inherit=False
         assert handler.level == logging.NOTSET
 
     def test_init_styled_console_disabled(self):
-        with temporary_settings({PREFECT_LOGGING_COLORS: False}):
-            handler = PrefectConsoleHandler()
+        with temporary_settings({SYNTASK_LOGGING_COLORS: False}):
+            handler = SyntaskConsoleHandler()
             console = handler.console
             assert isinstance(console, Console)
             assert isinstance(console.highlighter, NullHighlighter)
@@ -1044,7 +1044,7 @@ class TestPrefectConsoleHandler:
             assert handler.level == logging.NOTSET
 
     def test_init_override_kwargs(self):
-        handler = PrefectConsoleHandler(
+        handler = SyntaskConsoleHandler(
             highlighter=ReprHighlighter, styles={"number": "red"}, level=logging.DEBUG
         )
         console = handler.console
@@ -1057,7 +1057,7 @@ class TestPrefectConsoleHandler:
 
     def test_uses_stderr_by_default(self, capsys):
         logger = get_logger(uuid.uuid4().hex)
-        logger.handlers = [PrefectConsoleHandler()]
+        logger.handlers = [SyntaskConsoleHandler()]
         logger.info("Test!")
         stdout, stderr = capsys.readouterr()
         assert stdout == ""
@@ -1065,7 +1065,7 @@ class TestPrefectConsoleHandler:
 
     def test_respects_given_stream(self, capsys):
         logger = get_logger(uuid.uuid4().hex)
-        logger.handlers = [PrefectConsoleHandler(stream=sys.stdout)]
+        logger.handlers = [SyntaskConsoleHandler(stream=sys.stdout)]
         logger.info("Test!")
         stdout, stderr = capsys.readouterr()
         assert stderr == ""
@@ -1073,7 +1073,7 @@ class TestPrefectConsoleHandler:
 
     def test_includes_tracebacks_during_exceptions(self, capsys):
         logger = get_logger(uuid.uuid4().hex)
-        logger.handlers = [PrefectConsoleHandler()]
+        logger.handlers = [SyntaskConsoleHandler()]
 
         try:
             raise ValueError("oh my")
@@ -1088,7 +1088,7 @@ class TestPrefectConsoleHandler:
 
     def test_does_not_word_wrap_or_crop_messages(self, capsys):
         logger = get_logger(uuid.uuid4().hex)
-        handler = PrefectConsoleHandler()
+        handler = SyntaskConsoleHandler()
         logger.handlers = [handler]
 
         # Pretend we have a narrow little console
@@ -1101,7 +1101,7 @@ class TestPrefectConsoleHandler:
 
     def test_outputs_square_brackets_as_text(self, capsys):
         logger = get_logger(uuid.uuid4().hex)
-        handler = PrefectConsoleHandler()
+        handler = SyntaskConsoleHandler()
         logger.handlers = [handler]
 
         msg = "DROP TABLE [dbo].[SomeTable];"
@@ -1111,9 +1111,9 @@ class TestPrefectConsoleHandler:
         assert msg in stderr
 
     def test_outputs_square_brackets_as_style(self, capsys):
-        with temporary_settings({PREFECT_LOGGING_MARKUP: True}):
+        with temporary_settings({SYNTASK_LOGGING_MARKUP: True}):
             logger = get_logger(uuid.uuid4().hex)
-            handler = PrefectConsoleHandler()
+            handler = SyntaskConsoleHandler()
             logger.handlers = [handler]
 
             msg = "this applies [red]style[/red]!;"
@@ -1187,7 +1187,7 @@ class TestJsonFormatter:
 class TestObfuscateApiKeyFilter:
     def test_filters_current_api_key(self):
         test_api_key = "hi-hello-im-an-api-key"
-        with temporary_settings({PREFECT_API_KEY: test_api_key}):
+        with temporary_settings({SYNTASK_API_KEY: test_api_key}):
             filter = ObfuscateApiKeyFilter()
             record = logging.LogRecord(
                 name="Test Log",
@@ -1206,7 +1206,7 @@ class TestObfuscateApiKeyFilter:
 
     def test_current_api_key_is_not_logged(self, caplog):
         test_api_key = "hot-dog-theres-a-logger-this-is-my-big-chance-for-stardom"
-        with temporary_settings({PREFECT_API_KEY: test_api_key}):
+        with temporary_settings({SYNTASK_API_KEY: test_api_key}):
             logger = get_logger("test")
             logger.info(test_api_key)
 
@@ -1215,7 +1215,7 @@ class TestObfuscateApiKeyFilter:
 
     def test_current_api_key_is_not_logged_from_flow(self, caplog):
         test_api_key = "i-am-a-plaintext-api-key-and-i-dream-of-being-logged-one-day"
-        with temporary_settings({PREFECT_API_KEY: test_api_key}):
+        with temporary_settings({SYNTASK_API_KEY: test_api_key}):
 
             @flow
             def test_flow():
@@ -1229,7 +1229,7 @@ class TestObfuscateApiKeyFilter:
 
     def test_current_api_key_is_not_logged_from_flow_log_prints(self, caplog):
         test_api_key = "i-am-a-sneaky-little-api-key"
-        with temporary_settings({PREFECT_API_KEY: test_api_key}):
+        with temporary_settings({SYNTASK_API_KEY: test_api_key}):
 
             @flow(log_prints=True)
             def test_flow():
@@ -1242,7 +1242,7 @@ class TestObfuscateApiKeyFilter:
 
     def test_current_api_key_is_not_logged_from_task(self, caplog):
         test_api_key = "i-am-jacks-security-risk"
-        with temporary_settings({PREFECT_API_KEY: test_api_key}):
+        with temporary_settings({SYNTASK_API_KEY: test_api_key}):
 
             @task
             def test_task():
@@ -1291,7 +1291,7 @@ class TestObfuscateApiKeyFilter:
         self, caplog, raw_log_record, expected_log_record
     ):
         """
-        This is a regression test for https://github.com/synopkg/synopkg/issues/12139
+        This is a regression test for https://github.com/synopkg/syntask/issues/12139
         """
 
         @flow()
@@ -1299,7 +1299,7 @@ class TestObfuscateApiKeyFilter:
             logger = get_run_logger()
             logger.info(raw_log_record)
 
-        with temporary_settings({PREFECT_API_KEY: "super-mega-admin-key"}):
+        with temporary_settings({SYNTASK_API_KEY: "super-mega-admin-key"}):
             test_log_list()
 
         assert str(expected_log_record) in caplog.text
@@ -1383,8 +1383,8 @@ def test_disable_run_logger(caplog):
         logger.critical("won't show")
         return 42
 
-    flow_run_logger = get_logger("prefect.flow_run")
-    task_run_logger = get_logger("prefect.task_run")
+    flow_run_logger = get_logger("syntask.flow_run")
+    task_run_logger = get_logger("syntask.task_run")
     task_run_logger.disabled = True
 
     with disable_run_logger():
@@ -1457,7 +1457,7 @@ def test_patch_print_writes_to_logger_with_task_run_context(caplog, capsys, task
             break
 
     assert record.levelname == "INFO"
-    assert record.name == "prefect.task_runs"
+    assert record.name == "syntask.task_runs"
     assert record.task_run_id == str(task_run.id)
     assert record.task_name == my_task.name
 
@@ -1487,7 +1487,7 @@ def test_patch_print_writes_to_logger_with_explicit_file(
             break
 
     assert record.levelname == "INFO"
-    assert record.name == "prefect.task_runs"
+    assert record.name == "syntask.task_runs"
     assert record.task_run_id == str(task_run.id)
     assert record.task_name == my_task.name
 
@@ -1511,17 +1511,17 @@ def test_patch_print_writes_to_logger_with_flow_run_context(caplog, capsys, flow
             break
 
     assert record.levelname == "INFO"
-    assert record.name == "prefect.flow_runs"
+    assert record.name == "syntask.flow_runs"
     assert record.flow_run_id == str(flow_run.id)
     assert record.flow_name == my_flow.name
 
 
 def test_log_adapter_get_child(flow_run):
-    logger = PrefectLogAdapter(get_logger("prefect.parent"), {"hello": "world"})
+    logger = SyntaskLogAdapter(get_logger("syntask.parent"), {"hello": "world"})
     assert logger.extra == {"hello": "world"}
 
     child_logger = logger.getChild("child", {"goodnight": "moon"})
-    assert child_logger.logger.name == "prefect.parent.child"
+    assert child_logger.logger.name == "syntask.parent.child"
     assert child_logger.extra == {"hello": "world", "goodnight": "moon"}
 
 

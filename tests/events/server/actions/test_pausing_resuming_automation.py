@@ -8,9 +8,9 @@ from pendulum.datetime import DateTime
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions
-from prefect.server.events.models import automations
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.models import automations
+from syntask.server.events.schemas.automations import (
     Automation,
     AutomationPartialUpdate,
     EventTrigger,
@@ -20,17 +20,17 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import RelatedResource
-from prefect.settings import (
-    PREFECT_API_SERVICES_TRIGGERS_ENABLED,
+from syntask.server.events.schemas.events import RelatedResource
+from syntask.settings import (
+    SYNTASK_API_SERVICES_TRIGGERS_ENABLED,
     temporary_settings,
 )
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.utilities.pydantic import parse_obj_as
 
 
 @pytest.fixture
 def enable_automations():
-    with temporary_settings({PREFECT_API_SERVICES_TRIGGERS_ENABLED: True}):
+    with temporary_settings({SYNTASK_API_SERVICES_TRIGGERS_ENABLED: True}):
         yield
 
 
@@ -40,7 +40,7 @@ def triggers_disabled():
     notifications they make to avoid a non-deterministic event loop issue in the test
     suite where the after-commit callback is invoked during teardown.  Disabling the
     triggers service for the duration of this test suite will accomplish this."""
-    with temporary_settings({PREFECT_API_SERVICES_TRIGGERS_ENABLED: False}):
+    with temporary_settings({SYNTASK_API_SERVICES_TRIGGERS_ENABLED: False}):
         yield
 
 
@@ -112,7 +112,7 @@ def it_started_raining(
         occurred=start_of_test + timedelta(microseconds=2),
         event="rain.start",
         resource={
-            "prefect.resource.id": "front-lawn",
+            "syntask.resource.id": "front-lawn",
         },
         id=uuid4(),
     )
@@ -206,7 +206,7 @@ def it_stopped_raining(
         occurred=start_of_test + timedelta(microseconds=2),
         event="rain.stop",
         resource={
-            "prefect.resource.id": "front-lawn",
+            "syntask.resource.id": "front-lawn",
         },
         id=uuid4(),
     )
@@ -311,14 +311,14 @@ def the_sprinklers_stopped(
         occurred=start_of_test + timedelta(microseconds=2),
         event="sprinkler.off",
         resource={
-            "prefect.resource.id": "sprinklers.front-lawn",
+            "syntask.resource.id": "sprinklers.front-lawn",
         },
         related=parse_obj_as(
             List[RelatedResource],
             [
                 {
-                    "prefect.resource.id": f"prefect.automation.{self_managing_sprinkler_automation.id}",
-                    "prefect.resource.role": "i-automated-it",
+                    "syntask.resource.id": f"syntask.automation.{self_managing_sprinkler_automation.id}",
+                    "syntask.resource.role": "i-automated-it",
                 }
             ],
         ),
@@ -451,16 +451,16 @@ async def test_inferring_automation_requires_recognizable_resource_id(
         List[RelatedResource],
         [
             {
-                "prefect.resource.role": "i-automated-it",
-                "prefect.resource.id": "prefect.automation.nope",  # not a uuid
+                "syntask.resource.role": "i-automated-it",
+                "syntask.resource.id": "syntask.automation.nope",  # not a uuid
             },
             {
-                "prefect.resource.role": "i-automated-it",
-                "prefect.resource.id": f"oh.so.close.{uuid4()}",  # not an automation
+                "syntask.resource.role": "i-automated-it",
+                "syntask.resource.id": f"oh.so.close.{uuid4()}",  # not an automation
             },
             {
-                "prefect.resource.role": "i-automated-it",
-                "prefect.resource.id": "nah-ah",  # not a dotted name
+                "syntask.resource.role": "i-automated-it",
+                "syntask.resource.id": "nah-ah",  # not a dotted name
             },
         ],
     )

@@ -1,7 +1,7 @@
 import pytest
 
-from prefect import flow
-from prefect.variables import Variable
+from syntask import flow
+from syntask.variables import Variable
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 import inspect
 
-from prefect.utilities.slugify import slugify
+from syntask.utilities.slugify import slugify
 
 
 def test_slugify_has_expected_params():

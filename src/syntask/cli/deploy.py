@@ -18,12 +18,12 @@ from rich.panel import Panel
 from rich.table import Table
 from yaml.error import YAMLError
 
-import prefect
-from prefect._internal.compatibility.deprecated import (
+import syntask
+from syntask._internal.compatibility.deprecated import (
     generate_deprecation_message,
 )
-from prefect.blocks.system import Secret
-from prefect.cli._prompts import (
+from syntask.blocks.system import Secret
+from syntask.cli._prompts import (
     confirm,
     prompt,
     prompt_build_custom_docker_image,
@@ -35,48 +35,48 @@ from prefect.cli._prompts import (
     prompt_select_remote_flow_storage,
     prompt_select_work_pool,
 )
-from prefect.cli._types import SettingsOption
-from prefect.cli._utilities import (
+from syntask.cli._types import SettingsOption
+from syntask.cli._utilities import (
     exit_with_error,
 )
-from prefect.cli.root import app, is_interactive
-from prefect.client.schemas.actions import DeploymentScheduleCreate
-from prefect.client.schemas.objects import ConcurrencyLimitConfig
-from prefect.client.schemas.schedules import (
+from syntask.cli.root import app, is_interactive
+from syntask.client.schemas.actions import DeploymentScheduleCreate
+from syntask.client.schemas.objects import ConcurrencyLimitConfig
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,
 )
-from prefect.client.utilities import inject_client
-from prefect.deployments import initialize_project
-from prefect.deployments.base import (
-    _format_deployment_for_saving_to_prefect_file,
+from syntask.client.utilities import inject_client
+from syntask.deployments import initialize_project
+from syntask.deployments.base import (
+    _format_deployment_for_saving_to_syntask_file,
     _get_git_branch,
     _get_git_remote_origin_url,
-    _save_deployment_to_prefect_file,
+    _save_deployment_to_syntask_file,
 )
-from prefect.deployments.steps.core import run_steps
-from prefect.events import DeploymentTriggerTypes, TriggerTypes
-from prefect.exceptions import ObjectNotFound, PrefectHTTPStatusError
-from prefect.flows import load_flow_from_entrypoint
-from prefect.settings import (
-    PREFECT_DEFAULT_WORK_POOL_NAME,
-    PREFECT_UI_URL,
+from syntask.deployments.steps.core import run_steps
+from syntask.events import DeploymentTriggerTypes, TriggerTypes
+from syntask.exceptions import ObjectNotFound, SyntaskHTTPStatusError
+from syntask.flows import load_flow_from_entrypoint
+from syntask.settings import (
+    SYNTASK_DEFAULT_WORK_POOL_NAME,
+    SYNTASK_UI_URL,
 )
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.callables import (
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.callables import (
     parameter_schema,
 )
-from prefect.utilities.collections import get_from_dict
-from prefect.utilities.slugify import slugify
-from prefect.utilities.templating import (
+from syntask.utilities.collections import get_from_dict
+from syntask.utilities.slugify import slugify
+from syntask.utilities.templating import (
     apply_values,
     resolve_block_document_references,
     resolve_variables,
 )
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 @app.command()
@@ -98,19 +98,19 @@ async def init(
     """
     inputs = {}
     fields = fields or []
-    recipe_paths = prefect.__module_path__ / "deployments" / "recipes"
+    recipe_paths = syntask.__module_path__ / "deployments" / "recipes"
 
     for field in fields:
         key, value = field.split("=")
         inputs[key] = value
 
     if not recipe and is_interactive():
-        recipe_paths = prefect.__module_path__ / "deployments" / "recipes"
+        recipe_paths = syntask.__module_path__ / "deployments" / "recipes"
         recipes = []
 
         for r in recipe_paths.iterdir():
-            if r.is_dir() and (r / "prefect.yaml").exists():
-                with open(r / "prefect.yaml") as f:
+            if r.is_dir() and (r / "syntask.yaml").exists():
+                with open(r / "syntask.yaml") as f:
                     recipe_data = yaml.safe_load(f)
                     recipe_name = r.name
                     recipe_description = recipe_data.get(
@@ -136,8 +136,8 @@ async def init(
         if selected_recipe != {}:
             recipe = selected_recipe["name"]
 
-    if recipe and (recipe_paths / recipe / "prefect.yaml").exists():
-        with open(recipe_paths / recipe / "prefect.yaml") as f:
+    if recipe and (recipe_paths / recipe / "syntask.yaml").exists():
+        with open(recipe_paths / recipe / "syntask.yaml") as f:
             recipe_inputs = yaml.safe_load(f).get("required_inputs") or {}
 
         if recipe_inputs:
@@ -178,7 +178,7 @@ async def init(
     except ValueError as exc:
         if "Unknown recipe" in str(exc):
             exit_with_error(
-                f"Unknown recipe {recipe!r} provided - run [yellow]`prefect init"
+                f"Unknown recipe {recipe!r} provided - run [yellow]`syntask init"
                 "`[/yellow] to see all available recipes."
             )
         else:
@@ -249,7 +249,7 @@ async def deploy(
         help="Configure the behavior for runs once the concurrency limit is reached. Falls back to `ENQUEUE` if unset.",
     ),
     work_pool_name: str = SettingsOption(
-        PREFECT_DEFAULT_WORK_POOL_NAME,
+        SYNTASK_DEFAULT_WORK_POOL_NAME,
         "-p",
         "--pool",
         help="The work pool that will handle this deployment's runs.",
@@ -346,10 +346,10 @@ async def deploy(
             " provided, this flag will be ignored."
         ),
     ),
-    prefect_file: Path = typer.Option(
-        Path("prefect.yaml"),
-        "--prefect-file",
-        help="Specify a custom path to a prefect.yaml file",
+    syntask_file: Path = typer.Option(
+        Path("syntask.yaml"),
+        "--syntask-file",
+        help="Specify a custom path to a syntask.yaml file",
     ),
 ):
     """
@@ -364,7 +364,7 @@ async def deploy(
                 name="The `--variable` flag",
                 start_date="Mar 2024",
                 help=(
-                    "Please use the `--job-variable foo=bar` argument instead: `prefect"
+                    "Please use the `--job-variable foo=bar` argument instead: `syntask"
                     " deploy --job-variable`."
                 ),
             ),
@@ -408,7 +408,7 @@ async def deploy(
     }
     try:
         deploy_configs, actions = _load_deploy_configs_and_actions(
-            prefect_file=prefect_file,
+            syntask_file=syntask_file,
         )
         parsed_names = []
         for name in names or []:
@@ -436,7 +436,7 @@ async def deploy(
                 deploy_configs=deploy_configs,
                 actions=actions,
                 deploy_all=deploy_all,
-                prefect_file=prefect_file,
+                syntask_file=syntask_file,
             )
         else:
             # Accommodate passing in -n flow-name/deployment-name as well as -n deployment-name
@@ -449,7 +449,7 @@ async def deploy(
                 deploy_config=deploy_configs[0] if deploy_configs else {},
                 actions=actions,
                 options=options,
-                prefect_file=prefect_file,
+                syntask_file=syntask_file,
             )
     except ValueError as exc:
         exit_with_error(str(exc))
@@ -460,8 +460,8 @@ async def _run_single_deploy(
     deploy_config: Dict,
     actions: Dict,
     options: Optional[Dict] = None,
-    client: Optional["PrefectClient"] = None,
-    prefect_file: Path = Path("prefect.yaml"),
+    client: Optional["SyntaskClient"] = None,
+    syntask_file: Path = Path("syntask.yaml"),
 ):
     deploy_config = deepcopy(deploy_config) if deploy_config else {}
     actions = deepcopy(actions) if actions else {}
@@ -490,8 +490,8 @@ async def _run_single_deploy(
         if not is_interactive():
             raise ValueError(
                 "An entrypoint must be provided:\n\n"
-                " \t[yellow]prefect deploy path/to/file.py:flow_function\n\n"
-                "You can also provide an entrypoint in a prefect.yaml file."
+                " \t[yellow]syntask deploy path/to/file.py:flow_function\n\n"
+                "You can also provide an entrypoint in a syntask.yaml file."
             )
         deploy_config["entrypoint"] = await prompt_entrypoint(app.console)
 
@@ -516,17 +516,17 @@ async def _run_single_deploy(
         try:
             work_pool = await client.read_work_pool(deploy_config["work_pool"]["name"])
 
-            # dont allow submitting to prefect-agent typed work pools
-            if work_pool.type == "prefect-agent":
+            # dont allow submitting to syntask-agent typed work pools
+            if work_pool.type == "syntask-agent":
                 if not is_interactive():
                     raise ValueError(
                         "Cannot create a project-style deployment with work pool of"
-                        " type 'prefect-agent'. If you wish to use an agent with"
-                        " your deployment, please use the `prefect deployment"
+                        " type 'syntask-agent'. If you wish to use an agent with"
+                        " your deployment, please use the `syntask deployment"
                         " build` command."
                     )
                 app.console.print(
-                    "You've chosen a work pool with type 'prefect-agent' which"
+                    "You've chosen a work pool with type 'syntask-agent' which"
                     " cannot be used for project-style deployments. Let's pick"
                     " another work pool to deploy to."
                 )
@@ -538,13 +538,13 @@ async def _run_single_deploy(
                 "This deployment configuration references work pool"
                 f" {deploy_config['work_pool']['name']!r} which does not exist. This"
                 " means no worker will be able to pick up its runs. You can create a"
-                " work pool in the Prefect UI."
+                " work pool in the Syntask UI."
             )
     else:
         if not is_interactive():
             raise ValueError(
                 "A work pool is required to deploy this flow. Please specify a work"
-                " pool name via the '--pool' flag or in your prefect.yaml file."
+                " pool name via the '--pool' flag or in your syntask.yaml file."
             )
         if not isinstance(deploy_config.get("work_pool"), dict):
             deploy_config["work_pool"] = {}
@@ -553,11 +553,11 @@ async def _run_single_deploy(
         )
 
     docker_build_steps = [
-        "prefect_docker.deployments.steps.build_docker_image",
+        "syntask_docker.deployments.steps.build_docker_image",
     ]
 
     docker_push_steps = [
-        "prefect_docker.deployments.steps.push_docker_image",
+        "syntask_docker.deployments.steps.push_docker_image",
     ]
 
     docker_build_step_exists = any(
@@ -629,7 +629,7 @@ async def _run_single_deploy(
         and not docker_push_step_exists
         and confirm(
             (
-                "Your Prefect workers will need access to this flow's code in order to"
+                "Your Syntask workers will need access to this flow's code in order to"
                 " run it. Would you like your workers to pull your flow code from a"
                 " remote storage location when running this flow?"
             ),
@@ -742,18 +742,18 @@ async def _run_single_deploy(
         style="green",
     )
 
-    if PREFECT_UI_URL:
+    if SYNTASK_UI_URL:
         app.console.print(
             "\nView Deployment in UI:"
-            f" {PREFECT_UI_URL.value()}/deployments/deployment/{deployment_id}\n"
+            f" {SYNTASK_UI_URL.value()}/deployments/deployment/{deployment_id}\n"
         )
 
-    identical_deployment_exists_in_prefect_file = (
-        _check_if_identical_deployment_in_prefect_file(
-            deploy_config_before_templating, prefect_file
+    identical_deployment_exists_in_syntask_file = (
+        _check_if_identical_deployment_in_syntask_file(
+            deploy_config_before_templating, syntask_file
         )
     )
-    if should_prompt_for_save and not identical_deployment_exists_in_prefect_file:
+    if should_prompt_for_save and not identical_deployment_exists_in_syntask_file:
         if confirm(
             (
                 "Would you like to save configuration for this deployment for faster"
@@ -762,9 +762,9 @@ async def _run_single_deploy(
             console=app.console,
         ):
             matching_deployment_exists = (
-                _check_for_matching_deployment_name_and_entrypoint_in_prefect_file(
+                _check_for_matching_deployment_name_and_entrypoint_in_syntask_file(
                     deploy_config=deploy_config_before_templating,
-                    prefect_file=prefect_file,
+                    syntask_file=syntask_file,
                 )
             )
             if matching_deployment_exists and not confirm(
@@ -773,30 +773,30 @@ async def _run_single_deploy(
                     f" [yellow]{deploy_config_before_templating.get('name')}[/yellow]"
                     " and entrypoint:"
                     f" [yellow]{deploy_config_before_templating.get('entrypoint')}[/yellow]"
-                    f" in the [yellow]prefect.yaml[/yellow] file at {prefect_file}."
+                    f" in the [yellow]syntask.yaml[/yellow] file at {syntask_file}."
                     " Would you like to overwrite that entry?"
                 ),
             ):
                 app.console.print(
                     "[red]Cancelled saving deployment configuration"
                     f" '{deploy_config_before_templating.get('name')}' to the"
-                    f" deployment configuration file[/red] at {prefect_file}"
+                    f" deployment configuration file[/red] at {syntask_file}"
                 )
             else:
                 deploy_config_before_templating.update({"schedules": _schedules})
-                _save_deployment_to_prefect_file(
+                _save_deployment_to_syntask_file(
                     deploy_config_before_templating,
                     build_steps=build_steps or None,
                     push_steps=push_steps or None,
                     pull_steps=pull_steps or None,
                     triggers=trigger_specs or None,
-                    prefect_file=prefect_file,
+                    syntask_file=syntask_file,
                 )
                 app.console.print(
                     (
-                        f"\n[green]Deployment configuration saved to {prefect_file}![/]"
+                        f"\n[green]Deployment configuration saved to {syntask_file}![/]"
                         " You can now deploy using this deployment configuration"
-                        " with:\n\n\t[blue]$ prefect deploy -n"
+                        " with:\n\n\t[blue]$ syntask deploy -n"
                         f" {deploy_config['name']}[/]\n\nYou can also make changes to"
                         " this deployment configuration by making changes to the"
                         " YAML file."
@@ -809,7 +809,7 @@ async def _run_single_deploy(
             f" {deploy_config['work_pool']['name']!r} work pool:"
         )
         app.console.print(
-            f"\n\t$ prefect worker start --pool {deploy_config['work_pool']['name']!r}",
+            f"\n\t$ syntask worker start --pool {deploy_config['work_pool']['name']!r}",
             style="blue",
         )
     app.console.print(
@@ -817,7 +817,7 @@ async def _run_single_deploy(
     )
     app.console.print(
         (
-            "\n\t$ prefect deployment run"
+            "\n\t$ syntask deployment run"
             f" '{deploy_config['flow_name']}/{deploy_config['name']}'\n"
         ),
         style="blue",
@@ -829,7 +829,7 @@ async def _run_multi_deploy(
     actions: Dict,
     names: Optional[List[str]] = None,
     deploy_all: bool = False,
-    prefect_file: Path = Path("prefect.yaml"),
+    syntask_file: Path = Path("syntask.yaml"),
 ):
     deploy_configs = deepcopy(deploy_configs) if deploy_configs else []
     actions = deepcopy(actions) if actions else {}
@@ -860,7 +860,7 @@ async def _run_multi_deploy(
                 app.console.print("Skipping unnamed deployment.", style="yellow")
                 continue
         app.console.print(Panel(f"Deploying {deploy_config['name']}", style="blue"))
-        await _run_single_deploy(deploy_config, actions, prefect_file=prefect_file)
+        await _run_single_deploy(deploy_config, actions, syntask_file=syntask_file)
 
 
 def _construct_schedules(
@@ -1017,7 +1017,7 @@ async def _generate_git_clone_pull_step(
         create_new_block = False
         prompt_message = (
             "Please enter a token that can be used to access your private"
-            " repository. This token will be saved as a secret via the Prefect API"
+            " repository. This token will be saved as a secret via the Syntask API"
         )
 
         try:
@@ -1033,7 +1033,7 @@ async def _generate_git_clone_pull_step(
                 prompt_message = (
                     "Please enter a token that can be used to access your private"
                     " repository (this will overwrite the existing token saved via"
-                    " the Prefect API)."
+                    " the Syntask API)."
                 )
 
                 create_new_block = True
@@ -1058,15 +1058,15 @@ async def _generate_git_clone_pull_step(
             ).save(name=token_secret_block_name, overwrite=True)
 
     git_clone_step = {
-        "prefect.deployments.steps.git_clone": {
+        "syntask.deployments.steps.git_clone": {
             "repository": remote_url,
             "branch": branch,
         }
     }
 
     if token_secret_block_name:
-        git_clone_step["prefect.deployments.steps.git_clone"]["access_token"] = (
-            "{{ prefect.blocks.secret." + token_secret_block_name + " }}"
+        git_clone_step["syntask.deployments.steps.git_clone"]["access_token"] = (
+            "{{ syntask.blocks.secret." + token_secret_block_name + " }}"
         )
 
     return [git_clone_step]
@@ -1078,15 +1078,15 @@ async def _generate_pull_step_for_build_docker_image(
     pull_step = {}
     dir_name = os.path.basename(os.getcwd())
     if auto:
-        pull_step["directory"] = f"/opt/prefect/{dir_name}"
+        pull_step["directory"] = f"/opt/syntask/{dir_name}"
     else:
         pull_step["directory"] = prompt(
             "What is the path to your flow code in your Dockerfile?",
-            default=f"/opt/prefect/{dir_name}",
+            default=f"/opt/syntask/{dir_name}",
             console=console,
         )
 
-    return [{"prefect.deployments.steps.set_working_directory": pull_step}]
+    return [{"syntask.deployments.steps.set_working_directory": pull_step}]
 
 
 async def _check_for_build_docker_image_step(
@@ -1096,7 +1096,7 @@ async def _check_for_build_docker_image_step(
         return None
 
     build_docker_image_steps = [
-        "prefect_docker.deployments.steps.build_docker_image",
+        "syntask_docker.deployments.steps.build_docker_image",
     ]
     for build_docker_image_step in build_docker_image_steps:
         for action in build_action:
@@ -1111,8 +1111,8 @@ async def _generate_actions_for_remote_flow_storage(
 ) -> Dict[str, List[Dict[str, Any]]]:
     storage_provider_to_collection = {
         "s3": "prefect_aws",
-        "gcs": "prefect_gcp",
-        "azure_blob_storage": "prefect_azure",
+        "gcs": "syntask_gcp",
+        "azure_blob_storage": "syntask_azure",
     }
     selected_storage_provider = await prompt_select_remote_flow_storage(console=console)
 
@@ -1184,7 +1184,7 @@ async def _generate_default_pull_action(
                 exit_with_error(
                     "Your flow code must be copied into your Docker image to run"
                     " your deployment.\nTo do so, you can copy this line into your"
-                    " Dockerfile: [yellow]COPY . /opt/prefect/[/yellow]"
+                    " Dockerfile: [yellow]COPY . /opt/syntask/[/yellow]"
                 )
             return await _generate_pull_step_for_build_docker_image(
                 console, deploy_config, auto=False
@@ -1192,14 +1192,14 @@ async def _generate_default_pull_action(
     else:
         entrypoint_path, _ = deploy_config["entrypoint"].split(":")
         console.print(
-            "Your Prefect workers will attempt to load your flow from:"
+            "Your Syntask workers will attempt to load your flow from:"
             f" [green]{(Path.cwd()/Path(entrypoint_path)).absolute().resolve()}[/]. To"
             " see more options for managing your flow's code, run:\n\n\t[blue]$"
-            " prefect init[/]\n"
+            " syntask init[/]\n"
         )
         return [
             {
-                "prefect.deployments.steps.set_working_directory": {
+                "syntask.deployments.steps.set_working_directory": {
                     "directory": str(Path.cwd().absolute().resolve())
                 }
             }
@@ -1207,7 +1207,7 @@ async def _generate_default_pull_action(
 
 
 def _load_deploy_configs_and_actions(
-    prefect_file: Path,
+    syntask_file: Path,
 ) -> Tuple[List[Dict], Dict]:
     """
     Load deploy configs and actions from a deployment configuration YAML file.
@@ -1216,28 +1216,28 @@ def _load_deploy_configs_and_actions(
         Tuple[List[Dict], Dict]: a tuple of deployment configurations and actions
     """
     try:
-        with prefect_file.open("r") as f:
-            prefect_yaml_contents = yaml.safe_load(f)
+        with syntask_file.open("r") as f:
+            syntask_yaml_contents = yaml.safe_load(f)
     except (FileNotFoundError, IsADirectoryError, YAMLError) as exc:
         app.console.print(
             f"Unable to read the specified config file. Reason: {exc}. Skipping.",
             style="yellow",
         )
-        prefect_yaml_contents = {}
-    if not isinstance(prefect_yaml_contents, dict):
+        syntask_yaml_contents = {}
+    if not isinstance(syntask_yaml_contents, dict):
         app.console.print(
             "Unable to parse the specified config file. Skipping.",
             style="yellow",
         )
-        prefect_yaml_contents = {}
+        syntask_yaml_contents = {}
 
     actions = {
-        "build": prefect_yaml_contents.get("build", []),
-        "push": prefect_yaml_contents.get("push", []),
-        "pull": prefect_yaml_contents.get("pull", []),
+        "build": syntask_yaml_contents.get("build", []),
+        "push": syntask_yaml_contents.get("push", []),
+        "pull": syntask_yaml_contents.get("pull", []),
     }
 
-    deploy_configs = prefect_yaml_contents.get("deployments", [])
+    deploy_configs = syntask_yaml_contents.get("deployments", [])
 
     return deploy_configs, actions
 
@@ -1428,24 +1428,24 @@ def _pick_deploy_configs(
     elif deploy_all:
         return deploy_configs
 
-    # e.g. `prefect --no-prompt deploy`
+    # e.g. `syntask --no-prompt deploy`
     elif not is_interactive() and len(deploy_configs) == 1 and len(names) <= 1:
         # No name is needed if there is only one deployment configuration
         # and we are not in interactive mode
         return deploy_configs
 
-    # e.g. `prefect deploy -n flow-name/deployment-name -n deployment-name`
+    # e.g. `syntask deploy -n flow-name/deployment-name -n deployment-name`
     elif len(names) >= 1:
         return _handle_pick_deploy_with_name(
             deploy_configs,
             names,
         )
 
-    # e.g. `prefect deploy`
+    # e.g. `syntask deploy`
     elif is_interactive():
         return _handle_pick_deploy_without_name(deploy_configs)
 
-    # e.g `prefect --no-prompt deploy` where we have multiple deployment configurations
+    # e.g `syntask --no-prompt deploy` where we have multiple deployment configurations
     elif len(deploy_configs) > 1:
         raise ValueError(
             "Discovered one or more deployment configurations, but"
@@ -1580,13 +1580,13 @@ def _apply_cli_options_to_deploy_config(deploy_config, cli_options):
     return deploy_config, variable_overrides
 
 
-def _check_for_matching_deployment_name_and_entrypoint_in_prefect_file(
-    deploy_config, prefect_file: Path = Path("prefect.yaml")
+def _check_for_matching_deployment_name_and_entrypoint_in_syntask_file(
+    deploy_config, syntask_file: Path = Path("syntask.yaml")
 ) -> bool:
-    if prefect_file.exists():
-        with prefect_file.open(mode="r") as f:
-            parsed_prefect_file_contents = yaml.safe_load(f)
-            existing_deployments = parsed_prefect_file_contents.get("deployments")
+    if syntask_file.exists():
+        with syntask_file.open(mode="r") as f:
+            parsed_syntask_file_contents = yaml.safe_load(f)
+            existing_deployments = parsed_syntask_file_contents.get("deployments")
             if existing_deployments is not None:
                 for existing_deployment in existing_deployments:
                     if existing_deployment.get("name") == deploy_config.get(
@@ -1599,24 +1599,24 @@ def _check_for_matching_deployment_name_and_entrypoint_in_prefect_file(
     return False
 
 
-def _check_if_identical_deployment_in_prefect_file(
-    untemplated_deploy_config: Dict, prefect_file: Path = Path("prefect.yaml")
+def _check_if_identical_deployment_in_syntask_file(
+    untemplated_deploy_config: Dict, syntask_file: Path = Path("syntask.yaml")
 ) -> bool:
     """
     Check if the given deploy config is identical to an existing deploy config in the
-    prefect.yaml file, meaning that there have been no updates and prompting to save is unnecessary.
+    syntask.yaml file, meaning that there have been no updates and prompting to save is unnecessary.
 
     Args:
         untemplated_deploy_config: A deploy config that has not been templated.
     """
 
-    user_specified_deploy_config = _format_deployment_for_saving_to_prefect_file(
+    user_specified_deploy_config = _format_deployment_for_saving_to_syntask_file(
         untemplated_deploy_config
     )
-    if prefect_file.exists():
-        with prefect_file.open(mode="r") as f:
-            parsed_prefect_file_contents = yaml.safe_load(f)
-            existing_deployments = parsed_prefect_file_contents.get("deployments")
+    if syntask_file.exists():
+        with syntask_file.open(mode="r") as f:
+            parsed_syntask_file_contents = yaml.safe_load(f)
+            existing_deployments = parsed_syntask_file_contents.get("deployments")
             if existing_deployments is not None:
                 for deploy_config in existing_deployments:
                     if deploy_config == user_specified_deploy_config:
@@ -1638,7 +1638,7 @@ def _initialize_deployment_triggers(
 
 
 async def _create_deployment_triggers(
-    client: "PrefectClient",
+    client: "SyntaskClient",
     deployment_id: UUID,
     triggers: List[Union[DeploymentTriggerTypes, TriggerTypes]],
 ):
@@ -1649,11 +1649,11 @@ async def _create_deployment_triggers(
         # by the deployment, meaning that they were created via this
         # mechanism below, and then recreate them.
         await client.delete_resource_owned_automations(
-            f"prefect.deployment.{deployment_id}"
+            f"syntask.deployment.{deployment_id}"
         )
-    except PrefectHTTPStatusError as e:
+    except SyntaskHTTPStatusError as e:
         if e.response.status_code == 404:
-            # This Prefect server does not support automations, so we can safely
+            # This Syntask server does not support automations, so we can safely
             # ignore this 404 and move on.
             return
         raise e
@@ -1666,7 +1666,7 @@ async def _create_deployment_triggers(
 def _gather_deployment_trigger_definitions(
     trigger_flags: List[str], existing_triggers: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
-    """Parses trigger flags from CLI and existing deployment config in `prefect.yaml`.
+    """Parses trigger flags from CLI and existing deployment config in `syntask.yaml`.
 
     Args:
         trigger_flags: Triggers passed via CLI, either as JSON strings or file paths.

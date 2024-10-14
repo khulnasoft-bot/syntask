@@ -9,21 +9,21 @@ from pydantic import ValidationError
 from pydantic_extra_types.pendulum_dt import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.filters import EventFilter
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.events.services import event_persister
-from prefect.server.events.storage.database import query_events, write_events
-from prefect.server.utilities.messaging import CapturedMessage, Message, MessageHandler
-from prefect.settings import PREFECT_EVENTS_RETENTION_PERIOD, temporary_settings
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.filters import EventFilter
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.services import event_persister
+from syntask.server.events.storage.database import query_events, write_events
+from syntask.server.utilities.messaging import CapturedMessage, Message, MessageHandler
+from syntask.settings import SYNTASK_EVENTS_RETENTION_PERIOD, temporary_settings
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import ORMEventResource
+    from syntask.server.database.orm_models import ORMEventResource
 
 
 @db_injector
-async def get_event(db: PrefectDBInterface, id: UUID) -> Optional[ReceivedEvent]:
+async def get_event(db: SyntaskDBInterface, id: UUID) -> Optional[ReceivedEvent]:
     async with await db.session() as session:
         result = await session.execute(sa.select(db.Event).where(db.Event.id == id))
         event = result.scalar_one_or_none()
@@ -35,7 +35,7 @@ async def get_event(db: PrefectDBInterface, id: UUID) -> Optional[ReceivedEvent]
 
 
 async def get_resources(
-    session: AsyncSession, id: UUID, db: PrefectDBInterface
+    session: AsyncSession, id: UUID, db: SyntaskDBInterface
 ) -> Sequence["ORMEventResource"]:
     result = await session.execute(
         sa.select(db.EventResource)
@@ -61,23 +61,23 @@ def event() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=DateTime.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "my.resource.id", "label-1": "value-1"},
+        resource={"syntask.resource.id": "my.resource.id", "label-1": "value-1"},
         related=[
             {
-                "prefect.resource.id": "related-1",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-1",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-1",
                 "label-2": "value-2",
             },
             {
-                "prefect.resource.id": "related-2",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-2",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-3",
                 "label-2": "value-4",
             },
             {
-                "prefect.resource.id": "related-3",
-                "prefect.resource.role": "role-2",
+                "syntask.resource.id": "related-3",
+                "syntask.resource.role": "role-2",
                 "label-1": "value-5",
                 "label-2": "value-6",
             },
@@ -125,23 +125,23 @@ async def test_handling_message_writes_event(
     assert stored_event == ReceivedEvent(
         occurred=stored_event.occurred,  # avoid microsecond differences
         event="hello",
-        resource={"prefect.resource.id": "my.resource.id", "label-1": "value-1"},
+        resource={"syntask.resource.id": "my.resource.id", "label-1": "value-1"},
         related=[
             {
-                "prefect.resource.id": "related-1",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-1",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-1",
                 "label-2": "value-2",
             },
             {
-                "prefect.resource.id": "related-2",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-2",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-3",
                 "label-2": "value-4",
             },
             {
-                "prefect.resource.id": "related-3",
-                "prefect.resource.role": "role-2",
+                "syntask.resource.id": "related-3",
+                "syntask.resource.role": "role-2",
                 "label-1": "value-5",
                 "label-2": "value-6",
             },
@@ -155,7 +155,7 @@ async def test_handling_message_writes_event(
 
 async def test_handling_message_writes_event_resources(
     frozen_time: DateTime,
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     event_persister_handler: MessageHandler,
     message: Message,
     session: AsyncSession,
@@ -321,7 +321,7 @@ async def test_trims_messages_periodically(
     assert any(event.occurred < five_days_ago for event in initial_events)
     assert any(event.occurred >= five_days_ago for event in initial_events)
 
-    with temporary_settings({PREFECT_EVENTS_RETENTION_PERIOD: timedelta(days=5)}):
+    with temporary_settings({SYNTASK_EVENTS_RETENTION_PERIOD: timedelta(days=5)}):
         async with event_persister.create_handler(
             flush_every=timedelta(seconds=0.001),
             trim_every=timedelta(seconds=0.001),

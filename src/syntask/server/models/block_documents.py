@@ -1,6 +1,6 @@
 """
 Functions for interacting with block document ORM objects.
-Intended for internal use by the Prefect REST API.
+Intended for internal use by the Syntask REST API.
 """
 
 from copy import copy
@@ -11,17 +11,17 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-import prefect.server.models as models
-from prefect.server import schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas.actions import BlockDocumentReferenceCreate
-from prefect.server.schemas.core import BlockDocument
-from prefect.server.schemas.filters import BlockSchemaFilter
-from prefect.server.utilities.database import UUID as UUIDTypeDecorator
-from prefect.utilities.collections import dict_to_flatdict, flatdict_to_dict
-from prefect.utilities.names import obfuscate
+import syntask.server.models as models
+from syntask.server import schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas.actions import BlockDocumentReferenceCreate
+from syntask.server.schemas.core import BlockDocument
+from syntask.server.schemas.filters import BlockSchemaFilter
+from syntask.server.utilities.database import UUID as UUIDTypeDecorator
+from syntask.utilities.collections import dict_to_flatdict, flatdict_to_dict
+from syntask.utilities.names import obfuscate
 
 T = TypeVar("T", bound=tuple)
 
@@ -624,7 +624,7 @@ def _find_block_document_reference(
 
 @db_injector
 async def create_block_document_reference(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     block_document_reference: schemas.actions.BlockDocumentReferenceCreate,
 ) -> Union[orm_models.BlockDocumentReference, None]:

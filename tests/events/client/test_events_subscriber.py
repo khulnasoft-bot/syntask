@@ -3,31 +3,31 @@ from typing import Optional, Type
 import pytest
 from websockets.exceptions import ConnectionClosedError
 
-from prefect.events import Event, get_events_subscriber
-from prefect.events.clients import (
-    PrefectCloudAccountEventSubscriber,
-    PrefectCloudEventSubscriber,
-    PrefectEventSubscriber,
+from syntask.events import Event, get_events_subscriber
+from syntask.events.clients import (
+    SyntaskCloudAccountEventSubscriber,
+    SyntaskCloudEventSubscriber,
+    SyntaskEventSubscriber,
 )
-from prefect.events.filters import EventFilter, EventNameFilter
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_CLOUD_API_URL,
-    PREFECT_SERVER_ALLOW_EPHEMERAL_MODE,
+from syntask.events.filters import EventFilter, EventNameFilter
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_CLOUD_API_URL,
+    SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE,
     temporary_settings,
 )
-from prefect.testing.fixtures import Puppeteer, Recorder
+from syntask.testing.fixtures import Puppeteer, Recorder
 
 
 @pytest.fixture
 def ephemeral_settings():
     with temporary_settings(
         {
-            PREFECT_API_URL: None,
-            PREFECT_API_KEY: None,
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: True,
+            SYNTASK_API_URL: None,
+            SYNTASK_API_KEY: None,
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: True,
         }
     ):
         yield
@@ -37,31 +37,31 @@ def ephemeral_settings():
 def server_settings():
     with temporary_settings(
         {
-            PREFECT_API_URL: "https://locally/api",
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_API_URL: "https://locally/api",
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
         }
     ):
         yield
 
 
 async def test_constructs_server_client(server_settings):
-    assert isinstance(get_events_subscriber(), PrefectEventSubscriber)
+    assert isinstance(get_events_subscriber(), SyntaskEventSubscriber)
 
 
 async def test_constructs_client_when_ephemeral_enabled(ephemeral_settings):
-    assert isinstance(get_events_subscriber(), PrefectEventSubscriber)
+    assert isinstance(get_events_subscriber(), SyntaskEventSubscriber)
 
 
 def test_errors_when_missing_api_url_and_ephemeral_disabled():
     with temporary_settings(
         {
-            PREFECT_API_URL: None,
-            PREFECT_API_KEY: None,
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
-            PREFECT_SERVER_ALLOW_EPHEMERAL_MODE: False,
+            SYNTASK_API_URL: None,
+            SYNTASK_API_KEY: None,
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_SERVER_ALLOW_EPHEMERAL_MODE: False,
         }
     ):
-        with pytest.raises(ValueError, match="PREFECT_API_URL"):
+        with pytest.raises(ValueError, match="SYNTASK_API_URL"):
             get_events_subscriber()
 
 
@@ -69,16 +69,16 @@ def test_errors_when_missing_api_url_and_ephemeral_disabled():
 def cloud_settings():
     with temporary_settings(
         {
-            PREFECT_API_URL: "https://cloudy/api/accounts/1/workspaces/2",
-            PREFECT_CLOUD_API_URL: "https://cloudy/api",
-            PREFECT_API_KEY: "howdy-doody",
+            SYNTASK_API_URL: "https://cloudy/api/accounts/1/workspaces/2",
+            SYNTASK_CLOUD_API_URL: "https://cloudy/api",
+            SYNTASK_API_KEY: "howdy-doody",
         }
     ):
         yield
 
 
 async def test_constructs_cloud_client(cloud_settings):
-    assert isinstance(get_events_subscriber(), PrefectCloudEventSubscriber)
+    assert isinstance(get_events_subscriber(), SyntaskCloudEventSubscriber)
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
@@ -86,16 +86,16 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
 
     cloud_subscribers = [
         (
-            PrefectCloudEventSubscriber,
+            SyntaskCloudEventSubscriber,
             "/accounts/A/workspaces/W/events/out",
             "my-token",
         ),
-        (PrefectCloudAccountEventSubscriber, "/accounts/A/events/out", "my-token"),
+        (SyntaskCloudAccountEventSubscriber, "/accounts/A/events/out", "my-token"),
     ]
     subscribers = [
         # The base subscriber for OSS will just use the API URL, which is set to a
         # Cloud URL here, but it would usually be just /events/out
-        (PrefectEventSubscriber, "/accounts/A/workspaces/W/events/out", None),
+        (SyntaskEventSubscriber, "/accounts/A/workspaces/W/events/out", None),
     ] + cloud_subscribers
 
     if "Subscriber" in fixtures:
@@ -108,15 +108,15 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
 def api_setup(events_cloud_api_url: str):
     with temporary_settings(
         updates={
-            PREFECT_API_URL: events_cloud_api_url,
-            PREFECT_API_KEY: "my-token",
+            SYNTASK_API_URL: events_cloud_api_url,
+            SYNTASK_API_KEY: "my-token",
         }
     ):
         yield
 
 
 async def test_subscriber_can_connect_with_defaults(
-    Subscriber: Type[PrefectEventSubscriber],
+    Subscriber: Type[SyntaskEventSubscriber],
     socket_path: str,
     token: Optional[str],
     example_event_1: Event,
@@ -140,7 +140,7 @@ async def test_subscriber_can_connect_with_defaults(
 
 
 async def test_cloud_subscriber_complains_without_api_url_and_key(
-    CloudSubscriber: Type[PrefectCloudEventSubscriber],
+    CloudSubscriber: Type[SyntaskCloudEventSubscriber],
     socket_path: str,
     token: Optional[str],
     example_event_1: Event,
@@ -148,13 +148,13 @@ async def test_cloud_subscriber_complains_without_api_url_and_key(
     recorder: Recorder,
     puppeteer: Puppeteer,
 ):
-    with temporary_settings(updates={PREFECT_API_KEY: "", PREFECT_API_URL: ""}):
+    with temporary_settings(updates={SYNTASK_API_KEY: "", SYNTASK_API_URL: ""}):
         with pytest.raises(ValueError, match="must be provided or set"):
             CloudSubscriber()
 
 
 async def test_subscriber_can_connect_and_receive_one_event(
-    Subscriber: Type[PrefectEventSubscriber],
+    Subscriber: Type[SyntaskEventSubscriber],
     socket_path: str,
     token: Optional[str],
     example_event_1: Event,
@@ -182,7 +182,7 @@ async def test_subscriber_can_connect_and_receive_one_event(
 
 
 async def test_subscriber_specifying_negative_reconnects_gets_error(
-    Subscriber: Type[PrefectEventSubscriber],
+    Subscriber: Type[SyntaskEventSubscriber],
     socket_path: str,
     token: Optional[str],
     example_event_1: Event,
@@ -205,7 +205,7 @@ async def test_subscriber_specifying_negative_reconnects_gets_error(
 
 
 async def test_subscriber_raises_on_invalid_auth_with_soft_denial(
-    CloudSubscriber: Type[PrefectCloudEventSubscriber],
+    CloudSubscriber: Type[SyntaskCloudEventSubscriber],
     socket_path: str,
     token: Optional[str],
     events_cloud_api_url: str,
@@ -235,7 +235,7 @@ async def test_subscriber_raises_on_invalid_auth_with_soft_denial(
 
 
 async def test_cloud_subscriber_raises_on_invalid_auth_with_hard_denial(
-    CloudSubscriber: Type[PrefectCloudEventSubscriber],
+    CloudSubscriber: Type[SyntaskCloudEventSubscriber],
     socket_path: str,
     token: Optional[str],
     events_cloud_api_url: str,
@@ -266,7 +266,7 @@ async def test_cloud_subscriber_raises_on_invalid_auth_with_hard_denial(
 
 
 async def test_subscriber_reconnects_on_hard_disconnects(
-    Subscriber: Type[PrefectEventSubscriber],
+    Subscriber: Type[SyntaskEventSubscriber],
     socket_path: str,
     token: Optional[str],
     example_event_1: Event,
@@ -292,7 +292,7 @@ async def test_subscriber_reconnects_on_hard_disconnects(
 
 
 async def test_subscriber_gives_up_after_so_many_attempts(
-    Subscriber: Type[PrefectEventSubscriber],
+    Subscriber: Type[SyntaskEventSubscriber],
     socket_path: str,
     token: Optional[str],
     example_event_1: Event,
@@ -319,7 +319,7 @@ async def test_subscriber_gives_up_after_so_many_attempts(
 
 
 async def test_subscriber_skips_duplicate_events(
-    Subscriber: Type[PrefectEventSubscriber],
+    Subscriber: Type[SyntaskEventSubscriber],
     socket_path: str,
     token: Optional[str],
     example_event_1: Event,

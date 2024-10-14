@@ -6,8 +6,8 @@ from typing import Iterable, List, Tuple, Union
 import readchar
 from typer.testing import CliRunner, Result  # type: ignore
 
-from prefect.cli import app
-from prefect.utilities.asyncutils import in_async_main_thread
+from syntask.cli import app
+from syntask.utilities.asyncutils import in_async_main_thread
 
 
 def check_contains(cli_result: Result, content: str, should_contain: bool):
@@ -58,7 +58,7 @@ def invoke_and_assert(
     temp_dir: Union[str, None] = None,
 ) -> Result:
     """
-    Test utility for the Prefect CLI application, asserts exact match with CLI output.
+    Test utility for the Syntask CLI application, asserts exact match with CLI output.
 
     Args:
         command: Command passed to the Typer CliRunner

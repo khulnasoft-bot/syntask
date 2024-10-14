@@ -5,9 +5,9 @@ import time
 
 import pytest
 
-from prefect._internal.concurrency.api import create_call, from_async, from_sync
-from prefect._internal.concurrency.cancellation import CancelledError
-from prefect._internal.concurrency.threads import wait_for_global_loop_exit
+from syntask._internal.concurrency.api import create_call, from_async, from_sync
+from syntask._internal.concurrency.cancellation import CancelledError
+from syntask._internal.concurrency.threads import wait_for_global_loop_exit
 
 
 def identity(x):

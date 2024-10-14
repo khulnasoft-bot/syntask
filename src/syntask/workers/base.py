@@ -13,46 +13,46 @@ from pydantic import BaseModel, Field, PrivateAttr, field_validator
 from pydantic.json_schema import GenerateJsonSchema
 from typing_extensions import Literal
 
-import prefect
-from prefect._internal.schemas.validators import return_v_or_none
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.client.schemas.actions import WorkPoolCreate, WorkPoolUpdate
-from prefect.client.schemas.objects import StateType, WorkPool
-from prefect.client.utilities import inject_client
-from prefect.events import Event, RelatedResource, emit_event
-from prefect.events.related import object_as_related_resource, tags_as_related_resources
-from prefect.exceptions import (
+import syntask
+from syntask._internal.schemas.validators import return_v_or_none
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.client.schemas.actions import WorkPoolCreate, WorkPoolUpdate
+from syntask.client.schemas.objects import StateType, WorkPool
+from syntask.client.utilities import inject_client
+from syntask.events import Event, RelatedResource, emit_event
+from syntask.events.related import object_as_related_resource, tags_as_related_resources
+from syntask.exceptions import (
     Abort,
     ObjectNotFound,
 )
-from prefect.logging.loggers import PrefectLogAdapter, flow_run_logger, get_logger
-from prefect.plugins import load_prefect_collections
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_TEST_MODE,
-    PREFECT_WORKER_HEARTBEAT_SECONDS,
-    PREFECT_WORKER_PREFETCH_SECONDS,
-    PREFECT_WORKER_QUERY_SECONDS,
+from syntask.logging.loggers import SyntaskLogAdapter, flow_run_logger, get_logger
+from syntask.plugins import load_syntask_collections
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_TEST_MODE,
+    SYNTASK_WORKER_HEARTBEAT_SECONDS,
+    SYNTASK_WORKER_PREFETCH_SECONDS,
+    SYNTASK_WORKER_QUERY_SECONDS,
     get_current_settings,
 )
-from prefect.states import (
+from syntask.states import (
     Crashed,
     Pending,
     exception_to_failed_state,
 )
-from prefect.utilities.dispatch import get_registry_for_type, register_base_type
-from prefect.utilities.engine import propose_state
-from prefect.utilities.services import critical_service_loop
-from prefect.utilities.slugify import slugify
-from prefect.utilities.templating import (
+from syntask.utilities.dispatch import get_registry_for_type, register_base_type
+from syntask.utilities.engine import propose_state
+from syntask.utilities.services import critical_service_loop
+from syntask.utilities.slugify import slugify
+from syntask.utilities.templating import (
     apply_values,
     resolve_block_document_references,
     resolve_variables,
 )
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.objects import Flow, FlowRun
-    from prefect.client.schemas.responses import (
+    from syntask.client.schemas.objects import Flow, FlowRun
+    from syntask.client.schemas.responses import (
         DeploymentResponse,
         WorkerFlowRunResponse,
     )
@@ -91,7 +91,7 @@ class BaseJobConfiguration(BaseModel):
 
     @property
     def is_using_a_runner(self):
-        return self.command is not None and "prefect flow-run execute" in self.command
+        return self.command is not None and "syntask flow-run execute" in self.command
 
     @field_validator("command")
     @classmethod
@@ -124,7 +124,7 @@ class BaseJobConfiguration(BaseModel):
         cls,
         base_job_template: dict,
         values: dict,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ):
         """Creates a valid worker configuration object from the provided base
         configuration and overrides.
@@ -231,7 +231,7 @@ class BaseJobConfiguration(BaseModel):
         """
         Generate a command for a flow run job.
         """
-        return "prefect flow-run execute"
+        return "syntask flow-run execute"
 
     @staticmethod
     def _base_flow_run_labels(flow_run: "FlowRun") -> Dict[str, str]:
@@ -241,7 +241,7 @@ class BaseJobConfiguration(BaseModel):
         return {
             "syntask.khulnasoft.com/flow-run-id": str(flow_run.id),
             "syntask.khulnasoft.com/flow-run-name": flow_run.name,
-            "syntask.khulnasoft.com/version": prefect.__version__,
+            "syntask.khulnasoft.com/version": syntask.__version__,
         }
 
     @classmethod
@@ -258,7 +258,7 @@ class BaseJobConfiguration(BaseModel):
         """
         Generate a dictionary of environment variables for a flow run job.
         """
-        return {"PREFECT__FLOW_RUN_ID": str(flow_run.id)}
+        return {"SYNTASK__FLOW_RUN_ID": str(flow_run.id)}
 
     @staticmethod
     def _base_deployment_labels(deployment: "DeploymentResponse") -> Dict[str, str]:
@@ -267,9 +267,9 @@ class BaseJobConfiguration(BaseModel):
             "syntask.khulnasoft.com/deployment-name": deployment.name,
         }
         if deployment.updated is not None:
-            labels["syntask.khulnasoft.com/deployment-updated"] = deployment.updated.in_timezone(
-                "utc"
-            ).to_iso8601_string()
+            labels["syntask.khulnasoft.com/deployment-updated"] = (
+                deployment.updated.in_timezone("utc").to_iso8601_string()
+            )
         return labels
 
     @staticmethod
@@ -375,7 +375,7 @@ class BaseWorker(abc.ABC):
         base_job_template: Optional[Dict[str, Any]] = None,
     ):
         """
-        Base class for all Prefect workers.
+        Base class for all Syntask workers.
 
         Args:
             name: The name of the worker. If not provided, a random one
@@ -409,16 +409,16 @@ class BaseWorker(abc.ABC):
         self._work_queues: Set[str] = set(work_queues) if work_queues else set()
 
         self._prefetch_seconds: float = (
-            prefetch_seconds or PREFECT_WORKER_PREFETCH_SECONDS.value()
+            prefetch_seconds or SYNTASK_WORKER_PREFETCH_SECONDS.value()
         )
         self.heartbeat_interval_seconds = (
-            heartbeat_interval_seconds or PREFECT_WORKER_HEARTBEAT_SECONDS.value()
+            heartbeat_interval_seconds or SYNTASK_WORKER_HEARTBEAT_SECONDS.value()
         )
 
         self._work_pool: Optional[WorkPool] = None
         self._exit_stack: AsyncExitStack = AsyncExitStack()
         self._runs_task_group: Optional[anyio.abc.TaskGroup] = None
-        self._client: Optional[PrefectClient] = None
+        self._client: Optional[SyntaskClient] = None
         self._last_polled_time: pendulum.DateTime = pendulum.now("utc")
         self._limit = limit
         self._limiter: Optional[anyio.CapacityLimiter] = None
@@ -462,7 +462,7 @@ class BaseWorker(abc.ABC):
         Returns the worker class for a given worker type. If the worker type
         is not recognized, returns None.
         """
-        load_prefect_collections()
+        load_syntask_collections()
         worker_registry = get_registry_for_type(BaseWorker)
         if worker_registry is not None:
             return worker_registry.get(type)
@@ -472,7 +472,7 @@ class BaseWorker(abc.ABC):
         """
         Returns all worker types available in the local registry.
         """
-        load_prefect_collections()
+        load_syntask_collections()
         worker_registry = get_registry_for_type(BaseWorker)
         if worker_registry is not None:
             return list(worker_registry.keys())
@@ -481,7 +481,7 @@ class BaseWorker(abc.ABC):
     def get_name_slug(self):
         return slugify(self.name)
 
-    def get_flow_run_logger(self, flow_run: "FlowRun") -> PrefectLogAdapter:
+    def get_flow_run_logger(self, flow_run: "FlowRun") -> SyntaskLogAdapter:
         return flow_run_logger(flow_run=flow_run).getChild(
             "worker",
             extra={
@@ -503,7 +503,7 @@ class BaseWorker(abc.ABC):
         Starts the worker and runs the main worker loops.
 
         By default, the worker will run loops to poll for scheduled/cancelled flow
-        runs and sync with the Prefect API server.
+        runs and sync with the Syntask API server.
 
         If `run_once` is set, the worker will only run each loop once and then return.
 
@@ -528,7 +528,7 @@ class BaseWorker(abc.ABC):
                         partial(
                             critical_service_loop,
                             workload=self.get_and_submit_flow_runs,
-                            interval=PREFECT_WORKER_QUERY_SECONDS.value(),
+                            interval=SYNTASK_WORKER_QUERY_SECONDS.value(),
                             run_once=run_once,
                             jitter_range=0.3,
                             backoff=4,  # Up to ~1 minute interval during backoff
@@ -549,13 +549,13 @@ class BaseWorker(abc.ABC):
                     self._started_event = await self._emit_worker_started_event()
 
                     if with_healthcheck:
-                        from prefect.workers.server import build_healthcheck_server
+                        from syntask.workers.server import build_healthcheck_server
 
                         # we'll start the ASGI server in a separate thread so that
                         # uvicorn does not block the main thread
                         healthcheck_server = build_healthcheck_server(
                             worker=worker,
-                            query_interval_seconds=PREFECT_WORKER_QUERY_SECONDS.value(),
+                            query_interval_seconds=SYNTASK_WORKER_QUERY_SECONDS.value(),
                         )
                         healthcheck_thread = threading.Thread(
                             name="healthcheck-server-thread",
@@ -601,8 +601,8 @@ class BaseWorker(abc.ABC):
             anyio.CapacityLimiter(self._limit) if self._limit is not None else None
         )
 
-        if not PREFECT_TEST_MODE and not PREFECT_API_URL.value():
-            raise ValueError("`PREFECT_API_URL` must be set to start a Worker.")
+        if not SYNTASK_TEST_MODE and not SYNTASK_API_URL.value():
+            raise ValueError("`SYNTASK_API_URL` must be set to start a Worker.")
 
         self._client = get_client()
         await self._exit_stack.enter_async_context(self._client)
@@ -721,7 +721,7 @@ class BaseWorker(abc.ABC):
 
         await self._send_worker_heartbeat()
 
-        self._logger.debug("Worker synchronized with the Prefect API server.")
+        self._logger.debug("Worker synchronized with the Syntask API server.")
 
     async def _get_scheduled_flow_runs(
         self,
@@ -1098,10 +1098,10 @@ class BaseWorker(abc.ABC):
 
     def _event_resource(self):
         return {
-            "prefect.resource.id": f"prefect.worker.{self.type}.{self.get_name_slug()}",
-            "prefect.resource.name": self.name,
-            "prefect.version": prefect.__version__,
-            "prefect.worker-type": self.type,
+            "syntask.resource.id": f"syntask.worker.{self.type}.{self.get_name_slug()}",
+            "syntask.resource.name": self.name,
+            "syntask.version": syntask.__version__,
+            "syntask.worker-type": self.type,
         }
 
     def _event_related_resources(
@@ -1122,7 +1122,7 @@ class BaseWorker(abc.ABC):
 
         if include_self:
             worker_resource = self._event_resource()
-            worker_resource["prefect.resource.role"] = "worker"
+            worker_resource["syntask.resource.role"] = "worker"
             related.append(RelatedResource.model_validate(worker_resource))
 
         return related
@@ -1131,7 +1131,7 @@ class BaseWorker(abc.ABC):
         self, configuration: BaseJobConfiguration
     ) -> Event:
         return emit_event(
-            event="prefect.worker.submitted-flow-run",
+            event="syntask.worker.submitted-flow-run",
             resource=self._event_resource(),
             related=self._event_related_resources(configuration=configuration),
         )
@@ -1146,11 +1146,11 @@ class BaseWorker(abc.ABC):
 
         for resource in related:
             if resource.role == "flow-run":
-                resource["prefect.infrastructure.identifier"] = str(result.identifier)
-                resource["prefect.infrastructure.status-code"] = str(result.status_code)
+                resource["syntask.infrastructure.identifier"] = str(result.identifier)
+                resource["syntask.infrastructure.status-code"] = str(result.status_code)
 
         emit_event(
-            event="prefect.worker.executed-flow-run",
+            event="syntask.worker.executed-flow-run",
             resource=self._event_resource(),
             related=related,
             follows=submitted_event,
@@ -1158,14 +1158,14 @@ class BaseWorker(abc.ABC):
 
     async def _emit_worker_started_event(self) -> Event:
         return emit_event(
-            "prefect.worker.started",
+            "syntask.worker.started",
             resource=self._event_resource(),
             related=self._event_related_resources(),
         )
 
     async def _emit_worker_stopped_event(self, started_event: Event):
         emit_event(
-            "prefect.worker.stopped",
+            "syntask.worker.stopped",
             resource=self._event_resource(),
             related=self._event_related_resources(),
             follows=started_event,

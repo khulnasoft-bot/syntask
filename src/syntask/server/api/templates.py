@@ -2,13 +2,13 @@ import orjson
 from fastapi import Body, Response
 from jinja2.exceptions import TemplateSyntaxError
 
-from prefect.server.utilities.server import PrefectRouter
-from prefect.server.utilities.user_templates import (
+from syntask.server.utilities.server import SyntaskRouter
+from syntask.server.utilities.user_templates import (
     TemplateSecurityError,
     validate_user_template,
 )
 
-router = PrefectRouter(prefix="/templates", tags=["Automations"])
+router = SyntaskRouter(prefix="/templates", tags=["Automations"])
 
 
 @router.post(

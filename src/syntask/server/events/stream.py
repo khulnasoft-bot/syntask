@@ -3,10 +3,10 @@ from asyncio import Queue
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, AsyncIterable, Dict, Optional, Set
 
-from prefect.logging import get_logger
-from prefect.server.events.filters import EventFilter
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.utilities import messaging
+from syntask.logging import get_logger
+from syntask.server.events.filters import EventFilter
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.utilities import messaging
 
 logger = get_logger(__name__)
 

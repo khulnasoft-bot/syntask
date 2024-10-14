@@ -1,6 +1,6 @@
-site_name: Prefect SDK
+site_name: Syntask SDK
 site_url: https://docs-3.syntask.khulnasoft.com/
-repo_url: https://github.com/synopkg/synopkg
+repo_url: https://github.com/synopkg/syntask
 docs_dir: docs/mkdocs
 extra_css:
     - stylesheets/theme.css

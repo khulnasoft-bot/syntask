@@ -1,4 +1,4 @@
-from prefect import task
+from syntask import task
 
 
 @task

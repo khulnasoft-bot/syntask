@@ -12,9 +12,9 @@ import pytest
 from fastapi import Body, FastAPI, status
 from fastapi.exceptions import RequestValidationError
 
-import prefect.results
-from prefect.filesystems import LocalFileSystem
-from prefect.server.api.server import validation_exception_handler
+import syntask.results
+from syntask.filesystems import LocalFileSystem
+from syntask.server.api.server import validation_exception_handler
 
 
 @pytest.fixture
@@ -32,9 +32,9 @@ async def local_filesystem(tmp_path):
 
 @pytest.fixture(autouse=True)
 async def clear_cached_filesystems():
-    prefect.results._default_storages.clear()
+    syntask.results._default_storages.clear()
     yield
-    prefect.results._default_storages.clear()
+    syntask.results._default_storages.clear()
 
 
 # Key-value storage API ----------------------------------------------------------------

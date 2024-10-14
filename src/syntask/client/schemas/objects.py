@@ -32,10 +32,10 @@ from pydantic.functional_validators import ModelWrapValidatorHandler
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import Literal, Self, TypeVar
 
-from prefect._internal.compatibility.migration import getattr_migration
-from prefect._internal.schemas.bases import ObjectBaseModel, PrefectBaseModel
-from prefect._internal.schemas.fields import CreatedBy, UpdatedBy
-from prefect._internal.schemas.validators import (
+from syntask._internal.compatibility.migration import getattr_migration
+from syntask._internal.schemas.bases import ObjectBaseModel, SyntaskBaseModel
+from syntask._internal.schemas.fields import CreatedBy, UpdatedBy
+from syntask._internal.schemas.validators import (
     get_or_create_run_name,
     list_length_50_or_less,
     raise_on_name_alphanumeric_dashes_only,
@@ -48,21 +48,21 @@ from prefect._internal.schemas.validators import (
     validate_not_negative,
     validate_parent_and_ref_diff,
 )
-from prefect.client.schemas.schedules import SCHEDULE_TYPES
-from prefect.settings import PREFECT_CLOUD_API_URL, PREFECT_CLOUD_UI_URL
-from prefect.types import (
+from syntask.client.schemas.schedules import SCHEDULE_TYPES
+from syntask.settings import SYNTASK_CLOUD_API_URL, SYNTASK_CLOUD_UI_URL
+from syntask.types import (
     MAX_VARIABLE_NAME_LENGTH,
     Name,
     NonNegativeInteger,
     PositiveInteger,
     StrictVariableValue,
 )
-from prefect.utilities.collections import AutoEnum, listrepr, visit_collection
-from prefect.utilities.names import generate_slug
-from prefect.utilities.pydantic import handle_secret_render
+from syntask.utilities.collections import AutoEnum, listrepr, visit_collection
+from syntask.utilities.names import generate_slug
+from syntask.utilities.pydantic import handle_secret_render
 
 if TYPE_CHECKING:
-    from prefect.results import BaseResult, ResultRecordMetadata
+    from syntask.results import BaseResult, ResultRecordMetadata
 
 
 R = TypeVar("R", default=Any)
@@ -148,7 +148,7 @@ class ConcurrencyLimitStrategy(AutoEnum):
     CANCEL_NEW = AutoEnum.auto()
 
 
-class ConcurrencyOptions(PrefectBaseModel):
+class ConcurrencyOptions(SyntaskBaseModel):
     """
     Class for storing the concurrency config in database.
     """
@@ -156,7 +156,7 @@ class ConcurrencyOptions(PrefectBaseModel):
     collision_strategy: ConcurrencyLimitStrategy
 
 
-class ConcurrencyLimitConfig(PrefectBaseModel):
+class ConcurrencyLimitConfig(SyntaskBaseModel):
     """
     Class for storing the concurrency limit config in database.
     """
@@ -165,7 +165,7 @@ class ConcurrencyLimitConfig(PrefectBaseModel):
     collision_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.ENQUEUE
 
 
-class StateDetails(PrefectBaseModel):
+class StateDetails(SyntaskBaseModel):
     flow_run_id: Optional[UUID] = None
     task_run_id: Optional[UUID] = None
     # for task runs that represent subflows, the subflow's run ID
@@ -213,12 +213,12 @@ class State(ObjectBaseModel, Generic[R]):
     ] = Field(default=None)
 
     @overload
-    def result(self: "State[R]", raise_on_failure: bool = True) -> R:
-        ...
+    def result(self: "State[R]", raise_on_failure: bool = True) -> R: ...
 
     @overload
-    def result(self: "State[R]", raise_on_failure: bool = False) -> Union[R, Exception]:
-        ...
+    def result(
+        self: "State[R]", raise_on_failure: bool = False
+    ) -> Union[R, Exception]: ...
 
     def result(
         self,
@@ -248,7 +248,7 @@ class State(ObjectBaseModel, Generic[R]):
             The result of the run
 
         Examples:
-            >>> from prefect import flow, task
+            >>> from syntask import flow, task
             >>> @task
             >>> def my_task(x):
             >>>     return x
@@ -309,7 +309,7 @@ class State(ObjectBaseModel, Generic[R]):
             >>> flow_run = run_deployment("my_deployment/my_flow")
             >>> await flow_run.state.result(raise_on_failure=True, fetch=True) # Raises `ValueError("oh no!")`
         """
-        from prefect.states import get_state_result
+        from syntask.states import get_state_result
 
         return get_state_result(
             self,
@@ -326,8 +326,8 @@ class State(ObjectBaseModel, Generic[R]):
         This method will drop this state's `data` if it is not a result type. Only
         results should be sent to the API. Other data is only available locally.
         """
-        from prefect.client.schemas.actions import StateCreate
-        from prefect.results import (
+        from syntask.client.schemas.actions import StateCreate
+        from syntask.results import (
             BaseResult,
             ResultRecord,
             should_persist_result,
@@ -465,7 +465,7 @@ class State(ObjectBaseModel, Generic[R]):
         )
 
 
-class FlowRunPolicy(PrefectBaseModel):
+class FlowRunPolicy(SyntaskBaseModel):
     """Defines of how a flow run should be orchestrated."""
 
     max_retries: int = Field(
@@ -664,7 +664,7 @@ class FlowRun(ObjectBaseModel):
         return get_or_create_run_name(name)
 
 
-class TaskRunPolicy(PrefectBaseModel):
+class TaskRunPolicy(SyntaskBaseModel):
     """Defines of how a task run should retry."""
 
     max_retries: int = Field(
@@ -722,7 +722,7 @@ class TaskRunPolicy(PrefectBaseModel):
         return validate_not_negative(v)
 
 
-class TaskRunInput(PrefectBaseModel):
+class TaskRunInput(SyntaskBaseModel):
     """
     Base class for classes that represent inputs to task runs, which
     could include, constants, parameters, or other task runs.
@@ -865,9 +865,9 @@ class TaskRun(ObjectBaseModel):
         return get_or_create_run_name(name)
 
 
-class Workspace(PrefectBaseModel):
+class Workspace(SyntaskBaseModel):
     """
-    A Prefect Cloud workspace.
+    A Syntask Cloud workspace.
 
     Expected payload for each workspace returned by the `me/workspaces` route.
     """
@@ -893,7 +893,7 @@ class Workspace(PrefectBaseModel):
         Generate the API URL for accessing this workspace
         """
         return (
-            f"{PREFECT_CLOUD_API_URL.value()}"
+            f"{SYNTASK_CLOUD_API_URL.value()}"
             f"/accounts/{self.account_id}"
             f"/workspaces/{self.workspace_id}"
         )
@@ -903,7 +903,7 @@ class Workspace(PrefectBaseModel):
         Generate the UI URL for accessing this workspace
         """
         return (
-            f"{PREFECT_CLOUD_UI_URL.value()}"
+            f"{SYNTASK_CLOUD_UI_URL.value()}"
             f"/account/{self.account_id}"
             f"/workspace/{self.workspace_id}"
         )
@@ -912,7 +912,7 @@ class Workspace(PrefectBaseModel):
         return hash(self.handle)
 
 
-class IPAllowlistEntry(PrefectBaseModel):
+class IPAllowlistEntry(SyntaskBaseModel):
     ip_network: IPvAnyNetwork
     enabled: bool
     description: Optional[str] = Field(
@@ -920,22 +920,22 @@ class IPAllowlistEntry(PrefectBaseModel):
     )
     last_seen: Optional[str] = Field(
         default=None,
-        description="The last time this IP was seen accessing Prefect Cloud.",
+        description="The last time this IP was seen accessing Syntask Cloud.",
     )
 
 
-class IPAllowlist(PrefectBaseModel):
+class IPAllowlist(SyntaskBaseModel):
     """
-    A Prefect Cloud IP allowlist.
+    A Syntask Cloud IP allowlist.
 
-    Expected payload for an IP allowlist from the Prefect Cloud API.
+    Expected payload for an IP allowlist from the Syntask Cloud API.
     """
 
     entries: List[IPAllowlistEntry]
 
 
-class IPAllowlistMyAccessResponse(PrefectBaseModel):
-    """Expected payload for an IP allowlist access response from the Prefect Cloud API."""
+class IPAllowlistMyAccessResponse(SyntaskBaseModel):
+    """Expected payload for an IP allowlist access response from the Syntask Cloud API."""
 
     allowed: bool
     detail: str
@@ -1014,7 +1014,7 @@ class BlockDocument(ObjectBaseModel):
         default=False,
         description=(
             "Whether the block is anonymous (anonymous blocks are usually created by"
-            " Prefect automatically)"
+            " Syntask automatically)"
         ),
     )
 
@@ -1260,8 +1260,8 @@ class Configuration(ObjectBaseModel):
     value: Dict[str, Any] = Field(default=..., description="Account info")
 
 
-class SavedSearchFilter(PrefectBaseModel):
-    """A filter for a saved search model. Intended for use by the Prefect UI."""
+class SavedSearchFilter(SyntaskBaseModel):
+    """A filter for a saved search model. Intended for use by the Syntask UI."""
 
     object: str = Field(default=..., description="The object over which to filter.")
     property: str = Field(
@@ -1301,7 +1301,7 @@ class Log(ObjectBaseModel):
     )
 
 
-class QueueFilter(PrefectBaseModel):
+class QueueFilter(SyntaskBaseModel):
     """Filter criteria definition for a work queue."""
 
     tags: Optional[List[str]] = Field(
@@ -1351,7 +1351,7 @@ class WorkQueue(ObjectBaseModel):
     )
 
 
-class WorkQueueHealthPolicy(PrefectBaseModel):
+class WorkQueueHealthPolicy(SyntaskBaseModel):
     maximum_late_runs: Optional[int] = Field(
         default=0,
         description=(
@@ -1398,7 +1398,7 @@ class WorkQueueHealthPolicy(PrefectBaseModel):
         return healthy
 
 
-class WorkQueueStatusDetail(PrefectBaseModel):
+class WorkQueueStatusDetail(SyntaskBaseModel):
     healthy: bool = Field(..., description="Whether or not the work queue is healthy.")
     late_runs_count: int = Field(
         default=0, description="The number of late flow runs in the work queue."

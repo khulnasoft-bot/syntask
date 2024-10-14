@@ -4,9 +4,9 @@ from uuid import UUID
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database import orm_models
-from prefect.server.schemas import filters, sorting
-from prefect.server.schemas.actions import VariableCreate, VariableUpdate
+from syntask.server.database import orm_models
+from syntask.server.schemas import filters, sorting
+from syntask.server.schemas.actions import VariableCreate, VariableUpdate
 
 
 async def create_variable(

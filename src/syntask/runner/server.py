@@ -7,27 +7,27 @@ from fastapi import APIRouter, FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 from typing_extensions import Literal
 
-from prefect._internal.schemas.validators import validate_values_conform_to_schema
-from prefect.client.orchestration import get_client
-from prefect.exceptions import MissingFlowError, ScriptError
-from prefect.flows import Flow, load_flow_from_entrypoint
-from prefect.logging import get_logger
-from prefect.runner.utils import (
+from syntask._internal.schemas.validators import validate_values_conform_to_schema
+from syntask.client.orchestration import get_client
+from syntask.exceptions import MissingFlowError, ScriptError
+from syntask.flows import Flow, load_flow_from_entrypoint
+from syntask.logging import get_logger
+from syntask.runner.utils import (
     inject_schemas_into_openapi,
 )
-from prefect.settings import (
-    PREFECT_RUNNER_POLL_FREQUENCY,
-    PREFECT_RUNNER_SERVER_HOST,
-    PREFECT_RUNNER_SERVER_LOG_LEVEL,
-    PREFECT_RUNNER_SERVER_MISSED_POLLS_TOLERANCE,
-    PREFECT_RUNNER_SERVER_PORT,
+from syntask.settings import (
+    SYNTASK_RUNNER_POLL_FREQUENCY,
+    SYNTASK_RUNNER_SERVER_HOST,
+    SYNTASK_RUNNER_SERVER_LOG_LEVEL,
+    SYNTASK_RUNNER_SERVER_MISSED_POLLS_TOLERANCE,
+    SYNTASK_RUNNER_SERVER_PORT,
 )
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.importtools import load_script_as_module
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.importtools import load_script_as_module
 
 if TYPE_CHECKING:
-    from prefect.client.schemas.responses import DeploymentResponse
-    from prefect.runner import Runner
+    from syntask.client.schemas.responses import DeploymentResponse
+    from syntask.runner import Runner
 
 from pydantic import BaseModel
 
@@ -45,8 +45,8 @@ class RunnerGenericFlowRunRequest(BaseModel):
 def perform_health_check(runner, delay_threshold: Optional[int] = None) -> JSONResponse:
     if delay_threshold is None:
         delay_threshold = (
-            PREFECT_RUNNER_SERVER_MISSED_POLLS_TOLERANCE.value()
-            * PREFECT_RUNNER_POLL_FREQUENCY.value()
+            SYNTASK_RUNNER_SERVER_MISSED_POLLS_TOLERANCE.value()
+            * SYNTASK_RUNNER_POLL_FREQUENCY.value()
         )
 
     def _health_check():
@@ -135,9 +135,9 @@ async def get_deployment_router(
             )
 
             # Used for updating the route schemas later on
-            schemas[
-                f"{deployment.name}-{deployment_id}"
-            ] = deployment.parameter_openapi_schema
+            schemas[f"{deployment.name}-{deployment_id}"] = (
+                deployment.parameter_openapi_schema
+            )
             schemas[deployment_id] = deployment.name
     return router, schemas
 
@@ -294,8 +294,8 @@ def start_webserver(runner: "Runner", log_level: Optional[str] = None) -> None:
         runner (Runner): the runner this server interacts with and monitors
         log_level (str): the log level to use for the server
     """
-    host = PREFECT_RUNNER_SERVER_HOST.value()
-    port = PREFECT_RUNNER_SERVER_PORT.value()
-    log_level = log_level or PREFECT_RUNNER_SERVER_LOG_LEVEL.value()
+    host = SYNTASK_RUNNER_SERVER_HOST.value()
+    port = SYNTASK_RUNNER_SERVER_PORT.value()
+    log_level = log_level or SYNTASK_RUNNER_SERVER_LOG_LEVEL.value()
     webserver = build_server(runner)
     uvicorn.run(webserver, host=host, port=port, log_level=log_level)

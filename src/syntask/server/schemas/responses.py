@@ -1,5 +1,5 @@
 """
-Schemas for special responses from the Prefect REST API.
+Schemas for special responses from the Syntask REST API.
 """
 
 import datetime
@@ -11,16 +11,16 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import Literal, Self
 
-import prefect.server.schemas as schemas
-from prefect.server.schemas.core import (
+import syntask.server.schemas as schemas
+from syntask.server.schemas.core import (
     CreatedBy,
     FlowRunPolicy,
     UpdatedBy,
     WorkQueueStatusDetail,
 )
-from prefect.server.utilities.schemas.bases import ORMBaseModel, PrefectBaseModel
-from prefect.utilities.collections import AutoEnum
-from prefect.utilities.names import generate_slug
+from syntask.server.utilities.schemas.bases import ORMBaseModel, SyntaskBaseModel
+from syntask.utilities.collections import AutoEnum
+from syntask.utilities.names import generate_slug
 
 
 class SetStateStatus(AutoEnum):
@@ -32,7 +32,7 @@ class SetStateStatus(AutoEnum):
     WAIT = AutoEnum.auto()
 
 
-class StateAcceptDetails(PrefectBaseModel):
+class StateAcceptDetails(SyntaskBaseModel):
     """Details associated with an ACCEPT state transition."""
 
     type: Literal["accept_details"] = Field(
@@ -44,7 +44,7 @@ class StateAcceptDetails(PrefectBaseModel):
     )
 
 
-class StateRejectDetails(PrefectBaseModel):
+class StateRejectDetails(SyntaskBaseModel):
     """Details associated with a REJECT state transition."""
 
     type: Literal["reject_details"] = Field(
@@ -59,7 +59,7 @@ class StateRejectDetails(PrefectBaseModel):
     )
 
 
-class StateAbortDetails(PrefectBaseModel):
+class StateAbortDetails(SyntaskBaseModel):
     """Details associated with an ABORT state transition."""
 
     type: Literal["abort_details"] = Field(
@@ -74,7 +74,7 @@ class StateAbortDetails(PrefectBaseModel):
     )
 
 
-class StateWaitDetails(PrefectBaseModel):
+class StateWaitDetails(SyntaskBaseModel):
     """Details associated with a WAIT state transition."""
 
     type: Literal["wait_details"] = Field(
@@ -96,7 +96,7 @@ class StateWaitDetails(PrefectBaseModel):
     )
 
 
-class HistoryResponseState(PrefectBaseModel):
+class HistoryResponseState(SyntaskBaseModel):
     """Represents a single state's history over an interval."""
 
     state_type: schemas.states.StateType = Field(
@@ -120,7 +120,7 @@ class HistoryResponseState(PrefectBaseModel):
     )
 
 
-class HistoryResponse(PrefectBaseModel):
+class HistoryResponse(SyntaskBaseModel):
     """Represents a history of aggregation states over an interval"""
 
     interval_start: DateTime = Field(
@@ -154,7 +154,7 @@ StateResponseDetails = Union[
 ]
 
 
-class OrchestrationResult(PrefectBaseModel):
+class OrchestrationResult(SyntaskBaseModel):
     """
     A container for the output of state orchestration.
     """
@@ -164,7 +164,7 @@ class OrchestrationResult(PrefectBaseModel):
     details: StateResponseDetails
 
 
-class WorkerFlowRunResponse(PrefectBaseModel):
+class WorkerFlowRunResponse(SyntaskBaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     work_pool_id: UUID

@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from prefect.docker.docker_image import DockerImage
+    from syntask.docker.docker_image import DockerImage
 
 __all__ = ["DockerImage"]
 
 _public_api: dict[str, tuple[str, str]] = {
-    "DockerImage": ("prefect.docker.docker_image", "DockerImage"),
+    "DockerImage": ("syntask.docker.docker_image", "DockerImage"),
 }
 
 

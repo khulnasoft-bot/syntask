@@ -1,6 +1,0 @@
-integrationName: prefect-dask
-author: Prefect
-authorUrl: https://syntask.khulnasoft.com
-documentation: prefect-dask
-iconUrl: /images/integrations/dask.png
-tag: Dask

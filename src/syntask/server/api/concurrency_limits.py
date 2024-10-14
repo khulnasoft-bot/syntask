@@ -8,24 +8,24 @@ from uuid import UUID
 import pendulum
 from fastapi import Body, Depends, HTTPException, Path, Response, status
 
-import prefect.server.api.dependencies as dependencies
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.api.concurrency_limits_v2 import MinimalConcurrencyLimitResponse
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models import concurrency_limits
-from prefect.server.utilities.server import PrefectRouter
-from prefect.settings import PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS
+import syntask.server.api.dependencies as dependencies
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.api.concurrency_limits_v2 import MinimalConcurrencyLimitResponse
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models import concurrency_limits
+from syntask.server.utilities.server import SyntaskRouter
+from syntask.settings import SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS
 
-router = PrefectRouter(prefix="/concurrency_limits", tags=["Concurrency Limits"])
+router = SyntaskRouter(prefix="/concurrency_limits", tags=["Concurrency Limits"])
 
 
 @router.post("/")
 async def create_concurrency_limit(
     concurrency_limit: schemas.actions.ConcurrencyLimitCreate,
     response: Response,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.ConcurrencyLimit:
     # hydrate the input model into a full model
     concurrency_limit_model = schemas.core.ConcurrencyLimit(
@@ -48,7 +48,7 @@ async def read_concurrency_limit(
     concurrency_limit_id: UUID = Path(
         ..., description="The concurrency limit id", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.ConcurrencyLimit:
     """
     Get a concurrency limit by id.
@@ -70,7 +70,7 @@ async def read_concurrency_limit(
 @router.get("/tag/{tag}")
 async def read_concurrency_limit_by_tag(
     tag: str = Path(..., description="The tag name", alias="tag"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.ConcurrencyLimit:
     """
     Get a concurrency limit by tag.
@@ -95,7 +95,7 @@ async def read_concurrency_limit_by_tag(
 async def read_concurrency_limits(
     limit: int = dependencies.LimitBody(),
     offset: int = Body(0, ge=0),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> Sequence[schemas.core.ConcurrencyLimit]:
     """
     Query for concurrency limits.
@@ -119,7 +119,7 @@ async def reset_concurrency_limit_by_tag(
         embed=True,
         description="Manual override for active concurrency limit slots.",
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         model = await models.concurrency_limits.reset_concurrency_limit_by_tag(
@@ -136,7 +136,7 @@ async def delete_concurrency_limit(
     concurrency_limit_id: UUID = Path(
         ..., description="The concurrency limit id", alias="id"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         result = await models.concurrency_limits.delete_concurrency_limit(
@@ -151,7 +151,7 @@ async def delete_concurrency_limit(
 @router.delete("/tag/{tag}")
 async def delete_concurrency_limit_by_tag(
     tag: str = Path(..., description="The tag name"),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         result = await models.concurrency_limits.delete_concurrency_limit_by_tag(
@@ -180,7 +180,7 @@ async def increment_concurrency_limits_v1(
     task_run_id: UUID = Body(
         ..., description="The ID of the task run acquiring the slot"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[MinimalConcurrencyLimitResponse]:
     applied_limits = {}
 
@@ -218,7 +218,7 @@ async def increment_concurrency_limits_v1(
                         stale_limit.active_slots = list(active_slots)
 
                     raise Delay(
-                        delay_seconds=PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS.value(),
+                        delay_seconds=SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS.value(),
                         reason=f"Concurrency limit for the {tag} tag has been reached",
                     )
                 else:
@@ -263,7 +263,7 @@ async def decrement_concurrency_limits_v1(
     task_run_id: UUID = Body(
         ..., description="The ID of the task run releasing the slot"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     async with db.session_context(begin_transaction=True) as session:
         filtered_limits = (

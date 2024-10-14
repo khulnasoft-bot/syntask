@@ -2,7 +2,7 @@ import abc
 
 import pytest
 
-from prefect.utilities.dispatch import (
+from syntask.utilities.dispatch import (
     _TYPE_REGISTRIES,
     get_dispatch_key,
     get_registry_for_type,

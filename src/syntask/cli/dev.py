@@ -1,5 +1,5 @@
 """
-Command line interface for working with Prefect Server
+Command line interface for working with Syntask Server
 """
 
 import json
@@ -17,40 +17,40 @@ from typing import Optional
 import anyio
 import typer
 
-import prefect
-from prefect.cli._types import PrefectTyper, SettingsOption
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app
-from prefect.settings import (
-    PREFECT_SERVER_API_HOST,
-    PREFECT_SERVER_API_PORT,
+import syntask
+from syntask.cli._types import SettingsOption, SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app
+from syntask.settings import (
+    SYNTASK_SERVER_API_HOST,
+    SYNTASK_SERVER_API_PORT,
 )
-from prefect.utilities.dockerutils import get_prefect_image_name, python_version_minor
-from prefect.utilities.filesystem import tmpchdir
-from prefect.utilities.processutils import run_process
+from syntask.utilities.dockerutils import get_syntask_image_name, python_version_minor
+from syntask.utilities.filesystem import tmpchdir
+from syntask.utilities.processutils import run_process
 
 DEV_HELP = """
-Internal Prefect development.
+Internal Syntask development.
 
 Note that many of these commands require extra dependencies (such as npm and MkDocs)
 to function properly.
 """
-dev_app = PrefectTyper(
-    name="dev", short_help="Internal Prefect development.", help=DEV_HELP
+dev_app = SyntaskTyper(
+    name="dev", short_help="Internal Syntask development.", help=DEV_HELP
 )
 app.add_typer(dev_app)
 
 
 def exit_with_error_if_not_editable_install():
     if (
-        prefect.__module_path__.parent == "site-packages"
-        or not (prefect.__development_base_path__ / "setup.py").exists()
+        syntask.__module_path__.parent == "site-packages"
+        or not (syntask.__development_base_path__ / "setup.py").exists()
     ):
         exit_with_error(
-            "Development commands require an editable Prefect installation. "
-            "Development commands require content outside of the 'prefect' module  "
+            "Development commands require an editable Syntask installation. "
+            "Development commands require content outside of the 'syntask' module  "
             "which is not available when installed into your site-packages. "
-            f"Detected module path: {prefect.__module_path__}."
+            f"Detected module path: {syntask.__module_path__}."
         )
 
 
@@ -61,13 +61,13 @@ def build_docs(schema_path: Optional[str] = None):
     """
     exit_with_error_if_not_editable_install()
 
-    from prefect.server.api.server import create_app
+    from syntask.server.api.server import create_app
 
     schema = create_app(ephemeral=True).openapi()
 
     if not schema_path:
         path_to_schema = (
-            prefect.__development_base_path__ / "docs" / "api-ref" / "schema.json"
+            syntask.__development_base_path__ / "docs" / "api-ref" / "schema.json"
         ).absolute()
     else:
         path_to_schema = os.path.abspath(schema_path)
@@ -81,7 +81,7 @@ def build_docs(schema_path: Optional[str] = None):
 BUILD_UI_HELP = f"""
 Installs dependencies and builds UI locally.
 
-The built UI will be located at {prefect.__development_base_path__ / "ui"}
+The built UI will be located at {syntask.__development_base_path__ / "ui"}
 
 Requires npm.
 """
@@ -92,7 +92,7 @@ def build_ui(
     no_install: bool = False,
 ):
     exit_with_error_if_not_editable_install()
-    with tmpchdir(prefect.__development_base_path__ / "ui"):
+    with tmpchdir(syntask.__development_base_path__ / "ui"):
         if not no_install:
             app.console.print("Installing npm packages...")
             try:
@@ -108,13 +108,13 @@ def build_ui(
                 ["npm", "run", "build"], env=env, shell=sys.platform == "win32"
             )
 
-    with tmpchdir(prefect.__development_base_path__):
-        if os.path.exists(prefect.__ui_static_path__):
+    with tmpchdir(syntask.__development_base_path__):
+        if os.path.exists(syntask.__ui_static_path__):
             app.console.print("Removing existing build files...")
-            shutil.rmtree(prefect.__ui_static_path__)
+            shutil.rmtree(syntask.__ui_static_path__)
 
         app.console.print("Copying build into src...")
-        shutil.copytree("ui/dist", prefect.__ui_static_path__)
+        shutil.copytree("ui/dist", syntask.__ui_static_path__)
 
     app.console.print("Complete!")
 
@@ -125,7 +125,7 @@ async def ui():
     Starts a hot-reloading development UI.
     """
     exit_with_error_if_not_editable_install()
-    with tmpchdir(prefect.__development_base_path__ / "ui"):
+    with tmpchdir(syntask.__development_base_path__ / "ui"):
         app.console.print("Installing npm packages...")
         await run_process(["npm", "install"], stream_output=True)
 
@@ -135,8 +135,8 @@ async def ui():
 
 @dev_app.command()
 async def api(
-    host: str = SettingsOption(PREFECT_SERVER_API_HOST),
-    port: int = SettingsOption(PREFECT_SERVER_API_PORT),
+    host: str = SettingsOption(SYNTASK_SERVER_API_HOST),
+    port: int = SettingsOption(SYNTASK_SERVER_API_PORT),
     log_level: str = "DEBUG",
     services: bool = True,
 ):
@@ -146,16 +146,16 @@ async def api(
     import watchfiles
 
     server_env = os.environ.copy()
-    server_env["PREFECT_API_SERVICES_RUN_IN_APP"] = str(services)
-    server_env["PREFECT_API_SERVICES_UI"] = "False"
-    server_env["PREFECT_UI_API_URL"] = f"http://{host}:{port}/api"
+    server_env["SYNTASK_API_SERVICES_RUN_IN_APP"] = str(services)
+    server_env["SYNTASK_API_SERVICES_UI"] = "False"
+    server_env["SYNTASK_UI_API_URL"] = f"http://{host}:{port}/api"
 
     command = [
         sys.executable,
         "-m",
         "uvicorn",
         "--factory",
-        "prefect.server.api.server:create_app",
+        "syntask.server.api.server:create_app",
         "--host",
         str(host),
         "--port",
@@ -176,11 +176,11 @@ async def api(
         try:
             server_pid = await tg.start(start_command)
             async for _ in watchfiles.awatch(
-                prefect.__module_path__,
+                syntask.__module_path__,
                 stop_event=stop_event,  # type: ignore
             ):
                 # when any watched files change, restart the server
-                app.console.print("Restarting Prefect Server...")
+                app.console.print("Restarting Syntask Server...")
                 os.kill(server_pid, signal.SIGTERM)  # type: ignore
                 # start a new server
                 server_pid = await tg.start(start_command)
@@ -220,8 +220,8 @@ async def start(
                     # task group is async, so we need use the wrapped function
                     # directly
                     api.aio,
-                    host=PREFECT_SERVER_API_HOST.value(),
-                    port=PREFECT_SERVER_API_PORT.value(),
+                    host=SYNTASK_SERVER_API_HOST.value(),
+                    port=SYNTASK_SERVER_API_PORT.value(),
                 )
             )
         if not exclude_ui:
@@ -264,26 +264,26 @@ def build_image(
     arch = arch or platform.machine()
     python_version = python_version or python_version_minor()
 
-    tag = get_prefect_image_name(python_version=python_version, flavor=flavor)
+    tag = get_syntask_image_name(python_version=python_version, flavor=flavor)
 
     # Here we use a subprocess instead of the docker-py client to easily stream output
     # as it comes
     command = [
         "docker",
         "build",
-        str(prefect.__development_base_path__),
+        str(syntask.__development_base_path__),
         "--tag",
         tag,
         "--platform",
         f"linux/{arch}",
         "--build-arg",
-        "PREFECT_EXTRAS=[dev]",
+        "SYNTASK_EXTRAS=[dev]",
         "--build-arg",
         f"PYTHON_VERSION={python_version}",
     ]
 
     if flavor:
-        command += ["--build-arg", f"BASE_IMAGE=prefect-{flavor}"]
+        command += ["--build-arg", f"BASE_IMAGE=syntask-{flavor}"]
 
     if dry_run:
         print(" ".join(command))
@@ -299,7 +299,7 @@ def build_image(
 
 @dev_app.command()
 def container(
-    bg: bool = False, name="prefect-dev", api: bool = True, tag: Optional[str] = None
+    bg: bool = False, name="syntask-dev", api: bool = True, tag: Optional[str] = None
 ):
     """
     Run a docker container with local code mounted and installed.
@@ -318,8 +318,8 @@ def container(
             "the existing container."
         )
 
-    blocking_cmd = "prefect dev api" if api else "sleep infinity"
-    tag = tag or get_prefect_image_name()
+    blocking_cmd = "syntask dev api" if api else "sleep infinity"
+    tag = tag or get_syntask_image_name()
 
     container: Container = client.containers.create(
         image=tag,
@@ -327,14 +327,14 @@ def container(
             "/bin/bash",
             "-c",
             (  # noqa
-                "pip install -e /opt/prefect/repo\\[dev\\] && touch /READY &&"
+                "pip install -e /opt/syntask/repo\\[dev\\] && touch /READY &&"
                 f" {blocking_cmd}"
             ),
         ],
         name=name,
         auto_remove=True,
-        working_dir="/opt/prefect/repo",
-        volumes=[f"{prefect.__development_base_path__}:/opt/prefect/repo"],
+        working_dir="/opt/syntask/repo",
+        volumes=[f"{syntask.__development_base_path__}:/opt/syntask/repo"],
         shm_size="4G",
     )
 
@@ -394,19 +394,19 @@ def kubernetes_manifest():
     Generates a Kubernetes manifest for development.
 
     Example:
-        $ prefect dev kubernetes-manifest | kubectl apply -f -
+        $ syntask dev kubernetes-manifest | kubectl apply -f -
     """
     exit_with_error_if_not_editable_install()
 
     template = Template(
         (
-            prefect.__module_path__ / "cli" / "templates" / "kubernetes-dev.yaml"
+            syntask.__module_path__ / "cli" / "templates" / "kubernetes-dev.yaml"
         ).read_text()
     )
     manifest = template.substitute(
         {
-            "prefect_root_directory": prefect.__development_base_path__,
-            "image_name": get_prefect_image_name(),
+            "syntask_root_directory": syntask.__development_base_path__,
+            "image_name": get_syntask_image_name(),
         }
     )
     print(manifest)

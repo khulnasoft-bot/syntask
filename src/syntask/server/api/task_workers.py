@@ -3,11 +3,11 @@ from typing import List, Optional
 from fastapi import Body
 from pydantic import BaseModel
 
-from prefect.server import models
-from prefect.server.models.task_workers import TaskWorkerResponse
-from prefect.server.utilities.server import PrefectRouter
+from syntask.server import models
+from syntask.server.models.task_workers import TaskWorkerResponse
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="/task_workers", tags=["Task Workers"])
+router = SyntaskRouter(prefix="/task_workers", tags=["Task Workers"])
 
 
 class TaskWorkerFilter(BaseModel):

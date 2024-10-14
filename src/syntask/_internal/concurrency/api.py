@@ -18,12 +18,12 @@ from typing import (
 
 from typing_extensions import ParamSpec
 
-from prefect._internal.concurrency.threads import (
+from syntask._internal.concurrency.threads import (
     WorkerThread,
     get_global_loop,
     in_global_loop,
 )
-from prefect._internal.concurrency.waiters import (
+from syntask._internal.concurrency.waiters import (
     AsyncWaiter,
     Call,
     SyncWaiter,

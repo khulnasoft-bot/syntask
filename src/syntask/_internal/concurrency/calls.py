@@ -22,14 +22,14 @@ from typing import Any, Awaitable, Callable, Dict, Generic, Optional, Tuple, Typ
 
 from typing_extensions import ParamSpec
 
-from prefect._internal.concurrency import logger
-from prefect._internal.concurrency.cancellation import (
+from syntask._internal.concurrency import logger
+from syntask._internal.concurrency.cancellation import (
     CancelledError,
     cancel_async_at,
     cancel_sync_at,
     get_deadline,
 )
-from prefect._internal.concurrency.event_loop import get_running_loop
+from syntask._internal.concurrency.event_loop import get_running_loop
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -166,7 +166,7 @@ class Future(concurrent.futures.Future):
         try:
             with self._condition:
                 if self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]:
-                    # Raise Prefect cancelled error instead of
+                    # Raise Syntask cancelled error instead of
                     # `concurrent.futures._base.CancelledError`
                     raise CancelledError()
                 elif self._state == FINISHED:
@@ -175,7 +175,7 @@ class Future(concurrent.futures.Future):
                 self._condition.wait(timeout)
 
                 if self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]:
-                    # Raise Prefect cancelled error instead of
+                    # Raise Syntask cancelled error instead of
                     # `concurrent.futures._base.CancelledError`
                     raise CancelledError()
                 elif self._state == FINISHED:

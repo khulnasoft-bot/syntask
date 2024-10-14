@@ -2,9 +2,9 @@ import pendulum
 import pytest
 from pydantic_extra_types.pendulum_dt import DateTime
 
-from prefect.server import models, schemas
-from prefect.server.api.ui.flows import SimpleNextFlowRun
-from prefect.server.database import orm_models
+from syntask.server import models, schemas
+from syntask.server.api.ui.flows import SimpleNextFlowRun
+from syntask.server.database import orm_models
 
 
 @pytest.fixture

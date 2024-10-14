@@ -24,37 +24,37 @@ from uuid import UUID
 
 from typing_extensions import ParamSpec
 
-from prefect import Task
-from prefect.client.orchestration import SyncPrefectClient, get_client
-from prefect.client.schemas import FlowRun, TaskRun
-from prefect.client.schemas.filters import FlowRunFilter
-from prefect.client.schemas.sorting import FlowRunSort
-from prefect.concurrency.context import ConcurrencyContext
-from prefect.concurrency.v1.context import ConcurrencyContext as ConcurrencyContextV1
-from prefect.context import FlowRunContext, SyncClientContext, TagsContext
-from prefect.exceptions import (
+from syntask import Task
+from syntask.client.orchestration import SyncSyntaskClient, get_client
+from syntask.client.schemas import FlowRun, TaskRun
+from syntask.client.schemas.filters import FlowRunFilter
+from syntask.client.schemas.sorting import FlowRunSort
+from syntask.concurrency.context import ConcurrencyContext
+from syntask.concurrency.v1.context import ConcurrencyContext as ConcurrencyContextV1
+from syntask.context import FlowRunContext, SyncClientContext, TagsContext
+from syntask.exceptions import (
     Abort,
     Pause,
-    PrefectException,
+    SyntaskException,
     TerminationSignal,
     UpstreamTaskError,
 )
-from prefect.flows import Flow, load_flow_from_entrypoint, load_flow_from_flow_run
-from prefect.futures import PrefectFuture, resolve_futures_to_states
-from prefect.logging.loggers import (
+from syntask.flows import Flow, load_flow_from_entrypoint, load_flow_from_flow_run
+from syntask.futures import SyntaskFuture, resolve_futures_to_states
+from syntask.logging.loggers import (
     flow_run_logger,
     get_logger,
     get_run_logger,
     patch_print,
 )
-from prefect.results import (
+from syntask.results import (
     BaseResult,
     ResultStore,
     get_result_store,
     should_persist_result,
 )
-from prefect.settings import PREFECT_DEBUG_MODE
-from prefect.states import (
+from syntask.settings import SYNTASK_DEBUG_MODE
+from syntask.states import (
     Failed,
     Pending,
     Running,
@@ -63,15 +63,15 @@ from prefect.states import (
     exception_to_failed_state,
     return_value_to_state,
 )
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.asyncutils import run_coro_as_sync
-from prefect.utilities.callables import (
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.asyncutils import run_coro_as_sync
+from syntask.utilities.callables import (
     call_with_parameters,
     get_call_parameters,
     parameters_to_args_kwargs,
 )
-from prefect.utilities.collections import visit_collection
-from prefect.utilities.engine import (
+from syntask.utilities.collections import visit_collection
+from syntask.utilities.engine import (
     _get_hook_name,
     _resolve_custom_flow_run_name,
     capture_sigterm,
@@ -79,8 +79,8 @@ from prefect.utilities.engine import (
     propose_state_sync,
     resolve_to_final_result,
 )
-from prefect.utilities.timeout import timeout, timeout_async
-from prefect.utilities.urls import url_for
+from syntask.utilities.timeout import timeout, timeout_async
+from syntask.utilities.urls import url_for
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -92,9 +92,9 @@ class FlowRunTimeoutError(TimeoutError):
 
 def load_flow_and_flow_run(flow_run_id: UUID) -> Tuple[FlowRun, Flow]:
     ## TODO: add error handling to update state and log tracebacks
-    entrypoint = os.environ.get("PREFECT__FLOW_ENTRYPOINT")
+    entrypoint = os.environ.get("SYNTASK__FLOW_ENTRYPOINT")
 
-    client = cast(SyncPrefectClient, get_client(sync_client=True))
+    client = cast(SyncSyntaskClient, get_client(sync_client=True))
 
     flow_run = client.read_flow_run(flow_run_id)
     if entrypoint:
@@ -115,13 +115,13 @@ class FlowRunEngine(Generic[P, R]):
     flow_run: Optional[FlowRun] = None
     flow_run_id: Optional[UUID] = None
     logger: logging.Logger = field(default_factory=lambda: get_logger("engine"))
-    wait_for: Optional[Iterable[PrefectFuture]] = None
+    wait_for: Optional[Iterable[SyntaskFuture]] = None
     # holds the return value from the user code
     _return_value: Union[R, Type[NotSet]] = NotSet
     # holds the exception raised by the user code, if any
     _raised: Union[Exception, Type[NotSet]] = NotSet
     _is_started: bool = False
-    _client: Optional[SyncPrefectClient] = None
+    _client: Optional[SyncSyntaskClient] = None
     short_circuit: bool = False
     _flow_run_name_set: bool = False
 
@@ -133,7 +133,7 @@ class FlowRunEngine(Generic[P, R]):
             self.parameters = {}
 
     @property
-    def client(self) -> SyncPrefectClient:
+    def client(self) -> SyncSyntaskClient:
         if not self._is_started or self._client is None:
             raise RuntimeError("Engine has not started.")
         return self._client
@@ -160,7 +160,7 @@ class FlowRunEngine(Generic[P, R]):
             except UpstreamTaskError:
                 raise
             except Exception as exc:
-                raise PrefectException(
+                raise SyntaskException(
                     f"Failed to resolve inputs in parameter {parameter!r}. If your"
                     " parameter type is not supported, consider using the `quote`"
                     " annotation to skip resolution of inputs."
@@ -257,7 +257,7 @@ class FlowRunEngine(Generic[P, R]):
 
         # This is a fall through case which leans on the existing state result mechanics to get the
         # return value. This is necessary because we currently will return a State object if the
-        # the State was Prefect-created.
+        # the State was Syntask-created.
         # TODO: Remove the need to get the result from a State except in cases where the return value
         # is a State object.
         _result = self.state.result(raise_on_failure=raise_on_failure, fetch=True)  # type: ignore
@@ -339,7 +339,7 @@ class FlowRunEngine(Generic[P, R]):
     def load_subflow_run(
         self,
         parent_task_run: TaskRun,
-        client: SyncPrefectClient,
+        client: SyncSyntaskClient,
         context: FlowRunContext,
     ) -> Union[FlowRun, None]:
         """
@@ -385,7 +385,7 @@ class FlowRunEngine(Generic[P, R]):
                 self._return_value = loaded_flow_run.state
                 return loaded_flow_run
 
-    def create_flow_run(self, client: SyncPrefectClient) -> FlowRun:
+    def create_flow_run(self, client: SyncSyntaskClient) -> FlowRun:
         flow_run_ctx = FlowRunContext.get()
         parameters = self.parameters or {}
 
@@ -442,7 +442,7 @@ class FlowRunEngine(Generic[P, R]):
 
         enable_cancellation_and_crashed_hooks = (
             os.environ.get(
-                "PREFECT__ENABLE_CANCELLATION_AND_CRASHED_HOOKS", "true"
+                "SYNTASK__ENABLE_CANCELLATION_AND_CRASHED_HOOKS", "true"
             ).lower()
             == "true"
         )
@@ -488,8 +488,8 @@ class FlowRunEngine(Generic[P, R]):
                 self.logger.info(f"Hook {hook_name!r} finished running successfully")
 
     @contextmanager
-    def setup_run_context(self, client: Optional[SyncPrefectClient] = None):
-        from prefect.utilities.engine import (
+    def setup_run_context(self, client: Optional[SyncSyntaskClient] = None):
+        from syntask.utilities.engine import (
             should_log_prints,
         )
 
@@ -600,7 +600,7 @@ class FlowRunEngine(Generic[P, R]):
             finally:
                 # If debugging, use the more complete `repr` than the usual `str` description
                 display_state = (
-                    repr(self.state) if PREFECT_DEBUG_MODE else str(self.state)
+                    repr(self.state) if SYNTASK_DEBUG_MODE else str(self.state)
                 )
                 self.logger.log(
                     level=logging.INFO if self.state.is_completed() else logging.ERROR,
@@ -683,7 +683,7 @@ def run_flow_sync(
     flow: Flow[P, R],
     flow_run: Optional[FlowRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
 ) -> Union[R, State, None]:
     engine = FlowRunEngine[P, R](
@@ -705,7 +705,7 @@ async def run_flow_async(
     flow: Flow[P, R],
     flow_run: Optional[FlowRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
 ) -> Union[R, State, None]:
     engine = FlowRunEngine[P, R](
@@ -724,7 +724,7 @@ def run_generator_flow_sync(
     flow: Flow[P, R],
     flow_run: Optional[FlowRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
 ) -> Generator[R, None, None]:
     if return_type != "result":
@@ -760,7 +760,7 @@ async def run_generator_flow_async(
     flow: Flow[P, R],
     flow_run: Optional[FlowRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
 ) -> AsyncGenerator[R, None]:
     if return_type != "result":
@@ -798,7 +798,7 @@ def run_flow(
     flow: Flow[P, R],
     flow_run: Optional[FlowRun] = None,
     parameters: Optional[Dict[str, Any]] = None,
-    wait_for: Optional[Iterable[PrefectFuture]] = None,
+    wait_for: Optional[Iterable[SyntaskFuture]] = None,
     return_type: Literal["state", "result"] = "result",
 ) -> Union[R, State, None]:
     kwargs = dict(

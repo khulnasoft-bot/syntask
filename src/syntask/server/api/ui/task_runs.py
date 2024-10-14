@@ -8,22 +8,22 @@ from fastapi import Depends, HTTPException, status
 from pydantic import Field, model_serializer
 from pydantic_extra_types.pendulum_dt import DateTime
 
-import prefect.server.schemas as schemas
-from prefect._internal.schemas.bases import PrefectBaseModel
-from prefect.logging import get_logger
-from prefect.server import models
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.utilities.server import PrefectRouter
+import syntask.server.schemas as schemas
+from syntask._internal.schemas.bases import SyntaskBaseModel
+from syntask.logging import get_logger
+from syntask.server import models
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.utilities.server import SyntaskRouter
 
 logger = get_logger("orion.api.ui.task_runs")
 
-router = PrefectRouter(prefix="/ui/task_runs", tags=["Task Runs", "UI"])
+router = SyntaskRouter(prefix="/ui/task_runs", tags=["Task Runs", "UI"])
 
 FAILED_STATES = [schemas.states.StateType.CRASHED, schemas.states.StateType.FAILED]
 
 
-class TaskRunCount(PrefectBaseModel):
+class TaskRunCount(SyntaskBaseModel):
     completed: int = Field(
         default=..., description="The number of completed task runs."
     )
@@ -38,7 +38,7 @@ class TaskRunCount(PrefectBaseModel):
 
 
 def _postgres_bucket_expression(
-    db: PrefectDBInterface, delta: pendulum.Duration, start_datetime: datetime
+    db: SyntaskDBInterface, delta: pendulum.Duration, start_datetime: datetime
 ):
     # asyncpg under Python 3.7 doesn't support timezone-aware datetimes for the EXTRACT
     # function, so we will send it as a naive datetime in UTC
@@ -55,7 +55,7 @@ def _postgres_bucket_expression(
 
 
 def _sqlite_bucket_expression(
-    db: PrefectDBInterface, delta: pendulum.Duration, start_datetime: datetime
+    db: SyntaskDBInterface, delta: pendulum.Duration, start_datetime: datetime
 ):
     return sa.func.floor(
         (
@@ -76,7 +76,7 @@ async def read_dashboard_task_run_counts(
     deployments: Optional[schemas.filters.DeploymentFilter] = None,
     work_pools: Optional[schemas.filters.WorkPoolFilter] = None,
     work_queues: Optional[schemas.filters.WorkQueueFilter] = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[TaskRunCount]:
     if task_runs.start_time is None or task_runs.start_time.after_ is None:
         raise HTTPException(
@@ -197,7 +197,7 @@ async def read_task_run_counts_by_state(
     flow_runs: Optional[schemas.filters.FlowRunFilter] = None,
     task_runs: Optional[schemas.filters.TaskRunFilter] = None,
     deployments: Optional[schemas.filters.DeploymentFilter] = None,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.states.CountByState:
     async with db.session_context(begin_transaction=False) as session:
         return await models.task_runs.count_task_runs_by_state(

@@ -11,12 +11,12 @@ import pytest
 import readchar
 from typer import Exit
 
-from prefect.cli.server import PID_FILE
-from prefect.context import get_settings_context
-from prefect.settings import (
-    PREFECT_API_URL,
-    PREFECT_HOME,
-    PREFECT_PROFILES_PATH,
+from syntask.cli.server import PID_FILE
+from syntask.context import get_settings_context
+from syntask.settings import (
+    SYNTASK_API_URL,
+    SYNTASK_HOME,
+    SYNTASK_PROFILES_PATH,
     Profile,
     ProfilesCollection,
     get_current_settings,
@@ -24,9 +24,9 @@ from prefect.settings import (
     save_profiles,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.fixtures import is_port_in_use
-from prefect.utilities.processutils import open_process
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.fixtures import is_port_in_use
+from syntask.utilities.processutils import open_process
 
 POLL_INTERVAL = 0.5
 STARTUP_TIMEOUT = 20
@@ -58,7 +58,7 @@ async def start_server_process():
     # Will connect to the same database as normal test clients
     async with open_process(
         command=[
-            "prefect",
+            "syntask",
             "server",
             "start",
             "--host",
@@ -111,11 +111,11 @@ class TestBackgroundServer:
                 str(unused_tcp_port),
                 "--background",
             ],
-            expected_output_contains="The Prefect server is running in the background.",
+            expected_output_contains="The Syntask server is running in the background.",
             expected_code=0,
         )
 
-        pid_file = PREFECT_HOME.value() / "server.pid"
+        pid_file = SYNTASK_HOME.value() / "server.pid"
         assert pid_file.exists(), "Server PID file does not exist"
 
         invoke_and_assert(
@@ -128,7 +128,7 @@ class TestBackgroundServer:
         )
 
         assert not (
-            PREFECT_HOME.value() / "server.pid"
+            SYNTASK_HOME.value() / "server.pid"
         ).exists(), "Server PID file exists"
 
     def test_start_duplicate_background_server(self, unused_tcp_port_factory):
@@ -141,7 +141,7 @@ class TestBackgroundServer:
                 str(port_1),
                 "--background",
             ],
-            expected_output_contains="The Prefect server is running in the background.",
+            expected_output_contains="The Syntask server is running in the background.",
             expected_code=0,
         )
 
@@ -183,7 +183,7 @@ class TestBackgroundServer:
             )
 
     def test_start_port_in_use_by_background_server(self, unused_tcp_port):
-        pid_file = PREFECT_HOME.value() / PID_FILE
+        pid_file = SYNTASK_HOME.value() / PID_FILE
         pid_file.write_text("99999")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("127.0.0.1", unused_tcp_port))
@@ -201,7 +201,7 @@ class TestBackgroundServer:
             )
 
     def test_stop_stale_pid_file(self, unused_tcp_port):
-        pid_file = PREFECT_HOME.value() / PID_FILE
+        pid_file = SYNTASK_HOME.value() / PID_FILE
         pid_file.write_text("99999")
 
         invoke_and_assert(
@@ -215,7 +215,7 @@ class TestBackgroundServer:
         )
 
         assert not (
-            PREFECT_HOME.value() / "server.pid"
+            SYNTASK_HOME.value() / "server.pid"
         ).exists(), "Server PID file exists"
 
 
@@ -332,7 +332,7 @@ class TestUvicornSignalForwarding:
 class TestPrestartCheck:
     @pytest.fixture(autouse=True)
     def interactive_console(self, monkeypatch):
-        monkeypatch.setattr("prefect.cli.server.is_interactive", lambda: True)
+        monkeypatch.setattr("syntask.cli.server.is_interactive", lambda: True)
 
         # `readchar` does not like the fake stdin provided by typer isolation so we provide
         # a version that does not require a fd to be attached
@@ -351,7 +351,7 @@ class TestPrestartCheck:
     @pytest.fixture(autouse=True)
     def temporary_profiles_path(self, tmp_path):
         path = tmp_path / "profiles.toml"
-        with temporary_settings({PREFECT_PROFILES_PATH: path}):
+        with temporary_settings({SYNTASK_PROFILES_PATH: path}):
             save_profiles(
                 profiles=ProfilesCollection(profiles=[get_settings_context().profile])
             )
@@ -389,11 +389,11 @@ class TestPrestartCheck:
                 profiles=[
                     Profile(
                         name="local-server",
-                        settings={PREFECT_API_URL: "http://127.0.0.1:4200/api"},
+                        settings={SYNTASK_API_URL: "http://127.0.0.1:4200/api"},
                     ),
                     Profile(
                         name="local",
-                        settings={PREFECT_API_URL: "http://127.0.0.1:4200/api"},
+                        settings={SYNTASK_API_URL: "http://127.0.0.1:4200/api"},
                     ),
                     get_settings_context().profile,
                 ]

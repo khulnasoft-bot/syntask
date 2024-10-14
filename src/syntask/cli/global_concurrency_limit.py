@@ -9,20 +9,20 @@ from pydantic import ValidationError
 from rich.pretty import Pretty
 from rich.table import Table
 
-from prefect.cli._types import PrefectTyper
-from prefect.cli._utilities import exit_with_error, exit_with_success
-from prefect.cli.root import app, is_interactive
-from prefect.client.orchestration import get_client
-from prefect.client.schemas.actions import (
+from syntask.cli._types import SyntaskTyper
+from syntask.cli._utilities import exit_with_error, exit_with_success
+from syntask.cli.root import app, is_interactive
+from syntask.client.orchestration import get_client
+from syntask.client.schemas.actions import (
     GlobalConcurrencyLimitCreate,
     GlobalConcurrencyLimitUpdate,
 )
-from prefect.exceptions import (
+from syntask.exceptions import (
     ObjectNotFound,
-    PrefectHTTPStatusError,
+    SyntaskHTTPStatusError,
 )
 
-global_concurrency_limit_app = PrefectTyper(
+global_concurrency_limit_app = SyntaskTyper(
     name="global-concurrency-limit",
     help="Manage global concurrency limits.",
 )
@@ -46,7 +46,7 @@ async def list_global_concurrency_limits():
 
     table = Table(
         title="Global Concurrency Limits",
-        caption="List Global Concurrency Limits using `prefect global-concurrency-limit ls`",
+        caption="List Global Concurrency Limits using `syntask global-concurrency-limit ls`",
         show_header=True,
     )
 
@@ -256,11 +256,11 @@ async def update_global_concurrency_limit(
         slot_decay_per_second (Optional[float]): The slot decay per second.
 
     Examples:
-        $ prefect global-concurrency-limit update my-gcl --limit 10
-        $ prefect gcl update my-gcl --active-slots 5
-        $ prefect gcl update my-gcl --slot-decay-per-second 0.5
-        $ prefect gcl update my-gcl --enable
-        $ prefect gcl update my-gcl --disable --limit 5
+        $ syntask global-concurrency-limit update my-gcl --limit 10
+        $ syntask gcl update my-gcl --active-slots 5
+        $ syntask gcl update my-gcl --slot-decay-per-second 0.5
+        $ syntask gcl update my-gcl --enable
+        $ syntask gcl update my-gcl --disable --limit 5
     """
     gcl = GlobalConcurrencyLimitUpdate()
 
@@ -300,7 +300,7 @@ async def update_global_concurrency_limit(
             )
         except ObjectNotFound:
             exit_with_error(f"Global concurrency limit {name!r} not found.")
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             if exc.response.status_code == 422:
                 parsed_response = exc.response.json()
 
@@ -348,13 +348,13 @@ async def create_global_concurrency_limit(
 
     Examples:
 
-        $ prefect global-concurrency-limit create my-gcl --limit 10
+        $ syntask global-concurrency-limit create my-gcl --limit 10
 
-        $ prefect gcl create my-gcl --limit 5 --active-slots 3
+        $ syntask gcl create my-gcl --limit 5 --active-slots 3
 
-        $ prefect gcl create my-gcl --limit 5 --active-slots 3 --slot-decay-per-second 0.5
+        $ syntask gcl create my-gcl --limit 5 --active-slots 3 --slot-decay-per-second 0.5
 
-        $ prefect gcl create my-gcl --limit 5 --inactive
+        $ syntask gcl create my-gcl --limit 5 --inactive
     """
     async with get_client() as client:
         try:
@@ -383,12 +383,12 @@ async def create_global_concurrency_limit(
     async with get_client() as client:
         try:
             gcl_id = await client.create_global_concurrency_limit(concurrency_limit=gcl)
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             parsed_response = exc.response.json()
             exc = parsed_response["exception_detail"][0]["msg"]
 
             exit_with_error(f"Error updating global concurrency limit: {exc}")
 
     exit_with_success(
-        f"Created global concurrency limit with name {name!r} and ID '{gcl_id}'. Run `prefect gcl inspect {name}` to view details."
+        f"Created global concurrency limit with name {name!r} and ID '{gcl_id}'. Run `syntask gcl inspect {name}` to view details."
     )

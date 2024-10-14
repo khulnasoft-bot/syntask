@@ -4,7 +4,7 @@ Access attributes of the current task run dynamically.
 Note that if a task run cannot be discovered, all attributes will return empty values.
 
 You can mock the runtime attributes for testing purposes by setting environment variables
-prefixed with `PREFECT__RUNTIME__TASK_RUN`.
+prefixed with `SYNTASK__RUNTIME__TASK_RUN`.
 
 Available attributes:
     - `id`: the task run's unique ID
@@ -18,7 +18,7 @@ Available attributes:
 import os
 from typing import Any, Dict, List, Optional
 
-from prefect.context import TaskRunContext
+from syntask.context import TaskRunContext
 
 __all__ = ["id", "tags", "name", "parameters", "run_count", "task_name"]
 
@@ -37,14 +37,14 @@ def __getattr__(name: str) -> Any:
     """
     Attribute accessor for this submodule; note that imports also work with this:
 
-        from prefect.runtime.task_run import id
+        from syntask.runtime.task_run import id
     """
 
     func = FIELDS.get(name)
 
     # if `name` is an attribute but it is mocked through environment variable, the mocked type will be str,
     # which might be different from original one. For consistency, cast env var to the same type
-    env_key = f"PREFECT__RUNTIME__TASK_RUN__{name.upper()}"
+    env_key = f"SYNTASK__RUNTIME__TASK_RUN__{name.upper()}"
 
     if func is None:
         if env_key in os.environ:

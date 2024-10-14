@@ -309,7 +309,7 @@ Postgres: `d9d98a9ebb6f`
 
 ## Add configuration tables
 
-Adds a table for storing key / value configuration options for Prefect REST API in the database.
+Adds a table for storing key / value configuration options for Syntask REST API in the database.
 
 SQLite: `28ae48128c75`
 Postgres: `679e695af6ba`
@@ -332,7 +332,7 @@ Postgres: `5f376def75c3`
 
 Creates the database that previously was not managed by migrations.
 
-Upgrading to an existing database to use migrations requires the use of `prefect database alembic stamp` before a reset will drop existing tables.
+Upgrading to an existing database to use migrations requires the use of `syntask database alembic stamp` before a reset will drop existing tables.
 
 SQLite: `9725c1cbee35`
 Postgres: `25f4b90a7a42`

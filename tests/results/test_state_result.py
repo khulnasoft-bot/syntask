@@ -7,16 +7,16 @@ from unittest import mock
 
 import pytest
 
-import prefect.states
-from prefect.exceptions import UnfinishedRun
-from prefect.filesystems import LocalFileSystem, WritableFileSystem
-from prefect.results import (
+import syntask.states
+from syntask.exceptions import UnfinishedRun
+from syntask.filesystems import LocalFileSystem, WritableFileSystem
+from syntask.results import (
     ResultRecord,
     ResultRecordMetadata,
     ResultStore,
 )
-from prefect.serializers import JSONSerializer
-from prefect.states import State, StateType
+from syntask.serializers import JSONSerializer
+from syntask.states import State, StateType
 
 
 @pytest.mark.parametrize(
@@ -49,8 +49,8 @@ async def test_finished_states_allow_result_retrieval(state_type: StateType):
 def shorter_result_retries(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(prefect.states, "RESULT_READ_MAXIMUM_ATTEMPTS", 3)
-    monkeypatch.setattr(prefect.states, "RESULT_READ_RETRY_DELAY", 0.01)
+    monkeypatch.setattr(syntask.states, "RESULT_READ_MAXIMUM_ATTEMPTS", 3)
+    monkeypatch.setattr(syntask.states, "RESULT_READ_RETRY_DELAY", 0.01)
 
 
 @pytest.fixture
@@ -93,8 +93,8 @@ async def test_graceful_retries_are_finite_while_retrieving_missing_results(
 
     # it should have taken ~3 retries for this to raise
     expected_sleep = (
-        prefect.states.RESULT_READ_MAXIMUM_ATTEMPTS - 1
-    ) * prefect.states.RESULT_READ_RETRY_DELAY
+        syntask.states.RESULT_READ_MAXIMUM_ATTEMPTS - 1
+    ) * syntask.states.RESULT_READ_RETRY_DELAY
     elapsed = time.monotonic() - now
     assert elapsed >= expected_sleep
 
@@ -107,7 +107,7 @@ async def test_graceful_retries_reraise_last_error_while_retrieving_missing_resu
     now = time.monotonic()
     with pytest.raises(FileNotFoundError):
         with mock.patch(
-            "prefect.filesystems.LocalFileSystem.read_path",
+            "syntask.filesystems.LocalFileSystem.read_path",
             new=mock.AsyncMock(
                 side_effect=[
                     OSError,
@@ -119,10 +119,10 @@ async def test_graceful_retries_reraise_last_error_while_retrieving_missing_resu
             await completed_state.result()
 
     # the loop should have failed three times, sleeping 0.01s per error
-    assert m.call_count == prefect.states.RESULT_READ_MAXIMUM_ATTEMPTS
+    assert m.call_count == syntask.states.RESULT_READ_MAXIMUM_ATTEMPTS
     expected_sleep = (
-        prefect.states.RESULT_READ_MAXIMUM_ATTEMPTS - 1
-    ) * prefect.states.RESULT_READ_RETRY_DELAY
+        syntask.states.RESULT_READ_MAXIMUM_ATTEMPTS - 1
+    ) * syntask.states.RESULT_READ_RETRY_DELAY
     elapsed = time.monotonic() - now
     assert elapsed >= expected_sleep
 
@@ -147,7 +147,7 @@ async def test_graceful_retries_eventually_succeed_while(
     # even if it misses a couple times, it will eventually return the data
     now = time.monotonic()
     with mock.patch(
-        "prefect.filesystems.LocalFileSystem.read_path",
+        "syntask.filesystems.LocalFileSystem.read_path",
         new=mock.AsyncMock(
             side_effect=[
                 FileNotFoundError,
@@ -159,7 +159,7 @@ async def test_graceful_retries_eventually_succeed_while(
         assert await completed_state.result() == "test-graceful-retry"
 
     # the loop should have failed twice, then succeeded, sleeping 0.01s per failure
-    assert m.call_count == prefect.states.RESULT_READ_MAXIMUM_ATTEMPTS
-    expected_sleep = 2 * prefect.states.RESULT_READ_RETRY_DELAY
+    assert m.call_count == syntask.states.RESULT_READ_MAXIMUM_ATTEMPTS
+    expected_sleep = 2 * syntask.states.RESULT_READ_RETRY_DELAY
     elapsed = time.monotonic() - now
     assert elapsed >= expected_sleep

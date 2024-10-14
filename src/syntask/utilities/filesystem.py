@@ -14,7 +14,7 @@ import pathspec
 from fsspec.core import OpenFile
 from fsspec.implementations.local import LocalFileSystem
 
-import prefect
+import syntask
 
 
 def create_default_ignore_file(path: str) -> bool:
@@ -23,10 +23,10 @@ def create_default_ignore_file(path: str) -> bool:
     whether a file was created.
     """
     path = pathlib.Path(path)
-    ignore_file = path / ".prefectignore"
+    ignore_file = path / ".syntaskignore"
     if ignore_file.exists():
         return False
-    default_file = pathlib.Path(prefect.__module_path__) / ".prefectignore"
+    default_file = pathlib.Path(syntask.__module_path__) / ".syntaskignore"
     with ignore_file.open(mode="w") as f:
         f.write(default_file.read_text())
     return True

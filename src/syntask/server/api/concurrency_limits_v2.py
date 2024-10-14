@@ -3,22 +3,22 @@ from uuid import UUID
 
 from fastapi import Body, Depends, HTTPException, Path, status
 
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.server.api.dependencies import LimitBody
-from prefect.server.database.dependencies import provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas import actions
-from prefect.server.utilities.schemas import PrefectBaseModel
-from prefect.server.utilities.server import PrefectRouter
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.server.api.dependencies import LimitBody
+from syntask.server.database.dependencies import provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas import actions
+from syntask.server.utilities.schemas import SyntaskBaseModel
+from syntask.server.utilities.server import SyntaskRouter
 
-router = PrefectRouter(prefix="/v2/concurrency_limits", tags=["Concurrency Limits V2"])
+router = SyntaskRouter(prefix="/v2/concurrency_limits", tags=["Concurrency Limits V2"])
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_concurrency_limit_v2(
     concurrency_limit: actions.ConcurrencyLimitV2Create,
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.core.ConcurrencyLimitV2:
     async with db.session_context(begin_transaction=True) as session:
         model = await models.concurrency_limits_v2.create_concurrency_limit(
@@ -33,7 +33,7 @@ async def read_concurrency_limit_v2(
     id_or_name: Union[UUID, str] = Path(
         ..., description="The ID or name of the concurrency limit", alias="id_or_name"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> schemas.responses.GlobalConcurrencyLimitResponse:
     if isinstance(id_or_name, str):  # TODO: this seems like it shouldn't be necessary
         try:
@@ -62,7 +62,7 @@ async def read_concurrency_limit_v2(
 async def read_all_concurrency_limits_v2(
     limit: int = LimitBody(),
     offset: int = Body(0, ge=0),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[schemas.responses.GlobalConcurrencyLimitResponse]:
     async with db.session_context() as session:
         concurrency_limits = (
@@ -85,7 +85,7 @@ async def update_concurrency_limit_v2(
     id_or_name: Union[UUID, str] = Path(
         ..., description="The ID or name of the concurrency limit", alias="id_or_name"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     if isinstance(id_or_name, str):  # TODO: this seems like it shouldn't be necessary
         try:
@@ -115,7 +115,7 @@ async def delete_concurrency_limit_v2(
     id_or_name: Union[UUID, str] = Path(
         ..., description="The ID or name of the concurrency limit", alias="id_or_name"
     ),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ):
     if isinstance(id_or_name, str):  # TODO: this seems like it shouldn't be necessary
         try:
@@ -139,7 +139,7 @@ async def delete_concurrency_limit_v2(
         )
 
 
-class MinimalConcurrencyLimitResponse(PrefectBaseModel):
+class MinimalConcurrencyLimitResponse(SyntaskBaseModel):
     id: UUID
     name: str
     limit: int
@@ -151,7 +151,7 @@ async def bulk_increment_active_slots(
     names: List[str] = Body(..., min_items=1),
     mode: Literal["concurrency", "rate_limit"] = Body("concurrency"),
     create_if_missing: Optional[bool] = Body(None),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[MinimalConcurrencyLimitResponse]:
     async with db.session_context(begin_transaction=True) as session:
         limits = [
@@ -241,7 +241,7 @@ async def bulk_decrement_active_slots(
     names: List[str] = Body(..., min_items=1),
     occupancy_seconds: Optional[float] = Body(None, gt=0.0),
     create_if_missing: bool = Body(True),
-    db: PrefectDBInterface = Depends(provide_database_interface),
+    db: SyntaskDBInterface = Depends(provide_database_interface),
 ) -> List[MinimalConcurrencyLimitResponse]:
     async with db.session_context(begin_transaction=True) as session:
         limits = (

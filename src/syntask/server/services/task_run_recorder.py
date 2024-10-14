@@ -7,14 +7,14 @@ import pendulum
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.logging import get_logger
-from prefect.server.database.dependencies import db_injector, provide_database_interface
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.ordering import CausalOrdering, EventArrivedEarly
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.schemas.core import TaskRun
-from prefect.server.schemas.states import State
-from prefect.server.utilities.messaging import Message, MessageHandler, create_consumer
+from syntask.logging import get_logger
+from syntask.server.database.dependencies import db_injector, provide_database_interface
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.ordering import CausalOrdering, EventArrivedEarly
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.schemas.core import TaskRun
+from syntask.server.schemas.states import State
+from syntask.server.utilities.messaging import Message, MessageHandler, create_consumer
 
 logger = get_logger(__name__)
 
@@ -27,7 +27,7 @@ def causal_ordering():
 
 @db_injector
 async def _insert_task_run(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     task_run: TaskRun,
     task_run_attributes: Dict[str, Any],
@@ -53,7 +53,7 @@ async def _insert_task_run(
 
 @db_injector
 async def _insert_task_run_state(
-    db: PrefectDBInterface, session: AsyncSession, task_run: TaskRun
+    db: SyntaskDBInterface, session: AsyncSession, task_run: TaskRun
 ):
     await session.execute(
         db.insert(db.TaskRunState)
@@ -72,7 +72,7 @@ async def _insert_task_run_state(
 
 @db_injector
 async def _update_task_run_with_state(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     task_run: TaskRun,
     denormalized_state_attributes: Dict[str, Any],
@@ -91,11 +91,11 @@ async def _update_task_run_with_state(
 
 
 def task_run_from_event(event: ReceivedEvent) -> TaskRun:
-    task_run_id = event.resource.prefect_object_id("prefect.task-run")
+    task_run_id = event.resource.syntask_object_id("syntask.task-run")
 
     flow_run_id: Optional[UUID] = None
     if flow_run_resource := event.resource_in_role.get("flow-run"):
-        flow_run_id = flow_run_resource.prefect_object_id("prefect.flow-run")
+        flow_run_id = flow_run_resource.syntask_object_id("syntask.flow-run")
 
     state: State = State.model_validate(
         {
@@ -169,17 +169,17 @@ async def consumer() -> AsyncGenerator[MessageHandler, None]:
     async def message_handler(message: Message):
         event: ReceivedEvent = ReceivedEvent.model_validate_json(message.data)
 
-        if not event.event.startswith("prefect.task-run"):
+        if not event.event.startswith("syntask.task-run"):
             return
 
-        if not event.resource.get("prefect.orchestration") == "client":
+        if not event.resource.get("syntask.orchestration") == "client":
             return
 
         logger.debug(
             "Received event: %s with id: %s for resource: %s",
             event.event,
             event.id,
-            event.resource.get("prefect.resource.id"),
+            event.resource.get("syntask.resource.id"),
         )
 
         try:

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
-from prefect.server.schemas.actions import (
+from syntask.server.schemas.actions import (
     BlockTypeUpdate,
     DeploymentCreate,
     DeploymentScheduleCreate,
@@ -14,8 +14,8 @@ from prefect.server.schemas.actions import (
     WorkPoolCreate,
     WorkPoolUpdate,
 )
-from prefect.server.schemas.schedules import CronSchedule
-from prefect.settings import PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS
+from syntask.server.schemas.schedules import CronSchedule
+from syntask.settings import SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS
 
 
 @pytest.mark.parametrize(
@@ -394,7 +394,7 @@ class TestDeploymentScheduleValidation:
         [
             (
                 420000,
-                f"be less than or equal to {PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()}",
+                f"be less than or equal to {SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()}",
             ),
         ],
     )
@@ -434,7 +434,7 @@ class TestDeploymentScheduleValidation:
     )
     @pytest.mark.parametrize(
         "max_scheduled_runs",
-        [1, PREFECT_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()],
+        [1, SYNTASK_DEPLOYMENT_SCHEDULE_MAX_SCHEDULED_RUNS.value()],
     )
     def test_deployment_schedule_validation_success(
         self, schema_type, max_scheduled_runs

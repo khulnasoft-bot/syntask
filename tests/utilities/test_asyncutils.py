@@ -8,9 +8,9 @@ from functools import partial, wraps
 import anyio
 import pytest
 
-from prefect._internal.concurrency.threads import get_run_sync_loop
-from prefect.context import ContextModel
-from prefect.utilities.asyncutils import (
+from syntask._internal.concurrency.threads import get_run_sync_loop
+from syntask.context import ContextModel
+from syntask.utilities.asyncutils import (
     GatherIncomplete,
     LazySemaphore,
     add_event_loop_shutdown_callback,

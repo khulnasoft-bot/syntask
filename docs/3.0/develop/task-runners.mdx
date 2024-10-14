@@ -8,12 +8,12 @@ Calling a task function directly without a task runner executes the function in 
 which blocks execution of its flow until the task completes. 
 
 To enable concurrent, parallel, or distributed execution of tasks, use the `.submit()` method to submit a task to a _task runner_. 
-The default task runner in Prefect is the [`ThreadPoolTaskRunner`](https://prefect-python-sdk-docs.netlify.app/prefect/task-runners/#prefect.task_runners.ThreadPoolTaskRunner),
+The default task runner in Syntask is the [`ThreadPoolTaskRunner`](https://syntask-python-sdk-docs.netlify.app/syntask/task-runners/#syntask.task_runners.ThreadPoolTaskRunner),
 which runs tasks concurrently within a thread pool.
 For parallel or distributed task execution, you must additionally install one of the following task runners, available as integrations:
 
-- [`DaskTaskRunner`](https://github.com/synopkg/synopkg/tree/main/src/integrations/prefect-dask) can run tasks using [`dask.distributed`](http://distributed.dask.org/).
-- [`RayTaskRunner`](https://github.com/synopkg/synopkg/tree/main/src/integrations/prefect-ray) can run tasks using [Ray](https://www.ray.io/).
+- [`DaskTaskRunner`](https://github.com/synopkg/syntask/tree/main/src/integrations/prefect-dask) can run tasks using [`dask.distributed`](http://distributed.dask.org/).
+- [`RayTaskRunner`](https://github.com/synopkg/syntask/tree/main/src/integrations/syntask-ray) can run tasks using [Ray](https://www.ray.io/).
 
 <Note>
 **Concurrency vs. parallelism**
@@ -32,12 +32,12 @@ such as for operations mapped across a dataset.
 To configure your flow to use a specific task runner, provide the runner to the `task_runner` keyword of the flow decorator.
 
 To submit work to the runner, use the task's `.submit()` method.
-This method returns a [`PrefectFuture`](https://prefect-python-sdk-docs.netlify.app/prefect/futures/#prefect.futures.PrefectFuture), which is a Prefect object that contains:
+This method returns a [`SyntaskFuture`](https://syntask-python-sdk-docs.netlify.app/syntask/futures/#syntask.futures.SyntaskFuture), which is a Syntask object that contains:
 - a reference to the payload returned by the task;
-- and a [`State`](https://prefect-python-sdk-docs.netlify.app/prefect/server/schemas/states/), which is a Prefect object indicating the state of the task run.
+- and a [`State`](https://syntask-python-sdk-docs.netlify.app/syntask/server/schemas/states/), which is a Syntask object indicating the state of the task run.
 
 <Warning>
-Prefect future objects must be resolved explicitly before returning from a flow. 
+Syntask future objects must be resolved explicitly before returning from a flow. 
 Dependencies between futures will be automatically resolved whenever their dependents are resolved.
 This means that only _terminal_ futures need to be resolved, either by:
 - returning the terminal futures from your flow 
@@ -50,9 +50,9 @@ Not doing so may leave your tasks in an unfinished state.
 For example:
 
 ```python
-from prefect import flow, task
-from prefect.futures import wait
-from prefect.task_runners import ThreadPoolTaskRunner
+from syntask import flow, task
+from syntask.futures import wait
+from syntask.task_runners import ThreadPoolTaskRunner
 import time
 
 
@@ -76,7 +76,7 @@ def elevator():
 <Tip>
 **Default task runner**
 If you don't specify a task runner for a flow and you call a task with `.submit()` within the flow, 
-Prefect uses the default `ThreadPoolTaskRunner`.
+Syntask uses the default `ThreadPoolTaskRunner`.
 </Tip>
 
 The `max_workers` parameter of the `ThreadPoolTaskRunner` controls the number of threads that the task runner will use to execute tasks concurrently.
@@ -84,22 +84,22 @@ The `max_workers` parameter of the `ThreadPoolTaskRunner` controls the number of
 ## Access results from submitted tasks
 
 When you use `.submit()` to submit a task to a task runner, the task runner creates a 
-[`PrefectFuture`](https://prefect-python-sdk-docs.netlify.app/prefect/futures/#prefect.futures.PrefectFuture) for access to the state and 
+[`SyntaskFuture`](https://syntask-python-sdk-docs.netlify.app/syntask/futures/#syntask.futures.SyntaskFuture) for access to the state and 
 result of the task.
 
-A `PrefectFuture` is an object that provides access to a computation happening in a task runner, 
+A `SyntaskFuture` is an object that provides access to a computation happening in a task runner, 
 even if that computation happens on a remote system.
 
-When you pass a future into a task, Prefect automatically waits for the "upstream" task (the one that the future references), 
+When you pass a future into a task, Syntask automatically waits for the "upstream" task (the one that the future references), 
 to reach a final state before starting the downstream task.
 
-This means that the downstream task won't receive the `PrefectFuture` you passed as an argument. 
+This means that the downstream task won't receive the `SyntaskFuture` you passed as an argument. 
 Instead, the downstream task receives the value that the upstream task returned.
 
 For example:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def say_hello(name):
@@ -118,12 +118,12 @@ def hello_world():
 hello_world()
 ```
 
-Notice that we only had to wait for the final `print_result` future as Prefect automatically resolved `say_hello` to a string.
+Notice that we only had to wait for the final `print_result` future as Syntask automatically resolved `say_hello` to a string.
 
 You can access the result of a future explicitly with the `.result()` method.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -143,7 +143,7 @@ If the task run fails, `.result()` will raise the task run's exception. Disable 
 with the `raise_on_failure` option:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -163,7 +163,7 @@ def my_flow():
 ```
 
 
-You may also use the [`wait_for=[]`](https://prefect-python-sdk-docs.netlify.app/prefect/tasks/#prefect.tasks.Task.submit) parameter 
+You may also use the [`wait_for=[]`](https://syntask-python-sdk-docs.netlify.app/syntask/tasks/#syntask.tasks.Task.submit) parameter 
 when calling a task by specifying upstream task dependencies. This enables you to control task execution 
 order for tasks that do not share data dependencies.
 
@@ -202,17 +202,17 @@ def my_flow():
 This means that calling `.result()` will wait until the task run completes before continuing execution.
 - Only use `.result()` when you need to interact directly with the return value of your submitted task;
 for example, you should use `.result()` if passing the return value to a standard Python function (not a 
-Prefect task) but _not_ if you are passing the value to another task.
+Syntask task) but _not_ if you are passing the value to another task.
 </Note>
 
 ## Mapping over iterables
 
-Prefect also provides a `.map()` method that automatically submits a new task run for each element of its 
+Syntask also provides a `.map()` method that automatically submits a new task run for each element of its 
 input data. 
 This can be useful when submitting a lot of work to a task runner simultaneously.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def print_nums(nums):
@@ -232,10 +232,10 @@ def map_flow(nums):
 map_flow([1,2,3,5,8,13])
 ```
 
-Prefect also supports `unmapped` arguments, allowing you to pass static values that don't get mapped over.
+Syntask also supports `unmapped` arguments, allowing you to pass static values that don't get mapped over.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def add_together(x, y):
@@ -269,11 +269,11 @@ results = [future.result() for future in futures]
 </Tip>
 
 
-If your static argument is an iterable, wrap it with `unmapped` to tell Prefect to treat it 
+If your static argument is an iterable, wrap it with `unmapped` to tell Syntask to treat it 
 as a static value.
 
 ```python
-from prefect import flow, task, unmapped
+from syntask import flow, task, unmapped
 
 @task
 def sum_plus(x, static_iterable):
@@ -297,9 +297,9 @@ For example, you can have a flow (in the example below called `multiple_runner_f
 If you have some tasks that can run more efficiently in parallel on a Dask cluster, you can create a nested flow (such as `dask_nested_flow`) to run those tasks using the `DaskTaskRunner`.
 
 ```python
-from prefect import flow, task
-from prefect.task_runners import ThreadPoolTaskRunner
-from prefect_dask.task_runners import DaskTaskRunner
+from syntask import flow, task
+from syntask.task_runners import ThreadPoolTaskRunner
+from syntask_dask.task_runners import DaskTaskRunner
 import time
 
 

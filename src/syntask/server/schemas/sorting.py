@@ -1,13 +1,13 @@
 """
-Schemas for sorting Prefect REST API objects.
+Schemas for sorting Syntask REST API objects.
 """
 
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 
-from prefect.server.database import orm_models
-from prefect.utilities.collections import AutoEnum
+from syntask.server.database import orm_models
+from syntask.utilities.collections import AutoEnum
 
 if TYPE_CHECKING:
     from sqlalchemy.sql.expression import ColumnElement

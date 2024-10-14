@@ -3,15 +3,15 @@ from typing import Optional
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import schemas
-from prefect.server.database import orm_models
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
+from syntask.server import schemas
+from syntask.server.database import orm_models
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
 
 
 @db_injector
 async def write_configuration(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     configuration: schemas.core.Configuration,
 ) -> orm_models.Configuration:
@@ -40,7 +40,7 @@ async def write_configuration(
 
 @db_injector
 async def read_configuration(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     key: str,
 ) -> Optional[schemas.core.Configuration]:

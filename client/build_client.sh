@@ -12,7 +12,7 @@ fi
 
 # init the workspace
 cp -rf ./ $TMPDIR
-cd $TMPDIR/src/prefect
+cd $TMPDIR/src/syntask
 
 # delete the files we don't need
 rm -rf cli/
@@ -41,9 +41,9 @@ cp client/README.md .
 # this is a convenience to simulate the full build locally
 if [ -z ${CI} ];
     then
-        if [[ -z "${PREFECT_API_KEY}" ]] || [[ -z "${PREFECT_API_URL}" ]]; then
-            echo "In order to run smoke tests locally, PREFECT_API_KEY and"\
-            "PREFECT_API_URL must be set and valid for a Prefect Cloud account.";
+        if [[ -z "${SYNTASK_API_KEY}" ]] || [[ -z "${SYNTASK_API_URL}" ]]; then
+            echo "In order to run smoke tests locally, SYNTASK_API_KEY and"\
+            "SYNTASK_API_URL must be set and valid for a Syntask Cloud account.";
             exit 1;
         fi
         python -m venv venv;

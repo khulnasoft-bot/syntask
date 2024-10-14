@@ -5,14 +5,14 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.api.validation import (
+from syntask.server import models, schemas
+from syntask.server.api.validation import (
     validate_job_variable_defaults_for_work_pool,
     validate_job_variables_for_deployment,
     validate_job_variables_for_deployment_flow_run,
 )
-from prefect.server.database.orm_models import ORMDeployment, ORMFlow, ORMWorkPool
-from prefect.server.schemas.actions import (
+from syntask.server.database.orm_models import ORMDeployment, ORMFlow, ORMWorkPool
+from syntask.server.schemas.actions import (
     DeploymentCreate,
     DeploymentFlowRunCreate,
     DeploymentUpdate,

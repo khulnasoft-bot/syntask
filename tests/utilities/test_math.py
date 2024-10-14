@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.utilities.math import clamped_poisson_interval, poisson_interval
+from syntask.utilities.math import clamped_poisson_interval, poisson_interval
 
 
 def test_poisson_intervals():

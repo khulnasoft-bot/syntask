@@ -38,39 +38,39 @@ from pydantic_core import PydanticUndefinedType
 from pydantic_extra_types.pendulum_dt import DateTime
 from typing_extensions import ParamSpec, Self
 
-import prefect
-from prefect._internal.compatibility import deprecated
-from prefect._internal.compatibility.deprecated import deprecated_field
-from prefect.blocks.core import Block
-from prefect.client.utilities import inject_client
-from prefect.exceptions import (
+import syntask
+from syntask._internal.compatibility import deprecated
+from syntask._internal.compatibility.deprecated import deprecated_field
+from syntask.blocks.core import Block
+from syntask.client.utilities import inject_client
+from syntask.exceptions import (
     ConfigurationError,
     MissingContextError,
     SerializationError,
 )
-from prefect.filesystems import (
+from syntask.filesystems import (
     LocalFileSystem,
     NullFileSystem,
     WritableFileSystem,
 )
-from prefect.locking.protocol import LockManager
-from prefect.logging import get_logger
-from prefect.serializers import PickleSerializer, Serializer
-from prefect.settings import (
-    PREFECT_DEFAULT_RESULT_STORAGE_BLOCK,
-    PREFECT_LOCAL_STORAGE_PATH,
-    PREFECT_RESULTS_DEFAULT_SERIALIZER,
-    PREFECT_RESULTS_PERSIST_BY_DEFAULT,
-    PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
+from syntask.locking.protocol import LockManager
+from syntask.logging import get_logger
+from syntask.serializers import PickleSerializer, Serializer
+from syntask.settings import (
+    SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK,
+    SYNTASK_LOCAL_STORAGE_PATH,
+    SYNTASK_RESULTS_DEFAULT_SERIALIZER,
+    SYNTASK_RESULTS_PERSIST_BY_DEFAULT,
+    SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
 )
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.pydantic import get_dispatch_key, lookup_type, register_base_type
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.pydantic import get_dispatch_key, lookup_type, register_base_type
 
 if TYPE_CHECKING:
-    from prefect import Flow, Task
-    from prefect.client.orchestration import PrefectClient
-    from prefect.transactions import IsolationLevel
+    from syntask import Flow, Task
+    from syntask.client.orchestration import SyntaskClient
+    from syntask.transactions import IsolationLevel
 
 
 ResultStorage = Union[WritableFileSystem, str]
@@ -94,8 +94,8 @@ async def get_default_result_storage() -> WritableFileSystem:
     """
     Generate a default file system for result storage.
     """
-    default_block = PREFECT_DEFAULT_RESULT_STORAGE_BLOCK.value()
-    basepath = PREFECT_LOCAL_STORAGE_PATH.value()
+    default_block = SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK.value()
+    basepath = SYNTASK_LOCAL_STORAGE_PATH.value()
 
     cache_key = (str(default_block), str(basepath))
 
@@ -120,7 +120,7 @@ async def resolve_result_storage(
     Resolve one of the valid `ResultStorage` input types into a saved block
     document id and an instance of the block.
     """
-    from prefect.client.orchestration import get_client
+    from syntask.client.orchestration import get_client
 
     client = get_client()
     if isinstance(result_storage, Block):
@@ -169,13 +169,13 @@ async def get_or_create_default_task_scheduling_storage() -> ResultStorage:
     """
     Generate a default file system for background task parameter/result storage.
     """
-    default_block = PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK.value()
+    default_block = SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK.value()
 
     if default_block is not None:
         return await Block.load(default_block)
 
     # otherwise, use the local file system
-    basepath = PREFECT_LOCAL_STORAGE_PATH.value()
+    basepath = SYNTASK_LOCAL_STORAGE_PATH.value()
     return LocalFileSystem(basepath=basepath)
 
 
@@ -183,14 +183,14 @@ def get_default_result_serializer() -> Serializer:
     """
     Generate a default file system for result storage.
     """
-    return resolve_serializer(PREFECT_RESULTS_DEFAULT_SERIALIZER.value())
+    return resolve_serializer(SYNTASK_RESULTS_DEFAULT_SERIALIZER.value())
 
 
 def get_default_persist_setting() -> bool:
     """
     Return the default option for result persistence (False).
     """
-    return PREFECT_RESULTS_PERSIST_BY_DEFAULT.value()
+    return SYNTASK_RESULTS_PERSIST_BY_DEFAULT.value()
 
 
 def should_persist_result() -> bool:
@@ -198,9 +198,9 @@ def should_persist_result() -> bool:
     Return the default option for result persistence determined by the current run context.
 
     If there is no current run context, the default value set by
-    `PREFECT_RESULTS_PERSIST_BY_DEFAULT` will be returned.
+    `SYNTASK_RESULTS_PERSIST_BY_DEFAULT` will be returned.
     """
-    from prefect.context import FlowRunContext, TaskRunContext
+    from syntask.context import FlowRunContext, TaskRunContext
 
     task_run_context = TaskRunContext.get()
     if task_run_context is not None:
@@ -209,14 +209,14 @@ def should_persist_result() -> bool:
     if flow_run_context is not None:
         return flow_run_context.persist_result
 
-    return PREFECT_RESULTS_PERSIST_BY_DEFAULT.value()
+    return SYNTASK_RESULTS_PERSIST_BY_DEFAULT.value()
 
 
 def _format_user_supplied_storage_key(key: str) -> str:
     # Note here we are pinning to task runs since flow runs do not support storage keys
     # yet; we'll need to split logic in the future or have two separate functions
-    runtime_vars = {key: getattr(prefect.runtime, key) for key in dir(prefect.runtime)}
-    return key.format(**runtime_vars, parameters=prefect.runtime.task_run.parameters)
+    runtime_vars = {key: getattr(syntask.runtime, key) for key in dir(syntask.runtime)}
+    return key.format(**runtime_vars, parameters=syntask.runtime.task_run.parameters)
 
 
 T = TypeVar("T")
@@ -319,7 +319,7 @@ class ResultStore(BaseModel):
         Returns:
             An updated result store.
         """
-        from prefect.transactions import get_transaction
+        from syntask.transactions import get_transaction
 
         update = {}
         if task.result_storage is not None:
@@ -700,7 +700,7 @@ class ResultStore(BaseModel):
         Returns:
             bool: True if the isolation level is supported, False otherwise.
         """
-        from prefect.transactions import IsolationLevel
+        from syntask.transactions import IsolationLevel
 
         if level == IsolationLevel.READ_COMMITTED:
             return True
@@ -899,7 +899,7 @@ def get_result_store() -> ResultStore:
     """
     Get the current result store.
     """
-    from prefect.context import get_run_context
+    from syntask.context import get_run_context
 
     try:
         run_context = get_run_context()
@@ -920,7 +920,7 @@ class ResultRecordMetadata(BaseModel):
     )  # optional for backwards compatibility
     expiration: Optional[DateTime] = Field(default=None)
     serializer: Serializer = Field(default_factory=PickleSerializer)
-    prefect_version: str = Field(default=prefect.__version__)
+    syntask_version: str = Field(default=syntask.__version__)
     storage_block_id: Optional[uuid.UUID] = Field(default=None)
 
     def dump_bytes(self) -> bytes:
@@ -952,7 +952,7 @@ class ResultRecordMetadata(BaseModel):
             self.storage_key == other.storage_key
             and self.expiration == other.expiration
             and self.serializer == other.serializer
-            and self.prefect_version == other.prefect_version
+            and self.syntask_version == other.syntask_version
             and self.storage_block_id == other.storage_block_id
         )
 
@@ -1029,8 +1029,8 @@ class ResultRecord(BaseModel, Generic[R]):
                 value["metadata"]["expiration"] = value.pop("expiration")
             if "serializer" in value:
                 value["metadata"]["serializer"] = value.pop("serializer")
-            if "prefect_version" in value:
-                value["metadata"]["prefect_version"] = value.pop("prefect_version")
+            if "syntask_version" in value:
+                value["metadata"]["syntask_version"] = value.pop("syntask_version")
         return value
 
     @classmethod
@@ -1170,8 +1170,7 @@ class BaseResult(BaseModel, abc.ABC, Generic[R]):
 
     @abc.abstractmethod
     @sync_compatible
-    async def get(self) -> R:
-        ...
+    async def get(self) -> R: ...
 
     @abc.abstractclassmethod
     @sync_compatible
@@ -1179,8 +1178,7 @@ class BaseResult(BaseModel, abc.ABC, Generic[R]):
         cls: "Type[BaseResult[R]]",
         obj: R,
         **kwargs: Any,
-    ) -> "BaseResult[R]":
-        ...
+    ) -> "BaseResult[R]": ...
 
     @classmethod
     def __dispatch_key__(cls, **kwargs):
@@ -1231,7 +1229,7 @@ class PersistedResult(BaseResult):
         self._serializer = serializer
 
     @inject_client
-    async def _get_storage_block(self, client: "PrefectClient") -> WritableFileSystem:
+    async def _get_storage_block(self, client: "SyntaskClient") -> WritableFileSystem:
         if self._storage_block is not None:
             return self._storage_block
         elif self.storage_block_id is not None:
@@ -1244,7 +1242,7 @@ class PersistedResult(BaseResult):
     @sync_compatible
     @inject_client
     async def get(
-        self, ignore_cache: bool = False, client: "PrefectClient" = None
+        self, ignore_cache: bool = False, client: "SyntaskClient" = None
     ) -> R:
         """
         Retrieve the data and deserialize it into the original object.
@@ -1280,7 +1278,7 @@ class PersistedResult(BaseResult):
 
     @sync_compatible
     @inject_client
-    async def write(self, obj: R = NotSet, client: "PrefectClient" = None) -> None:
+    async def write(self, obj: R = NotSet, client: "SyntaskClient" = None) -> None:
         """
         Write the result to the storage block.
         """

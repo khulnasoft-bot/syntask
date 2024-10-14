@@ -12,17 +12,17 @@ from pydantic import BaseModel, Field, SecretBytes, SecretStr, ValidationError
 from pydantic import Secret as PydanticSecret
 from pydantic_core import to_json
 
-import prefect
-from prefect.blocks.core import Block, InvalidBlockRegistration
-from prefect.blocks.system import Secret
-from prefect.client.orchestration import PrefectClient
-from prefect.exceptions import PrefectHTTPStatusError
-from prefect.server import models
-from prefect.server.schemas.actions import BlockDocumentCreate
-from prefect.server.schemas.core import DEFAULT_BLOCK_SCHEMA_VERSION, BlockDocument
-from prefect.testing.utilities import AsyncMock, assert_blocks_equal
-from prefect.types import SecretDict
-from prefect.utilities.dispatch import lookup_type, register_type
+import syntask
+from syntask.blocks.core import Block, InvalidBlockRegistration
+from syntask.blocks.system import Secret
+from syntask.client.orchestration import SyntaskClient
+from syntask.exceptions import SyntaskHTTPStatusError
+from syntask.server import models
+from syntask.server.schemas.actions import BlockDocumentCreate
+from syntask.server.schemas.core import DEFAULT_BLOCK_SCHEMA_VERSION, BlockDocument
+from syntask.testing.utilities import AsyncMock, assert_blocks_equal
+from syntask.types import SecretDict
+from syntask.utilities.dispatch import lookup_type, register_type
 
 
 class CoolBlock(Block):
@@ -795,17 +795,17 @@ class TestAPICompatibility:
 
         assert block_schema.version == "1.0.0"
 
-    async def test_create_block_schema_uses_prefect_version_for_built_in_blocks(self):
+    async def test_create_block_schema_uses_syntask_version_for_built_in_blocks(self):
         try:
             await Secret.register_type_and_schema()
-        except PrefectHTTPStatusError as exc:
+        except SyntaskHTTPStatusError as exc:
             if exc.response.status_code == 403:
                 pass
             else:
                 raise exc
 
         block_schema = Secret._to_block_schema()
-        assert block_schema.version == Version(prefect.__version__).base_version
+        assert block_schema.version == Version(syntask.__version__).base_version
 
     def test_collecting_capabilities(self):
         class CanRun(Block):
@@ -885,10 +885,10 @@ class TestAPICompatibility:
         }
 
     async def test_block_load(
-        self, test_block, block_document, in_memory_prefect_client
+        self, test_block, block_document, in_memory_syntask_client
     ):
         my_block = await test_block.load(
-            block_document.name, client=in_memory_prefect_client
+            block_document.name, client=in_memory_syntask_client
         )
 
         assert my_block._block_document_name == block_document.name
@@ -897,19 +897,19 @@ class TestAPICompatibility:
         assert my_block._block_schema_id == block_document.block_schema_id
         assert my_block.foo == "bar"
 
-    @patch("prefect.blocks.core.load_prefect_collections")
+    @patch("syntask.blocks.core.load_syntask_collections")
     async def test_block_load_loads_collections(
         self,
-        mock_load_prefect_collections,
+        mock_load_syntask_collections,
         test_block,
         block_document: BlockDocument,
-        in_memory_prefect_client,
+        in_memory_syntask_client,
     ):
         await Block.load(
             block_document.block_type.slug + "/" + block_document.name,
-            client=in_memory_prefect_client,
+            client=in_memory_syntask_client,
         )
-        mock_load_prefect_collections.assert_called_once()
+        mock_load_syntask_collections.assert_called_once()
 
     async def test_load_from_block_base_class(self):
         class Custom(Block):
@@ -921,7 +921,7 @@ class TestAPICompatibility:
         loaded_block = await Block.load("custom/my-custom-block")
         assert loaded_block.message == "hello"
 
-    async def test_load_nested_block(self, session, in_memory_prefect_client):
+    async def test_load_nested_block(self, session, in_memory_syntask_client):
         class B(Block):
             _block_schema_type = "abc"
 
@@ -1019,7 +1019,7 @@ class TestAPICompatibility:
         await session.commit()
 
         block_instance = await E.load(
-            "outer-block-document", client=in_memory_prefect_client
+            "outer-block-document", client=in_memory_syntask_client
         )
         assert isinstance(block_instance, E)
         assert isinstance(block_instance.c, C)
@@ -1062,7 +1062,7 @@ class TestAPICompatibility:
         class Test(Block):
             a: str
 
-        @prefect.flow
+        @syntask.flow
         def save_block_flow():
             Test(a="foo").save("test")
 
@@ -1072,7 +1072,7 @@ class TestAPICompatibility:
         assert block.a == "foo"
 
     async def test_save_protected_block_with_new_block_schema_version(
-        self, session, prefect_client: PrefectClient
+        self, session, syntask_client: SyntaskClient
     ):
         """
         This testcase would fail when block protection was enabled for block type
@@ -1089,7 +1089,7 @@ class TestAPICompatibility:
 
         block_document_id = await Secret(value="secret").save("test")
 
-        block_document = await prefect_client.read_block_document(block_document_id)
+        block_document = await syntask_client.read_block_document(block_document_id)
         assert block_document.block_schema.version == mock_version
 
 
@@ -1099,14 +1099,14 @@ class TestRegisterBlockTypeAndSchema:
         b: str
         c: int
 
-    async def test_register_type_and_schema(self, prefect_client: PrefectClient):
+    async def test_register_type_and_schema(self, syntask_client: SyntaskClient):
         await self.NewBlock.register_type_and_schema()
 
-        block_type = await prefect_client.read_block_type_by_slug(slug="newblock")
+        block_type = await syntask_client.read_block_type_by_slug(slug="newblock")
         assert block_type is not None
         assert block_type.name == "NewBlock"
 
-        block_schema = await prefect_client.read_block_schema_by_checksum(
+        block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=self.NewBlock._calculate_schema_checksum()
         )
         assert block_schema is not None
@@ -1115,22 +1115,22 @@ class TestRegisterBlockTypeAndSchema:
         assert isinstance(self.NewBlock._block_type_id, UUID)
         assert isinstance(self.NewBlock._block_schema_id, UUID)
 
-    async def test_register_idempotent(self, prefect_client: PrefectClient):
+    async def test_register_idempotent(self, syntask_client: SyntaskClient):
         await self.NewBlock.register_type_and_schema()
         await self.NewBlock.register_type_and_schema()
 
-        block_type = await prefect_client.read_block_type_by_slug(slug="newblock")
+        block_type = await syntask_client.read_block_type_by_slug(slug="newblock")
         assert block_type is not None
         assert block_type.name == "NewBlock"
 
-        block_schema = await prefect_client.read_block_schema_by_checksum(
+        block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=self.NewBlock._calculate_schema_checksum()
         )
         assert block_schema is not None
         assert block_schema.fields == self.NewBlock.model_json_schema()
 
     async def test_register_existing_block_type_new_block_schema(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         # Ignore warning caused by matching key in registry
         warnings.filterwarnings("ignore", category=UserWarning)
@@ -1143,27 +1143,27 @@ class TestRegisterBlockTypeAndSchema:
 
         await ImpostorBlock.register_type_and_schema()
 
-        block_type = await prefect_client.read_block_type_by_slug(slug="newblock")
+        block_type = await syntask_client.read_block_type_by_slug(slug="newblock")
         assert block_type is not None
         assert block_type.name == "NewBlock"
 
         await self.NewBlock.register_type_and_schema()
 
-        block_schema = await prefect_client.read_block_schema_by_checksum(
+        block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=self.NewBlock._calculate_schema_checksum()
         )
         assert block_schema is not None
         assert block_schema.fields == self.NewBlock.model_json_schema()
 
     async def test_register_new_block_schema_when_version_changes(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         # Ignore warning caused by matching key in registry
         warnings.filterwarnings("ignore", category=UserWarning)
 
         await self.NewBlock.register_type_and_schema()
 
-        block_schema = await prefect_client.read_block_schema_by_checksum(
+        block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=self.NewBlock._calculate_schema_checksum()
         )
         assert block_schema is not None
@@ -1174,7 +1174,7 @@ class TestRegisterBlockTypeAndSchema:
 
         await self.NewBlock.register_type_and_schema()
 
-        block_schema = await prefect_client.read_block_schema_by_checksum(
+        block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=self.NewBlock._calculate_schema_checksum()
         )
         assert block_schema is not None
@@ -1183,7 +1183,7 @@ class TestRegisterBlockTypeAndSchema:
 
         self.NewBlock._block_schema_version = None
 
-    async def test_register_nested_block(self, prefect_client: PrefectClient):
+    async def test_register_nested_block(self, syntask_client: SyntaskClient):
         class Big(Block):
             id: UUID = Field(default_factory=uuid4)
             size: int
@@ -1199,30 +1199,30 @@ class TestRegisterBlockTypeAndSchema:
 
         await Biggest.register_type_and_schema()
 
-        big_block_type = await prefect_client.read_block_type_by_slug(slug="big")
+        big_block_type = await syntask_client.read_block_type_by_slug(slug="big")
         assert big_block_type is not None
-        big_block_schema = await prefect_client.read_block_schema_by_checksum(
+        big_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=Big._calculate_schema_checksum()
         )
         assert big_block_schema is not None
 
-        bigger_block_type = await prefect_client.read_block_type_by_slug(slug="bigger")
+        bigger_block_type = await syntask_client.read_block_type_by_slug(slug="bigger")
         assert bigger_block_type is not None
-        bigger_block_schema = await prefect_client.read_block_schema_by_checksum(
+        bigger_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=Bigger._calculate_schema_checksum()
         )
         assert bigger_block_schema is not None
 
-        biggest_block_type = await prefect_client.read_block_type_by_slug(
+        biggest_block_type = await syntask_client.read_block_type_by_slug(
             slug="biggest"
         )
         assert biggest_block_type is not None
-        biggest_block_schema = await prefect_client.read_block_schema_by_checksum(
+        biggest_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=Biggest._calculate_schema_checksum()
         )
         assert biggest_block_schema is not None
 
-    async def test_register_nested_block_union(self, prefect_client: PrefectClient):
+    async def test_register_nested_block_union(self, syntask_client: SyntaskClient):
         class A(Block):
             a: str
 
@@ -1237,35 +1237,35 @@ class TestRegisterBlockTypeAndSchema:
 
         await Umbrella.register_type_and_schema()
 
-        a_block_type = await prefect_client.read_block_type_by_slug(slug="a")
+        a_block_type = await syntask_client.read_block_type_by_slug(slug="a")
         assert a_block_type is not None
-        b_block_type = await prefect_client.read_block_type_by_slug(slug="b")
+        b_block_type = await syntask_client.read_block_type_by_slug(slug="b")
         assert b_block_type is not None
-        c_block_type = await prefect_client.read_block_type_by_slug(slug="c")
+        c_block_type = await syntask_client.read_block_type_by_slug(slug="c")
         assert c_block_type is not None
-        umbrella_block_type = await prefect_client.read_block_type_by_slug(
+        umbrella_block_type = await syntask_client.read_block_type_by_slug(
             slug="umbrella"
         )
         assert umbrella_block_type is not None
 
-        a_block_schema = await prefect_client.read_block_schema_by_checksum(
+        a_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=A._calculate_schema_checksum()
         )
         assert a_block_schema is not None
-        b_block_schema = await prefect_client.read_block_schema_by_checksum(
+        b_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=B._calculate_schema_checksum()
         )
         assert b_block_schema is not None
-        c_block_schema = await prefect_client.read_block_schema_by_checksum(
+        c_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=C._calculate_schema_checksum()
         )
         assert c_block_schema is not None
-        umbrella_block_schema = await prefect_client.read_block_schema_by_checksum(
+        umbrella_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=Umbrella._calculate_schema_checksum()
         )
         assert umbrella_block_schema is not None
 
-    async def test_register_nested_block_list(self, prefect_client: PrefectClient):
+    async def test_register_nested_block_list(self, syntask_client: SyntaskClient):
         class A(Block):
             a: str
 
@@ -1278,31 +1278,31 @@ class TestRegisterBlockTypeAndSchema:
 
         await ListCollection.register_type_and_schema()
 
-        a_block_type = await prefect_client.read_block_type_by_slug(slug="a")
+        a_block_type = await syntask_client.read_block_type_by_slug(slug="a")
         assert a_block_type is not None
-        b_block_type = await prefect_client.read_block_type_by_slug(slug="b")
+        b_block_type = await syntask_client.read_block_type_by_slug(slug="b")
         assert b_block_type is not None
 
-        list_collection_block_type = await prefect_client.read_block_type_by_slug(
+        list_collection_block_type = await syntask_client.read_block_type_by_slug(
             slug="listcollection"
         )
         assert list_collection_block_type is not None
 
-        a_block_schema = await prefect_client.read_block_schema_by_checksum(
+        a_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=A._calculate_schema_checksum()
         )
         assert a_block_schema is not None
-        b_block_schema = await prefect_client.read_block_schema_by_checksum(
+        b_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=B._calculate_schema_checksum()
         )
         assert b_block_schema is not None
 
-        list_collection_block_type = await prefect_client.read_block_schema_by_checksum(
+        list_collection_block_type = await syntask_client.read_block_schema_by_checksum(
             checksum=ListCollection._calculate_schema_checksum()
         )
         assert list_collection_block_type is not None
 
-    async def test_register_nested_block_tuple(self, prefect_client: PrefectClient):
+    async def test_register_nested_block_tuple(self, syntask_client: SyntaskClient):
         class A(Block):
             a: str
 
@@ -1319,39 +1319,39 @@ class TestRegisterBlockTypeAndSchema:
 
         await TupleCollection.register_type_and_schema()
 
-        a_block_type = await prefect_client.read_block_type_by_slug(slug="a")
+        a_block_type = await syntask_client.read_block_type_by_slug(slug="a")
         assert a_block_type is not None
-        b_block_type = await prefect_client.read_block_type_by_slug(slug="b")
+        b_block_type = await syntask_client.read_block_type_by_slug(slug="b")
         assert b_block_type is not None
-        c_block_type = await prefect_client.read_block_type_by_slug(slug="c")
+        c_block_type = await syntask_client.read_block_type_by_slug(slug="c")
         assert c_block_type is not None
 
-        tuple_collection_block_type = await prefect_client.read_block_type_by_slug(
+        tuple_collection_block_type = await syntask_client.read_block_type_by_slug(
             slug="tuplecollection"
         )
         assert tuple_collection_block_type is not None
 
-        a_block_schema = await prefect_client.read_block_schema_by_checksum(
+        a_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=A._calculate_schema_checksum()
         )
         assert a_block_schema is not None
-        b_block_schema = await prefect_client.read_block_schema_by_checksum(
+        b_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=B._calculate_schema_checksum()
         )
         assert b_block_schema is not None
-        c_block_schema = await prefect_client.read_block_schema_by_checksum(
+        c_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=C._calculate_schema_checksum()
         )
         assert c_block_schema is not None
 
         tuple_collection_block_type = (
-            await prefect_client.read_block_schema_by_checksum(
+            await syntask_client.read_block_schema_by_checksum(
                 checksum=TupleCollection._calculate_schema_checksum()
             )
         )
         assert tuple_collection_block_type is not None
 
-    async def test_register_nested_block_dict(self, prefect_client: PrefectClient):
+    async def test_register_nested_block_dict(self, syntask_client: SyntaskClient):
         class A(Block):
             a: str
 
@@ -1363,32 +1363,32 @@ class TestRegisterBlockTypeAndSchema:
 
         await DictCollection.register_type_and_schema()
 
-        a_block_type = await prefect_client.read_block_type_by_slug(slug="a")
+        a_block_type = await syntask_client.read_block_type_by_slug(slug="a")
         assert a_block_type is not None
-        b_block_type = await prefect_client.read_block_type_by_slug(slug="b")
+        b_block_type = await syntask_client.read_block_type_by_slug(slug="b")
         assert b_block_type is not None
 
-        dict_collection_block_type = await prefect_client.read_block_type_by_slug(
+        dict_collection_block_type = await syntask_client.read_block_type_by_slug(
             slug="dictcollection"
         )
         assert dict_collection_block_type is not None
 
-        a_block_schema = await prefect_client.read_block_schema_by_checksum(
+        a_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=A._calculate_schema_checksum()
         )
         assert a_block_schema is not None
-        b_block_schema = await prefect_client.read_block_schema_by_checksum(
+        b_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=B._calculate_schema_checksum()
         )
         assert b_block_schema is not None
 
-        dict_collection_block_type = await prefect_client.read_block_schema_by_checksum(
+        dict_collection_block_type = await syntask_client.read_block_schema_by_checksum(
             checksum=DictCollection._calculate_schema_checksum()
         )
         assert dict_collection_block_type is not None
 
     async def test_register_nested_block_type_nested(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         class A(Block):
             a: str
@@ -1404,30 +1404,30 @@ class TestRegisterBlockTypeAndSchema:
 
         await Depth.register_type_and_schema()
 
-        a_block_type = await prefect_client.read_block_type_by_slug(slug="a")
+        a_block_type = await syntask_client.read_block_type_by_slug(slug="a")
         assert a_block_type is not None
-        b_block_type = await prefect_client.read_block_type_by_slug(slug="b")
+        b_block_type = await syntask_client.read_block_type_by_slug(slug="b")
         assert b_block_type is not None
-        c_block_type = await prefect_client.read_block_type_by_slug(slug="c")
+        c_block_type = await syntask_client.read_block_type_by_slug(slug="c")
         assert c_block_type is not None
 
-        depth_block_type = await prefect_client.read_block_type_by_slug(slug="depth")
+        depth_block_type = await syntask_client.read_block_type_by_slug(slug="depth")
         assert depth_block_type is not None
 
-        a_block_schema = await prefect_client.read_block_schema_by_checksum(
+        a_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=A._calculate_schema_checksum()
         )
         assert a_block_schema is not None
-        b_block_schema = await prefect_client.read_block_schema_by_checksum(
+        b_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=B._calculate_schema_checksum()
         )
         assert b_block_schema is not None
-        c_block_schema = await prefect_client.read_block_schema_by_checksum(
+        c_block_schema = await syntask_client.read_block_schema_by_checksum(
             checksum=C._calculate_schema_checksum()
         )
         assert c_block_schema is not None
 
-        depth_block_type = await prefect_client.read_block_schema_by_checksum(
+        depth_block_type = await syntask_client.read_block_schema_by_checksum(
             checksum=Depth._calculate_schema_checksum()
         )
         assert depth_block_type is not None
@@ -1442,7 +1442,7 @@ class TestRegisterBlockTypeAndSchema:
         ):
             await Block.register_type_and_schema()
 
-    async def test_register_updates_block_type(self, prefect_client: PrefectClient):
+    async def test_register_updates_block_type(self, syntask_client: SyntaskClient):
         # Ignore warning caused by matching key in registry
         warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -1458,16 +1458,16 @@ class TestRegisterBlockTypeAndSchema:
 
         await Before.register_type_and_schema()
 
-        block_type = await prefect_client.read_block_type_by_slug(slug="test-block")
+        block_type = await syntask_client.read_block_type_by_slug(slug="test-block")
         assert block_type.description == "Before"
 
         await After.register_type_and_schema()
 
-        block_type = await prefect_client.read_block_type_by_slug(slug="test-block")
+        block_type = await syntask_client.read_block_type_by_slug(slug="test-block")
         assert block_type.description == "After"
 
     async def test_register_wont_update_same_block_type_values(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         # Ignore warning caused by matching key in registry
         warnings.filterwarnings("ignore", category=UserWarning)
@@ -1484,28 +1484,28 @@ class TestRegisterBlockTypeAndSchema:
 
         await Before.register_type_and_schema()
 
-        block_type = await prefect_client.read_block_type_by_slug(slug="test-block")
+        block_type = await syntask_client.read_block_type_by_slug(slug="test-block")
         assert block_type.description == "Before"
 
         mock = AsyncMock()
-        prefect_client.update_block_type = mock
+        syntask_client.update_block_type = mock
 
-        await After.register_type_and_schema(client=prefect_client)
+        await After.register_type_and_schema(client=syntask_client)
 
         # change to description means we should try and update the block type
         assert mock.call_count == 1
 
         # confirm the call was mocked, description is the same
-        block_type = await prefect_client.read_block_type_by_slug(slug="test-block")
+        block_type = await syntask_client.read_block_type_by_slug(slug="test-block")
         assert block_type.description == "Before"
 
         # if the description is the same as what matches the server, don't update
-        await Before.register_type_and_schema(client=prefect_client)
+        await Before.register_type_and_schema(client=syntask_client)
 
         # call count should not have increased
         assert mock.call_count == 1
 
-    async def test_register_fails_on_abc(self, prefect_client):
+    async def test_register_fails_on_abc(self, syntask_client):
         class Interface(Block, abc.ABC):
             _block_schema_capabilities = ["do-stuff"]
 
@@ -1520,7 +1520,7 @@ class TestRegisterBlockTypeAndSchema:
                 "subclass and not on a Block interface class directly."
             ),
         ):
-            await Interface.register_type_and_schema(client=prefect_client)
+            await Interface.register_type_and_schema(client=syntask_client)
 
 
 class TestSaveBlock:
@@ -1715,7 +1715,7 @@ class TestSaveBlock:
         assert loaded_outer_block.contents._block_document_name is None
 
     async def test_save_and_load_block_with_secrets_includes_secret_data(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         class SecretBlockB(Block):
             w: SecretDict
@@ -1727,7 +1727,7 @@ class TestSaveBlock:
         await block.save("secret-block")
 
         # read from API without secrets
-        api_block = await prefect_client.read_block_document(
+        api_block = await syntask_client.read_block_document(
             block._block_document_id, include_secrets=False
         )
         assert api_block.data == {
@@ -1738,7 +1738,7 @@ class TestSaveBlock:
         }
 
         # read from API with secrets
-        api_block = await prefect_client.read_block_document(
+        api_block = await syntask_client.read_block_document(
             block._block_document_id, include_secrets=True
         )
         assert api_block.data == {
@@ -1756,7 +1756,7 @@ class TestSaveBlock:
         assert api_block.z == "z"
 
     async def test_save_and_load_nested_block_with_secrets_hardcoded_child(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         class Child(Block):
             a: SecretStr
@@ -1772,7 +1772,7 @@ class TestSaveBlock:
         await block.save("secret-block")
 
         # read from API without secrets
-        api_block = await prefect_client.read_block_document(
+        api_block = await syntask_client.read_block_document(
             block._block_document_id, include_secrets=False
         )
         assert api_block.data == {
@@ -1787,7 +1787,7 @@ class TestSaveBlock:
         }
 
         # read from API with secrets
-        api_block = await prefect_client.read_block_document(
+        api_block = await syntask_client.read_block_document(
             block._block_document_id, include_secrets=True
         )
         assert api_block.data == {
@@ -1810,7 +1810,7 @@ class TestSaveBlock:
         assert api_block.child.c.get_secret_value() == {"secret": "value"}
 
     async def test_save_and_load_nested_block_with_secrets_saved_child(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         class Child(Block):
             a: SecretStr
@@ -1828,7 +1828,7 @@ class TestSaveBlock:
         await block.save("parent-block")
 
         # read from API without secrets
-        api_block = await prefect_client.read_block_document(
+        api_block = await syntask_client.read_block_document(
             block._block_document_id, include_secrets=False
         )
         assert api_block.data == {
@@ -1842,7 +1842,7 @@ class TestSaveBlock:
         }
 
         # read from API with secrets
-        api_block = await prefect_client.read_block_document(
+        api_block = await syntask_client.read_block_document(
             block._block_document_id, include_secrets=True
         )
         assert api_block.data == {
@@ -2018,7 +2018,7 @@ class TestToBlockType:
             Example:
                 Calculate volume:
                 ```python
-                from prefect_geometry import Cube
+                from syntask_geometry import Cube
 
                 my_cube = Cube.load("rubix")
 
@@ -2038,7 +2038,7 @@ class TestToBlockType:
             """\
             Calculate volume:
             ```python
-            from prefect_geometry import Cube
+            from syntask_geometry import Cube
 
             my_cube = Cube.load("rubix")
 
@@ -2054,7 +2054,7 @@ class TestToBlockType:
             Examples:
                 Load block:
                 ```python
-                from prefect_geometry import Cube
+                from syntask_geometry import Cube
 
                 my_cube = Cube.load("rubix")
                 ```
@@ -2077,7 +2077,7 @@ class TestToBlockType:
             """\
             Load block:
             ```python
-            from prefect_geometry import Cube
+            from syntask_geometry import Cube
 
             my_cube = Cube.load("rubix")
             ```
@@ -2103,7 +2103,7 @@ class TestToBlockType:
             _code_example = """\
             Don't trust that docstring. Here's how you really do it:
             ```python
-            from prefect_geometry import Cube
+            from syntask_geometry import Cube
 
             my_cube = Cube.load("rubix")
 
@@ -2123,7 +2123,7 @@ class TestToBlockType:
             """\
             Don't trust that docstring. Here's how you really do it:
             ```python
-            from prefect_geometry import Cube
+            from syntask_geometry import Cube
 
             my_cube = Cube.load("rubix")
 
@@ -2334,7 +2334,7 @@ class TestSyncCompatible:
     async def test_block_in_flow_sync_test_sync_flow(self):
         await CoolBlock(cool_factor=1000000).save("blk")
 
-        @prefect.flow
+        @syntask.flow
         def my_flow():
             loaded_block = CoolBlock.load("blk")
             return loaded_block.cool_factor
@@ -2345,7 +2345,7 @@ class TestSyncCompatible:
     async def test_block_in_flow_async_test_sync_flow(self):
         await CoolBlock(cool_factor=1000000).save("blk")
 
-        @prefect.flow
+        @syntask.flow
         def my_flow():
             loaded_block = CoolBlock.load("blk")
             return loaded_block.cool_factor
@@ -2356,7 +2356,7 @@ class TestSyncCompatible:
     async def test_block_in_flow_async_test_async_flow(self):
         await CoolBlock(cool_factor=1000000).save("blk")
 
-        @prefect.flow
+        @syntask.flow
         async def my_flow():
             loaded_block = await CoolBlock.load("blk")
             return loaded_block.cool_factor
@@ -2367,12 +2367,12 @@ class TestSyncCompatible:
     async def test_block_in_task_sync_test_sync_flow(self):
         await CoolBlock(cool_factor=1000000).save("blk")
 
-        @prefect.task
+        @syntask.task
         def my_task():
             loaded_block = CoolBlock.load("blk")
             return loaded_block.cool_factor
 
-        @prefect.flow()
+        @syntask.flow()
         def my_flow():
             return my_task()
 
@@ -2382,12 +2382,12 @@ class TestSyncCompatible:
     async def test_block_in_task_async_test_sync_task(self):
         await CoolBlock(cool_factor=1000000).save("blk")
 
-        @prefect.task
+        @syntask.task
         def my_task():
             loaded_block = CoolBlock.load("blk")
             return loaded_block.cool_factor
 
-        @prefect.flow()
+        @syntask.flow()
         def my_flow():
             return my_task()
 
@@ -2397,12 +2397,12 @@ class TestSyncCompatible:
     async def test_block_in_task_async_test_async_task(self):
         await CoolBlock(cool_factor=1000000).save("blk")
 
-        @prefect.task
+        @syntask.task
         async def my_task():
             loaded_block = await CoolBlock.load("blk")
             return loaded_block.cool_factor
 
-        @prefect.flow()
+        @syntask.flow()
         async def my_flow():
             return await my_task()
 
@@ -2441,8 +2441,8 @@ class TestTypeDispatch:
     def test_block_type_slug_respects_include(self):
         assert "block_type_slug" not in AChildBlock().model_dump(include={"a"})
 
-    async def test_block_type_slug_excluded_from_document(self, prefect_client):
-        await AChildBlock.register_type_and_schema(client=prefect_client)
+    async def test_block_type_slug_excluded_from_document(self, syntask_client):
+        await AChildBlock.register_type_and_schema(client=syntask_client)
         document = AChildBlock()._to_block_document(name="foo")
         assert "block_type_slug" not in document.data
 
@@ -2648,7 +2648,7 @@ class TestBlockSchemaMigration:
 
         assert bar.model_dump() == bar_new.model_dump()
 
-    async def test_save_new_schema_with_overwrite(self, prefect_client):
+    async def test_save_new_schema_with_overwrite(self, syntask_client):
         class Baz(Block):
             _block_type_name = "baz"
             _block_type_slug = "baz"
@@ -2658,7 +2658,7 @@ class TestBlockSchemaMigration:
 
         await baz.save("test")
 
-        block_document = await prefect_client.read_block_document_by_name(
+        block_document = await syntask_client.read_block_document_by_name(
             name="test", block_type_slug="baz"
         )
         old_schema_id = block_document.block_schema_id
@@ -2685,12 +2685,12 @@ class TestBlockSchemaMigration:
         # new local schema ID should be different because field added
         assert old_schema_id != new_schema_id
 
-        updated_schema = await prefect_client.read_block_document_by_name(
+        updated_schema = await syntask_client.read_block_document_by_name(
             name="test", block_type_slug="baz"
         )
         updated_schema_id = updated_schema.block_schema_id
 
-        # new local schema ID should now be saved to Prefect
+        # new local schema ID should now be saved to Syntask
         assert updated_schema_id == new_schema_id
 
 

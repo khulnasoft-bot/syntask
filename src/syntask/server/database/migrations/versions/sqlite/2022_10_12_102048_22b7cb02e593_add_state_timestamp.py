@@ -9,7 +9,7 @@ Create Date: 2022-10-12 10:20:48.760447
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "22b7cb02e593"
@@ -23,7 +23,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "state_timestamp",
-                prefect.server.utilities.database.Timestamp(timezone=True),
+                syntask.server.utilities.database.Timestamp(timezone=True),
                 nullable=True,
             )
         )
@@ -35,7 +35,7 @@ def upgrade():
         batch_op.add_column(
             sa.Column(
                 "state_timestamp",
-                prefect.server.utilities.database.Timestamp(timezone=True),
+                syntask.server.utilities.database.Timestamp(timezone=True),
                 nullable=True,
             )
         )

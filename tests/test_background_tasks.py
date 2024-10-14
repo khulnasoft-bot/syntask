@@ -6,22 +6,22 @@ from unittest import mock
 
 import pytest
 
-import prefect.results
-from prefect import Task, task, unmapped
-from prefect.blocks.core import Block
-from prefect.client.orchestration import get_client
-from prefect.client.schemas import TaskRun
-from prefect.filesystems import LocalFileSystem
-from prefect.results import ResultStore, get_or_create_default_task_scheduling_storage
-from prefect.server.api.task_runs import TaskQueue
-from prefect.server.schemas.core import TaskRun as ServerTaskRun
-from prefect.settings import (
-    PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
+import syntask.results
+from syntask import Task, task, unmapped
+from syntask.blocks.core import Block
+from syntask.client.orchestration import get_client
+from syntask.client.schemas import TaskRun
+from syntask.filesystems import LocalFileSystem
+from syntask.results import ResultStore, get_or_create_default_task_scheduling_storage
+from syntask.server.api.task_runs import TaskQueue
+from syntask.server.schemas.core import TaskRun as ServerTaskRun
+from syntask.settings import (
+    SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
     temporary_settings,
 )
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 async def result_store_from_task(task) -> ResultStore:
@@ -46,9 +46,9 @@ async def clear_scheduled_task_queues():
 
 @pytest.fixture(autouse=True)
 async def clear_cached_filesystems():
-    prefect.results._default_storages.clear()
+    syntask.results._default_storages.clear()
     yield
-    prefect.results._default_storages.clear()
+    syntask.results._default_storages.clear()
 
 
 @pytest.fixture
@@ -82,22 +82,22 @@ def async_foo_task_with_result_storage(async_foo_task, local_filesystem):
 
 
 async def test_task_submission_with_parameters_uses_default_storage(
-    foo_task, prefect_client
+    foo_task, syntask_client
 ):
     foo_task_without_result_storage = foo_task.with_options(result_storage=None)
     task_run_future = foo_task_without_result_storage.apply_async((42,))
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
 
     result_store = await result_store_from_task(foo_task)
     await result_store.read_parameters(task_run.state.state_details.task_parameters_id)
 
 
 async def test_task_submission_with_parameters_reuses_default_storage_block(
-    foo_task: Task, tmp_path: Path, prefect_client
+    foo_task: Task, tmp_path: Path, syntask_client
 ):
     with temporary_settings(
         {
-            PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: "local-file-system/my-tasks",
+            SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: "local-file-system/my-tasks",
         }
     ):
         block = LocalFileSystem(basepath=tmp_path / "some-storage")
@@ -117,8 +117,8 @@ async def test_task_submission_with_parameters_reuses_default_storage_block(
         assert isinstance(storage_after, LocalFileSystem)
 
         result_store = await result_store_from_task(foo_task)
-        task_run_a = await prefect_client.read_task_run(task_run_future_a.task_run_id)
-        task_run_b = await prefect_client.read_task_run(task_run_future_b.task_run_id)
+        task_run_a = await syntask_client.read_task_run(task_run_future_a.task_run_id)
+        task_run_b = await syntask_client.read_task_run(task_run_future_b.task_run_id)
         assert await result_store.read_parameters(
             task_run_a.state.state_details.task_parameters_id
         ) == {"parameters": {"x": 42}, "context": mock.ANY}
@@ -128,10 +128,10 @@ async def test_task_submission_with_parameters_reuses_default_storage_block(
 
 
 async def test_task_submission_creates_a_scheduled_task_run(
-    foo_task_with_result_storage, prefect_client
+    foo_task_with_result_storage, syntask_client
 ):
     task_run_future = foo_task_with_result_storage.apply_async((42,))
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
     assert task_run.state.is_scheduled()
     assert task_run.state.state_details.deferred is True
 
@@ -144,9 +144,9 @@ async def test_task_submission_creates_a_scheduled_task_run(
     assert parameters == {"parameters": {"x": 42}, "context": mock.ANY}
 
 
-async def test_sync_task_not_awaitable_in_async_context(foo_task, prefect_client):
+async def test_sync_task_not_awaitable_in_async_context(foo_task, syntask_client):
     task_run_future = foo_task.apply_async((42,))
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
     assert task_run.state.is_scheduled()
 
     result_store = await result_store_from_task(foo_task)
@@ -159,10 +159,10 @@ async def test_sync_task_not_awaitable_in_async_context(foo_task, prefect_client
 
 
 async def test_async_task_submission_creates_a_scheduled_task_run(
-    async_foo_task_with_result_storage, prefect_client
+    async_foo_task_with_result_storage, syntask_client
 ):
     task_run_future = async_foo_task_with_result_storage.apply_async((42,))
-    task_run = await prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await syntask_client.read_task_run(task_run_future.task_run_id)
     assert task_run.state.is_scheduled()
 
     result_store = await result_store_from_task(async_foo_task_with_result_storage)
@@ -176,17 +176,17 @@ async def test_async_task_submission_creates_a_scheduled_task_run(
 
 async def test_scheduled_tasks_are_enqueued_server_side(
     foo_task_with_result_storage: Task,
-    in_memory_prefect_client: "PrefectClient",
+    in_memory_syntask_client: "SyntaskClient",
     monkeypatch,
 ):
     # Need to mock `get_client` to return the in-memory client because we are directly inspecting
     # changes in the server-side task queue. Ideally, we'd be able to inspect the task queue via
     # the REST API for this test, but that's not currently possible.
     # TODO: Add ways to inspect the task queue via the REST API
-    monkeypatch.setattr(prefect.tasks, "get_client", lambda: in_memory_prefect_client)
+    monkeypatch.setattr(syntask.tasks, "get_client", lambda: in_memory_syntask_client)
 
     task_run_future = foo_task_with_result_storage.apply_async((42,))
-    task_run = await in_memory_prefect_client.read_task_run(task_run_future.task_run_id)
+    task_run = await in_memory_syntask_client.read_task_run(task_run_future.task_run_id)
     client_run: TaskRun = task_run
     assert client_run.state.is_scheduled()
 
@@ -217,7 +217,7 @@ async def test_scheduled_tasks_are_enqueued_server_side(
 async def test_tasks_are_not_enqueued_server_side_when_executed_directly(
     foo_task: Task,
 ):
-    # Regression test for https://github.com/synopkg/synopkg/issues/13674
+    # Regression test for https://github.com/synopkg/syntask/issues/13674
     # where executing a task would cause it to be enqueue server-side
     # and executed twice.
     foo_task(x=42)
@@ -227,7 +227,7 @@ async def test_tasks_are_not_enqueued_server_side_when_executed_directly(
 
 
 @pytest.fixture
-async def prefect_client() -> AsyncGenerator["PrefectClient", None]:
+async def syntask_client() -> AsyncGenerator["SyntaskClient", None]:
     async with get_client() as client:
         yield client
 

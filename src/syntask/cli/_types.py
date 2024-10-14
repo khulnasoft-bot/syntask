@@ -1,5 +1,5 @@
 """
-Custom Prefect CLI types
+Custom Syntask CLI types
 """
 
 import asyncio
@@ -11,10 +11,10 @@ import typer
 from rich.console import Console
 from rich.theme import Theme
 
-from prefect._internal.compatibility.deprecated import generate_deprecation_message
-from prefect.cli._utilities import with_cli_exception_handling
-from prefect.settings import PREFECT_CLI_COLORS, Setting
-from prefect.utilities.asyncutils import is_async_fn
+from syntask._internal.compatibility.deprecated import generate_deprecation_message
+from syntask.cli._utilities import with_cli_exception_handling
+from syntask.settings import SYNTASK_CLI_COLORS, Setting
+from syntask.utilities.asyncutils import is_async_fn
 
 
 def SettingsOption(setting: Setting, *args, **kwargs) -> typer.Option:
@@ -57,7 +57,7 @@ def with_deprecated_message(warning: str):
     return decorator
 
 
-class PrefectTyper(typer.Typer):
+class SyntaskTyper(typer.Typer):
     """
     Wraps commands created by `Typer` to support async functions and handle errors.
     """
@@ -88,12 +88,12 @@ class PrefectTyper(typer.Typer):
         self.console = Console(
             highlight=False,
             theme=Theme({"prompt.choices": "bold blue"}),
-            color_system="auto" if PREFECT_CLI_COLORS else None,
+            color_system="auto" if SYNTASK_CLI_COLORS else None,
         )
 
     def add_typer(
         self,
-        typer_instance: "PrefectTyper",
+        typer_instance: "SyntaskTyper",
         *args,
         no_args_is_help: bool = True,
         aliases: Optional[List[str]] = None,
@@ -177,7 +177,7 @@ class PrefectTyper(typer.Typer):
                 )
 
             # register fn with its original name
-            command_decorator = super(PrefectTyper, self).command(
+            command_decorator = super(SyntaskTyper, self).command(
                 name=name, *args, **kwargs
             )
             original_command = command_decorator(wrapped_fn)
@@ -185,7 +185,7 @@ class PrefectTyper(typer.Typer):
             # register fn for each alias, e.g. @marvin_app.command(aliases=["r"])
             if aliases:
                 for alias in aliases:
-                    super(PrefectTyper, self).command(
+                    super(SyntaskTyper, self).command(
                         name=alias,
                         *args,
                         **{k: v for k, v in kwargs.items() if k != "aliases"},
@@ -198,7 +198,7 @@ class PrefectTyper(typer.Typer):
     def setup_console(self, soft_wrap: bool, prompt: bool):
         self.console = Console(
             highlight=False,
-            color_system="auto" if PREFECT_CLI_COLORS else None,
+            color_system="auto" if SYNTASK_CLI_COLORS else None,
             theme=Theme({"prompt.choices": "bold blue"}),
             soft_wrap=not soft_wrap,
             force_interactive=prompt,

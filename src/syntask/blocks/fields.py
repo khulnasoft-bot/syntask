@@ -1,3 +1,3 @@
-from prefect.types import SecretDict
+from syntask.types import SecretDict
 
 __all__ = ["SecretDict"]

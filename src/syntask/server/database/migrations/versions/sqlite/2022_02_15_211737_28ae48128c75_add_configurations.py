@@ -9,7 +9,7 @@ Create Date: 2022-02-17 21:17:37.538086
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "28ae48128c75"
@@ -24,7 +24,7 @@ def upgrade():
         "configuration",
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text(
                 "(\n    (\n        lower(hex(randomblob(4))) \n        || '-' \n       "
                 " || lower(hex(randomblob(2))) \n        || '-4' \n        ||"
@@ -37,20 +37,20 @@ def upgrade():
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("(strftime('%Y-%m-%d %H:%M:%f000', 'now'))"),
             nullable=False,
         ),
         sa.Column("key", sa.String(), nullable=False),
         sa.Column(
             "value",
-            prefect.server.utilities.database.JSON(astext_type=sa.Text()),
+            syntask.server.utilities.database.JSON(astext_type=sa.Text()),
             nullable=False,
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_configuration")),

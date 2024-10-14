@@ -1,4 +1,4 @@
-integrationName: # Your collection name. Should match your PyPI package name. For example: prefect-collection
+integrationName: # Your collection name. Should match your PyPI package name. For example: syntask-collection
 author: Your Name
 authorUrl: # A link to information about the author. For example: Company URL, GitHub user profile, etc.
 documentation: # A link to the collection's documentation. For example, GitHub Pages.

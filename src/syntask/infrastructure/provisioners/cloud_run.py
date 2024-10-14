@@ -16,19 +16,19 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 from rich.syntax import Syntax
 
-from prefect.cli._prompts import prompt, prompt_select_from_table
-from prefect.client.orchestration import ServerType
-from prefect.client.schemas.actions import BlockDocumentCreate
-from prefect.client.utilities import inject_client
-from prefect.exceptions import ObjectAlreadyExists
-from prefect.settings import (
-    PREFECT_DEBUG_MODE,
-    PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE,
+from syntask.cli._prompts import prompt, prompt_select_from_table
+from syntask.client.orchestration import ServerType
+from syntask.client.schemas.actions import BlockDocumentCreate
+from syntask.client.utilities import inject_client
+from syntask.exceptions import ObjectAlreadyExists
+from syntask.settings import (
+    SYNTASK_DEBUG_MODE,
+    SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE,
     update_current_profile,
 )
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 class CloudRunPushProvisioner:
@@ -36,9 +36,9 @@ class CloudRunPushProvisioner:
         self._console = Console()
         self._project = None
         self._region = None
-        self._service_account_name = "prefect-cloud-run"
+        self._service_account_name = "syntask-cloud-run"
         self._credentials_block_name = None
-        self._image_repository_name = "prefect-images"
+        self._image_repository_name = "syntask-images"
 
     @property
     def console(self):
@@ -52,7 +52,7 @@ class CloudRunPushProvisioner:
         result = await run_process(shlex.split(command), check=False, *args, **kwargs)
 
         if result.returncode != 0:
-            if PREFECT_DEBUG_MODE:
+            if SYNTASK_DEBUG_MODE:
                 self._console.print(
                     "Error running command:",
                     Pretty(
@@ -132,7 +132,7 @@ class CloudRunPushProvisioner:
         try:
             await self._run_command(
                 f"gcloud iam service-accounts create {self._service_account_name}"
-                ' --display-name "Prefect Cloud Run Service Account"'
+                ' --display-name "Syntask Cloud Run Service Account"'
             )
         except subprocess.CalledProcessError as e:
             if "already exists" not in e.output.decode("utf-8"):
@@ -218,7 +218,7 @@ class CloudRunPushProvisioner:
             ) from e
 
     async def _create_gcp_credentials_block(
-        self, block_document_name: str, key: dict, client: "PrefectClient"
+        self, block_document_name: str, key: dict, client: "SyntaskClient"
     ) -> UUID:
         credentials_block_type = await client.read_block_type_by_slug("gcp-credentials")
 
@@ -246,7 +246,7 @@ class CloudRunPushProvisioner:
             return block_doc.id
 
     async def _create_provision_table(
-        self, work_pool_name: str, client: "PrefectClient"
+        self, work_pool_name: str, client: "SyntaskClient"
     ):
         return Panel(
             dedent(
@@ -264,7 +264,7 @@ class CloudRunPushProvisioner:
                                     - Cloud Run Developer
                             - Create a key for service account: [blue]{self._service_account_name}[/]
 
-                        Updates in Prefect {"workspace" if client.server_type == ServerType.CLOUD else "server"}
+                        Updates in Syntask {"workspace" if client.server_type == ServerType.CLOUD else "server"}
 
                             - Create GCP credentials block to store the service account key: [blue]{self._credentials_block_name}[/]
                 """
@@ -273,7 +273,7 @@ class CloudRunPushProvisioner:
         )
 
     async def _customize_resource_names(
-        self, work_pool_name: str, client: "PrefectClient"
+        self, work_pool_name: str, client: "SyntaskClient"
     ) -> bool:
         self._service_account_name = prompt(
             "Please enter a name for the service account",
@@ -299,7 +299,7 @@ class CloudRunPushProvisioner:
         self,
         work_pool_name: str,
         base_job_template: dict,
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ) -> Dict[str, Any]:
         assert client, "Client injection failed"
         await self._verify_gcloud_ready()
@@ -366,7 +366,7 @@ class CloudRunPushProvisioner:
             progress.console.print("Setting default Docker build namespace")
             default_docker_build_namespace = f"{self._region}-docker.pkg.dev/{self._project}/{self._image_repository_name}"
             update_current_profile(
-                {PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE: default_docker_build_namespace}
+                {SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE: default_docker_build_namespace}
             )
             progress.advance(task)
 
@@ -403,8 +403,8 @@ class CloudRunPushProvisioner:
                     Syntax(
                         dedent(
                             f"""\
-                        from prefect import flow
-                        from prefect.docker import DockerImage
+                        from syntask import flow
+                        from syntask.docker import DockerImage
 
 
                         @flow(log_prints=True)

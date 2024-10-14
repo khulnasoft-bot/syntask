@@ -7,24 +7,24 @@ from typing import Any, List, Optional
 
 import pytest
 
-from prefect import task
-from prefect.exceptions import MissingResult
-from prefect.futures import (
-    PrefectConcurrentFuture,
-    PrefectDistributedFuture,
-    PrefectFuture,
-    PrefectFutureList,
-    PrefectWrappedFuture,
+from syntask import task
+from syntask.exceptions import MissingResult
+from syntask.futures import (
+    SyntaskConcurrentFuture,
+    SyntaskDistributedFuture,
+    SyntaskFuture,
+    SyntaskFutureList,
+    SyntaskWrappedFuture,
     as_completed,
     resolve_futures_to_states,
     wait,
 )
-from prefect.states import Completed, Failed
-from prefect.task_engine import run_task_async, run_task_sync
-from prefect.task_runners import ThreadPoolTaskRunner
+from syntask.states import Completed, Failed
+from syntask.task_engine import run_task_async, run_task_sync
+from syntask.task_runners import ThreadPoolTaskRunner
 
 
-class MockFuture(PrefectWrappedFuture):
+class MockFuture(SyntaskWrappedFuture):
     def __init__(self, data: Any = 42):
         super().__init__(uuid.uuid4(), Future())
         self._final_state = Completed(data=data)
@@ -53,7 +53,7 @@ class TestUtilityFunctions:
     def test_wait_with_timeout(self):
         mock_futures = [MockFuture(data=i) for i in range(5)]
         hanging_future = Future()
-        mock_futures.append(PrefectConcurrentFuture(uuid.uuid4(), hanging_future))
+        mock_futures.append(SyntaskConcurrentFuture(uuid.uuid4(), hanging_future))
         futures = wait(mock_futures, timeout=0.01)
         assert futures.not_done == {mock_futures[-1]}
 
@@ -66,7 +66,7 @@ class TestUtilityFunctions:
     def test_as_completed_with_timeout(self):
         mock_futures = [MockFuture(data=i) for i in range(5)]
         hanging_future = Future()
-        mock_futures.append(PrefectConcurrentFuture(uuid.uuid4(), hanging_future))
+        mock_futures.append(SyntaskConcurrentFuture(uuid.uuid4(), hanging_future))
 
         with pytest.raises(TimeoutError) as exc_info:
             for future in as_completed(mock_futures, timeout=0.01):
@@ -136,7 +136,7 @@ class TestUtilityFunctions:
         task_runs = []
         for i in reversed(timings):
             task_run = await my_task.create_run(parameters={"seconds": i})
-            future = PrefectDistributedFuture(task_run_id=task_run.id)
+            future = SyntaskDistributedFuture(task_run_id=task_run.id)
 
             futures.append(future)
             task_run = asyncio.create_task(
@@ -161,10 +161,10 @@ class TestUtilityFunctions:
             assert results == timings
 
 
-class TestPrefectConcurrentFuture:
+class TestSyntaskConcurrentFuture:
     def test_wait_with_timeout(self):
         wrapped_future = Future()
-        future = PrefectConcurrentFuture(uuid.uuid4(), wrapped_future)
+        future = SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future)
         future.wait(timeout=0.01)  # should not raise a TimeoutError
 
         assert (
@@ -173,7 +173,7 @@ class TestPrefectConcurrentFuture:
 
     def test_wait_without_timeout(self):
         wrapped_future = Future()
-        future = PrefectConcurrentFuture(uuid.uuid4(), wrapped_future)
+        future = SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future)
         wrapped_future.set_result(Completed())
         future.wait(timeout=0)
 
@@ -182,7 +182,7 @@ class TestPrefectConcurrentFuture:
     def test_result_with_final_state(self):
         final_state = Completed(data=42)
         wrapped_future = Future()
-        future = PrefectConcurrentFuture(uuid.uuid4(), wrapped_future)
+        future = SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future)
         wrapped_future.set_result(final_state)
         result = future.result()
 
@@ -190,7 +190,7 @@ class TestPrefectConcurrentFuture:
 
     def test_result_without_final_state(self):
         wrapped_future = Future()
-        future = PrefectConcurrentFuture(uuid.uuid4(), wrapped_future)
+        future = SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future)
         wrapped_future.set_result(42)
         result = future.result()
 
@@ -199,21 +199,21 @@ class TestPrefectConcurrentFuture:
     def test_result_with_final_state_and_raise_on_failure(self):
         final_state = Failed(data=ValueError("oops"))
         wrapped_future = Future()
-        future = PrefectConcurrentFuture(uuid.uuid4(), wrapped_future)
+        future = SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future)
         wrapped_future.set_result(final_state)
 
         with pytest.raises(ValueError, match="oops"):
             future.result(raise_on_failure=True)
 
     def test_warns_if_not_resolved_when_garbage_collected(self, caplog):
-        PrefectConcurrentFuture(uuid.uuid4(), Future())
+        SyntaskConcurrentFuture(uuid.uuid4(), Future())
 
         assert "A future was garbage collected before it resolved" in caplog.text
 
     def test_does_not_warn_if_resolved_when_garbage_collected(self, caplog):
         wrapped_future = Future()
         wrapped_future.set_result(Completed())
-        PrefectConcurrentFuture(uuid.uuid4(), wrapped_future)
+        SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future)
 
         assert "A future was garbage collected before it resolved" not in caplog.text
 
@@ -274,14 +274,14 @@ class TestResolveFuturesToStates:
         )
 
 
-class TestPrefectDistributedFuture:
+class TestSyntaskDistributedFuture:
     async def test_wait_with_timeout(self, task_run):
         @task
         async def my_task():
             return 42
 
         task_run = await my_task.create_run()
-        future = PrefectDistributedFuture(task_run_id=task_run.id)
+        future = SyntaskDistributedFuture(task_run_id=task_run.id)
 
         asyncio.create_task(
             run_task_async(
@@ -293,7 +293,7 @@ class TestPrefectDistributedFuture:
             )
         )
 
-        future = PrefectDistributedFuture(task_run_id=task_run.id)
+        future = SyntaskDistributedFuture(task_run_id=task_run.id)
         future.wait(timeout=0.25)
         assert future.state.is_pending()
 
@@ -303,7 +303,7 @@ class TestPrefectDistributedFuture:
             return 42
 
         task_run = await my_task.create_run()
-        future = PrefectDistributedFuture(task_run_id=task_run.id)
+        future = SyntaskDistributedFuture(task_run_id=task_run.id)
 
         state = run_task_sync(
             task=my_task,
@@ -325,7 +325,7 @@ class TestPrefectDistributedFuture:
             return 42
 
         task_run = await my_task.create_run()
-        future = PrefectDistributedFuture(task_run_id=task_run.id)
+        future = SyntaskDistributedFuture(task_run_id=task_run.id)
 
         state = run_task_sync(
             task=my_task,
@@ -351,7 +351,7 @@ class TestPrefectDistributedFuture:
             return 42
 
         task_run = await my_task.create_run()
-        future = PrefectDistributedFuture(task_run_id=task_run.id)
+        future = SyntaskDistributedFuture(task_run_id=task_run.id)
 
         state = run_task_sync(
             task=my_task,
@@ -373,7 +373,7 @@ class TestPrefectDistributedFuture:
             raise ValueError("oops")
 
         task_run = await my_task.create_run()
-        future = PrefectDistributedFuture(task_run_id=task_run.id)
+        future = SyntaskDistributedFuture(task_run_id=task_run.id)
 
         state = run_task_sync(
             task=my_task,
@@ -395,7 +395,7 @@ class TestPrefectDistributedFuture:
             return 42
 
         task_run = await my_task.create_run()
-        future = PrefectDistributedFuture(task_run_id=task_run.id)
+        future = SyntaskDistributedFuture(task_run_id=task_run.id)
 
         state = run_task_sync(
             task=my_task,
@@ -412,10 +412,10 @@ class TestPrefectDistributedFuture:
             future.result()
 
 
-class TestPrefectFutureList:
+class TestSyntaskFutureList:
     def test_wait(self):
         mock_futures = [MockFuture(data=i) for i in range(5)]
-        futures = PrefectFutureList(mock_futures)
+        futures = SyntaskFutureList(mock_futures)
         # should not raise a TimeoutError
         futures.wait()
 
@@ -424,38 +424,38 @@ class TestPrefectFutureList:
 
     @pytest.mark.timeout(method="thread")  # alarm-based pytest-timeout will interfere
     def test_wait_with_timeout(self):
-        mock_futures: List[PrefectFuture] = [MockFuture(data=i) for i in range(5)]
+        mock_futures: List[SyntaskFuture] = [MockFuture(data=i) for i in range(5)]
         hanging_future = Future()
-        mock_futures.append(PrefectConcurrentFuture(uuid.uuid4(), hanging_future))
-        futures = PrefectFutureList(mock_futures)
+        mock_futures.append(SyntaskConcurrentFuture(uuid.uuid4(), hanging_future))
+        futures = SyntaskFutureList(mock_futures)
         # should not raise a TimeoutError or hang
         futures.wait(timeout=0.01)
 
     def test_results(self):
         mock_futures = [MockFuture(data=i) for i in range(5)]
-        futures = PrefectFutureList(mock_futures)
+        futures = SyntaskFutureList(mock_futures)
         result = futures.result()
 
         for i, result in enumerate(result):
             assert result == i
 
     def test_results_with_failure(self):
-        mock_futures: List[PrefectFuture] = [MockFuture(data=i) for i in range(5)]
+        mock_futures: List[SyntaskFuture] = [MockFuture(data=i) for i in range(5)]
         failing_future = Future()
         failing_future.set_exception(ValueError("oops"))
-        mock_futures.append(PrefectConcurrentFuture(uuid.uuid4(), failing_future))
-        futures = PrefectFutureList(mock_futures)
+        mock_futures.append(SyntaskConcurrentFuture(uuid.uuid4(), failing_future))
+        futures = SyntaskFutureList(mock_futures)
 
         with pytest.raises(ValueError, match="oops"):
             futures.result()
 
     def test_results_with_raise_on_failure_false(self):
-        mock_futures: List[PrefectFuture] = [MockFuture(data=i) for i in range(5)]
+        mock_futures: List[SyntaskFuture] = [MockFuture(data=i) for i in range(5)]
         final_state = Failed(data=ValueError("oops"))
         wrapped_future = Future()
         wrapped_future.set_result(final_state)
-        mock_futures.append(PrefectConcurrentFuture(uuid.uuid4(), wrapped_future))
-        futures = PrefectFutureList(mock_futures)
+        mock_futures.append(SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future))
+        futures = SyntaskFutureList(mock_futures)
 
         result = futures.result(raise_on_failure=False)
 
@@ -467,22 +467,22 @@ class TestPrefectFutureList:
 
     @pytest.mark.timeout(method="thread")  # alarm-based pytest-timeout will interfere
     def test_results_with_timeout(self):
-        mock_futures: List[PrefectFuture] = [MockFuture(data=i) for i in range(5)]
+        mock_futures: List[SyntaskFuture] = [MockFuture(data=i) for i in range(5)]
         failing_future = Future()
         failing_future.set_exception(TimeoutError("oops"))
-        mock_futures.append(PrefectConcurrentFuture(uuid.uuid4(), failing_future))
-        futures = PrefectFutureList(mock_futures)
+        mock_futures.append(SyntaskConcurrentFuture(uuid.uuid4(), failing_future))
+        futures = SyntaskFutureList(mock_futures)
 
         with pytest.raises(TimeoutError):
             futures.result(timeout=0.01)
 
     def test_result_does_not_obscure_other_timeouts(self):
-        mock_futures: List[PrefectFuture] = [MockFuture(data=i) for i in range(5)]
+        mock_futures: List[SyntaskFuture] = [MockFuture(data=i) for i in range(5)]
         final_state = Failed(data=TimeoutError("oops"))
         wrapped_future = Future()
         wrapped_future.set_result(final_state)
-        mock_futures.append(PrefectConcurrentFuture(uuid.uuid4(), wrapped_future))
-        futures = PrefectFutureList(mock_futures)
+        mock_futures.append(SyntaskConcurrentFuture(uuid.uuid4(), wrapped_future))
+        futures = SyntaskFutureList(mock_futures)
 
         with pytest.raises(TimeoutError, match="oops"):
             futures.result()

@@ -14,15 +14,15 @@ import typer
 import yaml
 
 DEFAULT_ROOT_PATH = os.environ.get(
-    "PREFECT_INSTALL_PATH", "~/src/github.com/synopkg/synopkg"
+    "SYNTASK_INSTALL_PATH", "~/src/github.com/synopkg/syntask"
 )
 DEFAULT_ROOT = Path(DEFAULT_ROOT_PATH).expanduser()
 COLLECTIONS_DIR = DEFAULT_ROOT / "src" / "integrations"
 
-app = typer.Typer(help="Utilities for managing Prefect collections en masse")
+app = typer.Typer(help="Utilities for managing Syntask collections en masse")
 
 
-def prefect_collections() -> List[str]:
+def syntask_collections() -> List[str]:
     entries = []
 
     for file in glob.glob("docs/integrations/catalog/*.yaml"):
@@ -32,29 +32,29 @@ def prefect_collections() -> List[str]:
         with open(file) as f:
             entries.append(yaml.safe_load(f))
 
-    entries = [e for e in entries if e["author"] == "Prefect"]
+    entries = [e for e in entries if e["author"] == "Syntask"]
     return [e["collectionName"] for e in entries]
 
 
 def collection_paths() -> Generator[Path, None, None]:
-    for collection in prefect_collections():
+    for collection in syntask_collections():
         yield COLLECTIONS_DIR / collection
 
 
 @contextmanager
 def _default_profile() -> Generator[None, None, None]:
-    import prefect.context
+    import syntask.context
 
-    original = prefect.context.get_settings_context().profile.name
+    original = syntask.context.get_settings_context().profile.name
     if original == "default":
         yield
         return
 
-    subprocess.check_call(["prefect", "profile", "use", "default"])
+    subprocess.check_call(["syntask", "profile", "use", "default"])
     try:
         yield
     finally:
-        subprocess.check_call(["prefect", "profile", "use", original])
+        subprocess.check_call(["syntask", "profile", "use", original])
 
 
 @app.command()
@@ -67,8 +67,8 @@ def test():
 
 @app.command()
 def list_collections():
-    """Lists all Prefect-managed collections"""
-    for collection in prefect_collections():
+    """Lists all Syntask-managed collections"""
+    for collection in syntask_collections():
         print(collection)
 
 

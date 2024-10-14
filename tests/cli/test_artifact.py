@@ -5,13 +5,13 @@ import pendulum
 import pytest
 from typer import Exit
 
-from prefect.server import models, schemas
-from prefect.testing.cli import invoke_and_assert
+from syntask.server import models, schemas
+from syntask.testing.cli import invoke_and_assert
 
 
 @pytest.fixture(autouse=True)
 def interactive_console(monkeypatch):
-    monkeypatch.setattr("prefect.cli.artifact.is_interactive", lambda: True)
+    monkeypatch.setattr("syntask.cli.artifact.is_interactive", lambda: True)
 
     # `readchar` does not like the fake stdin provided by typer isolation so we provide
     # a version that does not require a fd to be attached

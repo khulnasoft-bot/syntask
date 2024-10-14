@@ -1,7 +1,7 @@
 KNOWN_EXTRAS_FOR_PACKAGES = {
-    "prefect-kubernetes": "prefect[kubernetes]",
-    "prefect-aws": "prefect[aws]",
-    "prefect-gcp": "prefect[gcp]",
-    "prefect-azure": "prefect[azure]",
-    "prefect-docker": "prefect[docker]",
+    "syntask-kubernetes": "syntask[kubernetes]",
+    "prefect-aws": "syntask[aws]",
+    "syntask-gcp": "syntask[gcp]",
+    "syntask-azure": "syntask[azure]",
+    "prefect-docker": "syntask[docker]",
 }

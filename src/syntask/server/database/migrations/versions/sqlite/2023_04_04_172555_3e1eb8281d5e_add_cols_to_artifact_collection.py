@@ -9,7 +9,7 @@ Create Date: 2023-04-04 17:25:55.589739
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
+import syntask
 
 # revision identifiers, used by Alembic.
 revision = "3e1eb8281d5e"
@@ -24,12 +24,12 @@ def upgrade():
     with op.batch_alter_table("artifact_collection", schema=None) as batch_op:
         batch_op.add_column(
             sa.Column(
-                "task_run_id", prefect.server.utilities.database.UUID(), nullable=True
+                "task_run_id", syntask.server.utilities.database.UUID(), nullable=True
             )
         )
         batch_op.add_column(
             sa.Column(
-                "flow_run_id", prefect.server.utilities.database.UUID(), nullable=True
+                "flow_run_id", syntask.server.utilities.database.UUID(), nullable=True
             )
         )
         batch_op.add_column(sa.Column("type", sa.String(), nullable=True))

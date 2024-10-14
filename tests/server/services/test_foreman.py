@@ -8,19 +8,19 @@ import sqlalchemy as sa
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.schemas.statuses import DeploymentStatus
-from prefect.server.services.foreman import Foreman
-from prefect.settings import (
-    PREFECT_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS,
-    PREFECT_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE,
+from syntask.server import models, schemas
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.schemas.statuses import DeploymentStatus
+from syntask.server.services.foreman import Foreman
+from syntask.settings import (
+    SYNTASK_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS,
+    SYNTASK_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE,
 )
 
 if TYPE_CHECKING:
-    from prefect.server.database.orm_models import (
+    from syntask.server.database.orm_models import (
         ORMDeployment,
         ORMWorkPool,
         ORMWorkQueue,
@@ -30,11 +30,11 @@ if TYPE_CHECKING:
 @pytest.fixture(autouse=True)
 def patch_events_client(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "prefect.server.models.work_queues.PrefectServerEventsClient",
+        "syntask.server.models.work_queues.SyntaskServerEventsClient",
         AssertingEventsClient,
     )
     monkeypatch.setattr(
-        "prefect.server.models.workers.PrefectServerEventsClient",
+        "syntask.server.models.workers.SyntaskServerEventsClient",
         AssertingEventsClient,
     )
 
@@ -78,17 +78,17 @@ async def paused_work_pool(session: AsyncSession):
 
 @db_injector
 async def create_online_worker_with_old_heartbeat(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     work_pool: "ORMWorkPool",
     heartbeat_interval_seconds: Optional[int] = 60,
 ):
     worker_name = "online-worker-with-old-heartbeat"
     last_heartbeat_time = pendulum.now("UTC") - timedelta(
-        seconds=PREFECT_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE.value()
+        seconds=SYNTASK_API_SERVICES_FOREMAN_INACTIVITY_HEARTBEAT_MULTIPLE.value()
         * (
             heartbeat_interval_seconds
-            or PREFECT_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS.value()
+            or SYNTASK_API_SERVICES_FOREMAN_FALLBACK_HEARTBEAT_INTERVAL_SECONDS.value()
         )
     )
 
@@ -138,7 +138,7 @@ async def create_online_worker_with_new_heartbeat(
 
 @db_injector
 async def create_deployment_with_old_last_polled_time(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     suffix: str = "",
 ) -> "ORMDeployment":
@@ -205,7 +205,7 @@ async def create_deployment_with_old_last_polled_time(
 
 @db_injector
 async def create_deployment_with_new_last_polled_time(
-    db: PrefectDBInterface, session: AsyncSession
+    db: SyntaskDBInterface, session: AsyncSession
 ) -> "ORMDeployment":
     flow_2 = await models.flows.create_flow(
         session=session,
@@ -279,10 +279,10 @@ class TestForeman:
         assert len(events) == 1
 
         event = events[0]
-        assert event.event == "prefect.work-pool.not-ready"
-        assert event.resource.id == f"prefect.work-pool.{ready_work_pool.id}"
+        assert event.event == "syntask.work-pool.not-ready"
+        assert event.resource.id == f"syntask.work-pool.{ready_work_pool.id}"
         assert event.resource.name == ready_work_pool.name
-        assert event.resource["prefect.work-pool.type"] == "test"
+        assert event.resource["syntask.work-pool.type"] == "test"
 
     async def test_work_pool_status_update_with_multiple_workers(
         self,
@@ -470,11 +470,11 @@ class TestForeman:
         for event in events:
             print(event.id, event.follows, event.event, event.resource.id)
 
-        assert events[0].event == "prefect.work-pool.not-ready"
+        assert events[0].event == "syntask.work-pool.not-ready"
         assert events[0].follows is None
-        assert events[1].event == "prefect.work-pool.ready"
+        assert events[1].event == "syntask.work-pool.ready"
         assert events[1].follows == events[0].id
-        assert events[2].event == "prefect.work-pool.not-ready"
+        assert events[2].event == "syntask.work-pool.not-ready"
         assert events[2].follows == events[1].id
 
     async def test_status_update_when_deployment_has_old_last_polled_time(
@@ -499,26 +499,26 @@ class TestForeman:
         assert len(events) == 1
 
         event = events[0]
-        assert event.event == "prefect.deployment.not-ready"
-        assert event.resource.id == f"prefect.deployment.{deployment.id}"
+        assert event.event == "syntask.deployment.not-ready"
+        assert event.resource.id == f"syntask.deployment.{deployment.id}"
 
         assert event.resource.name == deployment.name
         assert (
-            event.related[0]["prefect.resource.id"]
-            == f"prefect.flow.{deployment.flow_id}"
+            event.related[0]["syntask.resource.id"]
+            == f"syntask.flow.{deployment.flow_id}"
         )
         flow_response = await client.get(f"/flows/{deployment.flow_id}")
         assert flow_response.status_code == 200
         flow = flow_response.json()
-        assert event.related[0]["prefect.resource.name"] == flow["name"]
-        assert event.related[0]["prefect.resource.role"] == "flow"
+        assert event.related[0]["syntask.resource.name"] == flow["name"]
+        assert event.related[0]["syntask.resource.role"] == "flow"
 
         assert (
-            event.related[1]["prefect.resource.id"]
-            == f"prefect.work-queue.{deployment.work_queue_id}"
+            event.related[1]["syntask.resource.id"]
+            == f"syntask.work-queue.{deployment.work_queue_id}"
         )
-        assert event.related[1]["prefect.resource.name"] == deployment.work_queue_name
-        assert event.related[1]["prefect.resource.role"] == "work-queue"
+        assert event.related[1]["syntask.resource.name"] == deployment.work_queue_name
+        assert event.related[1]["syntask.resource.role"] == "work-queue"
 
         work_queue_response = await client.get(
             f"/work_queues/{deployment.work_queue_id}"
@@ -527,8 +527,8 @@ class TestForeman:
         work_queue = response.json()
         work_pool_name = work_queue["work_pool_name"]
 
-        assert event.related[2]["prefect.resource.name"] == work_pool_name
-        assert event.related[2]["prefect.resource.role"] == "work-pool"
+        assert event.related[2]["syntask.resource.name"] == work_pool_name
+        assert event.related[2]["syntask.resource.role"] == "work-pool"
 
     async def test_status_update_when_deployment_has_new_last_polled_time(
         self,
@@ -608,7 +608,7 @@ class TestForemanWorkQueueService:
 
     @db_injector
     async def create_work_queue(
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         self,
         session: AsyncSession,
         wp: "ORMWorkPool",
@@ -632,7 +632,7 @@ class TestForemanWorkQueueService:
 
     @db_injector
     async def create_unpolled_work_queues(
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         self,
         session: AsyncSession,
         foreman: Foreman,
@@ -683,7 +683,7 @@ class TestForemanWorkQueueService:
 
     @db_injector
     async def poll_work_queue_by_name(
-        db: PrefectDBInterface, self, session: AsyncSession, name: str
+        db: SyntaskDBInterface, self, session: AsyncSession, name: str
     ):
         stmt = (
             sa.update(db.WorkQueue)
@@ -842,7 +842,7 @@ class TestForemanWorkQueueService:
             event
             for item in AssertingEventsClient.all
             for event in item.events
-            if event.event.startswith("prefect.work-queue.")
+            if event.event.startswith("syntask.work-queue.")
         ]
 
         # Until work pool status events are emitted, we have 2 work queue status events
@@ -852,35 +852,35 @@ class TestForemanWorkQueueService:
         # )  # 2 work queue status events and 2 work pool status events
 
         assert {(event.resource.id, event.resource.name) for event in events} == {
-            (f"prefect.work-queue.{wq_1.id}", wq_1.name),
-            (f"prefect.work-queue.{wq_2.id}", wq_2.name),
+            (f"syntask.work-queue.{wq_1.id}", wq_1.name),
+            (f"syntask.work-queue.{wq_2.id}", wq_2.name),
         }
 
         # check work queue 1 status event emitted
         wq_status_event_wp_1 = events[0]
-        assert wq_status_event_wp_1.event == "prefect.work-queue.not-ready"
+        assert wq_status_event_wp_1.event == "syntask.work-queue.not-ready"
         assert (
-            wq_status_event_wp_1.related[0]["prefect.resource.id"]
-            == f"prefect.work-pool.{ready_work_pool.id}"
+            wq_status_event_wp_1.related[0]["syntask.resource.id"]
+            == f"syntask.work-pool.{ready_work_pool.id}"
         )
         assert (
-            wq_status_event_wp_1.related[0]["prefect.resource.name"]
+            wq_status_event_wp_1.related[0]["syntask.resource.name"]
             == ready_work_pool.name
         )
-        assert wq_status_event_wp_1.related[0]["prefect.resource.role"] == "work-pool"
+        assert wq_status_event_wp_1.related[0]["syntask.resource.role"] == "work-pool"
 
         # check work queue 2 status event emitted
         wq_status_event_wp_2 = events[1]
-        assert wq_status_event_wp_2.event == "prefect.work-queue.not-ready"
+        assert wq_status_event_wp_2.event == "syntask.work-queue.not-ready"
         assert (
-            wq_status_event_wp_2.related[0]["prefect.resource.id"]
-            == f"prefect.work-pool.{ready_work_pool.id}"
+            wq_status_event_wp_2.related[0]["syntask.resource.id"]
+            == f"syntask.work-pool.{ready_work_pool.id}"
         )
         assert (
-            wq_status_event_wp_2.related[0]["prefect.resource.name"]
+            wq_status_event_wp_2.related[0]["syntask.resource.name"]
             == ready_work_pool.name
         )
-        assert wq_status_event_wp_2.related[0]["prefect.resource.role"] == "work-pool"
+        assert wq_status_event_wp_2.related[0]["syntask.resource.role"] == "work-pool"
 
     async def test_foreman_with_no_wqs_to_update(
         self,

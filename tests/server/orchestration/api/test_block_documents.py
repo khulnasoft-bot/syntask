@@ -6,13 +6,13 @@ import pytest
 from pydantic import SecretBytes, SecretStr
 from starlette import status
 
-from prefect.blocks.core import Block
-from prefect.server import models, schemas
-from prefect.server.schemas.actions import BlockDocumentCreate, BlockDocumentUpdate
-from prefect.server.schemas.core import BlockDocument
-from prefect.types import SecretDict
-from prefect.utilities.names import obfuscate_string
-from prefect.utilities.pydantic import parse_obj_as
+from syntask.blocks.core import Block
+from syntask.server import models, schemas
+from syntask.server.schemas.actions import BlockDocumentCreate, BlockDocumentUpdate
+from syntask.server.schemas.core import BlockDocument
+from syntask.types import SecretDict
+from syntask.utilities.names import obfuscate_string
+from syntask.utilities.pydantic import parse_obj_as
 
 
 def long_string(s: str):

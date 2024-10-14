@@ -1,8 +1,8 @@
 from unittest import mock
 
-from prefect import __development_base_path__
-from prefect.testing.cli import invoke_and_assert
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask import __development_base_path__
+from syntask.testing.cli import invoke_and_assert
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 TEST_PROJECTS_DIR = __development_base_path__ / "tests" / "test-projects"
 
@@ -42,7 +42,7 @@ async def test_import_failure():
 
 async def test_single_entrypoint():
     with mock.patch(
-        "prefect.cli.task.task_serve", new_callable=mock.AsyncMock
+        "syntask.cli.task.task_serve", new_callable=mock.AsyncMock
     ) as task_serve:
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -62,7 +62,7 @@ async def test_single_entrypoint():
 
 async def test_multiple_entrypoints():
     with mock.patch(
-        "prefect.cli.task.task_serve", new_callable=mock.AsyncMock
+        "syntask.cli.task.task_serve", new_callable=mock.AsyncMock
     ) as task_serve:
         await run_sync_in_worker_thread(
             invoke_and_assert,

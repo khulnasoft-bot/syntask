@@ -1,6 +1,6 @@
 """
 This module defines the ContainerInstancePushProvisioner class, which is responsible for provisioning
-infrastructure using Azure Container Instances for Prefect work pools.
+infrastructure using Azure Container Instances for Syntask work pools.
 
 The ContainerInstancePushProvisioner class provides methods for provisioning infrastructure and
 interacting with Azure Container Instances.
@@ -29,17 +29,17 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 from rich.syntax import Syntax
 
-from prefect.cli._prompts import prompt, prompt_select_from_table
-from prefect.client.schemas.actions import BlockDocumentCreate
-from prefect.client.utilities import inject_client
-from prefect.exceptions import ObjectAlreadyExists, ObjectNotFound
-from prefect.settings import (
-    PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE,
+from syntask.cli._prompts import prompt, prompt_select_from_table
+from syntask.client.schemas.actions import BlockDocumentCreate
+from syntask.client.utilities import inject_client
+from syntask.exceptions import ObjectAlreadyExists, ObjectNotFound
+from syntask.settings import (
+    SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE,
     update_current_profile,
 )
 
 if TYPE_CHECKING:
-    from prefect.client.orchestration import PrefectClient
+    from syntask.client.orchestration import SyntaskClient
 
 
 class AzureCLI:
@@ -155,12 +155,12 @@ class ContainerInstancePushProvisioner:
         self._subscription_id = None
         self._subscription_name = None
         self._location = "eastus"
-        self._identity_name = "prefect-acr-identity"
+        self._identity_name = "syntask-acr-identity"
         self.azure_cli = AzureCLI(self.console)
         self._credentials_block_name = None
-        self._resource_group_name = "prefect-aci-push-pool-rg"
-        self._app_registration_name = "prefect-aci-push-pool-app"
-        self._registry_name_prefix = "prefect"
+        self._resource_group_name = "syntask-aci-push-pool-rg"
+        self._app_registration_name = "syntask-aci-push-pool-app"
+        self._registry_name_prefix = "syntask"
 
     @property
     def console(self) -> Console:
@@ -545,7 +545,7 @@ class ContainerInstancePushProvisioner:
         Returns:
             dict: Object representing the registry.
         """
-        # check to see if there are any registries starting with 'prefect'
+        # check to see if there are any registries starting with 'syntask'
         command_get_registries = (
             'az acr list --query "[?starts_with(name,'
             f" '{self._registry_name_prefix}')]\" --subscription"
@@ -687,7 +687,7 @@ class ContainerInstancePushProvisioner:
         client_id: str,
         tenant_id: str,
         client_secret: str,
-        client: "PrefectClient",
+        client: "SyntaskClient",
     ) -> UUID:
         """
         Creates a credentials block for Azure Container Instance.
@@ -697,7 +697,7 @@ class ContainerInstancePushProvisioner:
             client_id (str): The client ID obtained from app registration.
             tenant_id (str): The tenant ID obtained from the secret generation.
             client_secret (str): The client secret obtained from the secret generation.
-            client (PrefectClient): An instance of PrefectClient.
+            client (SyntaskClient): An instance of SyntaskClient.
 
         Returns:
             UUID: The ID of the created credentials block.
@@ -733,7 +733,7 @@ class ContainerInstancePushProvisioner:
             self._console.print(
                 (
                     f"ACI credentials block '{credentials_block_name}' created in"
-                    " Prefect Cloud"
+                    " Syntask Cloud"
                 ),
                 style="green",
             )
@@ -758,14 +758,14 @@ class ContainerInstancePushProvisioner:
             raise e
 
     async def _aci_credentials_block_exists(
-        self, block_name: str, client: "PrefectClient"
+        self, block_name: str, client: "SyntaskClient"
     ) -> bool:
         """
         Checks if an ACI credentials block with the given name already exists.
 
         Args:
             block_name (str): The name of the ACI credentials block.
-            client (PrefectClient): An instance of PrefectClient.
+            client (SyntaskClient): An instance of SyntaskClient.
 
         Returns:
             bool: True if the credentials block exists, False otherwise.
@@ -786,7 +786,7 @@ class ContainerInstancePushProvisioner:
             return False
 
     async def _create_provision_table(
-        self, work_pool_name: str, client: "PrefectClient"
+        self, work_pool_name: str, client: "SyntaskClient"
     ):
         return Panel(
             dedent(
@@ -805,7 +805,7 @@ class ContainerInstancePushProvisioner:
                             - Create an ACR registry for image hosting
                             - Create an identity for Azure Container Instance to allow access to the registry
 
-                        Updates in Prefect workspace
+                        Updates in Syntask workspace
 
                             - Create Azure Container Instance credentials block: [blue]{self._credentials_block_name}[/]
                     """
@@ -814,7 +814,7 @@ class ContainerInstancePushProvisioner:
         )
 
     async def _customize_resource_names(
-        self, work_pool_name: str, client: "PrefectClient"
+        self, work_pool_name: str, client: "SyntaskClient"
     ) -> bool:
         self._resource_group_name = prompt(
             "Please enter a name for the resource group",
@@ -856,7 +856,7 @@ class ContainerInstancePushProvisioner:
         self,
         work_pool_name: str,
         base_job_template: Dict[str, Any],
-        client: Optional["PrefectClient"] = None,
+        client: Optional["SyntaskClient"] = None,
     ) -> Dict[str, Any]:
         """
         Orchestrates the provisioning of Azure resources and setup for the push work pool.
@@ -864,7 +864,7 @@ class ContainerInstancePushProvisioner:
         Args:
             work_pool_name (str): The name of the work pool.
             base_job_template (Dict[str, Any]): The base template for job creation.
-            client (Optional[PrefectClient]): An instance of PrefectClient. If None, it will be injected.
+            client (Optional[SyntaskClient]): An instance of SyntaskClient. If None, it will be injected.
 
         Returns:
             Dict[str, Any]: The updated job template with necessary references and configurations.
@@ -991,7 +991,7 @@ class ContainerInstancePushProvisioner:
                 subscription_id=self._subscription_id,
             )
             update_current_profile(
-                {PREFECT_DEFAULT_DOCKER_BUILD_NAMESPACE: registry["loginServer"]}
+                {SYNTASK_DEFAULT_DOCKER_BUILD_NAMESPACE: registry["loginServer"]}
             )
             progress.advance(task)
 
@@ -1041,8 +1041,8 @@ class ContainerInstancePushProvisioner:
                 Syntax(
                     dedent(
                         f"""\
-                        from prefect import flow
-                        from prefect.docker import DockerImage
+                        from syntask import flow
+                        from syntask.docker import DockerImage
 
 
                         @flow(log_prints=True)

@@ -11,10 +11,10 @@ from typing import List
 import sqlalchemy as sa
 from alembic import op
 
-import prefect
-from prefect.server.events.actions import ServerActionTypes
-from prefect.server.events.schemas.automations import Firing, ServerTriggerTypes
-from prefect.server.events.schemas.events import ReceivedEvent
+import syntask
+from syntask.server.events.actions import ServerActionTypes
+from syntask.server.events.schemas.automations import Firing, ServerTriggerTypes
+from syntask.server.events.schemas.events import ReceivedEvent
 
 # revision identifiers, used by Alembic.
 revision = "aeea5ee6f070"
@@ -32,41 +32,41 @@ def upgrade():
         sa.Column("enabled", sa.Boolean(), server_default="1", nullable=False),
         sa.Column(
             "trigger",
-            prefect.server.utilities.database.Pydantic(ServerTriggerTypes),
+            syntask.server.utilities.database.Pydantic(ServerTriggerTypes),
             nullable=False,
         ),
         sa.Column(
             "actions",
-            prefect.server.utilities.database.Pydantic(List[ServerActionTypes]),
+            syntask.server.utilities.database.Pydantic(List[ServerActionTypes]),
             nullable=False,
         ),
         sa.Column(
             "actions_on_trigger",
-            prefect.server.utilities.database.Pydantic(List[ServerActionTypes]),
+            syntask.server.utilities.database.Pydantic(List[ServerActionTypes]),
             server_default="[]",
             nullable=False,
         ),
         sa.Column(
             "actions_on_resolve",
-            prefect.server.utilities.database.Pydantic(List[ServerActionTypes]),
+            syntask.server.utilities.database.Pydantic(List[ServerActionTypes]),
             server_default="[]",
             nullable=False,
         ),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -78,53 +78,53 @@ def upgrade():
     op.create_table(
         "automation_bucket",
         sa.Column(
-            "automation_id", prefect.server.utilities.database.UUID(), nullable=False
+            "automation_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.Column(
-            "trigger_id", prefect.server.utilities.database.UUID(), nullable=True
+            "trigger_id", syntask.server.utilities.database.UUID(), nullable=True
         ),
         sa.Column(
             "bucketing_key",
-            prefect.server.utilities.database.JSON(astext_type=sa.Text()),
+            syntask.server.utilities.database.JSON(astext_type=sa.Text()),
             nullable=False,
         ),
         sa.Column(
             "last_event",
-            prefect.server.utilities.database.Pydantic(ReceivedEvent),
+            syntask.server.utilities.database.Pydantic(ReceivedEvent),
             nullable=True,
         ),
         sa.Column(
             "start",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column(
             "end",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column("count", sa.Integer(), nullable=False),
         sa.Column("last_operation", sa.String(), nullable=True),
         sa.Column(
             "triggered_at",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=False,
         ),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -157,7 +157,7 @@ def upgrade():
     op.create_table(
         "automation_related_resource",
         sa.Column(
-            "automation_id", prefect.server.utilities.database.UUID(), nullable=False
+            "automation_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.Column("resource_id", sa.String(), nullable=True),
         sa.Column(
@@ -168,19 +168,19 @@ def upgrade():
         ),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
@@ -213,44 +213,44 @@ def upgrade():
     op.create_table(
         "composite_trigger_child_firing",
         sa.Column(
-            "automation_id", prefect.server.utilities.database.UUID(), nullable=False
+            "automation_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.Column(
             "parent_trigger_id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             nullable=False,
         ),
         sa.Column(
-            "child_trigger_id", prefect.server.utilities.database.UUID(), nullable=False
+            "child_trigger_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.Column(
-            "child_firing_id", prefect.server.utilities.database.UUID(), nullable=False
+            "child_firing_id", syntask.server.utilities.database.UUID(), nullable=False
         ),
         sa.Column(
             "child_fired_at",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             nullable=True,
         ),
         sa.Column(
             "child_firing",
-            prefect.server.utilities.database.Pydantic(Firing),
+            syntask.server.utilities.database.Pydantic(Firing),
             nullable=False,
         ),
         sa.Column(
             "id",
-            prefect.server.utilities.database.UUID(),
+            syntask.server.utilities.database.UUID(),
             server_default=sa.text("(GEN_RANDOM_UUID())"),
             nullable=False,
         ),
         sa.Column(
             "created",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
         sa.Column(
             "updated",
-            prefect.server.utilities.database.Timestamp(timezone=True),
+            syntask.server.utilities.database.Timestamp(timezone=True),
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),

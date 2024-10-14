@@ -1,5 +1,5 @@
 from .bases import (
-    PrefectBaseModel,
+    SyntaskBaseModel,
     IDBaseModel,
     ORMBaseModel,
     ActionBaseModel,

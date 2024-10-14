@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.server import models, schemas
+from syntask.server import models, schemas
 
 
 class TestCreateSavedSearch:

@@ -38,7 +38,7 @@ def upgrade():
         connection.execute(
             sa.text(
                 "INSERT INTO work_pool (name, type) VALUES ('default-agent-pool',"
-                " 'prefect-agent')"
+                " 'syntask-agent')"
             )
         )
 

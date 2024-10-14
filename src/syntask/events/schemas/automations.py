@@ -22,9 +22,9 @@ from pydantic import (
 )
 from typing_extensions import Self, TypeAlias
 
-from prefect._internal.schemas.bases import PrefectBaseModel
-from prefect.events.actions import ActionTypes, RunDeployment
-from prefect.utilities.collections import AutoEnum
+from syntask._internal.schemas.bases import SyntaskBaseModel
+from syntask.events.actions import ActionTypes, RunDeployment
+from syntask.utilities.collections import AutoEnum
 
 from .events import ResourceSpecification
 
@@ -35,7 +35,7 @@ class Posture(AutoEnum):
     Metric = "Metric"
 
 
-class Trigger(PrefectBaseModel, abc.ABC, extra="ignore"):  # type: ignore[call-arg]
+class Trigger(SyntaskBaseModel, abc.ABC, extra="ignore"):  # type: ignore[call-arg]
     """
     Base class describing a set of criteria that must be satisfied in order to trigger
     an automation.
@@ -56,7 +56,7 @@ class Trigger(PrefectBaseModel, abc.ABC, extra="ignore"):  # type: ignore[call-a
         self._deployment_id = deployment_id
 
     def owner_resource(self) -> Optional[str]:
-        return f"prefect.deployment.{self._deployment_id}"
+        return f"syntask.deployment.{self._deployment_id}"
 
     def actions(self) -> List[ActionTypes]:
         assert self._deployment_id
@@ -122,7 +122,7 @@ class EventTrigger(ResourceTrigger):
         description=(
             "The event(s) which must first been seen to fire this trigger.  If "
             "empty, then fire this trigger immediately.  Events may include "
-            "trailing wildcards, like `prefect.flow-run.*`"
+            "trailing wildcards, like `syntask.flow-run.*`"
         ),
     )
     expect: Set[str] = Field(
@@ -130,7 +130,7 @@ class EventTrigger(ResourceTrigger):
         description=(
             "The event(s) this trigger is expecting to see.  If empty, this "
             "trigger will match any event.  Events may include trailing wildcards, "
-            "like `prefect.flow-run.*`"
+            "like `syntask.flow-run.*`"
         ),
     )
 
@@ -142,7 +142,7 @@ class EventTrigger(ResourceTrigger):
             "triggering event.  You may also refer to labels from related "
             "resources by specifying `related:<role>:<label>`.  This will use the "
             "value of that label for the first related resource in that role.  For "
-            'example, `"for_each": ["related:flow:prefect.resource.id"]` would '
+            'example, `"for_each": ["related:flow:syntask.resource.id"]` would '
             "evaluate the trigger for each flow."
         ),
     )
@@ -230,18 +230,18 @@ class MetricTriggerOperator(Enum):
     GTE = ">="
 
 
-class PrefectMetric(Enum):
+class SyntaskMetric(Enum):
     lateness = "lateness"
     duration = "duration"
     successes = "successes"
 
 
-class MetricTriggerQuery(PrefectBaseModel):
+class MetricTriggerQuery(SyntaskBaseModel):
     """Defines a subset of the Trigger subclass, which is specific
     to Metric automations, that specify the query configurations
     and breaching conditions for the Automation"""
 
-    name: PrefectMetric = Field(
+    name: SyntaskMetric = Field(
         ...,
         description="The name of the metric to query.",
     )
@@ -400,7 +400,7 @@ CompoundTrigger.model_rebuild()
 SequenceTrigger.model_rebuild()
 
 
-class AutomationCore(PrefectBaseModel, extra="ignore"):  # type: ignore[call-arg]
+class AutomationCore(SyntaskBaseModel, extra="ignore"):  # type: ignore[call-arg]
     """Defines an action a user wants to take when a certain number of events
     do or don't happen to the matching resources"""
 

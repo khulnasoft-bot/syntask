@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import pytest
 
-from prefect.server.events.schemas.automations import (
+from syntask.server.events.schemas.automations import (
     AutomationCreate,
     CompoundTrigger,
     EventTrigger,
@@ -90,7 +90,7 @@ def test_server_composite_triggers_validate_to_server_triggers():
                     "posture": "Reactive",
                     "expect": ["integration.example.event.A"],
                     "match": {
-                        "prefect.resource.id": "integration:compound:b7083807-cdc8-4c72-89ed-40927a67f731"
+                        "syntask.resource.id": "integration:compound:b7083807-cdc8-4c72-89ed-40927a67f731"
                     },
                     "threshold": 1,
                     "within": 0,
@@ -99,7 +99,7 @@ def test_server_composite_triggers_validate_to_server_triggers():
                     "posture": "Reactive",
                     "expect": ["integration.example.event.B"],
                     "match": {
-                        "prefect.resource.id": "integration:compound:b7083807-cdc8-4c72-89ed-40927a67f731"
+                        "syntask.resource.id": "integration:compound:b7083807-cdc8-4c72-89ed-40927a67f731"
                     },
                     "threshold": 1,
                     "within": 0,
@@ -111,8 +111,8 @@ def test_server_composite_triggers_validate_to_server_triggers():
     automation_as_json = json.dumps(composite_trigger_info)
     trigger_as_json = json.dumps(composite_trigger_info["trigger"])
 
-    assert CompoundTrigger.__module__ == "prefect.server.events.schemas.automations"
-    assert EventTrigger.__module__ == "prefect.server.events.schemas.automations"
+    assert CompoundTrigger.__module__ == "syntask.server.events.schemas.automations"
+    assert EventTrigger.__module__ == "syntask.server.events.schemas.automations"
 
     # Parse the automation
     automation = AutomationCreate.model_validate(composite_trigger_info)
