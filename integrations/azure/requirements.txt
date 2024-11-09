@@ -1,0 +1,6 @@
+prefect>=2.14.10
+azure_mgmt_containerinstance>=10.0
+azure_identity>=1.10
+azure-mgmt-resource>=21.2
+aiohttp
+

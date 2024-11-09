@@ -1,0 +1,727 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "nameOverride": {
+      "type": "string",
+      "title": "Name Override",
+      "description": "partially overrides common.names.name"
+    },
+    "fullnameOverride": {
+      "type": "string",
+      "title": "Fullname Override",
+      "description": "fully override common.names.fullname"
+    },
+    "namespaceOverride": {
+      "type": "string",
+      "title": "Namespace Override",
+      "description": "fully override common.names.namespace"
+    },
+    "commonLabels": {
+      "type": "object",
+      "title": "Common Labels",
+      "description": "labels to add to all deployed objects"
+    },
+    "commonAnnotations": {
+      "type": "object",
+      "title": "Common Annotations",
+      "description": "annotations to add to all deployed objects"
+    },
+    "worker": {
+      "type": "object",
+      "title": "Worker",
+      "description": "worker configuration",
+      "additionalProperties": false,
+      "properties": {
+        "autoscaling": {
+          "type": "object",
+          "title": "Autoscaling",
+          "description": "autoscaling configuration for the worker",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "enable autoscaling for the worker"
+            },
+            "minReplicas": {
+              "type": "integer",
+              "title": "Min Replicas",
+              "description": "minimum number of replicas to scale down to"
+            },
+            "maxReplicas": {
+              "type": "integer",
+              "title": "Max Replicas",
+              "description": "maximum number of replicas to scale up to"
+            },
+            "targetCPUUtilizationPercentage": {
+              "type": "integer",
+              "title": "Target CPU Utilization Percentage",
+              "description": "target CPU utilization percentage for scaling the worker"
+            },
+            "targetMemoryUtilizationPercentage": {
+              "type": "integer",
+              "title": "Target Memory Utilization Percentage",
+              "description": "target memory utilization percentage for scaling the worker"
+            }
+          }
+        },
+        "clusterUid": {
+          "type": "string",
+          "title": "Cluster UID",
+          "description": "unique cluster identifier, if none is provided this value will be inferred at time of helm install"
+        },
+        "initContainer": {
+          "type": "object",
+          "title": "initContainer",
+          "description": "sync-base-job-template initContainer configuration",
+          "additionalProperties": false,
+          "properties": {
+            "resources": {
+              "type": "object",
+              "title": "Resources",
+              "description": "initContainer resource configuration",
+              "additionalProperties": false,
+              "properties": {
+                "requests": {
+                  "type": "object",
+                  "title": "Requests",
+                  "description": "the requested resources for the init container",
+                  "additionalProperties": false,
+                  "properties": {
+                    "cpu": {
+                      "type": "string",
+                      "title": "CPU",
+                      "description": "init resource request cpu"
+                    },
+                    "memory": {
+                      "type": "string",
+                      "title": "Memory",
+                      "description": "init resource request memory"
+                    }
+                  }
+                },
+                "limits": {
+                  "type": "object",
+                  "title": "Limits",
+                  "description": "the requested limits for the init container",
+                  "additionalProperties": false,
+                  "properties": {
+                    "cpu": {
+                      "type": "string",
+                      "title": "CPU",
+                      "description": "init resource limit cpu"
+                    },
+                    "memory": {
+                      "type": "string",
+                      "title": "Memory",
+                      "description": "init resource limit memory"
+                    }
+                  }
+                }
+              }
+            },
+            "containerSecurityContext": {
+              "type": "object",
+              "title": "Container Security Context",
+              "description": "init container security context configuration",
+              "additionalProperties": false,
+              "properties": {
+                "allowPrivilegeEscalation": {
+                  "type": "boolean",
+                  "title": "Allow Privilege Escalation",
+                  "description": "set init containers' security context allowPrivilegeEscalation"
+                },
+                "readOnlyRootFilesystem": {
+                  "type": "boolean",
+                  "title": "Read Only Root Filesystem",
+                  "description": "set init containers' security context readOnlyRootFilesystem"
+                },
+                "runAsNonRoot": {
+                  "type": "boolean",
+                  "title": "Run As Non Root",
+                  "description": "set init containers' security context runAsNonRoot"
+                },
+                "runAsUser": {
+                  "type": "integer",
+                  "title": "Run As User",
+                  "description": "set init containers' security context runAsUser"
+                },
+                "capabilities": {
+                  "type": "object",
+                  "title": "Configure Linux capabilities",
+                  "description": "set init container's security context capabilities",
+                  "properties": {
+                    "add": {
+                      "type": "array",
+                      "title": "Added capabilities",
+                      "description": "set init container's security context capabilities to add",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "drop": {
+                      "type": "array",
+                      "title": "Removed capabilities",
+                      "description": "set init container's security context capabilities to remove",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "extraContainers": {
+              "type": "array",
+              "title": "Extra Containers",
+              "description": "additional init containers",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "image": {
+          "type": "object",
+          "title": "Image",
+          "description": "worker image configuration",
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "type": "string",
+              "title": "Repository",
+              "description": "worker image repository"
+            },
+            "prefectTag": {
+              "type": "string",
+              "title": "Tag",
+              "description": "worker image tag"
+            },
+            "pullPolicy": {
+              "type": "string",
+              "title": "Pull Policy",
+              "description": "worker image pull policy"
+            },
+            "pullSecrets": {
+              "type": "array",
+              "title": "Pull Secrets",
+              "description": "worker image pull secrets",
+              "items": {
+                "type": "string"
+              }
+            },
+            "debug": {
+              "type": "boolean",
+              "title": "Debug",
+              "description": "worker image debug mode"
+            }
+          }
+        },
+        "config": {
+          "type": "object",
+          "title": "Config",
+          "description": "general configuration of the worker",
+          "additionalProperties": false,
+          "properties": {
+            "workPool": {
+              "type": "string",
+              "title": "Work Pool",
+              "description": "the work pool that your started worker will poll."
+            },
+            "workQueues": {
+              "type": "array",
+              "title": "Work Queues",
+              "description": "one or more work queue names for the worker to pull from. if not provided, the worker will pull from all work queues in the work pool",
+              "items": {
+                "type": "string"
+              }
+            },
+            "queryInterval": {
+              "type": "integer",
+              "title": "Query Interval",
+              "description": "how often the worker will query for runs"
+            },
+            "prefetchSeconds": {
+              "type": "integer",
+              "title": "Prefetch Seconds",
+              "description": "when querying for runs, how many seconds in the future can they be scheduled"
+            },
+            "http2": {
+              "type": "boolean",
+              "title": "HTTP2",
+              "description": "connect using HTTP/2 if the server supports it (experimental)"
+            },
+            "limit": {
+              "type": ["integer", "null"],
+              "title": "Limit",
+              "description": "Maximum number of flow runs to start simultaneously (default: unlimited)"
+            },
+            "name": {
+              "type": ["string", "null"],
+              "title": "Name",
+              "description": "The name to give to the started worker. If not provided, a unique name will be generated."
+            },
+            "installPolicy": {
+              "type": "string",
+              "title": "Install Policy",
+              "description": "Install policy to use workers from Prefect integration packages."
+            },
+            "type": {
+              "type": "string",
+              "title": "Type",
+              "description": "the type of worker to start i.e kubernetes"
+            },
+            "baseJobTemplate": {
+              "type": "object",
+              "title": "Base Job Template",
+              "description": "If unspecified, Prefect will use the default base job template for the given worker type. If the work pool already exists, this will be ignored.",
+              "additionalProperties": false,
+              "properties": {
+                "existingConfigMapName": {
+                  "type": "string",
+                  "title": "Existing ConfigMap Name",
+                  "description": "the name of an existing ConfigMap containing a base job template. NOTE - the key must be 'baseJobTemplate.json'"
+                },
+                "configuration": {
+                  "type": ["string", "null"],
+                  "title": "Base Job Template Configuration",
+                  "description": "JSON formatted base job template. If data is provided here, the chart will generate a configmap and mount it to the worker pod"
+                },
+                "name": {
+                  "type": ["string", "null"],
+                  "title": "Name",
+                  "description": "optionally override the default name of the generated configmap."
+                }
+              }
+            }
+          }
+        },
+        "apiConfig": {
+          "type": "string",
+          "title": "API Config",
+          "description": "one of 'cloud' or 'server'"
+        },
+        "cloudApiConfig": {
+          "type": "object",
+          "title": "Cloud API Config",
+          "description": "cloud api configuration",
+          "additionalProperties": false,
+          "properties": {
+            "accountId": {
+              "type": "string",
+              "title": "Account ID",
+              "description": "prefect account ID"
+            },
+            "workspaceId": {
+              "type": "string",
+              "title": "Workspace ID",
+              "description": "prefect workspace ID"
+            },
+            "apiKeySecret": {
+              "type": "object",
+              "title": "API Key Secret",
+              "description": "prefect api key secret",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name",
+                  "description": "prefect API secret name"
+                },
+                "key": {
+                  "type": "string",
+                  "title": "Key",
+                  "description": "prefect API secret key"
+                }
+              }
+            },
+            "cloudUrl": {
+              "type": "string",
+              "title": "Cloud URL",
+              "description": "prefect cloud url"
+            }
+          }
+        },
+        "selfHostedCloudApiConfig": {
+          "type": "object",
+          "title": "Self Hosted API Config",
+          "description": "self hosted api configuration",
+          "additionalProperties": false,
+          "properties": {
+            "accountId": {
+              "type": "string",
+              "title": "Account ID",
+              "description": "prefect account ID"
+            },
+            "workspaceId": {
+              "type": "string",
+              "title": "Workspace ID",
+              "description": "prefect workspace ID"
+            },
+            "apiKeySecret": {
+              "type": "object",
+              "title": "API Key Secret",
+              "description": "prefect api key secret",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name",
+                  "description": "prefect API secret name"
+                },
+                "key": {
+                  "type": "string",
+                  "title": "Key",
+                  "description": "prefect API secret key"
+                }
+              }
+            },
+            "uiUrl": {
+              "type": "string",
+              "title": "Self Hosted Cloud URL",
+              "description": "self hosted cloud url"
+            },
+            "apiUrl": {
+              "type": "string",
+              "title": "Self Hosted API URL",
+              "description": "self hosted API url (PREFECT_API_URL)"
+            }
+          }
+        },
+        "serverApiConfig": {
+          "type": "object",
+          "title": "Server API Config",
+          "description": "server api configuration",
+          "additionalProperties": false,
+          "properties": {
+            "apiUrl": {
+              "type": "string",
+              "title": "API",
+              "description": "prefect API url (PREFECT_API_URL)"
+            },
+            "uiUrl": {
+              "type": "string",
+              "title": "UI",
+              "description": "prefect UI url"
+            }
+          }
+        },
+        "revisionHistoryLimit": {
+          "type": "integer",
+          "title": "Revision History Limit",
+          "description": "the number of old ReplicaSets to retain to allow rollback"
+        },
+        "replicaCount": {
+          "type": "integer",
+          "title": "Replica Count",
+          "description": "number of worker replicas to deploy"
+        },
+        "resources": {
+          "type": "object",
+          "title": "Resources",
+          "description": "worker resource configuration",
+          "additionalProperties": false,
+          "properties": {
+            "requests": {
+              "type": "object",
+              "title": "Requests",
+              "description": "the requested resources for the worker container",
+              "additionalProperties": false,
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "title": "CPU",
+                  "description": "worker resource request cpu"
+                },
+                "memory": {
+                  "type": "string",
+                  "title": "Memory",
+                  "description": "worker resource request memory"
+                }
+              }
+            },
+            "limits": {
+              "type": "object",
+              "title": "Limits",
+              "description": "the requested limits for the worker container",
+              "additionalProperties": false,
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "title": "CPU",
+                  "description": "worker resource limit cpu"
+                },
+                "memory": {
+                  "type": "string",
+                  "title": "Memory",
+                  "description": "worker resource limit memory"
+                }
+              }
+            }
+          }
+        },
+        "livenessProbe": {
+          "type": "object",
+          "title": "Liveness Probe",
+          "description": "worker liveness probe configuration",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "title": "Enabled",
+              "description": "enable worker liveness probe"
+            },
+            "config": {
+              "type": "object",
+              "title": "Config",
+              "description": "worker liveness probe configuration",
+              "additionalProperties": false,
+              "properties": {
+                "initialDelaySeconds": {
+                  "type": "integer",
+                  "title": "Initial Delay Seconds",
+                  "description": "The number of seconds to wait before starting the first probe."
+                },
+                "periodSeconds": {
+                  "type": "integer",
+                  "title": "Period Seconds",
+                  "description": "The number of seconds to wait between consecutive probes."
+                },
+                "timeoutSeconds": {
+                  "type": "integer",
+                  "title": "Timeout Seconds",
+                  "description": "number of seconds after which the probe times out"
+                },
+                "successThreshold": {
+                  "type": "integer",
+                  "title": "Success Threshold",
+                  "description": "The minimum consecutive successes required to consider the probe successful."
+                },
+                "failureThreshold": {
+                  "type": "integer",
+                  "title": "Failure Threshold",
+                  "description": "The number of consecutive failures allowed before considering the probe as failed."
+                }
+              }
+            }
+          }
+        },
+        "podSecurityContext": {
+          "type": "object",
+          "title": "Pod Security Context",
+          "description": "worker pod security context configuration",
+          "additionalProperties": false,
+          "properties": {
+            "fsGroup": {
+              "type": "integer",
+              "title": "FS Group",
+              "description": "set worker pod's security context fsGroup"
+            },
+            "runAsNonRoot": {
+              "type": "boolean",
+              "title": "Run As Non Root",
+              "description": "set worker pod's security context runAsNonRoot"
+            },
+            "runAsUser": {
+              "type": "integer",
+              "title": "Run As User",
+              "description": "set worker pod's security context runAsUser"
+            }
+          }
+        },
+        "priorityClassName": {
+          "type": "string",
+          "title": "Priority Class Name",
+          "description": "priority class name to use for the worker pods; if the priority class is empty or doesn't exist, the worker pods are scheduled without a priority class"
+        },
+        "containerSecurityContext": {
+          "type": "object",
+          "title": "Container Security Context",
+          "description": "worker container security context configuration",
+          "additionalProperties": false,
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "type": "boolean",
+              "title": "Allow Privilege Escalation",
+              "description": "set worker containers' security context allowPrivilegeEscalation"
+            },
+            "readOnlyRootFilesystem": {
+              "type": "boolean",
+              "title": "Read Only Root Filesystem",
+              "description": "set worker containers' security context readOnlyRootFilesystem"
+            },
+            "runAsNonRoot": {
+              "type": "boolean",
+              "title": "Run As Non Root",
+              "description": "set worker containers' security context runAsNonRoot"
+            },
+            "runAsUser": {
+              "type": "integer",
+              "title": "Run As User",
+              "description": "set worker containers' security context runAsUser"
+            },
+            "capabilities": {
+              "type": "object",
+              "title": "Configure Linux capabilities",
+              "description": "set worker container's security context capabilities",
+              "properties": {
+                "add": {
+                  "type": "array",
+                  "title": "Added capabilities",
+                  "description": "set worker container's security context capabilities to add",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "drop": {
+                  "type": "array",
+                  "title": "Removed capabilities",
+                  "description": "set worker container's security context capabilities to remove",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "podLabels": {
+          "type": "object",
+          "title": "Pod Labels",
+          "description": "extra labels for worker pod"
+        },
+        "podAnnotations": {
+          "type": "object",
+          "title": "Pod Annotations",
+          "description": "extra annotations for worker pod"
+        },
+        "affinity": {
+          "type": "object",
+          "title": "Affinity",
+          "description": "affinity for worker pods assignment"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "title": "Node Selector",
+          "description": "node labels for worker pods assignment"
+        },
+        "tolerations": {
+          "type": "array",
+          "title": "Tolerations",
+          "description": "tolerations for worker pods assignment",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraEnvVars": {
+          "type": "array",
+          "title": "Extra Env Vars",
+          "description": "extra environment variables to add to worker pods"
+        },
+        "extraEnvVarsCM": {
+          "type": "string",
+          "title": "Extra Env Vars ConfigMap",
+          "description": "name of existing ConfigMap containing extra env vars to add to worker nodes"
+        },
+        "extraEnvVarsSecret": {
+          "type": "string",
+          "title": "Extra Env Vars Secret",
+          "description": "name of existing Secret containing extra env vars to add to worker nodes"
+        },
+        "extraContainers": {
+          "type": "array",
+          "title": "Extra Containers",
+          "description": "additional sidecar containers",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraVolumes": {
+          "type": "array",
+          "title": "Extra Volumes",
+          "description": "array with extra volumes for the worker pod",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraVolumeMounts": {
+          "type": "array",
+          "title": "Extra Volume Mounts",
+          "description": "array with extra volumeMounts for the worker pod",
+          "items": {
+            "type": "object"
+          }
+        },
+        "extraArgs": {
+          "type": "array",
+          "title": "Extra Container Args",
+          "description": "array with extra args for the worker container"
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "title": "Service Account",
+      "description": "service account configuration",
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "title": "Create",
+          "description": "create service account"
+        },
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "description": "name of the service account to use"
+        },
+        "annotations": {
+          "type": "object",
+          "title": "Annotations",
+          "description": "annotations to add to the service account"
+        }
+      }
+    },
+    "role": {
+      "type": "object",
+      "title": "Role",
+      "description": "role configuration",
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "title": "Create",
+          "description": "create role"
+        },
+        "extraPermissions": {
+          "type": "array",
+          "title": "Extra Permissions",
+          "description": "extra permissions to add to the role"
+        }
+      }
+    },
+    "rolebinding": {
+      "type": "object",
+      "title": "RoleBinding",
+      "description": "rolebinding configuration",
+      "additionalProperties": false,
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "title": "Create",
+          "description": "create role binding"
+        }
+      }
+    },
+    "common": {
+      "type": "object",
+      "title": "Common",
+      "description": "common configuration.  Not set by user but required as common vars are passed to all manifests."
+    },
+    "global": {
+      "type": "object",
+      "title": "Global",
+      "description": "global configuration.  Not set by user but required when prefect is referenced as a downstream Chart"
+    }
+  }
+}

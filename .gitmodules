@@ -1,6 +1,0 @@
-[submodule "compat-tests"]
-	path = compat-tests
-	url = https://github.com/synopkg/compat-tests.git
-[submodule "syntask-ui"]
-	path = ui
-	url = https://github.com/synopkg/syntask-ui.git

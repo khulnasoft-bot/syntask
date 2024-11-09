@@ -1,0 +1,19 @@
+---
+sources:
+  common:
+    kind: helmchart
+    spec:
+      url: https://charts.bitnami.com/bitnami
+      name: common
+      versionFilter:
+        kind: semver
+    sourceid: common
+conditions: {}
+targets:
+  operator:
+    name: bump chart dependencies
+    kind: yaml
+    spec:
+      file: deploy/charts/prefect-operator/Chart.yaml
+      key: dependencies[0].version
+    sourceid: common

@@ -1,0 +1,44 @@
+---
+name: Build and Push Images on Merge to Main
+
+"on":
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+    paths:
+      - api/**
+      - cmd/**
+      - deploy/charts/**
+      - internal/**
+      - Dockerfile
+
+permissions: {}
+
+jobs:
+  run_unit_tests:
+    uses: ./.github/workflows/tests.yaml
+    permissions:
+      # required by downstream jobs
+      contents: read
+
+  build_and_push_image_for_main:
+    needs: run_unit_tests
+    uses: ./.github/workflows/build-and-push-image.yaml
+    with:
+      environment: dev
+      image: prefect-operator-dev
+    # this is required so that the workflow can read secrets rom the environment
+    secrets: inherit
+
+  create_helm_release:
+    needs: build_and_push_image_for_main
+    uses: ./.github/workflows/helm-release.yaml
+    permissions:
+      # required by downstream jobs
+      contents: write
+    with:
+      mode: main-merge
+    # this is required so that the workflow can read secrets
+    # from the environment
+    secrets: inherit

@@ -1,6 +1,0 @@
-integrationName: prefect-databricks
-author: Syntask
-authorUrl: https://syntask.khulnasoft.com
-documentation: https://synopkg.github.io/prefect-databricks/
-iconUrl: /images/integrations/databricks.png
-tag: Databricks

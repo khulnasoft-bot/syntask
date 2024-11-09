@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "common.labels.matchLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.useServiceAccount }}
+      serviceAccountName: {{ .Values.serviceAccount.useServiceAccount }}
+      {{ else }}
+      serviceAccountName: {{ include "prometheus-prefect-exporter.serviceAccountName" . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.image)}}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+          {{- if .Values.containerArgs }}
+          {{- range .Values.containerArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort | default .Values.service.port }}
+              protocol: TCP
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          {{- end }}
+          env:
+          - name: PREFECT_API_URL
+            value: {{ .Values.prefectApiUrl }}
+          {{- if .Values.csrfAuth }}
+          - name: PREFECT_CSRF_ENABLED
+            value: "True"
+          {{- end }}
+          {{- if .Values.pagination.enabled }}
+          - name: PAGINATION_LIMIT
+            value: {{ .Values.pagination.limit | quote }}
+          - name: PAGINATION_ENABLED
+            value: "True"
+          {{- end }}
+          {{- if not .Values.pagination.enabled }}
+          - name: PAGINATION_ENABLED
+            value: "False"
+          {{- end }}
+          {{- if .Values.env }}
+          {{- range $key, $value := .Values.env }}
+          - name: {{ $key | upper }}
+            value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

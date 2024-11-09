@@ -1,6 +1,0 @@
-integrationName: prefect-aws
-author: Syntask
-authorUrl: https://syntask.khulnasoft.com
-documentation: prefect-aws
-iconUrl: /images/integrations/aws.png
-tag: AWS

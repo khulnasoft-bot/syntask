@@ -91,7 +91,7 @@ export function isTaskRunSortValue(value: MaybeRef<unknown>): value is MaybeRef<
 
 export type TaskRunSortOptions = { label: string, value: TaskRunSortValues }[]
 
-const logSortValues = ['TIMESTAMP_ASC', 'TIMESTAMP_DESC', 'LEVEL_ASC', 'LEVEL_DESC', 'FLOW_RUN_ID_ASC', 'FLOW_RUN_ID_DESC', 'TASK_RUN_ID_ASC', 'TASK_RUN_ID_DESC']
+const logSortValues = ['TIMESTAMP_ASC', 'TIMESTAMP_DESC', 'LEVEL_ASC', 'LEVEL_DESC', 'FLOW_RUN_ID_ASC', 'FLOW_RUN_ID_DESC', 'TASK_RUN_ID_ASC', 'TASK_RUN_ID_DESC'] as const
 export type LogSortValues = typeof logSortValues[number]
 export const defaultLogSort: LogSortValues = 'TIMESTAMP_ASC'
 
@@ -112,3 +112,15 @@ export function isBlockDocumentSortValue(value: Ref<unknown>): value is Ref<Bloc
 export function isBlockDocumentSortValue(value: MaybeRef<unknown>): value is MaybeRef<BlockDocumentSortValues> {
   return blockDocumentSortValues.includes(toValue(value) as BlockDocumentSortValues)
 }
+
+const workPoolWorkerSortValues = ['LAST_HEARTBEAT_ASC', 'LAST_HEARTBEAT_DESC', 'NAME_ASC', 'NAME_DESC', 'CLIENT_VERSION_ASC', 'CLIENT_VERSION_DESC', 'STATUS_ASC', 'STATUS_DESC'] as const
+export type WorkPoolWorkerSortValues = typeof workPoolWorkerSortValues[number]
+export const defaultWorkPoolWorkersSort: WorkPoolWorkerSortValues = 'LAST_HEARTBEAT_DESC'
+
+export function isWorkPoolWorkerSortValue(value: unknown): value is WorkPoolWorkerSortValues
+export function isWorkPoolWorkerSortValue(value: Ref<unknown>): value is Ref<WorkPoolWorkerSortValues>
+export function isWorkPoolWorkerSortValue(value: MaybeRef<unknown>): value is MaybeRef<WorkPoolWorkerSortValues> {
+  return workPoolWorkerSortValues.includes(toValue(value) as WorkPoolWorkerSortValues)
+}
+
+export type WorkPoolWorkerSortOptions = { label: string, value: WorkPoolWorkerSortValues }[]

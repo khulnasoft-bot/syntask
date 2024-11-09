@@ -1,11 +1,13 @@
 <template>
   <slot :open="open" :close="close" />
-  <p-modal v-model:showModal="showModal" :title="schedule ? 'Edit schedule' : 'Add schedule'">
+  <p-modal v-model:showModal="showModal" :title="schedule ? 'Edit schedule' : 'Add schedule'" @update:show-modal="resetIfFalse">
     <p-label label="Schedule type">
       <p-button-group v-model="scheduleForm" :options="scheduleFormOptions" small />
     </p-label>
 
-    <p-toggle v-model="internalActive" />
+    <p-label label="Active">
+      <p-toggle v-model="internalActive" />
+    </p-label>
 
     <template v-if="scheduleForm == 'rrule'">
       <p>
@@ -122,6 +124,12 @@
     internalJobVariables.value = props.jobVariables ? stringify(props.jobVariables) : undefined
   }
   watch(() => props.schedule, updateInternalState)
+
+  function resetIfFalse(val: boolean): void {
+    if (!val) {
+      updateInternalState()
+    }
+  }
 </script>
 
 <script lang="ts">
