@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.blocks.abstract import (
+from syntask.blocks.abstract import (
     CredentialsBlock,
     DatabaseBlock,
     JobBlock,
@@ -9,7 +9,7 @@ from prefect.blocks.abstract import (
     ObjectStorageBlock,
     SecretBlock,
 )
-from prefect.exceptions import PrefectException
+from syntask.exceptions import SyntaskException
 
 
 class TestCredentialsBlock:
@@ -32,7 +32,7 @@ class TestCredentialsBlock:
         assert hasattr(a_credentials_block, "logger")
         assert len(caplog.records) == 1
         record = caplog.records[0]
-        assert record.name == "prefect.ACredentialsBlock"
+        assert record.name == "syntask.ACredentialsBlock"
         assert record.msg == "Got client."
 
 
@@ -55,11 +55,11 @@ class TestNotificationBlock:
         assert hasattr(a_notification_block, "logger")
         assert len(caplog.records) == 1
         record = caplog.records[0]
-        assert record.name == "prefect.ANotificationBlock"
+        assert record.name == "syntask.ANotificationBlock"
         assert record.msg == "Notification sent with body subject."
 
 
-class JobRunIsRunning(PrefectException):
+class JobRunIsRunning(SyntaskException):
     """Raised when a job run is still running."""
 
 
@@ -111,10 +111,10 @@ class TestJobBlock:
         assert hasattr(a_job_run, "logger")
         assert len(caplog.records) == 2
         record_1 = caplog.records[0]
-        assert record_1.name == "prefect.AJobBlock"
+        assert record_1.name == "syntask.AJobBlock"
         assert record_1.msg == "Job run triggered."
         record_2 = caplog.records[1]
-        assert record_2.name == "prefect.AJobRun"
+        assert record_2.name == "syntask.AJobRun"
         assert record_2.msg == "Job run completed."
 
 
@@ -192,7 +192,7 @@ class TestDatabaseBlock:
 
         records = caplog.records
         for record in records:
-            assert record.name == "prefect.ADatabaseBlock"
+            assert record.name == "syntask.ADatabaseBlock"
         assert records[0].message == "Fetching one result using {'a': 'b'}."
         assert records[1].message == "Fetching 2 results using {'a': 'b'}."
         assert records[2].message == "Fetching all results using {'a': 'b'}."

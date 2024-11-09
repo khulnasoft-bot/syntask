@@ -1,5 +1,5 @@
 ---
-description: Prefect results capture the data returned from your flows and tasks.
+description: Syntask results capture the data returned from your flows and tasks.
 tags:
     - flows
     - subflows
@@ -19,7 +19,7 @@ Results represent the data returned by a flow or a task.
 When **calling** flows or tasks, the result is returned directly:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -37,7 +37,7 @@ assert result == 2
 When working with flow and task states, the result can be retrieved with the `State.result()` method:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -55,7 +55,7 @@ assert state.result() == 2
 When submitting tasks to a runner, the result can be retrieved with the `Future.result()` method:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -72,12 +72,12 @@ assert result == 2
 
 ### Handling failures
 
-Sometimes your flows or tasks will encounter an **exception**. Prefect captures all exceptions in order to report states to the orchestrator, but we do not hide them from you (unless you ask us to) as your program needs to know if an unexpected error has occurred.
+Sometimes your flows or tasks will encounter an **exception**. Syntask captures all exceptions in order to report states to the orchestrator, but we do not hide them from you (unless you ask us to) as your program needs to know if an unexpected error has occurred.
 
 When **calling** flows or tasks, the exceptions are raised as in normal Python:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -95,10 +95,10 @@ def my_flow():
 my_flow()
 ```
 
-If you would prefer to check for a failed task without using `try/except`, you may ask Prefect to return the state:
+If you would prefer to check for a failed task without using `try/except`, you may ask Syntask to return the state:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -123,7 +123,7 @@ assert result == 2
 If you retrieve the result from a failed state, the exception will be raised. For this reason, it's often best to check if the state is failed first.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -143,10 +143,10 @@ def my_flow():
 my_flow()
 ```
 
-When retrieving the result from a state, you can ask Prefect not to raise exceptions:
+When retrieving the result from a state, you can ask Syntask not to raise exceptions:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -172,7 +172,7 @@ assert result == 2
 When submitting tasks to a runner, `Future.result()` works the same as `State.result()`:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -202,7 +202,7 @@ When **calling** flows or tasks, the result is returned directly:
 
 ```python
 import asyncio
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 async def my_task():
@@ -221,7 +221,7 @@ When working with flow and task states, the result can be retrieved with the `St
 
 ```python
 import asyncio
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 async def my_task():
@@ -241,12 +241,12 @@ asyncio.run(main())
 ```
 
 !!! important "Resolving results"
-    Prefect 2.6.0 added automatic retrieval of persisted results.
+    Syntask 2.6.0 added automatic retrieval of persisted results.
     Prior to this version, `State.result()` did not require an `await`.
     For backwards compatibility, when used from an asynchronous context, `State.result()` returns a raw result type.
 
     You may opt-in to the new behavior by passing `fetch=True` as shown in the example above.
-    If you would like this behavior to be used automatically, you may enable the `PREFECT_ASYNC_FETCH_STATE_RESULT` setting.
+    If you would like this behavior to be used automatically, you may enable the `SYNTASK_ASYNC_FETCH_STATE_RESULT` setting.
     If you do not opt-in to this behavior, you will see a warning.
     
     You may also opt-out by setting `fetch=False`.
@@ -256,7 +256,7 @@ When submitting tasks to a runner, the result can be retrieved with the `Future.
 
 ```python
 import asyncio
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 async def my_task():
@@ -274,9 +274,9 @@ assert result == 2
 
 ## Persisting results
 
-The Prefect API does not store your results [except in special cases](#storage-of-results-in-prefect). Instead, the result is _persisted_ to a storage location in your infrastructure and Prefect stores a _reference_ to the result.
+The Syntask API does not store your results [except in special cases](#storage-of-results-in-syntask). Instead, the result is _persisted_ to a storage location in your infrastructure and Syntask stores a _reference_ to the result.
 
-The following Prefect features require results to be persisted:
+The following Syntask features require results to be persisted:
 
 - Task cache keys
 - Flow run retries
@@ -285,7 +285,7 @@ If results are not persisted, these features may not be usable.
 
 ### Configuring persistence of results
 
-Persistence of results requires a [**serializer**](#result-serializer) and a [**storage** location](#result-storage-location). Prefect sets defaults for these, and you should not need to adjust them until you want to customize behavior. You can configure results on the `flow` and `task` decorators with the following options:
+Persistence of results requires a [**serializer**](#result-serializer) and a [**storage** location](#result-storage-location). Syntask sets defaults for these, and you should not need to adjust them until you want to customize behavior. You can configure results on the `flow` and `task` decorators with the following options:
 
 - `persist_result`: Whether the result should be persisted to storage.
 - `result_storage`: Where to store the result when persisted.
@@ -293,12 +293,12 @@ Persistence of results requires a [**serializer**](#result-serializer) and a [**
 
 #### Toggling persistence
 
-Persistence of the result of a task or flow can be configured with the `persist_result` option. The `persist_result` option defaults to a null value, which will automatically enable persistence if it is needed for a Prefect feature used by the flow or task. Otherwise, persistence is disabled by default.
+Persistence of the result of a task or flow can be configured with the `persist_result` option. The `persist_result` option defaults to a null value, which will automatically enable persistence if it is needed for a Syntask feature used by the flow or task. Otherwise, persistence is disabled by default.
 
 For example, the following flow has retries enabled. Flow retries require that all task results are persisted, so the task's result will be persisted:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -307,7 +307,7 @@ def my_task():
 @flow(retries=2)
 def my_flow():
     # This task does not have persistence toggled off and it is needed for the flow feature,
-    # so Prefect will persist its result at runtime
+    # so Syntask will persist its result at runtime
     my_task()
 ```
 
@@ -316,7 +316,7 @@ Flow retries do not require the flow's result to be persisted, so it will not be
 In this next example, one task has caching enabled. Task caching requires that the given task's result is persisted:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 from datetime import timedelta
 
 @task(cache_key_fn=lambda: "always", cache_expiration=timedelta(seconds=20))
@@ -343,7 +343,7 @@ def my_flow():
 Persistence of results can be manually toggled on or off:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @flow(persist_result=True)
 def my_flow():
@@ -357,25 +357,25 @@ def my_task():
     ...
 ```
 
-Toggling persistence manually will always override any behavior that Prefect would infer.
+Toggling persistence manually will always override any behavior that Syntask would infer.
 
-You may also change Prefect's default persistence behavior with the `PREFECT_RESULTS_PERSIST_BY_DEFAULT` setting. To persist results by default, even if they are not needed for a feature change the value to a truthy value:
+You may also change Syntask's default persistence behavior with the `SYNTASK_RESULTS_PERSIST_BY_DEFAULT` setting. To persist results by default, even if they are not needed for a feature change the value to a truthy value:
 
 ```
-prefect config set PREFECT_RESULTS_PERSIST_BY_DEFAULT=true
+syntask config set SYNTASK_RESULTS_PERSIST_BY_DEFAULT=true
 ```
 
-Task and flows with `persist_result=False` will not persist their results even if `PREFECT_RESULTS_PERSIST_BY_DEFAULT` is `true`.
+Task and flows with `persist_result=False` will not persist their results even if `SYNTASK_RESULTS_PERSIST_BY_DEFAULT` is `true`.
 
 #### Result storage location
 
 [The result storage location](#result-storage-types) can be configured with the `result_storage` option. The `result_storage` option defaults to a null value, which infers storage from the context.
 Generally, this means that tasks will use the result storage configured on the flow unless otherwise specified.
-If there is no context to load the storage from and results must be persisted, results will be stored in the path specified by the `PREFECT_LOCAL_STORAGE_PATH` setting (defaults to `~/.prefect/storage`).
+If there is no context to load the storage from and results must be persisted, results will be stored in the path specified by the `SYNTASK_LOCAL_STORAGE_PATH` setting (defaults to `~/.syntask/storage`).
 
 ```python
-from prefect import flow, task
-from prefect.filesystems import LocalFileSystem, S3
+from syntask import flow, task
+from syntask.filesystems import LocalFileSystem, S3
 
 @flow(persist_result=True)
 def my_flow():
@@ -404,8 +404,8 @@ You can configure this to use a specific storage using one of the following:
 The path of the result file in the result storage can be configured with the `result_storage_key`. The `result_storage_key` option defaults to a null value, which generates a unique identifier for each result.
 
 ```python
-from prefect import flow, task
-from prefect.filesystems import LocalFileSystem, S3
+from syntask import flow, task
+from syntask.filesystems import LocalFileSystem, S3
 
 @flow(result_storage=S3(bucket_path="my-bucket"))
 def my_flow():
@@ -418,10 +418,10 @@ def my_task():
 my_flow()  # The task's result will be persisted to 's3://my-bucket/my_task.json'
 ```
 
-Result storage keys are formatted with access to all of the modules in `prefect.runtime` and the run's `parameters`. In the following example, we will run a flow with three runs of the same task. Each task run will write its result to a unique file based on the `name` parameter.
+Result storage keys are formatted with access to all of the modules in `syntask.runtime` and the run's `parameters`. In the following example, we will run a flow with three runs of the same task. Each task run will write its result to a unique file based on the `name` parameter.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @flow()
 def my_flow():
@@ -439,16 +439,16 @@ my_flow()
 After running the flow, we can see three persisted result files in our storage directory:
 
 ```shell
-$ ls ~/.prefect/storage | grep "hello-"
+$ ls ~/.syntask/storage | grep "hello-"
 hello-bar.json
 hello-foo.json
 hello-world.json
 ```
 
-In the next example, we include metadata about the flow run from the `prefect.runtime.flow_run` module:
+In the next example, we include metadata about the flow run from the `syntask.runtime.flow_run` module:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @flow
 def my_flow():
@@ -464,7 +464,7 @@ my_flow()
 After running this flow, we can see a result file templated with the name of the flow and the flow run:
 
 ```
-❯ ls ~/.prefect/storage | grep "my-flow"    
+❯ ls ~/.syntask/storage | grep "my-flow"    
 my-flow_industrious-trout_hello.json
 ```
 
@@ -476,7 +476,7 @@ Result storage keys can only be configured on tasks at this time.
 
 [The result serializer](#result-serializer-types) can be configured with the `result_serializer` option. The `result_serializer` option defaults to a null value, which infers the serializer from the context.
 Generally, this means that tasks will use the result serializer configured on the flow unless otherwise specified.
-If there is no context to load the serializer from, the serializer defined by `PREFECT_RESULTS_DEFAULT_SERIALIZER` will be used. This setting defaults to Prefect's pickle serializer.
+If there is no context to load the serializer from, the serializer defined by `SYNTASK_RESULTS_DEFAULT_SERIALIZER` will be used. This setting defaults to Syntask's pickle serializer.
 
 You may configure the result serializer using:
 
@@ -485,25 +485,25 @@ You may configure the result serializer using:
 
 #### Compressing results
 
-Prefect provides a `CompressedSerializer` which can be used to _wrap_ other serializers to provide compression over the bytes they generate. The compressed serializer uses `lzma` compression by default. We test other compression schemes provided in the Python standard library such as `bz2` and `zlib`, but you should be able to use any compression library that provides `compress` and `decompress` methods.
+Syntask provides a `CompressedSerializer` which can be used to _wrap_ other serializers to provide compression over the bytes they generate. The compressed serializer uses `lzma` compression by default. We test other compression schemes provided in the Python standard library such as `bz2` and `zlib`, but you should be able to use any compression library that provides `compress` and `decompress` methods.
 
 You may configure compression of results using:
 
 - A type name, prefixed with `compressed/` e.g. `"compressed/json"` or `"compressed/pickle"`
 - An instance e.g. `CompressedSerializer(serializer="pickle", compressionlib="lzma")`
 
-Note that the `"compressed/<serializer-type>"` shortcut will only work for serializers provided by Prefect.
+Note that the `"compressed/<serializer-type>"` shortcut will only work for serializers provided by Syntask.
 If you are using custom serializers, you must pass a full instance.
 
-### Storage of results in Prefect
+### Storage of results in Syntask
 
-The Prefect API does not store your results in most cases for the following reasons:
+The Syntask API does not store your results in most cases for the following reasons:
 
 - Results can be large and slow to send to and from the API.
 - Results often contain private information or data.
 - Results would need to be stored in the database or complex logic implemented to hydrate from another source.
 
-There are a few cases where Prefect _will_ store your results directly in the database. This is an optimization to reduce the overhead of reading and writing to result storage.
+There are a few cases where Syntask _will_ store your results directly in the database. This is an optimization to reduce the overhead of reading and writing to result storage.
 
 The following data types will be stored by the API without persistence to storage:
 
@@ -514,16 +514,16 @@ If `persist_result` is set to `False`, these values will never be stored.
 
 ## Tracking results
 
-The Prefect API tracks metadata about your results. The value of your result is only stored in [specific cases](#storage-of-results-in-prefect). Result metadata can be seen in the UI on the "Results" page for flows.
+The Syntask API tracks metadata about your results. The value of your result is only stored in [specific cases](#storage-of-results-in-syntask). Result metadata can be seen in the UI on the "Results" page for flows.
 
-Prefect tracks the following result metadata:
+Syntask tracks the following result metadata:
 
 - Data type
 - Storage location (if persisted)
 
 ## Caching of results in memory
 
-When running your workflows, Prefect will keep the results of all tasks and flows in memory so they can be passed downstream. In some cases, it is desirable to override this behavior. For example, if you are returning a large amount of data from a task it can be costly to keep it memory for the entire duration of the flow run.
+When running your workflows, Syntask will keep the results of all tasks and flows in memory so they can be passed downstream. In some cases, it is desirable to override this behavior. For example, if you are returning a large amount of data from a task it can be costly to keep it memory for the entire duration of the flow run.
 
 Flows and tasks both include an option to drop the result from memory with `cache_result_in_memory`:
 
@@ -594,10 +594,10 @@ A result serializer is responsible for converting your Python object to and from
 
 ### Pickle serializer
 
-Pickle is a standard Python protocol for encoding arbitrary Python objects. We supply a custom pickle serializer at `prefect.serializers.PickleSerializer`. Prefect's pickle serializer uses the [cloudpickle](https://github.com/cloudpipe/cloudpickle) project by default to support more object types. Alternative pickle libraries can be specified:
+Pickle is a standard Python protocol for encoding arbitrary Python objects. We supply a custom pickle serializer at `syntask.serializers.PickleSerializer`. Syntask's pickle serializer uses the [cloudpickle](https://github.com/cloudpipe/cloudpickle) project by default to support more object types. Alternative pickle libraries can be specified:
 
 ```python
-from prefect.serializers import PickleSerializer
+from syntask.serializers import PickleSerializer
 
 PickleSerializer(picklelib="custompickle")
 ```
@@ -616,12 +616,12 @@ Drawbacks of the pickle serializer:
 
 ### JSON serializer
 
-We supply a custom JSON serializer at `prefect.serializers.JSONSerializer`. Prefect's JSON serializer uses custom hooks by default to support more object types. Specifically, we add support for all types supported by [Pydantic](https://pydantic-docs.helpmanual.io/).
+We supply a custom JSON serializer at `syntask.serializers.JSONSerializer`. Syntask's JSON serializer uses custom hooks by default to support more object types. Specifically, we add support for all types supported by [Pydantic](https://pydantic-docs.helpmanual.io/).
 
 By default, we use the standard Python `json` library. Alternative JSON libraries can be specified:
 
 ```python
-from prefect.serializers import JSONSerializer
+from syntask.serializers import JSONSerializer
 
 JSONSerializer(jsonlib="orjson")
 ```
@@ -639,7 +639,7 @@ Drawbacks of the JSON serializer:
 
 ## Result types
 
-Prefect uses internal result types to capture information about the result attached to a state. The following types are used:
+Syntask uses internal result types to capture information about the result attached to a state. The following types are used:
 
 - `UnpersistedResult`: Stores result metadata but the value is only available when created.
 - `LiteralResult`: Stores simple values inline.
@@ -653,7 +653,7 @@ Unpersisted results are used to represent results that have not been and will no
 
 ### Literal results
 
-Literal results are used to represent [results stored in the Prefect database](#storage-of-results-in-prefect). The values contained by these results must always be JSON serializable.
+Literal results are used to represent [results stored in the Syntask database](#storage-of-results-in-syntask). The values contained by these results must always be JSON serializable.
 
 Example:
 
@@ -685,4 +685,4 @@ When results are persisted to storage, they are always written as a JSON documen
 
 - The serialized data of the result.
 - A full description of [result serializer](#result-serializer-types) that can be used to deserialize the result data.
-- The Prefect version used to create the result.
+- The Syntask version used to create the result.

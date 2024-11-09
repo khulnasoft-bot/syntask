@@ -7,7 +7,7 @@ class TestReadCollectionViews:
     def collection_view_url(self, view):
         return (
             "https://raw.githubusercontent.com/"
-            "PrefectHQ/prefect-collection-registry/main/"
+            "Synopkg/syntask-collection-registry/main/"
             f"views/aggregate-{view}-metadata.json"
         )
 
@@ -130,4 +130,4 @@ class TestReadCollectionViews:
 
         assert res.status_code == 200
         # check for expected key to ensure it isn't an error
-        assert isinstance(res.json()["prefect"], dict)
+        assert isinstance(res.json()["syntask"], dict)

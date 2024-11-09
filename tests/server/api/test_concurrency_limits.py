@@ -1,9 +1,9 @@
 from uuid import uuid4
 
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.server import schemas
-from prefect.server.schemas.actions import ConcurrencyLimitCreate
+from syntask.server import schemas
+from syntask.server.schemas.actions import ConcurrencyLimitCreate
 
 
 class TestConcurrencyLimits:

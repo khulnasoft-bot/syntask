@@ -1,0 +1,33 @@
+
+name: Build and publish the syntask-client
+
+on:
+  release:
+    types: [released, prereleased]
+
+jobs:
+  verify-syntask-client-build:
+    uses: ./.github/workflows/syntask-client.yaml
+    with:
+      upload-artifacts: true
+      artifact-name: "syntask-client-pypi-dists"
+    secrets: inherit
+
+  publish-syntask-client-pypi-dists:
+    name: Publish to PyPI
+    environment: "prod"
+    needs: [verify-syntask-client-build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: "syntask-client-pypi-dists"
+          path: "./dist"
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.SYNTASK_CLIENT_PYPI_API_TOKEN }}
+          name: ci

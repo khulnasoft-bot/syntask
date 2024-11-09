@@ -1,8 +1,8 @@
 ---
-description: Prefect API routes for interacting with flow run objects.
+description: Syntask API routes for interacting with flow run objects.
 tags:
-    - Prefect API
+    - Syntask API
     - flow runs
 ---
 
-::: prefect.server.api.flow_runs
+::: syntask.server.api.flow_runs

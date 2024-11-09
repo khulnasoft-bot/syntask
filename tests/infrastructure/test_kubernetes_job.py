@@ -18,16 +18,16 @@ from jsonpatch import JsonPatch
 from kubernetes.client.exceptions import ApiException
 from kubernetes.config import ConfigException
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.blocks.kubernetes import KubernetesClusterConfig
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.blocks.kubernetes import KubernetesClusterConfig
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import ValidationError
 else:
     from pydantic import ValidationError
 
-from prefect.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
-from prefect.infrastructure.kubernetes import (
+from syntask.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
+from syntask.infrastructure.kubernetes import (
     KubernetesImagePullPolicy,
     KubernetesJob,
     KubernetesManifest,
@@ -104,7 +104,7 @@ def mock_k8s_client(monkeypatch, mock_cluster_config):
         yield mock
 
     monkeypatch.setattr(
-        "prefect.infrastructure.kubernetes.KubernetesJob.get_client",
+        "syntask.infrastructure.kubernetes.KubernetesJob.get_client",
         get_client,
     )
     return mock
@@ -123,7 +123,7 @@ def mock_k8s_batch_client(monkeypatch, mock_cluster_config, mock_k8s_v1_job):
         yield mock
 
     monkeypatch.setattr(
-        "prefect.infrastructure.kubernetes.KubernetesJob.get_batch_client",
+        "syntask.infrastructure.kubernetes.KubernetesJob.get_batch_client",
         get_batch_client,
     )
     return mock
@@ -192,7 +192,7 @@ def test_cluster_uid_uses_env_var_if_set(
     mock_watch,
     monkeypatch,
 ):
-    monkeypatch.setenv("PREFECT_KUBERNETES_CLUSTER_UID", "test-uid")
+    monkeypatch.setenv("SYNTASK_KUBERNETES_CLUSTER_UID", "test-uid")
     fake_status = MagicMock(spec=anyio.abc.TaskStatus)
     result = KubernetesJob(command=["echo", "hello"]).run(task_status=fake_status)
 
@@ -478,16 +478,16 @@ async def test_allows_unsetting_environment_variables(
     mock_watch,
     mock_k8s_batch_client,
 ):
-    assert "PREFECT_TEST_MODE" in KubernetesJob._base_environment()
+    assert "SYNTASK_TEST_MODE" in KubernetesJob._base_environment()
     await KubernetesJob(
-        command=["echo", "hello"], env={"PREFECT_TEST_MODE": None}
+        command=["echo", "hello"], env={"SYNTASK_TEST_MODE": None}
     ).run()
     mock_k8s_batch_client.create_namespaced_job.assert_called_once()
     manifest = mock_k8s_batch_client.create_namespaced_job.call_args[0][1]
     pod = manifest["spec"]["template"]["spec"]
     env = pod["containers"][0]["env"]
     env_names = {variable["name"] for variable in env}
-    assert "PREFECT_TEST_MODE" not in env_names
+    assert "SYNTASK_TEST_MODE" not in env_names
 
 
 @pytest.mark.parametrize(
@@ -1301,7 +1301,7 @@ class TestCustomizingBaseJob:
                                 "restartPolicy": "Never",
                                 "containers": [
                                     {
-                                        "name": "prefect-job",
+                                        "name": "syntask-job",
                                         "env": [],
                                     }
                                 ],
@@ -1340,7 +1340,7 @@ class TestCustomizingBaseJob:
                             "restartPolicy": "Never",
                             "containers": [
                                 {
-                                    "name": "prefect-job",
+                                    "name": "syntask-job",
                                     "env": [],
                                 }
                             ],
@@ -1372,7 +1372,7 @@ class TestCustomizingBaseJob:
                             "restartPolicy": "Never",
                             "containers": [
                                 {
-                                    "name": "prefect-job",
+                                    "name": "syntask-job",
                                     "env": [],
                                 },
                                 {
@@ -1396,8 +1396,8 @@ class TestCustomizingBaseJob:
 
         assert pod["volumes"] == [{"name": "data-volume", "hostPath": "/all/the/data/"}]
 
-        # the prefect-job container is still populated
-        assert pod["containers"][0]["name"] == "prefect-job"
+        # the syntask-job container is still populated
+        assert pod["containers"][0]["name"] == "syntask-job"
         assert pod["containers"][0]["args"] == ["echo", "hello"]
 
         assert pod["containers"][1] == {
@@ -1498,7 +1498,7 @@ class TestCustomizingJob:
             "cpu": "4000m",
         }
 
-        # prefect's orchestration values are still there
+        # syntask's orchestration values are still there
         assert pod["completions"] == 1
 
     def test_requesting_a_fancy_gpu(self):
@@ -1531,7 +1531,7 @@ class TestCustomizingJob:
             "cloud.google.com/gke-accelerator": "nvidia-tesla-k80",
         }
 
-        # prefect's orchestration values are still there
+        # syntask's orchestration values are still there
         assert pod["completions"] == 1
 
     def test_label_with_slash_in_it(self):
@@ -1618,7 +1618,7 @@ class TestLoadingManifestsFromFiles:
                     "spec": {
                         "containers": [
                             {
-                                "name": "prefect-job",
+                                "name": "syntask-job",
                                 "env": [],
                             }
                         ]
@@ -1744,7 +1744,7 @@ def base_job_template_with_defaults(
     }
     base_job_template_with_defaults["variables"]["properties"]["name"][
         "default"
-    ] = "prefect-job"
+    ] = "syntask-job"
     base_job_template_with_defaults["variables"]["properties"]["namespace"][
         "default"
     ] = "my_namespace"
@@ -1807,7 +1807,7 @@ async def test_generate_work_pool_base_job_template(
             command=["python", "my_script.py"],
             env={"VAR1": "value1", "VAR2": "value2"},
             labels={"label1": "value1", "label2": "value2"},
-            name="prefect-job",
+            name="syntask-job",
             image="docker.io/my_image:latest",
             image_pull_policy="Always",
             service_account_name="my_service_account",

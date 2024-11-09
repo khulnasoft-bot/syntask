@@ -11,13 +11,13 @@ from pendulum.datetime import DateTime
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.server.database.dependencies import db_injector
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.database.orm_models import ORMEventResource
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.events.services import event_persister
-from prefect.server.utilities.messaging import CapturedMessage, Message, MessageHandler
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.server.database.dependencies import db_injector
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.database.orm_models import ORMEventResource
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.services import event_persister
+from syntask.server.utilities.messaging import CapturedMessage, Message, MessageHandler
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import ValidationError
@@ -26,7 +26,7 @@ else:
 
 
 @db_injector
-async def get_event(db: PrefectDBInterface, id: UUID) -> "ReceivedEvent | None":
+async def get_event(db: SyntaskDBInterface, id: UUID) -> "ReceivedEvent | None":
     async with await db.session() as session:
         result = await session.execute(
             sa.text("SELECT * FROM events WHERE id = :id"),
@@ -46,7 +46,7 @@ async def get_event(db: PrefectDBInterface, id: UUID) -> "ReceivedEvent | None":
 
 
 async def get_resources(
-    session: AsyncSession, id: UUID, db: PrefectDBInterface
+    session: AsyncSession, id: UUID, db: SyntaskDBInterface
 ) -> Sequence[ORMEventResource]:
     result = await session.execute(
         sa.select(db.EventResource)
@@ -72,23 +72,23 @@ def event() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "my.resource.id", "label-1": "value-1"},
+        resource={"syntask.resource.id": "my.resource.id", "label-1": "value-1"},
         related=[
             {
-                "prefect.resource.id": "related-1",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-1",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-1",
                 "label-2": "value-2",
             },
             {
-                "prefect.resource.id": "related-2",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-2",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-3",
                 "label-2": "value-4",
             },
             {
-                "prefect.resource.id": "related-3",
-                "prefect.resource.role": "role-2",
+                "syntask.resource.id": "related-3",
+                "syntask.resource.role": "role-2",
                 "label-1": "value-5",
                 "label-2": "value-6",
             },
@@ -136,23 +136,23 @@ async def test_handling_message_writes_event(
     assert stored_event == ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="hello",
-        resource={"prefect.resource.id": "my.resource.id", "label-1": "value-1"},
+        resource={"syntask.resource.id": "my.resource.id", "label-1": "value-1"},
         related=[
             {
-                "prefect.resource.id": "related-1",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-1",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-1",
                 "label-2": "value-2",
             },
             {
-                "prefect.resource.id": "related-2",
-                "prefect.resource.role": "role-1",
+                "syntask.resource.id": "related-2",
+                "syntask.resource.role": "role-1",
                 "label-1": "value-3",
                 "label-2": "value-4",
             },
             {
-                "prefect.resource.id": "related-3",
-                "prefect.resource.role": "role-2",
+                "syntask.resource.id": "related-3",
+                "syntask.resource.role": "role-2",
                 "label-1": "value-5",
                 "label-2": "value-6",
             },
@@ -166,7 +166,7 @@ async def test_handling_message_writes_event(
 
 async def test_handling_message_writes_event_resources(
     frozen_time: DateTime,
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     event_persister_handler: MessageHandler,
     message: Message,
     session: AsyncSession,

@@ -4,20 +4,20 @@ from uuid import uuid4
 import pendulum
 import pytest
 
-from prefect.server import models, schemas
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.orchestration.dependencies import (
+from syntask.server import models, schemas
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.orchestration.dependencies import (
     provide_task_orchestration_parameters,
     provide_task_policy,
     temporary_task_orchestration_parameters,
     temporary_task_policy,
 )
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.orchestration.rules import (
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     BaseOrchestrationRule,
 )
-from prefect.server.schemas.states import Failed, Running, Scheduled, StateType
+from syntask.server.schemas.states import Failed, Running, Scheduled, StateType
 
 
 class TestCreateTaskRunState:

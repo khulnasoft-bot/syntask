@@ -3,8 +3,8 @@ from typing import cast
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from prefect._internal.pydantic._compat import model_validate
-from prefect._internal.pydantic._flags import EXPECT_DEPRECATION_WARNINGS
+from syntask._internal.pydantic._compat import model_validate
+from syntask._internal.pydantic._flags import EXPECT_DEPRECATION_WARNINGS
 
 
 class Model(BaseModel):

@@ -1,5 +1,5 @@
 ---
-description: Learn how to create interactive workflows with Prefect.
+description: Learn how to create interactive workflows with Syntask.
 tags:
     - flow run
     - pause
@@ -13,14 +13,14 @@ search:
 
 # Creating Interactive Workflows
 
-Flows can pause or suspend execution and automatically resume when they receive type-checked input in Prefect's UI. Flows can also send and receive type-checked input at any time while running, without pausing or suspending. This guide will show you how to use these features to build _interactive workflows_.
+Flows can pause or suspend execution and automatically resume when they receive type-checked input in Syntask's UI. Flows can also send and receive type-checked input at any time while running, without pausing or suspending. This guide will show you how to use these features to build _interactive workflows_.
 
 !!! note "A note on async Python syntax"
-    Most of the example code in this section uses async Python functions and `await`. However, as with other Prefect features, you can call these functions with or without `await`.
+    Most of the example code in this section uses async Python functions and `await`. However, as with other Syntask features, you can call these functions with or without `await`.
 
 ## Pausing or suspending a flow until it receives input
 
-You can pause or suspend a flow until it receives input from a user in Prefect's UI. This is useful when you need to ask for additional information or feedback before resuming a flow. Such workflows are often called [human-in-the-loop](https://hai.stanford.edu/news/humans-loop-design-interactive-ai-systems) (HITL) systems.
+You can pause or suspend a flow until it receives input from a user in Syntask's UI. This is useful when you need to ask for additional information or feedback before resuming a flow. Such workflows are often called [human-in-the-loop](https://hai.stanford.edu/news/humans-loop-design-interactive-ai-systems) (HITL) systems.
 
 !!! note "What is human-in-the-loop interactivity used for?"
 
@@ -32,15 +32,15 @@ To receive input while paused or suspended use the `wait_for_input` parameter in
 
 - A built-in type like `int` or `str`, or a built-in collection like `List[int]`
 - A `pydantic.BaseModel` subclass
-- A subclass of `prefect.input.RunInput`
+- A subclass of `syntask.input.RunInput`
 
 !!! tip "When to use a `RunModel` or `BaseModel` instead of a built-in type"
-    There are a few reasons to use a `RunModel` or `BaseModel`. The first is that when you let Prefect automatically create one of these classes for your input type, the field that users will see in Prefect's UI when they click "Resume" on a flow run is named `value` and has no help text to suggest what the field is. If you create a `RunInput` or `BaseModel`, you can change details like the field name, help text, and default value, and users will see those reflected in the "Resume" form.
+    There are a few reasons to use a `RunModel` or `BaseModel`. The first is that when you let Syntask automatically create one of these classes for your input type, the field that users will see in Syntask's UI when they click "Resume" on a flow run is named `value` and has no help text to suggest what the field is. If you create a `RunInput` or `BaseModel`, you can change details like the field name, help text, and default value, and users will see those reflected in the "Resume" form.
 
 The simplest way to pause or suspend and wait for input is to pass a built-in type:
 
 ```python
-from prefect import flow, pause_flow_run, get_run_logger
+from syntask import flow, pause_flow_run, get_run_logger
 
 @flow
 def greet_user():
@@ -51,16 +51,16 @@ def greet_user():
     logger.info(f"Hello, {user}!")
 ```
 
-In this example, the flow run will pause until a user clicks the Resume button in the Prefect UI, enters a name, and submits the form.
+In this example, the flow run will pause until a user clicks the Resume button in the Syntask UI, enters a name, and submits the form.
 
 !!! note "What types can you pass for `wait_for_input`?"
 
-    When you pass a built-in type such as `int` as an argument for the `wait_for_input` parameter to `pause_flow_run` or `suspend_flow_run`, Prefect automatically creates a Pydantic model containing one field annotated with the type you specified. This means you can use [any type annotation that Pydantic accepts for model fields](https://docs.pydantic.dev/1.10/usage/types/) with these functions.
+    When you pass a built-in type such as `int` as an argument for the `wait_for_input` parameter to `pause_flow_run` or `suspend_flow_run`, Syntask automatically creates a Pydantic model containing one field annotated with the type you specified. This means you can use [any type annotation that Pydantic accepts for model fields](https://docs.pydantic.dev/1.10/usage/types/) with these functions.
 
 Instead of a built-in type, you can pass in a `pydantic.BaseModel` class. This is useful if you already have a `BaseModel` you want to use:
 
 ```python
-from prefect import flow, pause_flow_run, get_run_logger
+from syntask import flow, pause_flow_run, get_run_logger
 from pydantic import BaseModel
 
 
@@ -80,15 +80,15 @@ async def greet_user():
 
 !!! note "`BaseModel` classes are upgraded to `RunInput` classes automatically"
 
-    When you pass a `pydantic.BaseModel` class as the `wait_for_input` argument to `pause_flow_run` or `suspend_flow_run`, Prefect automatically creates a `RunInput` class with the same behavior as your `BaseModel` and uses that instead.
+    When you pass a `pydantic.BaseModel` class as the `wait_for_input` argument to `pause_flow_run` or `suspend_flow_run`, Syntask automatically creates a `RunInput` class with the same behavior as your `BaseModel` and uses that instead.
 
     `RunInput` classes contain extra logic that allows flows to send and receive them at runtime. You shouldn't notice any difference!
 
-Finally, for advanced use cases like overriding how Prefect stores flow run inputs, you can create a `RunInput` class:
+Finally, for advanced use cases like overriding how Syntask stores flow run inputs, you can create a `RunInput` class:
 
 ```python
-from prefect import get_run_logger
-from prefect.input import RunInput
+from syntask import get_run_logger
+from syntask.input import RunInput
 
 class UserInput(RunInput):
     name: str
@@ -114,8 +114,8 @@ You can set default values for fields in your model by using the `with_initial_d
 Expanding on the example above, you could make the `name` field default to "anonymous":
 
 ```python
-from prefect import get_run_logger
-from prefect.input import RunInput
+from syntask import get_run_logger
+from syntask.input import RunInput
 
 class UserInput(RunInput):
     name: str
@@ -139,12 +139,12 @@ When a user sees the form for this input, the name field will contain "anonymous
 
 ### Providing a description with runtime data
 
-You can provide a dynamic, markdown description that will appear in the Prefect UI when the flow run pauses. This feature enables context-specific prompts, enhancing clarity and user interaction. Building on the example above:
+You can provide a dynamic, markdown description that will appear in the Syntask UI when the flow run pauses. This feature enables context-specific prompts, enhancing clarity and user interaction. Building on the example above:
 
 ```python
 from datetime import datetime
-from prefect import flow, pause_flow_run, get_run_logger
-from prefect.input import RunInput
+from syntask import flow, pause_flow_run, get_run_logger
+from syntask.input import RunInput
 
 
 class UserInput(RunInput):
@@ -182,16 +182,16 @@ When a user sees the form for this input, the given markdown will appear above t
 
 ### Handling custom validation
 
-Prefect uses the fields and type hints on your `RunInput` or `BaseModel` class to validate the general structure of input your flow receives, but you might require more complex validation. If you do, you can use Pydantic [validators](https://docs.pydantic.dev/1.10/usage/validators/).
+Syntask uses the fields and type hints on your `RunInput` or `BaseModel` class to validate the general structure of input your flow receives, but you might require more complex validation. If you do, you can use Pydantic [validators](https://docs.pydantic.dev/1.10/usage/validators/).
 
 !!! warning "Custom validation runs after the flow resumes"
-    Prefect transforms the type annotations in your `RunInput` or `BaseModel` class to a JSON schema and uses that schema in the UI for client-side validation. However, custom validation requires running _Python_ logic defined in your `RunInput` class. Because of this, validation happens _after the flow resumes_, so you'll want to handle it explicitly in your flow. Continue reading for an example best practice.
+    Syntask transforms the type annotations in your `RunInput` or `BaseModel` class to a JSON schema and uses that schema in the UI for client-side validation. However, custom validation requires running _Python_ logic defined in your `RunInput` class. Because of this, validation happens _after the flow resumes_, so you'll want to handle it explicitly in your flow. Continue reading for an example best practice.
 
 The following is an example `RunInput` class that uses a custom field validator:
 
 ```python
 import pydantic
-from prefect.input import RunInput
+from syntask.input import RunInput
 
 
 class ShirtOrder(RunInput):
@@ -212,8 +212,8 @@ In the example, we use Pydantic's `validator` decorator to define a custom valid
 
 ```python
 import pydantic
-from prefect import flow, pause_flow_run
-from prefect.input import RunInput
+from syntask import flow, pause_flow_run
+from syntask.input import RunInput
 
 
 class ShirtOrder(RunInput):
@@ -243,8 +243,8 @@ However, what if you don't want the flow run to fail? One way to handle this cas
 from typing import Literal
 
 import pydantic
-from prefect import flow, get_run_logger, pause_flow_run
-from prefect.input import RunInput
+from syntask import flow, get_run_logger, pause_flow_run
+from syntask.input import RunInput
 
 
 class ShirtOrder(RunInput):
@@ -293,7 +293,7 @@ The most important parameter to the `send_input` and `receive_input` functions i
 
 - A built-in type such as `int` or `str`
 - A `pydantic.BaseModel` class
-- A `prefect.input.RunInput` class
+- A `syntask.input.RunInput` class
 
 !!! type "When to use a `BaseModel` or `RunInput` instead of a built-in type"
     Most built-in types and collections of built-in types should work with `send_input` and `receive_input`, but there is a caveat with nested collection types, such as lists of tuples, e.g. `List[Tuple[str, float]])`. In this case, validation may happen after your flow receives the data, so calling `receive_input` may raise a `ValidationError`. You can plan to catch this exception, but also, consider placing the field in an explicit `BaseModel` or `RunInput` so that your flow only receives exact type matches.
@@ -305,8 +305,8 @@ Let's look at some examples! We'll check out `receive_input` first, followed by 
 The following flow uses `receive_input` to continually receive names and print a personalized greeting for each name it receives:
 
 ```python
-from prefect import flow
-from prefect.input.run_input import receive_input
+from syntask import flow
+from syntask.input.run_input import receive_input
 
 
 @flow
@@ -316,15 +316,15 @@ async def greeter_flow():
         print(f"Hello, {name_input}!")
 ```
 
-When you pass a type such as `str` into `receive_input`, Prefect creates a `RunInput` class to manage your input automatically. When a flow sends input of this type, Prefect uses the `RunInput` class to validate the input. If the validation succeeds, your flow receives the input in the type you specified. In this example, if the flow received a valid string as input, the variable `name_input` would contain the string value.
+When you pass a type such as `str` into `receive_input`, Syntask creates a `RunInput` class to manage your input automatically. When a flow sends input of this type, Syntask uses the `RunInput` class to validate the input. If the validation succeeds, your flow receives the input in the type you specified. In this example, if the flow received a valid string as input, the variable `name_input` would contain the string value.
 
-If, instead, you pass a `BaseModel`, Prefect upgrades your `BaseModel` to a `RunInput` class, and the variable your flow sees &mdash; in this case, `name_input` &mdash; is a `RunInput` instance that behaves like a `BaseModel`. Of course, if you pass in a `RunInput` class, no upgrade is needed, and you'll get a `RunInput` instance.
+If, instead, you pass a `BaseModel`, Syntask upgrades your `BaseModel` to a `RunInput` class, and the variable your flow sees &mdash; in this case, `name_input` &mdash; is a `RunInput` instance that behaves like a `BaseModel`. Of course, if you pass in a `RunInput` class, no upgrade is needed, and you'll get a `RunInput` instance.
 
 If you prefer to keep things simple and pass types such as `str` into `receive_input`, you can do so. If you need access to the generated `RunInput` that contains the received value, pass `with_metadata=True` to `receive_input`:
 
 ```python
-from prefect import flow
-from prefect.input.run_input import receive_input
+from syntask import flow
+from syntask.input.run_input import receive_input
 
 
 @flow
@@ -342,11 +342,11 @@ async def greeter_flow():
 !!! tip "Why would you need to use `with_metadata=True`?"
     The primary uses of accessing the `RunInput` object for a receive input are to respond to the sender with the `RunInput.respond()` function or to access the unique key for an input. Later in this guide, we'll discuss how and why you might use these features.
 
-Notice that we are now printing `name_input.value`. When Prefect generates a `RunInput` for you from a built-in type, the `RunInput` class has a single field, `value`, that uses a type annotation matching the type you specified. So if you call `receive_input` like this: `receive_input(str, with_metadata=True)`, that's equivalent to manually creating the following `RunInput` class and `receive_input` call:
+Notice that we are now printing `name_input.value`. When Syntask generates a `RunInput` for you from a built-in type, the `RunInput` class has a single field, `value`, that uses a type annotation matching the type you specified. So if you call `receive_input` like this: `receive_input(str, with_metadata=True)`, that's equivalent to manually creating the following `RunInput` class and `receive_input` call:
 
 ```python
-from prefect import flow
-from prefect.input.run_input import RunInput
+from syntask import flow
+from syntask.input.run_input import RunInput
 
 class GreeterInput(RunInput):
     value: str
@@ -358,16 +358,16 @@ async def greeter_flow():
 ```
 
 !!! warning "The type used in `receive_input` and `send_input` must match"
-    For a flow to receive input, the sender must use the same type that the receiver is receiving. This means that if the receiver is receiving `GreeterInput`, the sender must send `GreeterInput`. If the receiver is receiving `GreeterInput` and the sender sends `str` input that Prefect automatically upgrades to a `RunInput` class, the types won't match, so the receiving flow run won't receive the input. However, the input will be waiting if the flow ever calls `receive_input(str)`!
+    For a flow to receive input, the sender must use the same type that the receiver is receiving. This means that if the receiver is receiving `GreeterInput`, the sender must send `GreeterInput`. If the receiver is receiving `GreeterInput` and the sender sends `str` input that Syntask automatically upgrades to a `RunInput` class, the types won't match, so the receiving flow run won't receive the input. However, the input will be waiting if the flow ever calls `receive_input(str)`!
 
 ### Keeping track of inputs you've already seen
 
 By default, each time you call `receive_input`, you get an iterator that iterates over all known inputs to a specific flow run, starting with the first received. The iterator will keep track of your current position as you iterate over it, or you can call `next()` to explicitly get the next input. If you're using the iterator in a loop, you should probably assign it to a variable:
 
 ```python
-from prefect import flow, get_client
-from prefect.deployments.deployments import run_deployment
-from prefect.input.run_input import receive_input, send_input
+from syntask import flow, get_client
+from syntask.deployments.deployments import run_deployment
+from syntask.input.run_input import receive_input, send_input
 
 EXIT_SIGNAL = "__EXIT__"
 
@@ -420,10 +420,10 @@ So, an iterator helps to keep track of the inputs your flow has already received
 The following flow receives input for 30 seconds then suspends itself, which exits the flow and tears down infrastructure:
 
 ```python
-from prefect import flow, get_run_logger, suspend_flow_run
-from prefect.blocks.system import JSON
-from prefect.context import get_run_context
-from prefect.input.run_input import receive_input
+from syntask import flow, get_run_logger, suspend_flow_run
+from syntask.blocks.system import JSON
+from syntask.context import get_run_context
+from syntask.input.run_input import receive_input
 
 
 EXIT_SIGNAL = "__EXIT__"
@@ -471,7 +471,7 @@ As this flow processes name input, it adds the _key_ of the flow run input to th
 
 ### Responding to the input's sender
 
-When your flow receives input from another flow, Prefect knows the sending flow run ID, so the receiving flow can respond by calling the `respond` method on the `RunInput` instance the flow received. There are a couple of requirements:
+When your flow receives input from another flow, Syntask knows the sending flow run ID, so the receiving flow can respond by calling the `respond` method on the `RunInput` instance the flow received. There are a couple of requirements:
 
 1. You will need to pass in a `BaseModel` or `RunInput`, or use `with_metadata=True`
 2. The flow you are responding to must receive the same type of input you send in order to see it.
@@ -481,8 +481,8 @@ The `respond` method is equivalent to calling `send_input(..., flow_run_id=sendi
 Now that we know about `respond`, let's make our `greeter_flow` respond to name inputs instead of printing them:
 
 ```python
-from prefect import flow
-from prefect.input.run_input import receive_input
+from syntask import flow
+from syntask.input.run_input import receive_input
 
 
 @flow
@@ -498,8 +498,8 @@ async def greeter():
 Cool! There's one problem left: this flow runs forever! We need a way to signal that it should exit. Let's keep things simple and teach it to look for a special string:
 
 ```python
-from prefect import flow
-from prefect.input.run_input import receive_input
+from syntask import flow
+from syntask.input.run_input import receive_input
 
 
 
@@ -580,11 +580,11 @@ Finally, let's see a complete example of using `send_input` and `receive_input`.
 ```python
 import asyncio
 import sys
-from prefect import flow, get_client
-from prefect.blocks.system import JSON
-from prefect.context import get_run_context
-from prefect.deployments.deployments import run_deployment
-from prefect.input.run_input import receive_input, send_input
+from syntask import flow, get_client
+from syntask.blocks.system import JSON
+from syntask.context import get_run_context
+from syntask.deployments.deployments import run_deployment
+from syntask.input.run_input import receive_input, send_input
 
 
 EXIT_SIGNAL = "__EXIT__"
@@ -660,7 +660,7 @@ if __name__ == "__main__":
         asyncio.run(sender())
 ```
 
-To run the example, you'll need a Python environment with Prefect installed, pointed at either an open-source Prefect server instance or Prefect Cloud.
+To run the example, you'll need a Python environment with Syntask installed, pointed at either an open-source Syntask server instance or Syntask Cloud.
 
 With your environment set up, start a flow runner in one terminal with the following command:
 
@@ -670,7 +670,7 @@ python my_file_name greeter
 ```
 </div>
 
-For example, with Prefect Cloud, you should see output like this:
+For example, with Syntask Cloud, you should see output like this:
 
 <div class="terminal">
 ```bash
@@ -679,10 +679,10 @@ For example, with Prefect Cloud, you should see output like this:
 │                                                                                                  │
 │ To trigger a run for this flow, use the following command:                                       │
 │                                                                                                  │
-│         $ prefect deployment run 'greeter/send-receive'                                          │
+│         $ syntask deployment run 'greeter/send-receive'                                          │
 │                                                                                                  │
-│ You can also run your flow via the Prefect UI:                                                   │
-│ https://app.prefect.cloud/account/...(a URL for your account)                                    │
+│ You can also run your flow via the Syntask UI:                                                   │
+│ https://app.syntask.cloud/account/...(a URL for your account)                                    │
 │                                                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -700,8 +700,8 @@ You should see output like this:
 
 <div class="terminal">
 ```bash
-11:38:41.800 | INFO    | prefect.engine - Created flow run 'gregarious-owl' for flow 'sender'
-11:38:41.802 | INFO    | Flow run 'gregarious-owl' - View at https://app.prefect.cloud/account/...
+11:38:41.800 | INFO    | syntask.engine - Created flow run 'gregarious-owl' for flow 'sender'
+11:38:41.802 | INFO    | Flow run 'gregarious-owl' - View at https://app.syntask.cloud/account/...
 What is your name?
 ```
 </div>

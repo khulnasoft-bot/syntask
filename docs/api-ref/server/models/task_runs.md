@@ -1,2 +1,2 @@
-::: prefect.server.models.task_runs
+::: syntask.server.models.task_runs
 

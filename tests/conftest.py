@@ -1,16 +1,16 @@
 """
-Base configuration of pytest for testing the 'prefect' module.
+Base configuration of pytest for testing the 'syntask' module.
 
 Here we make the following changes to pytest:
 - Add service flags to the CLI
 - Skip tests with the in accordance with service marks and flags
 - Override the test event loop to allow async session/module scoped fixtures
-- Inject a check for open Prefect client lifespans after every test call
-- Create a test Prefect settings profile before test collection that will be used
+- Inject a check for open Syntask client lifespans after every test call
+- Create a test Syntask settings profile before test collection that will be used
   for the duration of the test run. This ensures tests are run in a temporary
   environment.
 
-WARNING: Prefect settings cannot be modified in async fixtures.
+WARNING: Syntask settings cannot be modified in async fixtures.
     Async fixtures are run in a different async context than tests and the modified
     settings will not be present in tests. If a setting needs to be modified by an async
     fixture, a sync fixture must be defined that consumes the async fixture to perform
@@ -33,46 +33,46 @@ from sqlalchemy.dialects.postgresql.asyncpg import dialect as postgres_dialect
 
 # Improve diff display for assertions in utilities
 # Note: This must occur before import of the module
-pytest.register_assert_rewrite("prefect.testing.utilities")
+pytest.register_assert_rewrite("syntask.testing.utilities")
 
-import prefect
-import prefect.settings
-from prefect.logging.configuration import setup_logging
-from prefect.settings import (
-    PREFECT_API_BLOCKS_REGISTER_ON_START,
-    PREFECT_API_DATABASE_CONNECTION_URL,
-    PREFECT_API_SERVICES_CANCELLATION_CLEANUP_ENABLED,
-    PREFECT_API_SERVICES_FLOW_RUN_NOTIFICATIONS_ENABLED,
-    PREFECT_API_SERVICES_LATE_RUNS_ENABLED,
-    PREFECT_API_SERVICES_PAUSE_EXPIRATIONS_ENABLED,
-    PREFECT_API_SERVICES_SCHEDULER_ENABLED,
-    PREFECT_API_URL,
-    PREFECT_ASYNC_FETCH_STATE_RESULT,
-    PREFECT_CLI_COLORS,
-    PREFECT_CLI_WRAP_LINES,
-    PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION,
-    PREFECT_EXPERIMENTAL_ENABLE_WORKERS,
-    PREFECT_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION,
-    PREFECT_EXPERIMENTAL_WARN_WORKERS,
-    PREFECT_HOME,
-    PREFECT_LOCAL_STORAGE_PATH,
-    PREFECT_LOGGING_INTERNAL_LEVEL,
-    PREFECT_LOGGING_LEVEL,
-    PREFECT_LOGGING_TO_API_ENABLED,
-    PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION,
-    PREFECT_PROFILES_PATH,
-    PREFECT_SERVER_ANALYTICS_ENABLED,
-    PREFECT_SERVER_CSRF_PROTECTION_ENABLED,
-    PREFECT_UNIT_TEST_LOOP_DEBUG,
-    PREFECT_UNIT_TEST_MODE,
+import syntask
+import syntask.settings
+from syntask.logging.configuration import setup_logging
+from syntask.settings import (
+    SYNTASK_API_BLOCKS_REGISTER_ON_START,
+    SYNTASK_API_DATABASE_CONNECTION_URL,
+    SYNTASK_API_SERVICES_CANCELLATION_CLEANUP_ENABLED,
+    SYNTASK_API_SERVICES_FLOW_RUN_NOTIFICATIONS_ENABLED,
+    SYNTASK_API_SERVICES_LATE_RUNS_ENABLED,
+    SYNTASK_API_SERVICES_PAUSE_EXPIRATIONS_ENABLED,
+    SYNTASK_API_SERVICES_SCHEDULER_ENABLED,
+    SYNTASK_API_URL,
+    SYNTASK_ASYNC_FETCH_STATE_RESULT,
+    SYNTASK_CLI_COLORS,
+    SYNTASK_CLI_WRAP_LINES,
+    SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION,
+    SYNTASK_EXPERIMENTAL_ENABLE_WORKERS,
+    SYNTASK_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION,
+    SYNTASK_EXPERIMENTAL_WARN_WORKERS,
+    SYNTASK_HOME,
+    SYNTASK_LOCAL_STORAGE_PATH,
+    SYNTASK_LOGGING_INTERNAL_LEVEL,
+    SYNTASK_LOGGING_LEVEL,
+    SYNTASK_LOGGING_TO_API_ENABLED,
+    SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION,
+    SYNTASK_PROFILES_PATH,
+    SYNTASK_SERVER_ANALYTICS_ENABLED,
+    SYNTASK_SERVER_CSRF_PROTECTION_ENABLED,
+    SYNTASK_UNIT_TEST_LOOP_DEBUG,
+    SYNTASK_UNIT_TEST_MODE,
 )
-from prefect.utilities.dispatch import get_registry_for_type
+from syntask.utilities.dispatch import get_registry_for_type
 
 # isort: split
 # Import fixtures
 
-from prefect.testing.cli import *
-from prefect.testing.fixtures import *
+from syntask.testing.cli import *
+from syntask.testing.fixtures import *
 
 from .fixtures.api import *
 from .fixtures.client import *
@@ -119,9 +119,9 @@ def pytest_addoption(parser):
         action="store_true",
         default=False,
         help=(
-            "Do not build the prefect Docker image during tests.  Tests that require "
+            "Do not build the syntask Docker image during tests.  Tests that require "
             "the image will fail if the image is not present or has an outdated "
-            "version of `prefect` installed.  Used during CI to run the test suite "
+            "version of `syntask` installed.  Used during CI to run the test suite "
             "against images built with our production release build process."
         ),
     )
@@ -219,7 +219,7 @@ def event_loop(request):
     policy = asyncio.get_event_loop_policy()
 
     if sys.version_info < (3, 8) and sys.platform != "win32":
-        from prefect.utilities.compat import ThreadedChildWatcher
+        from syntask.utilities.compat import ThreadedChildWatcher
 
         # Python < 3.8 does not use a `ThreadedChildWatcher` by default which can
         # lead to errors in tests as the previous default `SafeChildWatcher`  is not
@@ -233,7 +233,7 @@ def event_loop(request):
     asyncio_logger.setLevel("WARNING")
     asyncio_logger.addHandler(logging.StreamHandler())
 
-    if PREFECT_UNIT_TEST_LOOP_DEBUG.value():
+    if SYNTASK_UNIT_TEST_LOOP_DEBUG.value():
         loop.set_debug(True)
 
     loop.slow_callback_duration = 0.25
@@ -267,7 +267,7 @@ def pytest_runtest_call(item):
 def assert_lifespan_is_not_left_open():
     # This checks for regressions where the application lifespan is left open
     # across tests.
-    from prefect.client import APP_LIFESPANS
+    from syntask.client import APP_LIFESPANS
 
     yield
 
@@ -282,7 +282,7 @@ def assert_lifespan_is_not_left_open():
 
 
 # Stores the temporary directory that is used for the test run
-TEST_PREFECT_HOME = None
+TEST_SYNTASK_HOME = None
 
 # Stores the profile context manager used for the test run, preventing early exit from
 # garbage collection when the sessionstart function exits.
@@ -298,48 +298,48 @@ def pytest_sessionstart(session):
     We set the test profile during session startup instead of a fixture to ensure that
     when tests are collected they respect the setting values.
     """
-    global TEST_PREFECT_HOME, TEST_PROFILE_CTX
-    TEST_PREFECT_HOME = tempfile.mkdtemp()
+    global TEST_SYNTASK_HOME, TEST_PROFILE_CTX
+    TEST_SYNTASK_HOME = tempfile.mkdtemp()
 
-    profile = prefect.settings.Profile(
+    profile = syntask.settings.Profile(
         name="test-session",
         settings={
-            # Set PREFECT_HOME to a temporary directory to avoid clobbering
+            # Set SYNTASK_HOME to a temporary directory to avoid clobbering
             # environments and settings
-            PREFECT_HOME: TEST_PREFECT_HOME,
-            PREFECT_LOCAL_STORAGE_PATH: Path(TEST_PREFECT_HOME) / "storage",
-            PREFECT_PROFILES_PATH: "$PREFECT_HOME/profiles.toml",
+            SYNTASK_HOME: TEST_SYNTASK_HOME,
+            SYNTASK_LOCAL_STORAGE_PATH: Path(TEST_SYNTASK_HOME) / "storage",
+            SYNTASK_PROFILES_PATH: "$SYNTASK_HOME/profiles.toml",
             # Disable connection to an API
-            PREFECT_API_URL: None,
+            SYNTASK_API_URL: None,
             # Disable pretty CLI output for easier assertions
-            PREFECT_CLI_COLORS: False,
-            PREFECT_CLI_WRAP_LINES: False,
+            SYNTASK_CLI_COLORS: False,
+            SYNTASK_CLI_WRAP_LINES: False,
             # Enable future change
-            PREFECT_ASYNC_FETCH_STATE_RESULT: True,
+            SYNTASK_ASYNC_FETCH_STATE_RESULT: True,
             # Enable debug logging
-            PREFECT_LOGGING_LEVEL: "DEBUG",
-            PREFECT_LOGGING_INTERNAL_LEVEL: "DEBUG",
+            SYNTASK_LOGGING_LEVEL: "DEBUG",
+            SYNTASK_LOGGING_INTERNAL_LEVEL: "DEBUG",
             # Disable shipping logs to the API;
             # can be enabled by the `enable_api_log_handler` mark
-            PREFECT_LOGGING_TO_API_ENABLED: False,
+            SYNTASK_LOGGING_TO_API_ENABLED: False,
             # Disable services for test runs
-            PREFECT_SERVER_ANALYTICS_ENABLED: False,
-            PREFECT_API_SERVICES_LATE_RUNS_ENABLED: False,
-            PREFECT_API_SERVICES_SCHEDULER_ENABLED: False,
-            PREFECT_API_SERVICES_FLOW_RUN_NOTIFICATIONS_ENABLED: False,
-            PREFECT_API_SERVICES_PAUSE_EXPIRATIONS_ENABLED: False,
-            PREFECT_API_SERVICES_CANCELLATION_CLEANUP_ENABLED: False,
+            SYNTASK_SERVER_ANALYTICS_ENABLED: False,
+            SYNTASK_API_SERVICES_LATE_RUNS_ENABLED: False,
+            SYNTASK_API_SERVICES_SCHEDULER_ENABLED: False,
+            SYNTASK_API_SERVICES_FLOW_RUN_NOTIFICATIONS_ENABLED: False,
+            SYNTASK_API_SERVICES_PAUSE_EXPIRATIONS_ENABLED: False,
+            SYNTASK_API_SERVICES_CANCELLATION_CLEANUP_ENABLED: False,
             # Disable block auto-registration memoization
-            PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION: False,
+            SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION: False,
             # Disable auto-registration of block types as they can conflict
-            PREFECT_API_BLOCKS_REGISTER_ON_START: False,
+            SYNTASK_API_BLOCKS_REGISTER_ON_START: False,
             # Code is being executed in a unit test context
-            PREFECT_UNIT_TEST_MODE: True,
+            SYNTASK_UNIT_TEST_MODE: True,
         },
         source=__file__,
     )
 
-    TEST_PROFILE_CTX = prefect.context.use_profile(
+    TEST_PROFILE_CTX = syntask.context.use_profile(
         profile,
         override_environment_variables=True,
         include_current_context=False,
@@ -349,7 +349,7 @@ def pytest_sessionstart(session):
     # Create the storage path now, fixing an obscure bug where it can be created by
     # when mounted as Docker volume resulting in the directory being owned by root
     # and unwritable by the normal user
-    PREFECT_LOCAL_STORAGE_PATH.value().mkdir()
+    SYNTASK_LOCAL_STORAGE_PATH.value().mkdir()
 
     # Ensure logging is configured for the test session
     setup_logging()
@@ -361,19 +361,19 @@ def pytest_sessionfinish(session):
     yield
 
     # Then, delete the temporary directory
-    if TEST_PREFECT_HOME is not None:
-        shutil.rmtree(TEST_PREFECT_HOME)
+    if TEST_SYNTASK_HOME is not None:
+        shutil.rmtree(TEST_SYNTASK_HOME)
 
 
 @pytest.fixture(scope="session", autouse=True)
 def safety_check_settings():
     # Safety check for connection to an external API
     assert (
-        PREFECT_API_URL.value() is None
+        SYNTASK_API_URL.value() is None
     ), "Tests should not be run connected to an external API."
     # Safety check for home directory
     assert (
-        str(PREFECT_HOME.value()) == TEST_PREFECT_HOME
+        str(SYNTASK_HOME.value()) == TEST_SYNTASK_HOME
     ), "Tests should use the temporary test directory"
 
 
@@ -391,7 +391,7 @@ async def generate_test_database_connection_url(
     server for each test worker, using the provided connection URL as the starting
     point.  Requires that the given database user has permission to connect to the
     server and create new databases."""
-    original_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+    original_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
     if not original_url:
         yield None
         return
@@ -399,7 +399,7 @@ async def generate_test_database_connection_url(
     print(f"Generating test database connection URL from {original_url!r}")
     scheme, netloc, database, query, fragment = urlsplit(original_url)
     if scheme == "sqlite+aiosqlite":
-        # SQLite databases will be scoped by the PREFECT_HOME setting, which will
+        # SQLite databases will be scoped by the SYNTASK_HOME setting, which will
         # be in an isolated temporary directory
         yield None
         return
@@ -471,7 +471,7 @@ def test_database_connection_url(generate_test_database_connection_url):
     if url is None:
         yield None
     else:
-        with temporary_settings({PREFECT_API_DATABASE_CONNECTION_URL: url}):
+        with temporary_settings({SYNTASK_API_DATABASE_CONNECTION_URL: url}):
             yield url
 
 
@@ -480,9 +480,9 @@ def reset_object_registry():
     """
     Ensures each test has a clean object registry.
     """
-    from prefect.context import PrefectObjectRegistry
+    from syntask.context import SyntaskObjectRegistry
 
-    with PrefectObjectRegistry():
+    with SyntaskObjectRegistry():
         yield
 
 
@@ -506,7 +506,7 @@ def caplog(caplog):
     Overrides caplog to apply to all of our loggers that do not propagate and
     consequently would not be captured by caplog.
     """
-    from prefect.logging.configuration import PROCESS_LOGGING_CONFIG
+    from syntask.logging.configuration import PROCESS_LOGGING_CONFIG
 
     for name, logger_config in PROCESS_LOGGING_CONFIG["loggers"].items():
         if not logger_config.get("propagate", True):
@@ -519,14 +519,14 @@ def caplog(caplog):
 
 @pytest.fixture(autouse=True)
 def disable_csrf_protection():
-    with temporary_settings({PREFECT_SERVER_CSRF_PROTECTION_ENABLED: False}):
+    with temporary_settings({SYNTASK_SERVER_CSRF_PROTECTION_ENABLED: False}):
         yield
 
 
 @pytest.fixture
 def enable_workers():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_WORKERS: 1, PREFECT_EXPERIMENTAL_WARN_WORKERS: 0}
+        {SYNTASK_EXPERIMENTAL_ENABLE_WORKERS: 1, SYNTASK_EXPERIMENTAL_WARN_WORKERS: 0}
     ):
         yield
 
@@ -534,7 +534,7 @@ def enable_workers():
 @pytest.fixture
 def disable_workers():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_WORKERS: 0, PREFECT_EXPERIMENTAL_WARN_WORKERS: 1}
+        {SYNTASK_EXPERIMENTAL_ENABLE_WORKERS: 0, SYNTASK_EXPERIMENTAL_WARN_WORKERS: 1}
     ):
         yield
 
@@ -543,8 +543,8 @@ def disable_workers():
 def enable_enhanced_cancellation():
     with temporary_settings(
         {
-            PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: 1,
-            PREFECT_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: 0,
+            SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: 1,
+            SYNTASK_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: 0,
         }
     ):
         yield
@@ -554,8 +554,8 @@ def enable_enhanced_cancellation():
 def disable_enhanced_cancellation():
     with temporary_settings(
         {
-            PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: 0,
-            PREFECT_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: 1,
+            SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: 0,
+            SYNTASK_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: 1,
         }
     ):
         yield

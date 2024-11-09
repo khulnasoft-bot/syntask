@@ -9,13 +9,13 @@ from pendulum.date import Date
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events.counting import PIVOT_DATETIME, Countable, TimeUnit
-from prefect.server.events.filters import (
+from syntask.server.events.counting import PIVOT_DATETIME, Countable, TimeUnit
+from syntask.server.events.filters import (
     EventFilter,
     EventOccurredFilter,
 )
-from prefect.server.events.schemas.events import EventCount, ReceivedEvent
-from prefect.server.events.storage.database import (
+from syntask.server.events.schemas.events import EventCount, ReceivedEvent
+from syntask.server.events.storage.database import (
     count_events,
     write_events,
 )
@@ -53,17 +53,17 @@ def all_events(known_dates: Tuple[Date, ...]) -> List[ReceivedEvent]:
 
     resource_options: List[Dict[str, str]] = [
         {
-            "prefect.resource.id": "foo.1",
-            "prefect.resource.name": "Foo To You",
+            "syntask.resource.id": "foo.1",
+            "syntask.resource.name": "Foo To You",
             "hello": "world",
         },
         {
-            "prefect.resource.id": "foo.2",
-            "prefect.resource.name": "Foo To You Two",
+            "syntask.resource.id": "foo.2",
+            "syntask.resource.name": "Foo To You Two",
             "hello": "world",
         },
         {
-            "prefect.resource.id": "foo.3",
+            "syntask.resource.id": "foo.3",
             "goodbye": "moon",
         },
     ]
@@ -71,48 +71,48 @@ def all_events(known_dates: Tuple[Date, ...]) -> List[ReceivedEvent]:
         [],
         [
             {
-                "prefect.resource.id": "foo.1",
-                "prefect.resource.role": "thing",
+                "syntask.resource.id": "foo.1",
+                "syntask.resource.role": "thing",
             },
             {
-                "prefect.resource.id": "foo.2",
-                "prefect.resource.role": "another-thing",
+                "syntask.resource.id": "foo.2",
+                "syntask.resource.role": "another-thing",
             },
             {
-                "prefect.resource.id": "foo.3",
-                "prefect.resource.role": "the-other-thing",
+                "syntask.resource.id": "foo.3",
+                "syntask.resource.role": "the-other-thing",
             },
             {
-                "prefect.resource.id": "related.4",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "related.4",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
             },
         ],
         [
             {
-                "prefect.resource.id": "foo.1",
-                "prefect.resource.role": "thing",
+                "syntask.resource.id": "foo.1",
+                "syntask.resource.role": "thing",
                 "hello": "world",
                 "another": "label",
             },
             {
-                "prefect.resource.id": "foo.2",
-                "prefect.resource.role": "another-thing",
+                "syntask.resource.id": "foo.2",
+                "syntask.resource.role": "another-thing",
                 "hello": "world",
             },
             {
-                "prefect.resource.id": "foo.3",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "foo.3",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
             },
             {
-                "prefect.resource.id": "related.4",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "related.4",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
             },
             {
-                "prefect.resource.id": "related.5",
-                "prefect.resource.role": "that-other-thing",
+                "syntask.resource.id": "related.5",
+                "syntask.resource.role": "that-other-thing",
                 "goodbye": "moon",
             },
         ],

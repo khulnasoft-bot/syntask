@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syntask-server
+  namespace: ${namespace}
+  labels:
+    app: syntask-server
+spec:
+  selector:
+    matchLabels:
+      app: syntask-server
+  replicas: 1  # We're using SQLite, so we should only run 1 pod
+  template:
+    metadata:
+      labels:
+        app: syntask-server
+    spec:
+      containers:
+      - name: api
+        image: ${image_name}
+        command: ["syntask", "server", "start", "--host", "0.0.0.0", "--log-level", "${log_level}"]
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 4200
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: syntask-server
+  namespace: ${namespace}
+  labels:
+    app: syntask-server
+spec:
+  ports:
+    - port: 4200
+      protocol: TCP
+  selector:
+    app: syntask-server
+

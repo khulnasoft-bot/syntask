@@ -1,8 +1,8 @@
 recipeName: Subflow Basics
-author: Prefect
-authorUrl: https://prefect.io
-description: Prefect 2 Paradigm Shift, from flow-of-flows to subflows.
+author: Syntask
+authorUrl: https://syntask.io
+description: Syntask 2 Paradigm Shift, from flow-of-flows to subflows.
 topic: Flows
-recipeUrl: https://discourse.prefect.io/t/migrating-to-prefect-2-0-from-flow-of-flows-to-subflows/1318
+recipeUrl: https://discourse.syntask.io/t/migrating-to-syntask-2-0-from-flow-of-flows-to-subflows/1318
 iconUrl: 
   - /img/collections/python.png

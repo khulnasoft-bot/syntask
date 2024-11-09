@@ -1,9 +1,9 @@
 ---
-description: Prefect Cloud Event Feed
+description: Syntask Cloud Event Feed
 tags:
     - UI
     - dashboard
-    - Prefect Cloud
+    - Syntask Cloud
     - Observability
     - Events
 search:
@@ -14,19 +14,19 @@ search:
 
 An event is a notification of a change. Together, events form a feed of activity recording what's happening across your stack.
 
-Events power several features in Prefect Cloud, including flow run logs, audit logs, and automations.
+Events power several features in Syntask Cloud, including flow run logs, audit logs, and automations.
 
 Events can represent API calls, state transitions, or changes in your execution environment or infrastructure.
 
-Events enable observability into your data stack via the [event feed](/ui/events/#event-feed), and the configuration of Prefect's reactivity via [automations](/concepts/automations/).
+Events enable observability into your data stack via the [event feed](/ui/events/#event-feed), and the configuration of Syntask's reactivity via [automations](/concepts/automations/).
 
-![Prefect UI](/img/ui/event-feed.png)
+![Syntask UI](/img/ui/event-feed.png)
 
 ## Event specification
 
-Events adhere to a structured [specification](https://app.prefect.cloud/api/docs#tag/Events).
+Events adhere to a structured [specification](https://app.syntask.cloud/api/docs#tag/Events).
 
-![Prefect UI](/img/ui/event-spec.png)
+![Syntask UI](/img/ui/event-spec.png)
 
 | Name     | Type   | Required? | Description                                                          |
 | -------- | ------ | --------- | -------------------------------------------------------------------- |
@@ -40,38 +40,38 @@ Events adhere to a structured [specification](https://app.prefect.cloud/api/docs
 
 ## Event grammar
 
-Generally, events have a consistent and informative grammar - an event describes a resource and an action that the resource took or that was taken on that resource. For example, events emitted by Prefect objects take the form of:
+Generally, events have a consistent and informative grammar - an event describes a resource and an action that the resource took or that was taken on that resource. For example, events emitted by Syntask objects take the form of:
 
 ```
-prefect.block.write-method.called
-prefect-cloud.automation.action.executed
-prefect-cloud.user.logged-in
+syntask.block.write-method.called
+syntask-cloud.automation.action.executed
+syntask-cloud.user.logged-in
 ```
 
 ## Event sources
 
-Events are automatically emitted by all Prefect objects, including flows, tasks, deployments, work queues, and logs. Prefect-emitted events will contain the `prefect` or `prefect-cloud` resource prefix. Events can also be sent to the Prefect [events API](https://app.prefect.cloud/api/docs#tag/Events) via authenticated http request.
+Events are automatically emitted by all Syntask objects, including flows, tasks, deployments, work queues, and logs. Syntask-emitted events will contain the `syntask` or `syntask-cloud` resource prefix. Events can also be sent to the Syntask [events API](https://app.syntask.cloud/api/docs#tag/Events) via authenticated http request.
 
 ### Emit custom events from Python code
 
-The Prefect Python SDK provides an `emit_event` function that emits an Prefect event when called. The function can be called inside or outside of a task or flow. Running the following code will emit an event to Prefect Cloud, which will validate and ingest the event data.
+The Syntask Python SDK provides an `emit_event` function that emits an Syntask event when called. The function can be called inside or outside of a task or flow. Running the following code will emit an event to Syntask Cloud, which will validate and ingest the event data.
 
 ```python
-from prefect.events import emit_event
+from syntask.events import emit_event
 
 def some_function(name: str="kiki") -> None:
     print(f"hi {name}!")
-    emit_event(event=f"{name}.sent.event!", resource={"prefect.resource.id": f"coder.{name}"})
+    emit_event(event=f"{name}.sent.event!", resource={"syntask.resource.id": f"coder.{name}"})
 
 some_function()
 ```
 
-Note that the `emit_event` arguments shown above are required: `event` represents the name of the event and `resource={"prefect.resource.id": "my_string"}` is the resource id. 
+Note that the `emit_event` arguments shown above are required: `event` represents the name of the event and `resource={"syntask.resource.id": "my_string"}` is the resource id. 
 To get data into an event for use in an automation action, you can specify a dictionary of values for the `payload` parameter. 
 
 ### Emit events via webhooks
 
-Prefect Cloud offers [programmable webhooks](/guides/webhooks/) to receive HTTP requests from other systems and translate them into events within your workspace.  Webhooks can emit [pre-defined static events](/guides/webhooks/#static-webhook-events), dynamic events that [use portions of the incoming HTTP request](/guides/webhooks/#dynamic-webhook-events), or events derived from [CloudEvents](/guides/webhooks/#accepting-cloudevents).
+Syntask Cloud offers [programmable webhooks](/guides/webhooks/) to receive HTTP requests from other systems and translate them into events within your workspace.  Webhooks can emit [pre-defined static events](/guides/webhooks/#static-webhook-events), dynamic events that [use portions of the incoming HTTP request](/guides/webhooks/#dynamic-webhook-events), or events derived from [CloudEvents](/guides/webhooks/#accepting-cloudevents).
 
 Events emitted from any source will appear in the event feed, where you can visualize activity in context and configure [automations](/concepts/automations/) to react to the presence or absence of it in the future. 
 
@@ -80,17 +80,17 @@ Events emitted from any source will appear in the event feed, where you can visu
 Every event has a primary resource, which describes the object that emitted an event. Resources are used as quasi-stable identifiers for sources of events, and are constructed as dot-delimited strings, for example:
 
 ```
-prefect-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3.action.0
+syntask-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3.action.0
 acme.user.kiki.elt_script_1
-prefect.flow-run.e3755d32-cec5-42ca-9bcd-af236e308ba6
+syntask.flow-run.e3755d32-cec5-42ca-9bcd-af236e308ba6
 ```
 
 Resources can optionally have additional arbitrary labels which can be used in event aggregation queries, such as:
 
 ```json
 "resource": {
-    "prefect.resource.id": "prefect-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3",
-    "prefect-cloud.action.type": "call-webhook"
+    "syntask.resource.id": "syntask-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3",
+    "syntask-cloud.action.type": "call-webhook"
     }
 ```
 
@@ -98,22 +98,22 @@ Events can optionally contain related resources, used to associate the event wit
 
 ```json
 "resource": {
-    "prefect.resource.id": "prefect-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3.action.0",
-    "prefect-cloud.action.type": "call-webhook"
+    "syntask.resource.id": "syntask-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3.action.0",
+    "syntask-cloud.action.type": "call-webhook"
   },
 "related": [
   {
-      "prefect.resource.id": "prefect-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3",
-      "prefect.resource.role": "automation",
-      "prefect-cloud.name": "webhook_body_demo",
-      "prefect-cloud.posture": "Reactive"
+      "syntask.resource.id": "syntask-cloud.automation.5b9c5c3d-6ca0-48d0-8331-79f4b65385b3",
+      "syntask.resource.role": "automation",
+      "syntask-cloud.name": "webhook_body_demo",
+      "syntask-cloud.posture": "Reactive"
   }
 ]
 ```
 
 ## Events in the Cloud UI
 
-Prefect Cloud provides an interactive dashboard to analyze and take action on events that occurred in your workspace on the event feed page.
+Syntask Cloud provides an interactive dashboard to analyze and take action on events that occurred in your workspace on the event feed page.
 
 ![Event feed](/img/ui/event-feed.png)
 

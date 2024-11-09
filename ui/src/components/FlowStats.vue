@@ -15,10 +15,10 @@
     FlowRunHistoryCard,
     subscriptionIntervalKey,
     mapper
-  } from '@prefecthq/prefect-ui-library'
+  } from '@syntaskhq/syntask-ui-library'
   import { secondsInDay, secondsToMilliseconds } from 'date-fns'
   import { computed, provide, toRefs } from 'vue'
-  import { useWorkspaceDashboardFilterFromRoute, DateRangeSelect } from '@prefecthq/prefect-ui-library'
+  import { useWorkspaceDashboardFilterFromRoute, DateRangeSelect } from '@syntaskhq/syntask-ui-library'
 
   const props = defineProps<{
     flowId: string,

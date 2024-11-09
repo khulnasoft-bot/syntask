@@ -1,5 +1,5 @@
 ---
-description: Prefect storage configures local or remote data stores used for flow scripts, deployments, and flow runs.
+description: Syntask storage configures local or remote data stores used for flow scripts, deployments, and flow runs.
 tags:
     - storage
     - databases
@@ -17,19 +17,19 @@ search:
 # Storage
 
 !!! warning "Storage blocks are not recommended"
-    Storage blocks are part of the legacy block-based deployment model. Instead, using `serve` or `runner`-based Python creation methods or workers and work pools with `prefect deploy` via the CLI are the recommended options for creating a deployment. 
-    Flow code storage can be specified in the Python file with `serve` or `runner`-based Python creation methods; alternatively, with the work pools and workers style of flow deployment, you can specify flow code storage during the interactive `prefect deploy` CLI experience and in its resulting `prefect.yaml` file. 
+    Storage blocks are part of the legacy block-based deployment model. Instead, using `serve` or `runner`-based Python creation methods or workers and work pools with `syntask deploy` via the CLI are the recommended options for creating a deployment. 
+    Flow code storage can be specified in the Python file with `serve` or `runner`-based Python creation methods; alternatively, with the work pools and workers style of flow deployment, you can specify flow code storage during the interactive `syntask deploy` CLI experience and in its resulting `syntask.yaml` file. 
 
-Storage lets you configure how flow code for deployments is persisted and retrieved by [Prefect workers](/concepts/work-pools) (or legacy [agents](/concepts/agents)). Anytime you build a block-based deployment, a storage block is used to upload the entire directory containing your workflow code (along with supporting files) to its configured location.  This helps ensure portability of your relative imports, configuration files, and more.  Note that your environment dependencies (for example, external Python packages) still need to be managed separately.
+Storage lets you configure how flow code for deployments is persisted and retrieved by [Syntask workers](/concepts/work-pools) (or legacy [agents](/concepts/agents)). Anytime you build a block-based deployment, a storage block is used to upload the entire directory containing your workflow code (along with supporting files) to its configured location.  This helps ensure portability of your relative imports, configuration files, and more.  Note that your environment dependencies (for example, external Python packages) still need to be managed separately.
 
-If no storage is explicitly configured, Prefect will use `LocalFileSystem` storage by default. Local storage works fine for many local flow run scenarios, especially when testing and getting started. However, due to the inherent lack of portability, many use cases are better served by using remote storage such as S3 or Google Cloud Storage.
+If no storage is explicitly configured, Syntask will use `LocalFileSystem` storage by default. Local storage works fine for many local flow run scenarios, especially when testing and getting started. However, due to the inherent lack of portability, many use cases are better served by using remote storage such as S3 or Google Cloud Storage.
 
-Prefect supports creating multiple storage configurations and switching between storage as needed.
+Syntask supports creating multiple storage configurations and switching between storage as needed.
 
 !!! tip "Storage uses blocks"
-    [Blocks](/concepts/blocks/) are the Prefect technology underlying storage, and enables you to do so much more.
+    [Blocks](/concepts/blocks/) are the Syntask technology underlying storage, and enables you to do so much more.
 
-    In addition to creating storage blocks via the Prefect CLI, you can now create storage blocks and other kinds of block configuration objects via the [Prefect UI and Prefect Cloud](/ui/blocks/).
+    In addition to creating storage blocks via the Syntask CLI, you can now create storage blocks and other kinds of block configuration objects via the [Syntask UI and Syntask Cloud](/ui/blocks/).
 
 ## Configuring storage for a deployment
 
@@ -40,7 +40,7 @@ When building a deployment for a workflow, you have two options for configuring 
 
 ### Using the default
 
-Anytime you call `prefect deployment build` without providing the `--storage-block` flag, a default `LocalFileSystem` block will be used.  Note that this block will always use your present working directory as its basepath (which is usually desirable).  You can see the block's settings by inspecting the `deployment.yaml` file that Prefect creates after calling `prefect deployment build`.
+Anytime you call `syntask deployment build` without providing the `--storage-block` flag, a default `LocalFileSystem` block will be used.  Note that this block will always use your present working directory as its basepath (which is usually desirable).  You can see the block's settings by inspecting the `deployment.yaml` file that Syntask creates after calling `syntask deployment build`.
 
 While you generally can't run a deployment stored on a local file system on other machines, any agent running on the same machine will be able to successfully run your deployment.
 
@@ -50,15 +50,15 @@ Current options for deployment storage blocks include:
 
 | Storage                                                                                  | Description                                                                                                | Required Library                                                      |
 | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [Local File System](/api-ref/prefect/filesystems/#prefect.filesystems.LocalFileSystem)   | Store code in a run's local file system.                                                                   |                                                                       |
-| [Remote File System](/api-ref/prefect/filesystems/#prefect.filesystems.RemoteFileSystem) | Store code in a any filesystem supported by [`fsspec`](https://filesystem-spec.readthedocs.io/en/latest/). |                                                                       |
-| [AWS S3 Storage](/api-ref/prefect/filesystems/#prefect.filesystems.S3)                   | Store code in an AWS S3 bucket.                                                                            | [`s3fs`](https://s3fs.readthedocs.io/en/latest/)                      |
-| [Azure Storage](/api-ref/prefect/filesystems/#prefect.filesystems.Azure)                 | Store code in Azure Datalake and Azure Blob Storage.                                                       | [`adlfs`](https://github.com/fsspec/adlfs)                            |
-| [GitHub Storage](/api-ref/prefect/filesystems/#prefect.filesystems.GitHub)               | Store code in a GitHub repository.                                                                         |                                                                       |
-| [Google Cloud Storage](/api-ref/prefect/filesystems/#prefect.filesystems.GCS)            | Store code in a Google Cloud Platform (GCP) Cloud Storage bucket.                                          | [`gcsfs`](https://gcsfs.readthedocs.io/en/latest/)                    |
-| [SMB](/api-ref/prefect/filesystems/#prefect.filesystems.SMB)                             | Store code in SMB shared network storage.                                                                  | [`smbprotocol`](https://github.com/jborean93/smbprotocol)             |
-| [GitLab Repository](https://prefecthq.github.io/prefect-gitlab/)                         | Store code in a GitLab repository.                                                                         | [`prefect-gitlab`](https://github.com/PrefectHQ/prefect-gitlab)       |
-| [Bitbucket Repository](https://prefecthq.github.io/prefect-bitbucket/)                   | Store code in a Bitbucket repository.                                                                      | [`prefect-bitbucket`](https://github.com/PrefectHQ/prefect-bitbucket) |
+| [Local File System](/api-ref/syntask/filesystems/#syntask.filesystems.LocalFileSystem)   | Store code in a run's local file system.                                                                   |                                                                       |
+| [Remote File System](/api-ref/syntask/filesystems/#syntask.filesystems.RemoteFileSystem) | Store code in a any filesystem supported by [`fsspec`](https://filesystem-spec.readthedocs.io/en/latest/). |                                                                       |
+| [AWS S3 Storage](/api-ref/syntask/filesystems/#syntask.filesystems.S3)                   | Store code in an AWS S3 bucket.                                                                            | [`s3fs`](https://s3fs.readthedocs.io/en/latest/)                      |
+| [Azure Storage](/api-ref/syntask/filesystems/#syntask.filesystems.Azure)                 | Store code in Azure Datalake and Azure Blob Storage.                                                       | [`adlfs`](https://github.com/fsspec/adlfs)                            |
+| [GitHub Storage](/api-ref/syntask/filesystems/#syntask.filesystems.GitHub)               | Store code in a GitHub repository.                                                                         |                                                                       |
+| [Google Cloud Storage](/api-ref/syntask/filesystems/#syntask.filesystems.GCS)            | Store code in a Google Cloud Platform (GCP) Cloud Storage bucket.                                          | [`gcsfs`](https://gcsfs.readthedocs.io/en/latest/)                    |
+| [SMB](/api-ref/syntask/filesystems/#syntask.filesystems.SMB)                             | Store code in SMB shared network storage.                                                                  | [`smbprotocol`](https://github.com/jborean93/smbprotocol)             |
+| [GitLab Repository](https://syntaskhq.github.io/syntask-gitlab/)                         | Store code in a GitLab repository.                                                                         | [`syntask-gitlab`](https://github.com/Synopkg/syntask-gitlab)       |
+| [Bitbucket Repository](https://syntaskhq.github.io/syntask-bitbucket/)                   | Store code in a Bitbucket repository.                                                                      | [`syntask-bitbucket`](https://github.com/Synopkg/syntask-bitbucket) |
 
 !!! note "Accessing files may require storage filesystem libraries"
     Note that the appropriate filesystem library supporting the storage location must be installed prior to building a deployment with a storage block or accessing the storage location from flow scripts.
@@ -71,20 +71,20 @@ Current options for deployment storage blocks include:
 
 You can create these blocks either via the UI or via Python.
 
-You can [create, edit, and manage storage blocks](/ui/blocks/) in the Prefect UI and Prefect Cloud. On a Prefect server, blocks are created in the server's database. On Prefect Cloud, blocks are created on a workspace.
+You can [create, edit, and manage storage blocks](/ui/blocks/) in the Syntask UI and Syntask Cloud. On a Syntask server, blocks are created in the server's database. On Syntask Cloud, blocks are created on a workspace.
 
-To create a new block, select the **+** button. Prefect displays a library of block types you can configure to create blocks to be used by your flows.
+To create a new block, select the **+** button. Syntask displays a library of block types you can configure to create blocks to be used by your flows.
 
-![Viewing the new block library in the Prefect UI](/img/ui/block-library.png)
+![Viewing the new block library in the Syntask UI](/img/ui/block-library.png)
 
-Select **Add +** to configure a new storage block based on a specific block type. Prefect displays a **Create** page that enables specifying storage settings.
+Select **Add +** to configure a new storage block based on a specific block type. Syntask displays a **Create** page that enables specifying storage settings.
 
-![Configuring an S3 storage block in the Prefect UI](/img/concepts/s3-block-configuration.png)
+![Configuring an S3 storage block in the Syntask UI](/img/concepts/s3-block-configuration.png)
 
-You can also create blocks using the Prefect Python API:
+You can also create blocks using the Syntask Python API:
 
 ```python
-from prefect.filesystems import S3
+from syntask.filesystems import S3
 
 block = S3(bucket_path="my-bucket/a-sub-directory", 
            aws_access_key_id="foo", 
@@ -93,11 +93,11 @@ block = S3(bucket_path="my-bucket/a-sub-directory",
 block.save("example-block")
 ```
 
-This block configuration is now available to be used by anyone with appropriate access to your Prefect API.  We can use this block to build a deployment by passing its slug to the `prefect deployment build` command. The storage block slug is formatted as `block-type/block-name`. In this case, `s3/example-block` for an AWS S3 Bucket block named `example-block`. See [block identifiers](/concepts/deployments/#block-identifiers) for details.
+This block configuration is now available to be used by anyone with appropriate access to your Syntask API.  We can use this block to build a deployment by passing its slug to the `syntask deployment build` command. The storage block slug is formatted as `block-type/block-name`. In this case, `s3/example-block` for an AWS S3 Bucket block named `example-block`. See [block identifiers](/concepts/deployments/#block-identifiers) for details.
 
 <div class="terminal">
 ```bash
-prefect deployment build ./flows/my_flow.py:my_flow --name "Example Deployment" --storage-block s3/example-block
+syntask deployment build ./flows/my_flow.py:my_flow --name "Example Deployment" --storage-block s3/example-block
 ```
 </div>
 

@@ -1,9 +1,9 @@
 ---
-description: Prefect API routes for interacting with saved search objects.
+description: Syntask API routes for interacting with saved search objects.
 tags:
-    - Prefect API
+    - Syntask API
     - search
     - saved search
 ---
 
-::: prefect.server.api.saved_searches
+::: syntask.server.api.saved_searches

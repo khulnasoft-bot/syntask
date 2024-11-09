@@ -57,9 +57,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { media } from '@prefecthq/prefect-design'
-  import { PrefectStateNames, DeploymentDescription, FlowRunListItem, DeploymentDetails, DeploymentDescriptionEmptyState, PageHeadingDeployment, ParametersTable, DeploymentDeprecatedMessage, useTabs, useWorkspaceApi, useFlowRunsFilter, prefectStateNames, DeploymentConfiguration, useNextFlowRun, FlowRunFilteredList } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam, useRouteQueryParam, useSubscription } from '@prefecthq/vue-compositions'
+  import { media } from '@syntaskhq/syntask-design'
+  import { SyntaskStateNames, DeploymentDescription, FlowRunListItem, DeploymentDetails, DeploymentDescriptionEmptyState, PageHeadingDeployment, ParametersTable, DeploymentDeprecatedMessage, useTabs, useWorkspaceApi, useFlowRunsFilter, syntaskStateNames, DeploymentConfiguration, useNextFlowRun, FlowRunFilteredList } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam, useRouteQueryParam, useSubscription } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { usePageTitle } from '@/compositions/usePageTitle'
@@ -99,7 +99,7 @@
     },
     flowRuns: {
       state: {
-        name: prefectStateNames.filter(stateName => stateName !== 'Scheduled'),
+        name: syntaskStateNames.filter(stateName => stateName !== 'Scheduled'),
       },
     },
   })

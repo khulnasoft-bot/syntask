@@ -3,15 +3,15 @@ from unittest import mock
 import pytest
 from websockets.exceptions import ConnectionClosed
 
-from prefect.events import Event
-from prefect.events.clients import PrefectCloudEventsClient, PrefectEventsClient
-from prefect.testing.fixtures import Puppeteer, Recorder
+from syntask.events import Event
+from syntask.events.clients import SyntaskCloudEventsClient, SyntaskEventsClient
+from syntask.testing.fixtures import Puppeteer, Recorder
 
 
 async def test_events_client_can_connect_and_emit(
     events_api_url: str, example_event_1: Event, recorder: Recorder
 ):
-    async with PrefectEventsClient(events_api_url) as client:
+    async with SyntaskEventsClient(events_api_url) as client:
         await client.emit(example_event_1)
 
     assert recorder.connections == 1
@@ -22,7 +22,7 @@ async def test_events_client_can_connect_and_emit(
 async def test_cloud_client_can_connect_and_emit(
     events_cloud_api_url: str, example_event_1: Event, recorder: Recorder
 ):
-    async with PrefectCloudEventsClient(events_cloud_api_url, "my-token") as client:
+    async with SyntaskCloudEventsClient(events_cloud_api_url, "my-token") as client:
         await client.emit(example_event_1)
 
     assert recorder.connections == 1
@@ -40,7 +40,7 @@ async def test_reconnects_and_resends_after_hard_disconnect(
     recorder: Recorder,
     puppeteer: Puppeteer,
 ):
-    client = PrefectEventsClient(events_cloud_api_url, checkpoint_every=1)
+    client = SyntaskEventsClient(events_cloud_api_url, checkpoint_every=1)
     async with client:
         assert recorder.connections == 1
 
@@ -74,7 +74,7 @@ async def test_gives_up_after_a_certain_amount_of_tries(
     puppeteer: Puppeteer,
     attempts: int,
 ):
-    client = PrefectEventsClient(
+    client = SyntaskEventsClient(
         events_cloud_api_url,
         checkpoint_every=1,
         reconnection_attempts=attempts,
@@ -108,7 +108,7 @@ async def test_giving_up_after_negative_one_tries_is_a_noop(
 ):
     """This is a nonsensical configuration, but covers a branch of client.emit where
     the primary reconnection loop does nothing (not even sending events)"""
-    client = PrefectEventsClient(
+    client = SyntaskEventsClient(
         events_cloud_api_url, checkpoint_every=1, reconnection_attempts=-1
     )
     async with client:
@@ -129,13 +129,13 @@ async def test_giving_up_after_negative_one_tries_is_a_noop(
 async def test_handles_api_url_with_trailing_slash(
     events_cloud_api_url: str, example_event_1: Event, recorder: Recorder
 ):
-    # Regression test for https://github.com/PrefectHQ/prefect/issues/9662
-    # where a configuration that has a trailing slash on the PREFECT_API_URL
+    # Regression test for https://github.com/Synopkg/syntask/issues/9662
+    # where a configuration that has a trailing slash on the SYNTASK_API_URL
     # would cause the client to fail to connect with a 403 as the path would
-    # contain a double slash, ie: `wss:api.prefect.cloud/...//events/in`
+    # contain a double slash, ie: `wss:api.syntask.cloud/...//events/in`
 
     events_cloud_api_url += "/"
-    async with PrefectEventsClient(events_cloud_api_url) as client:
+    async with SyntaskEventsClient(events_cloud_api_url) as client:
         await client.emit(example_event_1)
 
     assert recorder.connections == 1
@@ -152,8 +152,8 @@ async def test_recovers_from_temporary_error_reconnecting(
     puppeteer: Puppeteer,
 ):
     """Regression test for an error where the client encountered assertion errors in
-    PrefectEventsClient._emit because the websocket was None"""
-    client = PrefectEventsClient(
+    SyntaskEventsClient._emit because the websocket was None"""
+    client = SyntaskEventsClient(
         events_cloud_api_url, checkpoint_every=1, reconnection_attempts=3
     )
     async with client:
@@ -200,8 +200,8 @@ async def test_recovers_from_long_lasting_error_reconnecting(
     puppeteer: Puppeteer,
 ):
     """Regression test for an error where the client encountered assertion errors in
-    PrefectEventsClient._emit because the websocket was None"""
-    client = PrefectEventsClient(
+    SyntaskEventsClient._emit because the websocket was None"""
+    client = SyntaskEventsClient(
         events_cloud_api_url, checkpoint_every=1, reconnection_attempts=3
     )
     async with client:

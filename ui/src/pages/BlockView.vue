@@ -9,8 +9,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { PageHeadingBlock, BlockDocumentCard, useWorkspaceApi } from '@prefecthq/prefect-ui-library'
-  import { useSubscriptionWithDependencies, useRouteParam } from '@prefecthq/vue-compositions'
+  import { PageHeadingBlock, BlockDocumentCard, useWorkspaceApi } from '@syntaskhq/syntask-ui-library'
+  import { useSubscriptionWithDependencies, useRouteParam } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { usePageTitle } from '@/compositions/usePageTitle'

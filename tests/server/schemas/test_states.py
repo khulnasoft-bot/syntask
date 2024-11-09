@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -11,8 +11,8 @@ else:
 
 import pytest
 
-from prefect.deprecated.data_documents import DataDocument
-from prefect.server.schemas.states import (
+from syntask.deprecated.data_documents import DataDocument
+from syntask.server.schemas.states import (
     AwaitingRetry,
     Completed,
     Failed,

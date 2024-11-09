@@ -6,17 +6,17 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from prefect.pydantic import HAS_PYDANTIC_V2
-from prefect.serializers import (
+from syntask.pydantic import HAS_PYDANTIC_V2
+from syntask.serializers import (
     CompressedSerializer,
     JSONSerializer,
     PickleSerializer,
     Serializer,
-    prefect_json_object_decoder,
-    prefect_json_object_encoder,
+    syntask_json_object_decoder,
+    syntask_json_object_encoder,
 )
-from prefect.testing.utilities import exceptions_equal
-from prefect.utilities.dispatch import get_registry_for_type
+from syntask.testing.utilities import exceptions_equal
+from syntask.utilities.dispatch import get_registry_for_type
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import BaseModel, ValidationError, validator
@@ -250,51 +250,51 @@ class TestJSONSerializer:
         serializer = JSONSerializer(jsonlib="orjson")
         serializer.dumps("test")
         serializer.loads(b"test")
-        dumps_mock.assert_called_once_with("test", default=prefect_json_object_encoder)
+        dumps_mock.assert_called_once_with("test", default=syntask_json_object_encoder)
         loads_mock.assert_called_once_with(
-            "test", object_hook=prefect_json_object_decoder
+            "test", object_hook=syntask_json_object_decoder
         )
 
     def test_allows_custom_encoder(self, monkeypatch):
         fake_object_encoder = MagicMock(return_value="foobar!")
-        prefect_object_encoder = MagicMock()
+        syntask_object_encoder = MagicMock()
 
         monkeypatch.setattr(
-            "prefect.fake_object_encoder", fake_object_encoder, raising=False
+            "syntask.fake_object_encoder", fake_object_encoder, raising=False
         )
         monkeypatch.setattr(
-            "prefect.serializers.prefect_json_object_encoder",
-            prefect_object_encoder,
+            "syntask.serializers.syntask_json_object_encoder",
+            syntask_object_encoder,
         )
 
-        serializer = JSONSerializer(object_encoder="prefect.fake_object_encoder")
+        serializer = JSONSerializer(object_encoder="syntask.fake_object_encoder")
 
         # Encoder hooks are only called for unsupported objects
         obj = uuid.uuid4()
         result = serializer.dumps(obj)
         assert result == b'"foobar!"'
-        prefect_object_encoder.assert_not_called()
+        syntask_object_encoder.assert_not_called()
         fake_object_encoder.assert_called_once_with(obj)
 
     def test_allows_custom_decoder(self, monkeypatch):
         fake_object_decoder = MagicMock(return_value="test")
-        prefect_object_decoder = MagicMock()
+        syntask_object_decoder = MagicMock()
 
         monkeypatch.setattr(
-            "prefect.fake_object_decoder", fake_object_decoder, raising=False
+            "syntask.fake_object_decoder", fake_object_decoder, raising=False
         )
 
         monkeypatch.setattr(
-            "prefect.serializers.prefect_json_object_decoder",
-            prefect_object_decoder,
+            "syntask.serializers.syntask_json_object_decoder",
+            syntask_object_decoder,
         )
 
-        serializer = JSONSerializer(object_decoder="prefect.fake_object_decoder")
+        serializer = JSONSerializer(object_decoder="syntask.fake_object_decoder")
 
         # Decoder hooks are only called for dicts
         assert serializer.loads(json.dumps({"foo": "bar"}).encode()) == "test"
         fake_object_decoder.assert_called_once_with({"foo": "bar"})
-        prefect_object_decoder.assert_not_called()
+        syntask_object_decoder.assert_not_called()
 
     def test_allows_custom_kwargs(self, monkeypatch):
         dumps_mock = MagicMock()
@@ -307,10 +307,10 @@ class TestJSONSerializer:
         serializer.dumps("test")
         serializer.loads(b"test")
         dumps_mock.assert_called_once_with(
-            "test", default=prefect_json_object_encoder, foo="bar"
+            "test", default=syntask_json_object_encoder, foo="bar"
         )
         loads_mock.assert_called_once_with(
-            "test", object_hook=prefect_json_object_decoder, bar="foo"
+            "test", object_hook=syntask_json_object_decoder, bar="foo"
         )
 
     def test_does_not_allow_object_hook_collision(self):

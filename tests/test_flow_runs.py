@@ -2,19 +2,19 @@ import time
 
 import pytest
 
-import prefect.client.schemas as client_schemas
-from prefect import flow
-from prefect.exceptions import FlowRunWaitTimeout
-from prefect.flow_runs import wait_for_flow_run
-from prefect.states import Completed
+import syntask.client.schemas as client_schemas
+from syntask import flow
+from syntask.exceptions import FlowRunWaitTimeout
+from syntask.flow_runs import wait_for_flow_run
+from syntask.states import Completed
 
 
-async def test_create_then_wait_for_flow_run(prefect_client):
+async def test_create_then_wait_for_flow_run(syntask_client):
     @flow
     def foo():
         pass
 
-    flow_run = await prefect_client.create_flow_run(
+    flow_run = await syntask_client.create_flow_run(
         foo, name="petes-flow-run", state=Completed()
     )
     assert isinstance(flow_run, client_schemas.FlowRun)
@@ -25,12 +25,12 @@ async def test_create_then_wait_for_flow_run(prefect_client):
     assert flow_run.state.is_final()
 
 
-async def test_create_then_wait_timeout(prefect_client):
+async def test_create_then_wait_timeout(syntask_client):
     @flow
     def foo():
         time.sleep(9999)
 
-    flow_run = await prefect_client.create_flow_run(
+    flow_run = await syntask_client.create_flow_run(
         foo,
         name="petes-flow-run",
     )

@@ -1,6 +1,6 @@
 """
 This test suite exists to reproduce the issue in
-https://github.com/PrefectHQ/prefect/issues/11820
+https://github.com/Synopkg/syntask/issues/11820
 
 They shouldn't be run as part of the normal test suite, but can be run manually with:
 

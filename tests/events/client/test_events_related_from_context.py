@@ -3,16 +3,16 @@ from unittest import mock
 
 import pytest
 
-from prefect import flow, task
-from prefect.client.orchestration import get_client
-from prefect.context import FlowRunContext
-from prefect.events import RelatedResource
-from prefect.events.related import (
+from syntask import flow, task
+from syntask.client.orchestration import get_client
+from syntask.context import FlowRunContext
+from syntask.events import RelatedResource
+from syntask.events.related import (
     MAX_CACHE_SIZE,
     _get_and_cache_related_object,
     related_resources_from_run_context,
 )
-from prefect.states import Running
+from syntask.states import Running
 
 
 @pytest.fixture
@@ -52,9 +52,9 @@ async def test_gracefully_handles_missing_context():
 
 
 async def test_gets_related_from_run_context(
-    prefect_client, work_queue_1, worker_deployment_wq1
+    syntask_client, work_queue_1, worker_deployment_wq1
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         worker_deployment_wq1.id,
         state=Running(),
         tags=["flow-run-one"],
@@ -64,78 +64,78 @@ async def test_gets_related_from_run_context(
         related = await related_resources_from_run_context()
 
     work_pool = work_queue_1.work_pool
-    db_flow = await prefect_client.read_flow(flow_run.flow_id)
+    db_flow = await syntask_client.read_flow(flow_run.flow_id)
 
     assert related == [
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-                "prefect.resource.role": "flow-run",
-                "prefect.resource.name": flow_run.name,
+                "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+                "syntask.resource.role": "flow-run",
+                "syntask.resource.name": flow_run.name,
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.flow.{db_flow.id}",
-                "prefect.resource.role": "flow",
-                "prefect.resource.name": db_flow.name,
+                "syntask.resource.id": f"syntask.flow.{db_flow.id}",
+                "syntask.resource.role": "flow",
+                "syntask.resource.name": db_flow.name,
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.deployment.{worker_deployment_wq1.id}",
-                "prefect.resource.role": "deployment",
-                "prefect.resource.name": worker_deployment_wq1.name,
+                "syntask.resource.id": f"syntask.deployment.{worker_deployment_wq1.id}",
+                "syntask.resource.role": "deployment",
+                "syntask.resource.name": worker_deployment_wq1.name,
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.work-queue.{work_queue_1.id}",
-                "prefect.resource.role": "work-queue",
-                "prefect.resource.name": work_queue_1.name,
+                "syntask.resource.id": f"syntask.work-queue.{work_queue_1.id}",
+                "syntask.resource.role": "work-queue",
+                "syntask.resource.name": work_queue_1.name,
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                "prefect.resource.role": "work-pool",
-                "prefect.resource.name": work_pool.name,
+                "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                "syntask.resource.role": "work-pool",
+                "syntask.resource.name": work_pool.name,
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": "prefect.tag.flow-run-one",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": "syntask.tag.flow-run-one",
+                "syntask.resource.role": "tag",
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": "prefect.tag.test",
-                "prefect.resource.role": "tag",
+                "syntask.resource.id": "syntask.tag.test",
+                "syntask.resource.role": "tag",
             }
         ),
     ]
 
 
-async def test_can_exclude_by_resource_id(prefect_client):
+async def test_can_exclude_by_resource_id(syntask_client):
     @flow
     async def test_flow():
         flow_run_context = FlowRunContext.get()
         assert flow_run_context is not None
-        exclude = {f"prefect.flow-run.{flow_run_context.flow_run.id}"}
+        exclude = {f"syntask.flow-run.{flow_run_context.flow_run.id}"}
 
         return await related_resources_from_run_context(exclude=exclude)
 
     state = await test_flow._run()
 
-    flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+    flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
 
     related = await state.result()
 
-    assert f"prefect.flow-run.{flow_run.id}" not in related
+    assert f"syntask.flow-run.{flow_run.id}" not in related
 
 
-async def test_gets_related_from_task_run_context(prefect_client):
+async def test_gets_related_from_task_run_context(syntask_client):
     @task
     async def test_task():
         # Clear the FlowRunContext to simulated a task run in a remote worker.
@@ -149,32 +149,32 @@ async def test_gets_related_from_task_run_context(prefect_client):
     state = await test_flow._run()
     task_state = await state.result()
 
-    flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
-    db_flow = await prefect_client.read_flow(flow_run.flow_id)
-    task_run = await prefect_client.read_task_run(task_state.state_details.task_run_id)
+    flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
+    db_flow = await syntask_client.read_flow(flow_run.flow_id)
+    task_run = await syntask_client.read_task_run(task_state.state_details.task_run_id)
 
     related = await task_state.result()
 
     assert related == [
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.flow-run.{flow_run.id}",
-                "prefect.resource.role": "flow-run",
-                "prefect.resource.name": flow_run.name,
+                "syntask.resource.id": f"syntask.flow-run.{flow_run.id}",
+                "syntask.resource.role": "flow-run",
+                "syntask.resource.name": flow_run.name,
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.task-run.{task_run.id}",
-                "prefect.resource.role": "task-run",
-                "prefect.resource.name": task_run.name,
+                "syntask.resource.id": f"syntask.task-run.{task_run.id}",
+                "syntask.resource.role": "task-run",
+                "syntask.resource.name": task_run.name,
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.flow.{db_flow.id}",
-                "prefect.resource.role": "flow",
-                "prefect.resource.name": db_flow.name,
+                "syntask.resource.id": f"syntask.flow.{db_flow.id}",
+                "syntask.resource.role": "flow",
+                "syntask.resource.name": db_flow.name,
             }
         ),
     ]
@@ -186,7 +186,7 @@ async def test_caches_related_objects(spy_client):
         flow_run_context = FlowRunContext.get()
         assert flow_run_context is not None
 
-        with mock.patch("prefect.client.orchestration.get_client", lambda: spy_client):
+        with mock.patch("syntask.client.orchestration.get_client", lambda: spy_client):
             await related_resources_from_run_context()
             await related_resources_from_run_context()
 

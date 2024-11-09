@@ -1,5 +1,5 @@
 ---
-description: Prefect tasks represents a discrete unit of work in a Prefect workflow.
+description: Syntask tasks represents a discrete unit of work in a Syntask workflow.
 tags:
     - tasks
     - task runs
@@ -22,15 +22,15 @@ search:
 
 # Tasks
 
-A task is a function that represents a discrete unit of work in a Prefect workflow. Tasks are not required &mdash; you may define Prefect workflows that consist only of flows, using regular Python statements and functions. Tasks enable you to encapsulate elements of your workflow logic in observable units that can be reused across flows and subflows.
+A task is a function that represents a discrete unit of work in a Syntask workflow. Tasks are not required &mdash; you may define Syntask workflows that consist only of flows, using regular Python statements and functions. Tasks enable you to encapsulate elements of your workflow logic in observable units that can be reused across flows and subflows.
 
 ## Tasks overview
 
-Tasks are functions: they can take inputs, perform work, and return an output. A Prefect task can do almost anything a Python function can do.  
+Tasks are functions: they can take inputs, perform work, and return an output. A Syntask task can do almost anything a Python function can do.  
 
 Tasks are special because they receive metadata about upstream dependencies and the state of those dependencies before they run, even if they don't receive any explicit data inputs from them. This gives you the opportunity to, for example, have a task wait on the completion of another task before executing.
 
-Tasks also take advantage of automatic Prefect [logging](/concepts/logs/) to capture details about task runs such as runtime, tags, and final state.
+Tasks also take advantage of automatic Syntask [logging](/concepts/logs/) to capture details about task runs such as runtime, tags, and final state.
 
 You can define your tasks within the same file as your flow definition, or you can define tasks within modules and import them for use in your flow definitions. All tasks must be called from within a flow. Tasks may not be called from other tasks.
 
@@ -39,7 +39,7 @@ You can define your tasks within the same file as your flow definition, or you c
 Use the `@task` decorator to designate a function as a task. Calling the task from within a flow function creates a new task run:
 
 ```python hl_lines="3-5"
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -53,9 +53,9 @@ def my_flow():
 Tasks are uniquely identified by a task key, which is a hash composed of the task name, the fully-qualified name of the function, and any tags. If the task does not have a name specified, the name is derived from the task function.
 
 !!! note "How big should a task be?"
-    Prefect encourages "small tasks" &mdash; each one should represent a single logical step of your workflow. This allows Prefect to better contain task failures.
+    Syntask encourages "small tasks" &mdash; each one should represent a single logical step of your workflow. This allows Syntask to better contain task failures.
 
-    To be clear, there's nothing stopping you from putting all of your code in a single task &mdash; Prefect will happily run it! However, if any line of code fails, the entire task will fail and must be retried from the beginning. This can be avoided by splitting the code into multiple dependent tasks.
+    To be clear, there's nothing stopping you from putting all of your code in a single task &mdash; Syntask will happily run it! However, if any line of code fails, the entire task will fail and must be retried from the beginning. This can be avoided by splitting the code into multiple dependent tasks.
 
 
 ## Task arguments
@@ -66,7 +66,7 @@ Tasks allow for customization through optional arguments:
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`                | An optional name for the task. If not provided, the name will be inferred from the function name.                                                                                                                       |
 | `description`         | An optional string description for the task. If not provided, the description will be pulled from the docstring for the decorated function.                                                                             |
-| `tags`                | An optional set of tags to be associated with runs of this task. These tags are combined with any tags defined by a `prefect.tags` context at task runtime.                                                             |
+| `tags`                | An optional set of tags to be associated with runs of this task. These tags are combined with any tags defined by a `syntask.tags` context at task runtime.                                                             |
 | `cache_key_fn`        | An optional callable that, given the task run context and call parameters, generates a string key. If the key matches a previous completed state, that state result will be restored instead of running the task again. |
 | `cache_expiration`    | An optional amount of time indicating how long cached states for this task should be restorable; if not provided, cached states will never expire.                                                                      |
 | `retries`             | An optional number of times to retry on task run failure.                                                                                                                                                               |
@@ -74,7 +74,7 @@ Tasks allow for customization through optional arguments:
 | `log_prints`|An optional boolean indicating whether to log print statements. |
 | `persist_result` | An optional boolean indicating whether to persist the result of the task run to storage. |
 
-See all possible parameters in the [Python SDK API docs](/api-ref/prefect/tasks/#prefect.tasks.task).
+See all possible parameters in the [Python SDK API docs](/api-ref/syntask/tasks/#syntask.tasks.task).
 
 For example, you can provide a `name` value for the task. Here we've used the optional `description` argument as well.
 
@@ -89,7 +89,7 @@ You can distinguish runs of this task by providing a `task_run_name`; this setti
 
 ```python
 import datetime
-from prefect import flow, task
+from syntask import flow, task
 
 @task(name="My Example Task", 
       description="An example task for a tutorial.",
@@ -107,7 +107,7 @@ Additionally this setting also accepts a function that returns a string to be us
 
 ```python
 import datetime
-from prefect import flow, task
+from syntask import flow, task
 
 def generate_task_name():
     date = datetime.datetime.now(datetime.timezone.utc)
@@ -125,11 +125,11 @@ def my_flow():
     my_task(name="marvin")
 ```
 
-If you need access to information about the task, use the `prefect.runtime` module. For example:
+If you need access to information about the task, use the `syntask.runtime` module. For example:
 
 ```python
-from prefect import flow
-from prefect.runtime import flow_run, task_run
+from syntask import flow
+from syntask.runtime import flow_run, task_run
 
 def generate_task_name():
     flow_name = flow_run.flow_name
@@ -157,10 +157,10 @@ def my_flow(name: str):
 
 Tags are optional string labels that enable you to identify and group tasks other than by name or flow. Tags are useful for:
 
-- Filtering task runs by tag in the UI and via the [Prefect REST API](/api-ref/rest-api/#filtering).
+- Filtering task runs by tag in the UI and via the [Syntask REST API](/api-ref/rest-api/#filtering).
 - Setting [concurrency limits](#task-run-concurrency-limits) on task runs by tag.
 
-Tags may be specified as a keyword argument on the [task decorator](/api-ref/prefect/tasks/#prefect.tasks.task).
+Tags may be specified as a keyword argument on the [task decorator](/api-ref/syntask/tasks/#syntask.tasks.task).
 
 ```python hl_lines="1"
 @task(name="hello-task", tags=["test"])
@@ -168,11 +168,11 @@ def my_task():
     print("Hello, I'm a task")
 ```
 
-You can also provide tags as an argument with a [`tags` context manager](/api-ref/prefect/context/#prefect.context.tags), specifying tags when the task is called rather than in its definition.
+You can also provide tags as an argument with a [`tags` context manager](/api-ref/syntask/context/#syntask.context.tags), specifying tags when the task is called rather than in its definition.
 
 ```python hl_lines="10"
-from prefect import flow, task
-from prefect import tags
+from syntask import flow, task
+from syntask import tags
 
 @task
 def my_task():
@@ -186,13 +186,13 @@ def my_flow():
 
 ## Retries
 
-Prefect can automatically retry tasks on failure. In Prefect, a task _fails_ if
+Syntask can automatically retry tasks on failure. In Syntask, a task _fails_ if
 its Python function raises an exception.
 
 To enable retries, pass `retries` and `retry_delay_seconds` parameters to your
-task. If the task fails, Prefect will retry it up to `retries` times, waiting
+task. If the task fails, Syntask will retry it up to `retries` times, waiting
 `retry_delay_seconds` seconds between each attempt. If the task fails on the
-final retry, Prefect marks the task as _crashed_ if the task raised an exception
+final retry, Syntask marks the task as _crashed_ if the task raised an exception
 or _failed_ if it returned a string.
 
 !!! note "Retries don't create new task runs"
@@ -207,7 +207,7 @@ request.
 ```python hl_lines="4"
 import httpx
 
-from prefect import flow, task
+from syntask import flow, task
 
 
 @task(retries=2, retry_delay_seconds=5)
@@ -217,7 +217,7 @@ def get_data_task(
     response = httpx.get(url)
     
     # If the response status code is anything but a 2xx, httpx will raise
-    # an exception. This task doesn't handle the exception, so Prefect will
+    # an exception. This task doesn't handle the exception, so Syntask will
     # catch the exception and will consider the task run failed.
     response.raise_for_status()
     
@@ -230,7 +230,7 @@ def get_data_flow():
 ```
 
 In this task, if the HTTP request to the brittle API receives any status code
-other than a 2xx (200, 201, etc.), Prefect will retry the task a maximum of two
+other than a 2xx (200, 201, etc.), Syntask will retry the task a maximum of two
 times, waiting five seconds in between retries.
 
 ### Custom retry behavior
@@ -238,7 +238,7 @@ times, waiting five seconds in between retries.
 The `retry_delay_seconds` option accepts a list of delays for more custom retry behavior. The following task will wait for successively increasing intervals of 1, 10, and 100 seconds, respectively, before the next attempt starts:
 
 ```python
-from prefect import task
+from syntask import task
 
 @task(retries=3, retry_delay_seconds=[1, 10, 100])
 def some_task_with_manual_backoff_retries():
@@ -249,7 +249,7 @@ The `retry_condition_fn` option accepts a callable that returns a boolean. If th
 
 ```python
 import httpx
-from prefect import flow, task
+from syntask import flow, task
 
 def retry_handler(task, task_run, state) -> bool:
     """This is a custom retry handler to handle when we want to retry a task"""
@@ -281,11 +281,11 @@ if __name__ == "__main__":
     get_data_flow(url="https://httpbin.org/status/503")
 ```
 
-Additionally, you can pass a callable that accepts the number of retries as an argument and returns a list. Prefect includes an [`exponential_backoff`](/api-ref/prefect/tasks/#prefect.tasks.exponential_backoff) utility that will automatically generate a list of retry delays that correspond to an exponential backoff retry strategy. The following flow will wait for 10, 20, then 40 seconds before each retry.
+Additionally, you can pass a callable that accepts the number of retries as an argument and returns a list. Syntask includes an [`exponential_backoff`](/api-ref/syntask/tasks/#syntask.tasks.exponential_backoff) utility that will automatically generate a list of retry delays that correspond to an exponential backoff retry strategy. The following flow will wait for 10, 20, then 40 seconds before each retry.
 
 ```python
-from prefect import task
-from prefect.tasks import exponential_backoff
+from syntask import task
+from syntask.tasks import exponential_backoff
 
 @task(retries=3, retry_delay_seconds=exponential_backoff(backoff_factor=10))
 def some_task_with_exponential_backoff_retries():
@@ -301,8 +301,8 @@ is when many tasks all retry at the exact same time, potentially overwhelming sy
 The `retry_jitter_factor` option can be used to add variance to the base delay. For example, a retry delay of 10 seconds with a `retry_jitter_factor` of 0.5 will be allowed to delay up to 15 seconds. Large values of `retry_jitter_factor` provide more protection against "thundering herds," while keeping the average retry delay time constant. For example, the following task adds jitter to its exponential backoff so the retry delays will vary up to a maximum delay time of 20, 40, and 80 seconds respectively.
 
 ```python
-from prefect import task
-from prefect.tasks import exponential_backoff
+from syntask import task
+from syntask.tasks import exponential_backoff
 
 @task(
     retries=3,
@@ -318,21 +318,21 @@ def some_task_with_exponential_backoff_retries():
 You can also set retries and retry delays by using the following global settings. These settings will not override the `retries` or `retry_delay_seconds` that are set in the flow or task decorator.
 
 ```
-prefect config set PREFECT_FLOW_DEFAULT_RETRIES=2
-prefect config set PREFECT_TASK_DEFAULT_RETRIES=2
-prefect config set PREFECT_FLOW_DEFAULT_RETRY_DELAY_SECONDS = [1, 10, 100]
-prefect config set PREFECT_TASK_DEFAULT_RETRY_DELAY_SECONDS = [1, 10, 100]
+syntask config set SYNTASK_FLOW_DEFAULT_RETRIES=2
+syntask config set SYNTASK_TASK_DEFAULT_RETRIES=2
+syntask config set SYNTASK_FLOW_DEFAULT_RETRY_DELAY_SECONDS = [1, 10, 100]
+syntask config set SYNTASK_TASK_DEFAULT_RETRY_DELAY_SECONDS = [1, 10, 100]
 ```
 
 ## Caching
 
 Caching refers to the ability of a task run to reflect a finished state without actually running the code that defines the task. This allows you to efficiently reuse results of tasks that may be expensive to run with every flow run, or reuse cached results if the inputs to a task have not changed.
 
-To determine whether a task run should retrieve a cached state, we use "cache keys". A cache key is a string value that indicates if one run should be considered identical to another. When a task run with a cache key finishes, we attach that cache key to the state. When each task run starts, Prefect checks for states with a matching cache key. If a state with an identical key is found, Prefect will use the cached state instead of running the task again.
+To determine whether a task run should retrieve a cached state, we use "cache keys". A cache key is a string value that indicates if one run should be considered identical to another. When a task run with a cache key finishes, we attach that cache key to the state. When each task run starts, Syntask checks for states with a matching cache key. If a state with an identical key is found, Syntask will use the cached state instead of running the task again.
 
 To enable caching, specify a `cache_key_fn` &mdash; a function that returns a cache key &mdash; on your task. You may optionally provide a `cache_expiration` timedelta indicating when the cache expires. If you do not specify a `cache_expiration`, the cache key does not expire.
 
-You can define a task that is cached based on its inputs by using the Prefect `task_input_hash`. This is a task cache key implementation that hashes all inputs to the task using a JSON or cloudpickle serializer. If the task inputs do not change, the cached results are used rather than running the task until the cache expires.
+You can define a task that is cached based on its inputs by using the Syntask `task_input_hash`. This is a task cache key implementation that hashes all inputs to the task using a JSON or cloudpickle serializer. If the task inputs do not change, the cached results are used rather than running the task until the cache expires.
 
 Note that, if any arguments are not JSON serializable, the pickle serializer is used as a fallback. If cloudpickle fails, `task_input_hash` returns a null key indicating that a cache key could not be generated for the given inputs.
 
@@ -340,8 +340,8 @@ In this example, until the `cache_expiration` time ends, as long as the input to
 
 ```python hl_lines="3 5"
 from datetime import timedelta
-from prefect import flow, task
-from prefect.tasks import task_input_hash
+from syntask import flow, task
+from syntask.tasks import task_input_hash
 
 @task(cache_key_fn=task_input_hash, cache_expiration=timedelta(days=1))
 def hello_task(name_input):
@@ -362,10 +362,10 @@ Alternatively, you can provide your own function or other callable that returns 
 Note that the `cache_key_fn` is _not_ defined as a `@task`.
 
 !!! note "Task cache keys"
-    By default, a task cache key is limited to 2000 characters, specified by the `PREFECT_API_TASK_CACHE_KEY_MAX_LENGTH` setting.
+    By default, a task cache key is limited to 2000 characters, specified by the `SYNTASK_API_TASK_CACHE_KEY_MAX_LENGTH` setting.
 
 ```python hl_lines="3-5 7"
-from prefect import task, flow
+from syntask import task, flow
 
 def static_cache_key(context, parameters):
     # return a constant
@@ -394,7 +394,7 @@ running an expensive operation
 ```
 </div>
 
-When each task run requested to enter a `Running` state, it provided its cache key computed from the `cache_key_fn`.  The Prefect backend identified that there was a COMPLETED state associated with this key and instructed the run to immediately enter the same COMPLETED state, including the same return values.  
+When each task run requested to enter a `Running` state, it provided its cache key computed from the `cache_key_fn`.  The Syntask backend identified that there was a COMPLETED state associated with this key and instructed the run to immediately enter the same COMPLETED state, including the same return values.  
 
 A real-world example might include the flow run ID from the context in the cache key so only repeated calls in the same flow run are cached.
 
@@ -409,7 +409,7 @@ def cached_task():
 ```
 
 !!! note "Task results, retries, and caching"
-    Task results are cached in memory during a flow run and persisted to the location specified by the `PREFECT_LOCAL_STORAGE_PATH` setting. As a result, task caching between flow runs is currently limited to flow runs with access to that local storage path.
+    Task results are cached in memory during a flow run and persisted to the location specified by the `SYNTASK_LOCAL_STORAGE_PATH` setting. As a result, task caching between flow runs is currently limited to flow runs with access to that local storage path.
 
 ### Refreshing the cache
 
@@ -433,7 +433,7 @@ def caching_task():
 
 When this task runs, it will _always_ update the cache key instead of using the cached value. This is particularly useful when you have a flow that is responsible for updating the cache.
 
-If you want to refresh the cache for all tasks, you can use the `PREFECT_TASKS_REFRESH_CACHE` setting. Setting `PREFECT_TASKS_REFRESH_CACHE=true` will change the default behavior of all tasks to refresh. This is particularly useful if you want to rerun a flow without cached results.
+If you want to refresh the cache for all tasks, you can use the `SYNTASK_TASKS_REFRESH_CACHE` setting. Setting `SYNTASK_TASKS_REFRESH_CACHE=true` will change the default behavior of all tasks to refresh. This is particularly useful if you want to rerun a flow without cached results.
 
 If you have tasks that should not refresh when this setting is enabled, you may explicitly set `refresh_cache` to `False`. These tasks will never refresh the cache &mdash; if a cache key exists it will be read, not updated. Note that, if a cache key does _not_ exist yet, these tasks can still write to the cache.
 
@@ -450,7 +450,7 @@ Task timeouts are used to prevent unintentional long-running tasks. When the dur
 Timeout durations are specified using the `timeout_seconds` keyword argument.
 
 ```python hl_lines="4"
-from prefect import task
+from syntask import task
 import time
 
 @task(timeout_seconds=1, log_prints=True)
@@ -467,8 +467,8 @@ Depending on how you call tasks, they can return different types of results and 
 Any task can return:
 
 - Data , such as `int`, `str`, `dict`, `list`, and so on &mdash;  this is the default behavior any time you call `your_task()`.
-- [`PrefectFuture`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture) &mdash;  this is achieved by calling [`your_task.submit()`](/concepts/task-runners/#using-a-task-runner). A `PrefectFuture` contains both _data_ and _State_
-- Prefect [`State`](/api-ref/server/schemas/states/)  &mdash; anytime you call your task or flow with the argument `return_state=True`, it will directly return a state you can use to build custom behavior based on a state change you care about, such as task or flow failing or retrying.
+- [`SyntaskFuture`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture) &mdash;  this is achieved by calling [`your_task.submit()`](/concepts/task-runners/#using-a-task-runner). A `SyntaskFuture` contains both _data_ and _State_
+- Syntask [`State`](/api-ref/server/schemas/states/)  &mdash; anytime you call your task or flow with the argument `return_state=True`, it will directly return a state you can use to build custom behavior based on a state change you care about, such as task or flow failing or retrying.
 
 To run your task with a [task runner](/concepts/task-runners/), you must call the task with `.submit()`.
 
@@ -479,7 +479,7 @@ See [state returned values](/concepts/task-runners/#using-results-from-submitted
 
 ## Wait for
 
-To create a dependency between two tasks that do not exchange data, but one needs to wait for the other to finish, use the special [`wait_for`](/api-ref/prefect/tasks/#prefect.tasks.Task.submit) keyword argument:
+To create a dependency between two tasks that do not exchange data, but one needs to wait for the other to finish, use the special [`wait_for`](/api-ref/syntask/tasks/#syntask.tasks.Task.submit) keyword argument:
 
 ```python
 @task
@@ -500,12 +500,12 @@ def my_flow():
 
 ## Map
 
-Prefect provides a `.map()` implementation that automatically creates a task run for each element of its input data. Mapped tasks represent the computations of many individual children tasks.
+Syntask provides a `.map()` implementation that automatically creates a task run for each element of its input data. Mapped tasks represent the computations of many individual children tasks.
 
-The simplest Prefect map takes a tasks and applies it to each element of its inputs.
+The simplest Syntask map takes a tasks and applies it to each element of its inputs.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def print_nums(nums):
@@ -525,10 +525,10 @@ def map_flow(nums):
 map_flow([1,2,3,5,8,13])
 ```
 
-Prefect also supports `unmapped` arguments, allowing you to pass static values that don't get mapped over.
+Syntask also supports `unmapped` arguments, allowing you to pass static values that don't get mapped over.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def add_together(x, y):
@@ -542,10 +542,10 @@ def sum_it(numbers, static_value):
 sum_it([1, 2, 3], 5)
 ```
 
-If your static argument is an iterable, you'll need to wrap it with `unmapped` to tell Prefect that it should be treated as a static value.
+If your static argument is an iterable, you'll need to wrap it with `unmapped` to tell Syntask that it should be treated as a static value.
 
 ```python
-from prefect import flow, task, unmapped
+from syntask import flow, task, unmapped
 
 @task
 def sum_plus(x, static_iterable):
@@ -561,12 +561,12 @@ sum_it([4, 5, 6], unmapped([1, 2, 3]))
 
 ## Async tasks
 
-Prefect also supports asynchronous task and flow definitions by default. All of [the standard rules of async](https://docs.python.org/3/library/asyncio-task.html) apply:
+Syntask also supports asynchronous task and flow definitions by default. All of [the standard rules of async](https://docs.python.org/3/library/asyncio-task.html) apply:
 
 ```python
 import asyncio
 
-from prefect import task, flow
+from syntask import task, flow
 
 @task
 async def print_values(values):
@@ -591,7 +591,7 @@ Note, if you are not using `asyncio.gather`, calling [`.submit()`](/concepts/tas
 
 There are situations in which you want to actively prevent too many tasks from running simultaneously. For example, if many tasks across multiple flows are designed to interact with a database that only allows 10 connections, you want to make sure that no more than 10 tasks that connect to this database are running at any given time.
 
-Prefect has built-in functionality for achieving this: task concurrency limits.
+Syntask has built-in functionality for achieving this: task concurrency limits.
 
 Task concurrency limits use [task tags](#tags). You can specify an optional concurrency limit as the maximum number of concurrent task runs in a `Running` state for tasks with a given tag. The specified concurrency limit applies to any task to which the tag is applied.
 
@@ -606,25 +606,25 @@ Tags without explicit limits are considered to have unlimited concurrency.
 
 Task tag limits are checked whenever a task run attempts to enter a [`Running` state](/concepts/states/).
 
-If there are no concurrency slots available for any one of your task's tags, the transition to a `Running` state will be delayed and the client is instructed to try entering a `Running` state again in 30 seconds (or the value specified by the `PREFECT_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS` setting).
+If there are no concurrency slots available for any one of your task's tags, the transition to a `Running` state will be delayed and the client is instructed to try entering a `Running` state again in 30 seconds (or the value specified by the `SYNTASK_TASK_RUN_TAG_CONCURRENCY_SLOT_WAIT_SECONDS` setting).
 
 ### Configuring concurrency limits
 
 !!! tip "Flow run concurrency limits are set at a work pool and/or work queue level"
-    While task run concurrency limits are configured via tags (as shown below), [flow run concurrency limits](https://docs.prefect.io/latest/concepts/work-pools/#work-pool-concurrency) are configured via work pools and/or work queues.
+    While task run concurrency limits are configured via tags (as shown below), [flow run concurrency limits](https://docs.syntask.io/latest/concepts/work-pools/#work-pool-concurrency) are configured via work pools and/or work queues.
 
 You can set concurrency limits on as few or as many tags as you wish. You can set limits through:
 
-- Prefect [CLI](#cli)
-- Prefect API by using `PrefectClient` [Python client](#python-client)
-- Prefect server UI or Prefect Cloud
+- Syntask [CLI](#cli)
+- Syntask API by using `SyntaskClient` [Python client](#python-client)
+- Syntask server UI or Syntask Cloud
 
 #### CLI
 
-You can create, list, and remove concurrency limits by using Prefect CLI `concurrency-limit` commands.
+You can create, list, and remove concurrency limits by using Syntask CLI `concurrency-limit` commands.
 
 ```bash
-prefect concurrency-limit [command] [arguments]
+syntask concurrency-limit [command] [arguments]
 ```
 
 | Command | Description                                                      |
@@ -637,24 +637,24 @@ prefect concurrency-limit [command] [arguments]
 For example, to set a concurrency limit of 10 on the 'small_instance' tag:
 
 ```bash
-prefect concurrency-limit create small_instance 10
+syntask concurrency-limit create small_instance 10
 ```
 
 To delete the concurrency limit on the 'small_instance' tag:
 
 ```bash
-prefect concurrency-limit delete small_instance
+syntask concurrency-limit delete small_instance
 ```
 
 To view details about the concurrency limit on the 'small_instance' tag:
 
 ```bash
-prefect concurrency-limit inspect small_instance
+syntask concurrency-limit inspect small_instance
 ```
 
 #### Python client
 
-To update your tag concurrency limits programmatically, use [`PrefectClient.orchestration.create_concurrency_limit`](../../api-ref/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.create_concurrency_limit).
+To update your tag concurrency limits programmatically, use [`SyntaskClient.orchestration.create_concurrency_limit`](../../api-ref/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.create_concurrency_limit).
 
 `create_concurrency_limit` takes two arguments:
 
@@ -664,7 +664,7 @@ To update your tag concurrency limits programmatically, use [`PrefectClient.orch
 For example, to set a concurrency limit of 10 on the 'small_instance' tag:
 
 ```python
-from prefect import get_client
+from syntask import get_client
 
 async with get_client() as client:
     # set a concurrency limit of 10 on the 'small_instance' tag
@@ -674,7 +674,7 @@ async with get_client() as client:
         )
 ```
 
-To remove all concurrency limits on a tag, use [`PrefectClient.delete_concurrency_limit_by_tag`](/api-ref/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.delete_concurrency_limit_by_tag/), passing the tag:
+To remove all concurrency limits on a tag, use [`SyntaskClient.delete_concurrency_limit_by_tag`](/api-ref/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.delete_concurrency_limit_by_tag/), passing the tag:
 
 ```python
 async with get_client() as client:
@@ -682,9 +682,9 @@ async with get_client() as client:
     await client.delete_concurrency_limit_by_tag(tag="small_instance")
 ```
 
-If you wish to query for the currently set limit on a tag, use [`PrefectClient.read_concurrency_limit_by_tag`](/api-ref/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.read_concurrency_limit_by_tag), passing the tag:
+If you wish to query for the currently set limit on a tag, use [`SyntaskClient.read_concurrency_limit_by_tag`](/api-ref/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.read_concurrency_limit_by_tag), passing the tag:
 
-To see _all_ of your limits across all of your tags, use [`PrefectClient.read_concurrency_limits`](/api-ref/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient.read_concurrency_limits).
+To see _all_ of your limits across all of your tags, use [`SyntaskClient.read_concurrency_limits`](/api-ref/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient.read_concurrency_limits).
 
 ```python
 async with get_client() as client:

@@ -1,5 +1,5 @@
 ---
-description: Learn how to control concurrency and apply rate limits using Prefect's provided utilities.
+description: Learn how to control concurrency and apply rate limits using Syntask's provided utilities.
 tags:
     - concurrency
     - rate limits
@@ -12,7 +12,7 @@ search:
 Global concurrency limits allow you to manage execution efficiently, controlling how many tasks, flows, or other operations can run simultaneously. They are ideal when optimizing resource usage, preventing bottlenecks, and customizing task execution are priorities.
 
 !!! tip "Clarification on use of the term 'tasks'"
-    In the context of global concurrency and rate limits, "tasks" refers not specifically to Prefect tasks, but to concurrent units of work in general, such as those managed by an event loop or `TaskGroup` in asynchronous programming. These general "tasks" could include Prefect tasks when they are part of an asynchronous execution environment.
+    In the context of global concurrency and rate limits, "tasks" refers not specifically to Syntask tasks, but to concurrent units of work in general, such as those managed by an event loop or `TaskGroup` in asynchronous programming. These general "tasks" could include Syntask tasks when they are part of an asynchronous execution environment.
 
 Rate Limits ensure system stability by governing the frequency of requests or operations. They are suitable for preventing overuse, ensuring fairness, and handling errors gracefully.
 
@@ -22,7 +22,7 @@ The core difference between a rate limit and a concurrency limit is the way in w
 
 ## Managing Global concurrency limits and rate limits
 
-You can create, read, edit, and delete concurrency limits via the Prefect UI.
+You can create, read, edit, and delete concurrency limits via the Syntask UI.
 
 When creating a concurrency limit, you can specify the following parameters:
 
@@ -62,8 +62,8 @@ The `concurrency`context manager allows control over the maximum number of concu
 **Sync**
 
 ```python
-from prefect import flow, task
-from prefect.concurrency.sync import concurrency
+from syntask import flow, task
+from syntask.concurrency.sync import concurrency
 
 
 @task
@@ -86,8 +86,8 @@ if __name__ == "__main__":
 
 ```python
 import asyncio
-from prefect import flow, task
-from prefect.concurrency.asyncio import concurrency
+from syntask import flow, task
+from syntask.concurrency.asyncio import concurrency
 
 
 @task
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     asyncio.run(my_flow())
 ```
 
-1. The code imports the necessary modules and the concurrency context manager. Use the `prefect.concurrency.sync` module for sync usage and the `prefect.concurrency.asyncio` module for async usage.
+1. The code imports the necessary modules and the concurrency context manager. Use the `syntask.concurrency.sync` module for sync usage and the `syntask.concurrency.asyncio` module for async usage.
 2. It defines a `process_data` task, taking `x` and `y` as input arguments. Inside this task, the concurrency context manager controls concurrency, using the `database` concurrency limit and occupying one slot. If another task attempts to run with the same limit and no slots are available, that task will be blocked until a slot becomes available.
 3. A flow named `my_flow` is defined. Within this flow, it iterates through a list of tuples, each containing pairs of x and y values. For each pair, the `process_data` task is submitted with the corresponding x and y values for processing.
 
@@ -120,8 +120,8 @@ The Rate Limit feature provides control over the frequency of requests or operat
 **Sync**
 
 ```python
-from prefect import flow, task
-from prefect.concurrency.sync import rate_limit
+from syntask import flow, task
+from syntask.concurrency.sync import rate_limit
 
 
 @task
@@ -145,8 +145,8 @@ if __name__ == "__main__":
 ```python
 import asyncio
 
-from prefect import flow, task
-from prefect.concurrency.asyncio import rate_limit
+from syntask import flow, task
+from syntask.concurrency.asyncio import rate_limit
 
 
 @task
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     asyncio.run(my_flow())
 ```
 
-1. The code imports the necessary modules and the `rate_limit` function. Use the `prefect.concurrency.sync` module for sync usage and the `prefect.concurrency.asyncio` module for async usage.
+1. The code imports the necessary modules and the `rate_limit` function. Use the `syntask.concurrency.sync` module for sync usage and the `syntask.concurrency.asyncio` module for async usage.
 2. It defines a `make_http_request` task. Inside this task, the `rate_limit` function is used to ensure that the requests are made at a controlled pace.
 3. A flow named `my_flow` is defined. Within this flow the `make_http_request` task is submitted 10 times.
 
@@ -176,7 +176,7 @@ if __name__ == "__main__":
 ```python
 import asyncio
 
-from prefect.concurrency.asyncio import rate_limit
+from syntask.concurrency.asyncio import rate_limit
 
 
 async def main():
@@ -199,8 +199,8 @@ Throttling task submission to avoid overloading resources, to comply with extern
 In this scenario the `rate_limit` function is used to throttle the submission of tasks. The rate limit acts as a bottleneck, ensuring that tasks are submitted at a controlled rate, governed by the `slot_decay_per_second` setting on the associated concurrency limit.
 
 ```python
-from prefect import flow, task
-from prefect.concurrency.sync import rate_limit
+from syntask import flow, task
+from syntask.concurrency.sync import rate_limit
 
 
 @task
@@ -226,7 +226,7 @@ Managing the maximum number of concurrent database connections to avoid exhausti
 In this scenario we've setup a concurrency limit named `database` and given it a maximum concurrency limit that matches the maximum number of database connections we want to allow. We then use the `concurrency` context manager to control the number of database connections allowed at any one time.
 
 ```python
-from prefect import flow, task, concurrency
+from syntask import flow, task, concurrency
 import psycopg2
 
 @task
@@ -261,7 +261,7 @@ In this scenario we want to limit the number of `process_data` tasks to five at 
 
 ```python
 import asyncio
-from prefect.concurrency.sync import concurrency
+from syntask.concurrency.sync import concurrency
 
 
 async def process_data(data):

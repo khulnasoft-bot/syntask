@@ -1,1 +1,1 @@
-src/prefect/_version.py export-subst
+src/syntask/_version.py export-subst

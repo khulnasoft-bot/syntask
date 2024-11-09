@@ -5,11 +5,11 @@ import pendulum
 import pytest
 from pendulum.datetime import DateTime
 
-from prefect.server.events import actions
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import TriggeredAction
-from prefect.server.utilities.messaging import MessageHandler
-from prefect.server.utilities.messaging.memory import MemoryMessage
+from syntask.server.events import actions
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import TriggeredAction
+from syntask.server.utilities.messaging import MessageHandler
+from syntask.server.utilities.messaging.memory import MemoryMessage
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ async def message_handler(act: mock.AsyncMock) -> AsyncGenerator[MessageHandler,
 
 @pytest.fixture
 def act() -> Generator[mock.AsyncMock, None, None]:
-    with mock.patch("prefect.server.events.actions.DoNothing.act", autospec=True) as m:
+    with mock.patch("syntask.server.events.actions.DoNothing.act", autospec=True) as m:
         yield m
 
 
@@ -98,10 +98,10 @@ async def test_successes_emit_events(
     automation_id = email_me_when_that_dang_spider_comes.automation.id
 
     assert start_of_test <= event.occurred <= pendulum.now("UTC")
-    assert event.event == "prefect.automation.action.executed"
+    assert event.event == "syntask.automation.action.executed"
 
-    assert event.resource.id == f"prefect.automation.{automation_id}"
-    assert event.resource["prefect.resource.name"] == "React immediately to spiders"
+    assert event.resource.id == f"syntask.automation.{automation_id}"
+    assert event.resource["syntask.resource.name"] == "React immediately to spiders"
 
     assert not event.related
 
@@ -133,9 +133,9 @@ async def test_failures_emit_events(
     automation_id = email_me_when_that_dang_spider_comes.automation.id
 
     assert start_of_test <= event.occurred <= pendulum.now("UTC")
-    assert event.event == "prefect.automation.action.failed"
-    assert event.resource.id == f"prefect.automation.{automation_id}"
-    assert event.resource["prefect.resource.name"] == "React immediately to spiders"
+    assert event.event == "syntask.automation.action.failed"
+    assert event.resource.id == f"syntask.automation.{automation_id}"
+    assert event.resource["syntask.resource.name"] == "React immediately to spiders"
 
     assert not event.related
 

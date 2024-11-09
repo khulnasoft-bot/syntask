@@ -7,17 +7,17 @@ import pytest
 from pendulum.datetime import DateTime
 from pendulum.duration import Duration
 
-import prefect
-from prefect.client.schemas.objects import FlowRun
-from prefect.exceptions import FlowRunWaitTimeout
-from prefect.states import Completed, Failed
-from prefect.testing.cli import invoke_and_assert
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+import syntask
+from syntask.client.schemas.objects import FlowRun
+from syntask.exceptions import FlowRunWaitTimeout
+from syntask.states import Completed, Failed
+from syntask.testing.cli import invoke_and_assert
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 @pytest.fixture
-async def deployment_name(deployment, prefect_client):
-    flow = await prefect_client.read_flow(deployment.flow_id)
+async def deployment_name(deployment, syntask_client):
+    flow = await syntask_client.read_flow(deployment.flow_id)
     return f"{flow.name}/{deployment.name}"
 
 
@@ -37,7 +37,7 @@ def failed_flow_run():
 
 
 async def test_run_deployment_only_creates_one_flow_run(
-    deployment_name: str, prefect_client: prefect.PrefectClient, deployment
+    deployment_name: str, syntask_client: syntask.SyntaskClient, deployment
 ):
     await run_sync_in_worker_thread(
         invoke_and_assert,
@@ -48,7 +48,7 @@ async def test_run_deployment_only_creates_one_flow_run(
         ],
     )
 
-    flow_runs = await prefect_client.read_flow_runs()
+    flow_runs = await syntask_client.read_flow_runs()
     assert len(flow_runs) == 1
     flow_run = flow_runs[0]
 
@@ -173,7 +173,7 @@ async def test_start_at_option_schedules_flow_run(
     deployment_name: str,
     start_at: str,
     expected_start_time: DateTime,
-    prefect_client: prefect.PrefectClient,
+    syntask_client: syntask.SyntaskClient,
 ):
     expected_display = expected_start_time.to_datetime_string()
 
@@ -189,7 +189,7 @@ async def test_start_at_option_schedules_flow_run(
         expected_output_contains=f"Scheduled start time: {expected_display}",
     )
 
-    flow_runs = await prefect_client.read_flow_runs()
+    flow_runs = await syntask_client.read_flow_runs()
     assert len(flow_runs) == 1
     flow_run = flow_runs[0]
 
@@ -213,7 +213,7 @@ async def test_start_at_option_with_tz_schedules_flow_run(
     deployment_name: str,
     start_at: str,
     expected_start_time: DateTime,
-    prefect_client: prefect.PrefectClient,
+    syntask_client: syntask.SyntaskClient,
 ):
     expected_start_time_local = expected_start_time.in_tz(pendulum.tz.local_timezone())
     expected_display = (
@@ -234,7 +234,7 @@ async def test_start_at_option_with_tz_schedules_flow_run(
         expected_output_contains=f"Scheduled start time: {expected_display}",
     )
 
-    flow_runs = await prefect_client.read_flow_runs()
+    flow_runs = await syntask_client.read_flow_runs()
     assert len(flow_runs) == 1
     flow_run = flow_runs[0]
 
@@ -315,7 +315,7 @@ async def test_start_in_option_displays_scheduled_start_time(
 async def test_start_in_option_schedules_flow_run(
     deployment_name: str,
     frozen_now: DateTime,
-    prefect_client: prefect.PrefectClient,
+    syntask_client: syntask.SyntaskClient,
     start_in: str,
     expected_duration: Duration,
 ):
@@ -336,7 +336,7 @@ async def test_start_in_option_schedules_flow_run(
         expected_output_contains=f"Scheduled start time: {expected_display}",
     )
 
-    flow_runs = await prefect_client.read_flow_runs()
+    flow_runs = await syntask_client.read_flow_runs()
     assert len(flow_runs) == 1
     flow_run = flow_runs[0]
 
@@ -367,15 +367,15 @@ async def test_date_as_start_in_option_schedules_flow_run_equal_to_start_at(
     deployment_name: str,
     start_time: str,
     expected_start_time: DateTime,
-    prefect_client: prefect.PrefectClient,
+    syntask_client: syntask.SyntaskClient,
 ):
     """
     Passing a date (rather than something like `5 minutes`) as an argument to start_in results in a scheduled flow run,
     equivalent to passing the same date as a start_at argument.
 
     Example:
-    `prefect deployment run --start-in 12/20/2022` and
-    `prefect deployment run --start-at 12/20/2022`
+    `syntask deployment run --start-in 12/20/2022` and
+    `syntask deployment run --start-at 12/20/2022`
     have the same scheduled start time.
 
     The result of the design is unintentional and this test documents the observed
@@ -407,7 +407,7 @@ async def test_date_as_start_in_option_schedules_flow_run_equal_to_start_at(
         expected_output_contains=f"Scheduled start time: {expected_display}",
     )
 
-    flow_runs = await prefect_client.read_flow_runs()
+    flow_runs = await syntask_client.read_flow_runs()
 
     assert len(flow_runs) == 2
     start_at_flow_run = flow_runs[0]
@@ -470,7 +470,7 @@ async def test_run_deployment_watch(
     monkeypatch,
     deployment,
     deployment_name,
-    prefect_client,
+    syntask_client,
     test_case,
     mock_wait_for_flow_run,
     timeout,
@@ -478,7 +478,7 @@ async def test_run_deployment_watch(
     expected_code,
 ):
     monkeypatch.setattr(
-        "prefect.cli.deployment.wait_for_flow_run", mock_wait_for_flow_run
+        "syntask.cli.deployment.wait_for_flow_run", mock_wait_for_flow_run
     )
 
     deployment_run_with_watch_command = partial(
@@ -496,7 +496,7 @@ async def test_run_deployment_watch(
     else:
         await run_sync_in_worker_thread(deployment_run_with_watch_command)
 
-    assert len(flow_runs := await prefect_client.read_flow_runs()) == 1
+    assert len(flow_runs := await syntask_client.read_flow_runs()) == 1
     flow_run = flow_runs[0]
     assert flow_run.deployment_id == deployment.id
 
@@ -514,7 +514,7 @@ async def test_run_deployment_watch(
 @pytest.mark.parametrize("arg_name", ["-jv", "--job-variable"])
 async def test_deployment_runs_with_job_variables(
     deployment_name: str,
-    prefect_client: prefect.PrefectClient,
+    syntask_client: syntask.SyntaskClient,
     arg_name: str,
 ):
     """
@@ -536,6 +536,6 @@ async def test_deployment_runs_with_job_variables(
         expected_output_contains=f"Job Variables: {job_vars}",
     )
 
-    flow_runs = await prefect_client.read_flow_runs()
+    flow_runs = await syntask_client.read_flow_runs()
     this_run = flow_runs[0]
     assert this_run.job_variables == job_vars

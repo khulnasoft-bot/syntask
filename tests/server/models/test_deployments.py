@@ -8,10 +8,10 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.schemas import filters
-from prefect.server.schemas.states import StateType
-from prefect.settings import PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS
+from syntask.server import models, schemas
+from syntask.server.schemas import filters
+from syntask.server.schemas.states import StateType
+from syntask.settings import SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS
 
 
 class TestCreateDeployment:
@@ -60,7 +60,7 @@ class TestCreateDeployment:
         self, session, flow
     ):
         # There was an issue where create_deployment always created a work queue when its name was provided.
-        # This test ensures that this no longer happens. See: https://github.com/PrefectHQ/prefect/pull/9046
+        # This test ensures that this no longer happens. See: https://github.com/Synopkg/syntask/pull/9046
         wq = await models.work_queues.read_work_queue_by_name(
             session=session, name="wq-1"
         )
@@ -613,7 +613,7 @@ class TestScheduledRuns:
         scheduled_runs = await models.deployments.schedule_runs(
             session, deployment_id=deployment.id
         )
-        assert len(scheduled_runs) == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert len(scheduled_runs) == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
         query_result = await session.execute(
             sa.select(db.FlowRun).where(
                 db.FlowRun.state.has(db.FlowRunState.type == StateType.SCHEDULED)
@@ -625,7 +625,7 @@ class TestScheduledRuns:
 
         expected_times = {
             pendulum.now("UTC").start_of("day").add(days=i + 1)
-            for i in range(PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value())
+            for i in range(SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value())
         }
 
         actual_times = set()
@@ -640,7 +640,7 @@ class TestScheduledRuns:
         scheduled_runs = await models.deployments.schedule_runs(
             session, deployment_id=deployment.id
         )
-        assert len(scheduled_runs) == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert len(scheduled_runs) == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
         second_scheduled_runs = await models.deployments.schedule_runs(
             session, deployment_id=deployment.id
@@ -657,7 +657,7 @@ class TestScheduledRuns:
         )
 
         db_scheduled_runs = query_result.scalars().all()
-        assert len(db_scheduled_runs) == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert len(db_scheduled_runs) == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
     async def test_schedule_n_runs(self, flow, deployment, session):
         scheduled_runs = await models.deployments.schedule_runs(
@@ -1093,7 +1093,7 @@ class TestUpdateDeployment:
         # a work_queue_name was provided. This also happened when the work_pool_name was provided. In case of
         # the latter, the work_queue should only have been created in the specified pool, not duplicated in
         # the default pool.
-        # This test ensures that this no longer happens. See: https://github.com/PrefectHQ/prefect/pull/9046
+        # This test ensures that this no longer happens. See: https://github.com/Synopkg/syntask/pull/9046
 
         new_queue_name = "new-work-queue-name"
 

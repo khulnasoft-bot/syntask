@@ -8,15 +8,15 @@ from unittest.mock import ANY, MagicMock, call
 
 import pytest
 
-from prefect._internal.concurrency.api import create_call, from_async, from_sync
-from prefect._internal.concurrency.services import (
+from syntask._internal.concurrency.api import create_call, from_async, from_sync
+from syntask._internal.concurrency.services import (
     BatchedQueueService,
     QueueService,
     drain_on_exit,
     drain_on_exit_async,
 )
-from prefect._internal.concurrency.threads import wait_for_global_loop_exit
-from prefect.settings import PREFECT_LOGGING_INTERNAL_LEVEL, temporary_settings
+from syntask._internal.concurrency.threads import wait_for_global_loop_exit
+from syntask.settings import SYNTASK_LOGGING_INTERNAL_LEVEL, temporary_settings
 
 
 class MockService(QueueService[int]):
@@ -240,7 +240,7 @@ def test_drain_many_instances_many_threads():
 
 
 def test_drain_on_global_loop_shutdown():
-    # Regression test https://github.com/PrefectHQ/prefect/issues/9275#issuecomment-1520468276
+    # Regression test https://github.com/Synopkg/syntask/issues/9275#issuecomment-1520468276
     for i in range(10):
         MockService.instance().send(i)
 
@@ -398,7 +398,7 @@ def test_queue_service_item_failure_contains_traceback_only_at_debug(
         async def _handle(self, _):
             raise Exception(self.exception_msg)
 
-    with temporary_settings({PREFECT_LOGGING_INTERNAL_LEVEL: level}):
+    with temporary_settings({SYNTASK_LOGGING_INTERNAL_LEVEL: level}):
         instance = ExceptionOnHandleService.instance()
         instance.send(1)
         instance.drain()
@@ -419,7 +419,7 @@ def test_batched_queue_service_item_failure_contains_traceback_only_at_debug(
         async def _handle_batch(self, _):
             raise Exception(self.exception_msg)
 
-    with temporary_settings({PREFECT_LOGGING_INTERNAL_LEVEL: level}):
+    with temporary_settings({SYNTASK_LOGGING_INTERNAL_LEVEL: level}):
         instance = ExceptionOnHandleBatchService.instance()
         instance.send(1)
         instance.drain()
@@ -442,7 +442,7 @@ def test_queue_service_start_failure_contains_traceback_only_at_debug(
         async def _main_loop(self):
             raise Exception(self.exception_msg)
 
-    with temporary_settings({PREFECT_LOGGING_INTERNAL_LEVEL: level}):
+    with temporary_settings({SYNTASK_LOGGING_INTERNAL_LEVEL: level}):
         instance = ExceptionOnHandleService.instance()
         instance.drain()
 

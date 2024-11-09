@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -11,9 +11,9 @@ else:
 
 import pytest
 
-from prefect.server import schemas
-from prefect.server.utilities.schemas import PrefectBaseModel
-from prefect.settings import PREFECT_API_TASK_CACHE_KEY_MAX_LENGTH, temporary_settings
+from syntask.server import schemas
+from syntask.server.utilities.schemas import SyntaskBaseModel
+from syntask.settings import SYNTASK_API_TASK_CACHE_KEY_MAX_LENGTH, temporary_settings
 
 
 @pytest.mark.parametrize(
@@ -124,7 +124,7 @@ class TestFlowRunNotificationPolicy:
 
 
 class TestFlowRunPolicy:
-    class OldFlowRunPolicy(PrefectBaseModel):
+    class OldFlowRunPolicy(SyntaskBaseModel):
         # Schemas ignore extras during normal execution, but raise errors during tests if not explicitly ignored.
         class Config:
             extra = "ignore"
@@ -163,7 +163,7 @@ class TestFlowRunPolicy:
 
 
 class TestTaskRunPolicy:
-    class OldTaskRunPolicy(PrefectBaseModel):
+    class OldTaskRunPolicy(SyntaskBaseModel):
         # Schemas ignore extras during normal execution, but raise errors during tests if not explicitly ignored.
         class Config:
             extra = "ignore"
@@ -201,7 +201,7 @@ class TestTaskRunPolicy:
 
 class TestTaskRun:
     def test_task_run_cache_key_greater_than_user_configured_max_length(self):
-        with temporary_settings({PREFECT_API_TASK_CACHE_KEY_MAX_LENGTH: 5}):
+        with temporary_settings({SYNTASK_API_TASK_CACHE_KEY_MAX_LENGTH: 5}):
             cache_key_invalid_length = "X" * 6
             with pytest.raises(
                 pydantic.ValidationError,
@@ -227,7 +227,7 @@ class TestTaskRun:
                 )
 
     def test_task_run_cache_key_within_user_configured_max_length(self):
-        with temporary_settings({PREFECT_API_TASK_CACHE_KEY_MAX_LENGTH: 1000}):
+        with temporary_settings({SYNTASK_API_TASK_CACHE_KEY_MAX_LENGTH: 1000}):
             cache_key_valid_length = "X" * 1000
             schemas.core.TaskRun(
                 id=uuid4(),

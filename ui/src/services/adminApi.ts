@@ -1,4 +1,4 @@
-import { Api } from '@prefecthq/prefect-ui-library'
+import { Api } from '@syntaskhq/syntask-ui-library'
 import { ServerSettings } from '@/models/ServerSettings'
 
 export class AdminApi extends Api {

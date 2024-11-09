@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Set, Type
 import orjson
 import pytest
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -23,7 +23,7 @@ else:
     import pydantic
     from pydantic import Field
 
-from prefect.events.schemas.automations import (
+from syntask.events.schemas.automations import (
     EventTrigger,
     MetricTrigger,
     MetricTriggerQuery,
@@ -32,10 +32,10 @@ from prefect.events.schemas.automations import (
     ResourceTrigger,
     TriggerTypes,
 )
-from prefect.server.utilities.schemas import PrefectBaseModel
+from syntask.server.utilities.schemas import SyntaskBaseModel
 
 
-class V1Trigger(PrefectBaseModel):
+class V1Trigger(SyntaskBaseModel):
     """A copy of the original events.automations.Trigger class for reference."""
 
     match: ResourceSpecification = Field(  # pragma: no branch
@@ -52,7 +52,7 @@ class V1Trigger(PrefectBaseModel):
         description=(
             "The event(s) which must first been seen to start this automation.  If "
             "empty, then start this Automation immediately.  Events may include "
-            "trailing wildcards, like `prefect.flow-run.*`"
+            "trailing wildcards, like `syntask.flow-run.*`"
         ),
     )
     expect: Set[str] = Field(
@@ -60,7 +60,7 @@ class V1Trigger(PrefectBaseModel):
         description=(
             "The event(s) this automation is expecting to see.  If empty, this "
             "automation will match any event.  Events may include trailing wildcards, "
-            "like `prefect.flow-run.*`"
+            "like `syntask.flow-run.*`"
         ),
     )
 
@@ -72,7 +72,7 @@ class V1Trigger(PrefectBaseModel):
             "triggering event.  You may also refer to labels from related "
             "resources by specifying `related:<role>:<label>`.  This will use the "
             "value of that label for the first related resource in that role.  For "
-            'example, `"for_each": ["related:flow:prefect.resource.id"]` would '
+            'example, `"for_each": ["related:flow:syntask.resource.id"]` would '
             "evaluate the automation for each flow."
         ),
     )
@@ -198,7 +198,7 @@ def test_deserializing_polymorphic(
     assert_triggers_match(v1_trigger, v2_trigger)
 
 
-class Referencer(PrefectBaseModel):
+class Referencer(SyntaskBaseModel):
     trigger: TriggerTypes
 
 
@@ -217,7 +217,7 @@ def test_deserializing_into_polymorphic_attribute(
     assert_triggers_match(v1_trigger, v2_trigger)
 
 
-class Container(PrefectBaseModel):
+class Container(SyntaskBaseModel):
     triggers: List[TriggerTypes]
 
 
@@ -237,29 +237,29 @@ def test_deserializing_into_polymorphic_collection_attribute():
         assert_triggers_match(v1_trigger, v2_trigger)
 
 
-# The following triggers were sampled from Prefect Cloud as of 2024-03-06.  Feel free to
+# The following triggers were sampled from Syntask Cloud as of 2024-03-06.  Feel free to
 # add any additional examples that may represent edge cases.
 
 V1_TRIGGERS = {
     "event-triggers": [
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.Crashed"], "within": 10.0, "posture": "Reactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.632cee21-fea1-490c-91cc-d97abbcf6870"], "prefect.resource.role": "flow"}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.Late"], "within": 10.0, "posture": "Reactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.158dd08b-c0fb-4898-af4a-d7d2737bb4ba"], "prefect.resource.role": "flow"}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.*"], "within": 10.0, "posture": "Reactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {}}""",
-        """{"after": [], "match": {"prefect.resource.id": "file.normalized-data.*"}, "expect": ["file.uploaded"], "metric": null, "within": 0.0, "posture": "Reactive", "for_each": [], "threshold": 1, "match_related": {}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.Running"], "metric": null, "within": 10.0, "posture": "Reactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.64767c2a-f6b6-44b6-8a84-aaa2d21534ae"], "prefect.resource.role": "flow"}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.Crashed", "prefect.flow-run.TimedOut", "prefect.flow-run.Failed"], "metric": null, "within": 10.0, "posture": "Reactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.ab9279f8-0c24-4ff0-b3c4-a9562afcf30f", "prefect.flow.1b384893-b552-4cfa-9496-c4a7bc99f27d", "prefect.flow.bf237a78-d460-4e84-9fb7-f6ee02f2f3d8"], "prefect.resource.role": "flow"}}""",
-        """{"after": ["prefect.flow-run.Late"], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.*"], "within": 180.0, "posture": "Proactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {}}""",
-        """{"after": ["prefect.flow-run.Pending", "prefect.flow-run.Late"], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.*"], "within": 1800.0, "posture": "Proactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {}}""",
-        """{"after": ["prefect.flow-run.Pending"], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.*"], "within": 3600.0, "posture": "Proactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.80544b38-1f76-4ddf-95e8-4910b4b1fbf1"], "prefect.resource.role": "flow"}}""",
-        """{"after": ["prefect.flow-run.Running"], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.*"], "metric": null, "within": 900.0, "posture": "Proactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.bf2a955a-7394-41eb-b690-f7f54dd6d194"], "prefect.resource.role": "flow"}}""",
-        """{"after": ["prefect.flow-run.Running"], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.*"], "metric": null, "within": 900.0, "posture": "Proactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.5ff0e4e7-7da8-476e-b9df-91f3069375d8", "prefect.flow.14c16080-21f8-4d2f-ba0d-aeff18f5e2d1", "prefect.flow.8ca556d3-6c7b-4598-80bf-5bff306931da", "..."], "prefect.resource.role": "flow"}}""",
-        """{"after": ["prefect.flow-run.Late", "prefect.flow-run.Pending"], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": ["prefect.flow-run.*"], "metric": null, "within": 600.0, "posture": "Proactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.ab9279f8-0c24-4ff0-b3c4-a9562afcf30f", "prefect.flow.1b384893-b552-4cfa-9496-c4a7bc99f27d", "..."], "prefect.resource.role": "flow"}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.work-queue.*"}, "expect": ["prefect.work-queue.unhealthy"], "metric": null, "within": 300.0, "posture": "Proactive", "for_each": ["prefect.resource.id"], "threshold": 1, "match_related": {}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.Crashed"], "within": 10.0, "posture": "Reactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.632cee21-fea1-490c-91cc-d97abbcf6870"], "syntask.resource.role": "flow"}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.Late"], "within": 10.0, "posture": "Reactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.158dd08b-c0fb-4898-af4a-d7d2737bb4ba"], "syntask.resource.role": "flow"}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.*"], "within": 10.0, "posture": "Reactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {}}""",
+        """{"after": [], "match": {"syntask.resource.id": "file.normalized-data.*"}, "expect": ["file.uploaded"], "metric": null, "within": 0.0, "posture": "Reactive", "for_each": [], "threshold": 1, "match_related": {}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.Running"], "metric": null, "within": 10.0, "posture": "Reactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.64767c2a-f6b6-44b6-8a84-aaa2d21534ae"], "syntask.resource.role": "flow"}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.Crashed", "syntask.flow-run.TimedOut", "syntask.flow-run.Failed"], "metric": null, "within": 10.0, "posture": "Reactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.ab9279f8-0c24-4ff0-b3c4-a9562afcf30f", "syntask.flow.1b384893-b552-4cfa-9496-c4a7bc99f27d", "syntask.flow.bf237a78-d460-4e84-9fb7-f6ee02f2f3d8"], "syntask.resource.role": "flow"}}""",
+        """{"after": ["syntask.flow-run.Late"], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.*"], "within": 180.0, "posture": "Proactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {}}""",
+        """{"after": ["syntask.flow-run.Pending", "syntask.flow-run.Late"], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.*"], "within": 1800.0, "posture": "Proactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {}}""",
+        """{"after": ["syntask.flow-run.Pending"], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.*"], "within": 3600.0, "posture": "Proactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.80544b38-1f76-4ddf-95e8-4910b4b1fbf1"], "syntask.resource.role": "flow"}}""",
+        """{"after": ["syntask.flow-run.Running"], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.*"], "metric": null, "within": 900.0, "posture": "Proactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.bf2a955a-7394-41eb-b690-f7f54dd6d194"], "syntask.resource.role": "flow"}}""",
+        """{"after": ["syntask.flow-run.Running"], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.*"], "metric": null, "within": 900.0, "posture": "Proactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.5ff0e4e7-7da8-476e-b9df-91f3069375d8", "syntask.flow.14c16080-21f8-4d2f-ba0d-aeff18f5e2d1", "syntask.flow.8ca556d3-6c7b-4598-80bf-5bff306931da", "..."], "syntask.resource.role": "flow"}}""",
+        """{"after": ["syntask.flow-run.Late", "syntask.flow-run.Pending"], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": ["syntask.flow-run.*"], "metric": null, "within": 600.0, "posture": "Proactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.ab9279f8-0c24-4ff0-b3c4-a9562afcf30f", "syntask.flow.1b384893-b552-4cfa-9496-c4a7bc99f27d", "..."], "syntask.resource.role": "flow"}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.work-queue.*"}, "expect": ["syntask.work-queue.unhealthy"], "metric": null, "within": 300.0, "posture": "Proactive", "for_each": ["syntask.resource.id"], "threshold": 1, "match_related": {}}""",
     ],
     "metric-triggers": [
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": [], "metric": {"name": "successes", "range": 10800.0, "operator": "<", "threshold": 0.99, "firing_for": 21600.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.tag.3-hour-sla"], "prefect.resource.role": "tag"}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": [], "metric": {"name": "successes", "range": 3600.0, "operator": "<", "threshold": 0.99, "firing_for": 7200.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.tag.hourly-sla"], "prefect.resource.role": "tag"}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": [], "metric": {"name": "lateness", "range": 3600.0, "operator": ">", "threshold": 1200.0, "firing_for": 600.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {}}""",
-        """{"after": [], "match": {"prefect.resource.id": "prefect.flow-run.*"}, "expect": [], "metric": {"name": "successes", "range": 86400.0, "operator": "<", "threshold": 0.9, "firing_for": 60.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {"prefect.resource.id": ["prefect.flow.a447ae13-3e6e-4ed2-9248-88addc3af2ca"], "prefect.resource.role": "flow"}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": [], "metric": {"name": "successes", "range": 10800.0, "operator": "<", "threshold": 0.99, "firing_for": 21600.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.tag.3-hour-sla"], "syntask.resource.role": "tag"}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": [], "metric": {"name": "successes", "range": 3600.0, "operator": "<", "threshold": 0.99, "firing_for": 7200.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.tag.hourly-sla"], "syntask.resource.role": "tag"}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": [], "metric": {"name": "lateness", "range": 3600.0, "operator": ">", "threshold": 1200.0, "firing_for": 600.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {}}""",
+        """{"after": [], "match": {"syntask.resource.id": "syntask.flow-run.*"}, "expect": [], "metric": {"name": "successes", "range": 86400.0, "operator": "<", "threshold": 0.9, "firing_for": 60.0}, "within": 0.0, "posture": "Metric", "for_each": [], "threshold": 1, "match_related": {"syntask.resource.id": ["syntask.flow.a447ae13-3e6e-4ed2-9248-88addc3af2ca"], "syntask.resource.role": "flow"}}""",
     ],
 }

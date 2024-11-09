@@ -1,4 +1,4 @@
-from prefect import flow, task
+from syntask import flow, task
 
 run_count = 0
 

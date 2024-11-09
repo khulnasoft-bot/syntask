@@ -2,7 +2,7 @@ import typing
 
 import pytest
 
-from prefect.pydantic import BaseModel, ConfigDict, Field, ValidationError
+from syntask.pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
 def test_allow_population_by_field_name():

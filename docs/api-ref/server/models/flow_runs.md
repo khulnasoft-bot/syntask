@@ -1,2 +1,2 @@
-::: prefect.server.models.flow_runs
+::: syntask.server.models.flow_runs
 

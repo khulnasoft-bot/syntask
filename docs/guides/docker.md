@@ -14,20 +14,20 @@ search:
 
 # Running Flows with Docker
 
-In the [Deployments](/tutorial/deployments/) tutorial, we looked at serving a flow that enables scheduling or creating flow runs via the Prefect API.
+In the [Deployments](/tutorial/deployments/) tutorial, we looked at serving a flow that enables scheduling or creating flow runs via the Syntask API.
 
 With our Python script in hand, we can build a Docker image for our script, allowing us to serve our flow in various remote environments. We'll use Kubernetes in this guide, but you can use any Docker-compatible infrastructure.
 
 In this guide we'll:
 
-- Write a Dockerfile to build an image that stores our Prefect flow code.
+- Write a Dockerfile to build an image that stores our Syntask flow code.
 - Build a Docker image for our flow.
 - Deploy and run our Docker image on a Kubernetes cluster.
-- Look at the Prefect-maintained Docker images and discuss options for use
+- Look at the Syntask-maintained Docker images and discuss options for use
 
-Note that in this guide we'll create a Dockerfile from scratch. Alternatively, Prefect makes it convenient to build a Docker image as part of deployment creation. You can even include environment variables and specify additional Python packages to install at runtime.
+Note that in this guide we'll create a Dockerfile from scratch. Alternatively, Syntask makes it convenient to build a Docker image as part of deployment creation. You can even include environment variables and specify additional Python packages to install at runtime.
 
-If creating a deployment with a `prefect.yaml` file, the build step makes it easy to customize your Docker image and push it to the registry of your choice. See an example [here](/guides/deployment/kubernetes/#define-a-deployment).
+If creating a deployment with a `syntask.yaml` file, the build step makes it easy to customize your Docker image and push it to the registry of your choice. See an example [here](/guides/deployment/kubernetes/#define-a-deployment).
 
 Deployment creation with a Python script that includes `flow.deploy` similarly allows you to customize your Docker image with keyword arguments as shown below.
 
@@ -49,17 +49,17 @@ To complete this guide, you'll need the following:
 
 - A Python script that defines and serves a flow.
   - We'll use the flow script and deployment from the [Deployments](/tutorial/deployments/) tutorial.
-- Access to a running Prefect API server.
-  - You can sign up for a forever free [Prefect Cloud account](https://docs.prefect.io/cloud/) or run a Prefect API server locally with `prefect server start`.
+- Access to a running Syntask API server.
+  - You can sign up for a forever free [Syntask Cloud account](https://docs.syntask.io/cloud/) or run a Syntask API server locally with `syntask server start`.
 - [Docker Desktop](https://docs.docker.com/desktop/) installed on your machine.
 
 ## Writing a Dockerfile
 
-First let's make a clean directory to work from, `prefect-docker-guide`.
+First let's make a clean directory to work from, `syntask-docker-guide`.
 
 ```bash
-mkdir prefect-docker-guide
-cd prefect-docker-guide
+mkdir syntask-docker-guide
+cd syntask-docker-guide
 ```
 
 In this directory, we'll create a sub-directory named `flows` and put our flow script from the [Deployments](/tutorial/deployments/) tutorial in it.
@@ -67,18 +67,18 @@ In this directory, we'll create a sub-directory named `flows` and put our flow s
 ```bash
 mkdir flows
 cd flows
-touch prefect-docker-guide-flow.py
+touch syntask-docker-guide-flow.py
 ```
 
 Here's the flow code for reference:
 
-```python title="prefect-docker-guide-flow.py"
+```python title="syntask-docker-guide-flow.py"
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow(log_prints=True)
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "Synopkg/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     response = httpx.get(url)
     response.raise_for_status()
@@ -89,20 +89,20 @@ def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
 
 
 if __name__ == "__main__":
-    get_repo_info.serve(name="prefect-docker-guide")
+    get_repo_info.serve(name="syntask-docker-guide")
 ```
 
-The next file we'll add to the `prefect-docker-guide` directory is a `requirements.txt`. We'll include all dependencies required for our `prefect-docker-guide-flow.py` script in the Docker image we'll build.
+The next file we'll add to the `syntask-docker-guide` directory is a `requirements.txt`. We'll include all dependencies required for our `syntask-docker-guide-flow.py` script in the Docker image we'll build.
 
 ```bash
-# ensure you run this line from the top level of the `prefect-docker-guide` directory
+# ensure you run this line from the top level of the `syntask-docker-guide` directory
 touch requirements.txt
 ```
 
 Here's what we'll put in our `requirements.txt` file:
 
 ```txt title="requirements.txt"
-prefect>=2.12.0
+syntask>=2.12.0
 httpx
 ```
 
@@ -115,18 +115,18 @@ touch Dockerfile
 We'll add the following content to our `Dockerfile`:
 
 ```dockerfile title="Dockerfile"
-# We're using the latest version of Prefect with Python 3.10
-FROM prefecthq/prefect:2-python3.10
+# We're using the latest version of Syntask with Python 3.10
+FROM syntaskhq/syntask:2-python3.10
 
 # Add our requirements.txt file to the image and install dependencies
 COPY requirements.txt .
 RUN pip install -r requirements.txt --trusted-host pypi.python.org --no-cache-dir
 
 # Add our flow code to the image
-COPY flows /opt/prefect/flows
+COPY flows /opt/syntask/flows
 
 # Run our flow script when the container starts
-CMD ["python", "flows/prefect-docker-guide-flow.py"]
+CMD ["python", "flows/syntask-docker-guide-flow.py"]
 ```
 
 ## Building a Docker image
@@ -134,37 +134,37 @@ CMD ["python", "flows/prefect-docker-guide-flow.py"]
 Now that we have a Dockerfile we can build our image by running:
 
 ```bash
-docker build -t prefect-docker-guide-image .
+docker build -t syntask-docker-guide-image .
 ```
 
 We can check that our build worked by running a container from our new image.
 
 === "Cloud"
 
-    Our container will need an API URL and and API key to communicate with Prefect Cloud. 
+    Our container will need an API URL and and API key to communicate with Syntask Cloud. 
     
-    - You can get an API key from the [API Keys](https://docs.prefect.io/2.12.0/cloud/users/api-keys/) section of the user settings in the Prefect UI. 
+    - You can get an API key from the [API Keys](https://docs.syntask.io/2.12.0/cloud/users/api-keys/) section of the user settings in the Syntask UI. 
 
-    - You can get your API URL by running `prefect config view` and copying the `PREFECT_API_URL` value.
+    - You can get your API URL by running `syntask config view` and copying the `SYNTASK_API_URL` value.
 
     We'll provide both these values to our container by passing them as environment variables with the `-e` flag.
 
     ```bash
-    docker run -e PREFECT_API_URL=YOUR_PREFECT_API_URL -e PREFECT_API_KEY=YOUR_API_KEY prefect-docker-guide-image
+    docker run -e SYNTASK_API_URL=YOUR_SYNTASK_API_URL -e SYNTASK_API_KEY=YOUR_API_KEY syntask-docker-guide-image
     ```
 
     After running the above command, the container should start up and serve the flow within the container!
 
 === "Self-hosted"
 
-    Our container will need an API URL and network access to communicate with the Prefect API. 
+    Our container will need an API URL and network access to communicate with the Syntask API. 
     
-    For this guide, we'll assume the Prefect API is running on the same machine that we'll run our container on and the Prefect API was started with `prefect server start`. If you're running a different setup, check out the [Hosting a Prefect server guide](/guides/host/) for information on how to connect to your Prefect API instance.
+    For this guide, we'll assume the Syntask API is running on the same machine that we'll run our container on and the Syntask API was started with `syntask server start`. If you're running a different setup, check out the [Hosting a Syntask server guide](/guides/host/) for information on how to connect to your Syntask API instance.
     
-    To ensure that our flow container can communicate with the Prefect API, we'll set our `PREFECT_API_URL` to `http://host.docker.internal:4200/api`. If you're running Linux, you'll need to set your `PREFECT_API_URL` to `http://localhost:4200/api` and use the `--network="host"` option instead.
+    To ensure that our flow container can communicate with the Syntask API, we'll set our `SYNTASK_API_URL` to `http://host.docker.internal:4200/api`. If you're running Linux, you'll need to set your `SYNTASK_API_URL` to `http://localhost:4200/api` and use the `--network="host"` option instead.
 
     ```bash
-    docker run --network="host" -e PREFECT_API_URL=http://host.docker.internal:4200/api prefect-docker-guide-image
+    docker run --network="host" -e SYNTASK_API_URL=http://host.docker.internal:4200/api syntask-docker-guide-image
     ```
 
     After running the above command, the container should start up and serve the flow within the container!
@@ -179,7 +179,7 @@ For this guide, we'll simulate a remote environment by using Kubernetes locally 
 
 To ensure the process serving our flow is always running, we'll create a [Kubernetes deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/). If our flow's container ever crashes, Kubernetes will automatically restart it, ensuring that we won't miss any scheduled runs.
 
-First, we'll create a `deployment-manifest.yaml` file in our `prefect-docker-guide` directory:
+First, we'll create a `deployment-manifest.yaml` file in our `syntask-docker-guide` directory:
 
 ```bash
 touch deployment-manifest.yaml
@@ -193,7 +193,7 @@ And we'll add the following content to our `deployment-manifest.yaml` file:
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: prefect-docker-guide
+      name: syntask-docker-guide
     spec:
       replicas: 1
       selector:
@@ -206,18 +206,18 @@ And we'll add the following content to our `deployment-manifest.yaml` file:
         spec:
           containers:
           - name: flow-container
-            image: prefect-docker-guide-image:latest
+            image: syntask-docker-guide-image:latest
             env:
-            - name: PREFECT_API_URL
-              value: YOUR_PREFECT_API_URL
-            - name: PREFECT_API_KEY
+            - name: SYNTASK_API_URL
+              value: YOUR_SYNTASK_API_URL
+            - name: SYNTASK_API_KEY
               value: YOUR_API_KEY
             # Never pull the image because we're using a local image
             imagePullPolicy: Never
     ```
 
     !!!tip "Keep your API key secret"
-          In the above manifest we are passing in the Prefect API URL and API key as environment variables. This approach is simple, but it is not secure. If you are deploying your flow to a remote cluster, you should use a [Kubernetes secret](https://kubernetes.io/docs/concepts/configuration/secret/) to store your API key.
+          In the above manifest we are passing in the Syntask API URL and API key as environment variables. This approach is simple, but it is not secure. If you are deploying your flow to a remote cluster, you should use a [Kubernetes secret](https://kubernetes.io/docs/concepts/configuration/secret/) to store your API key.
 
 === "Self-hosted"
 
@@ -225,7 +225,7 @@ And we'll add the following content to our `deployment-manifest.yaml` file:
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: prefect-docker-guide
+      name: syntask-docker-guide
     spec:
       replicas: 1
       selector:
@@ -238,16 +238,16 @@ And we'll add the following content to our `deployment-manifest.yaml` file:
         spec:
           containers:
           - name: flow-container
-            image: prefect-docker-guide-image:latest
+            image: syntask-docker-guide-image:latest
             env:
-            - name: PREFECT_API_URL
+            - name: SYNTASK_API_URL
               value: <http://host.docker.internal:4200/api>
             # Never pull the image because we're using a local image
             imagePullPolicy: Never
     ```
 
     !!!tip "Linux users"
-        If you're running Linux, you'll need to set your `PREFECT_API_URL` to use the IP address of your machine instead of `host.docker.internal`.
+        If you're running Linux, you'll need to set your `SYNTASK_API_URL` to use the IP address of your machine instead of `host.docker.internal`.
 
 This manifest defines how our image will run when deployed in our Kubernetes cluster. Note that we will be running a single replica of our flow container. If you want to run multiple replicas of your flow container to keep up with an active schedule, or because our flow is resource-intensive, you can increase the `replicas` value.
 
@@ -274,42 +274,42 @@ kubectl logs -l flow=get-repo-info
 Now that we're serving our flow in our cluster, we can trigger a flow run by running:
 
 ```bash
-prefect deployment run get-repo-info/prefect-docker-guide
+syntask deployment run get-repo-info/syntask-docker-guide
 ```
 
-If we navigate to the URL provided by the `prefect deployment run` command, we can follow the flow run via the logs in the Prefect UI!
+If we navigate to the URL provided by the `syntask deployment run` command, we can follow the flow run via the logs in the Syntask UI!
 
-## Prefect-maintained Docker images
+## Syntask-maintained Docker images
 
-Every release of Prefect results in several new Docker images.
-These images are all named [prefecthq/prefect](https://hub.docker.com/r/prefecthq/prefect) and their
+Every release of Syntask results in several new Docker images.
+These images are all named [syntaskhq/syntask](https://hub.docker.com/r/syntaskhq/syntask) and their
 **tags** identify their differences.
 
 ### Image tags
 
-When a release is published, images are built for all of Prefect's supported Python versions.
-These images are tagged to identify the combination of Prefect and Python versions contained.
+When a release is published, images are built for all of Syntask's supported Python versions.
+These images are tagged to identify the combination of Syntask and Python versions contained.
 Additionally, we have "convenience" tags which are updated with each release to facilitate automatic updates.
 
 For example, when release `2.11.5` is published:
 
 1. Images with the release packaged are built for each supported Python version (3.8, 3.9, 3.10, 3.11) with both standard Python and Conda.
-2. These images are tagged with the full description, e.g. `prefect:2.1.1-python3.10` and `prefect:2.1.1-python3.10-conda`.
+2. These images are tagged with the full description, e.g. `syntask:2.1.1-python3.10` and `syntask:2.1.1-python3.10-conda`.
 3. For users that want more specific pins, these images are also tagged with the SHA of the git commit of the release, e.g. `sha-88a7ff17a3435ec33c95c0323b8f05d7b9f3f6d2-python3.10`
-4. For users that want to be on the latest `2.1.x` release, receiving patch updates, we update a tag without the patch version to this release, e.g. `prefect.2.1-python3.10`.
-5. For users that want to be on the latest `2.x.y` release, receiving minor version updates, we update a tag without the minor or patch version to this release, e.g. `prefect.2-python3.10`
-6. Finally, for users who want the latest `2.x.y` release without specifying a Python version, we update `2-latest` to the image for our highest supported Python version, which in this case would be equivalent to `prefect:2.1.1-python3.10`.
+4. For users that want to be on the latest `2.1.x` release, receiving patch updates, we update a tag without the patch version to this release, e.g. `syntask.2.1-python3.10`.
+5. For users that want to be on the latest `2.x.y` release, receiving minor version updates, we update a tag without the minor or patch version to this release, e.g. `syntask.2-python3.10`
+6. Finally, for users who want the latest `2.x.y` release without specifying a Python version, we update `2-latest` to the image for our highest supported Python version, which in this case would be equivalent to `syntask:2.1.1-python3.10`.
 
 !!! tip "Choose image versions carefully"
-    It's a good practice to use Docker images with specific Prefect versions in production.
+    It's a good practice to use Docker images with specific Syntask versions in production.
 
-    Use care when employing images that automatically update to new versions (such as `prefecthq/prefect:2-python3.11` or `prefecthq/prefect:2-latest`).
+    Use care when employing images that automatically update to new versions (such as `syntaskhq/syntask:2-python3.11` or `syntaskhq/syntask:2-latest`).
 
 ### Standard Python
 
 Standard Python images are based on the official Python `slim` images, e.g. `python:3.10-slim`.
 
-| Tag                   |       Prefect Version       | Python Version  |
+| Tag                   |       Syntask Version       | Python Version  |
 | --------------------- | :-------------------------: | -------------:  |
 | 2-latest              | most recent v2 PyPi version |            3.10 |
 | 2-python3.11          | most recent v2 PyPi version |            3.11 |
@@ -328,9 +328,9 @@ Standard Python images are based on the official Python `slim` images, e.g. `pyt
 ### Conda-flavored Python
 
 Conda flavored images are based on `continuumio/miniconda3`.
-Prefect is installed into a conda environment named `prefect`.
+Syntask is installed into a conda environment named `syntask`.
 
-| Tag                         |       Prefect Version       | Python Version  |
+| Tag                         |       Syntask Version       | Python Version  |
 | --------------------------- | :-------------------------: | -------------:  |
 | 2-latest-conda              | most recent v2 PyPi version |            3.10 |
 | 2-python3.11-conda          | most recent v2 PyPi version |            3.11 |
@@ -348,21 +348,21 @@ Prefect is installed into a conda environment named `prefect`.
 
 ## Building your own image
 
-If your flow relies on dependencies not found in the default `prefecthq/prefect` images, you may want to build your own image. You can either
-base it off of one of the provided `prefecthq/prefect` images, or build your own image.
-See the [Work pool deployment guide](/guides/prefect-deploy/) for discussion of how Prefect can help you build custom images with dependencies specified in a `requirements.txt` file.
+If your flow relies on dependencies not found in the default `syntaskhq/syntask` images, you may want to build your own image. You can either
+base it off of one of the provided `syntaskhq/syntask` images, or build your own image.
+See the [Work pool deployment guide](/guides/syntask-deploy/) for discussion of how Syntask can help you build custom images with dependencies specified in a `requirements.txt` file.
 
-By default, Prefect [work pools](/concepts/work-pools) that use containers refer to the `2-latest` image.
+By default, Syntask [work pools](/concepts/work-pools) that use containers refer to the `2-latest` image.
 You can specify another image at work pool creation.
 The work pool image choice can be overridden in individual deployments.
 
-### Extending the `prefecthq/prefect` image manually
+### Extending the `syntaskhq/syntask` image manually
 
 Here we provide an example `Dockerfile` for building an image based on
-`prefecthq/prefect:2-latest`, but with `scikit-learn` installed.
+`syntaskhq/syntask:2-latest`, but with `scikit-learn` installed.
 
 ```dockerfile
-FROM prefecthq/prefect:2-latest
+FROM syntaskhq/syntask:2-latest
 
 RUN pip install scikit-learn
 ```
@@ -371,9 +371,9 @@ RUN pip install scikit-learn
 
 The options described above have different complexity (and performance) characteristics. For choosing a strategy, we provide the following recommendations:
 
-- If your flow only makes use of tasks defined in the same file as the flow, or tasks that are part of `prefect` itself, then you can rely on the default provided `prefecthq/prefect` image.
+- If your flow only makes use of tasks defined in the same file as the flow, or tasks that are part of `syntask` itself, then you can rely on the default provided `syntaskhq/syntask` image.
 
-- If your flow requires a few extra dependencies found on PyPI, you can use the default `prefecthq/prefect` image and set `prefect.deployments.steps.pip_install_requirements:` in the `pull`step to install these dependencies at runtime.
+- If your flow requires a few extra dependencies found on PyPI, you can use the default `syntaskhq/syntask` image and set `syntask.deployments.steps.pip_install_requirements:` in the `pull`step to install these dependencies at runtime.
 
 - If the installation process requires compiling code or other expensive operations, you may be better off building a custom image instead.
 
@@ -385,4 +385,4 @@ We only served a single flow in this guide, but you can extend this setup to ser
 
 To learn more about deploying flows, check out the [Deployments](/concepts/deployments/) concept doc!
 
-For advanced infrastructure requirements, such as executing each flow run within its own dedicated Docker container, learn more in the [Work pool deployment guide](/guides/prefect-deploy/).
+For advanced infrastructure requirements, such as executing each flow run within its own dedicated Docker container, learn more in the [Work pool deployment guide](/guides/syntask-deploy/).

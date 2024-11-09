@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -10,10 +10,10 @@ else:
     import pydantic
 
 import pytest
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.server import models, schemas
-from prefect.server.schemas import actions
+from syntask.server import models, schemas
+from syntask.server.schemas import actions
 
 
 @pytest.fixture

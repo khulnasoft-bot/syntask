@@ -1,8 +1,8 @@
 import pytest
 
 # Import the local 'tests' module to pickle to ray workers
-from prefect.task_runners import ConcurrentTaskRunner, SequentialTaskRunner
-from prefect.testing.standard_test_suites import TaskRunnerStandardTestSuite
+from syntask.task_runners import ConcurrentTaskRunner, SequentialTaskRunner
+from syntask.testing.standard_test_suites import TaskRunnerStandardTestSuite
 
 
 @pytest.fixture

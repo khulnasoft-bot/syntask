@@ -1,8 +1,8 @@
 import anyio
 from packaging.version import Version
 
-import prefect
-from prefect import flow, get_client, task
+import syntask
+from syntask import flow, get_client, task
 
 # The version results were added in
 RESULTS_VERSION = "2.6.0"
@@ -18,7 +18,7 @@ def wrapper_flow():
     return hello(return_state=True)
 
 
-if Version(prefect.__version__) >= Version(RESULTS_VERSION):
+if Version(syntask.__version__) >= Version(RESULTS_VERSION):
     hello = hello.with_options(persist_result=True)
 
 
@@ -34,11 +34,11 @@ if __name__ == "__main__":
 
     api_state = anyio.run(get_state_from_api, task_state.state_details.task_run_id)
 
-    if Version(prefect.__version__) >= Version(RESULTS_VERSION):
+    if Version(syntask.__version__) >= Version(RESULTS_VERSION):
         result = api_state.result()
         assert result == "Hello!", f"Got {result!r}"
     else:
-        from prefect.results import _Result
+        from syntask.results import _Result
 
         result = api_state.result()
         assert isinstance(result, _Result), f"Got {result!r}"

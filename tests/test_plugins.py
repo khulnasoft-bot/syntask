@@ -5,10 +5,10 @@ from unittest.mock import Mock
 
 import pytest
 
-import prefect
-from prefect.plugins import load_extra_entrypoints
-from prefect.settings import PREFECT_EXTRA_ENTRYPOINTS, temporary_settings
-from prefect.testing.utilities import exceptions_equal
+import syntask
+from syntask.plugins import load_extra_entrypoints
+from syntask.settings import SYNTASK_EXTRA_ENTRYPOINTS, temporary_settings
+from syntask.testing.utilities import exceptions_equal
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ def raising_module_fixture(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPat
 
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_imports_module():
-    with temporary_settings({PREFECT_EXTRA_ENTRYPOINTS: "test_module_name"}):
+    with temporary_settings({SYNTASK_EXTRA_ENTRYPOINTS: "test_module_name"}):
         result = load_extra_entrypoints()
 
     assert set(result.keys()) == {"test_module_name"}
@@ -75,7 +75,7 @@ def test_load_extra_entrypoints_imports_module():
 
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_strips_spaces():
-    with temporary_settings({PREFECT_EXTRA_ENTRYPOINTS: "   test_module_name "}):
+    with temporary_settings({SYNTASK_EXTRA_ENTRYPOINTS: "   test_module_name "}):
         result = load_extra_entrypoints()
 
     assert set(result.keys()) == {"test_module_name"}
@@ -84,7 +84,7 @@ def test_load_extra_entrypoints_strips_spaces():
 
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_unparsable_entrypoint(capsys):
-    with temporary_settings({PREFECT_EXTRA_ENTRYPOINTS: "foo$bar"}):
+    with temporary_settings({SYNTASK_EXTRA_ENTRYPOINTS: "foo$bar"}):
         result = load_extra_entrypoints()
 
     assert set(result.keys()) == {"foo$bar"}
@@ -102,7 +102,7 @@ def test_load_extra_entrypoints_unparsable_entrypoint(capsys):
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_callable():
     with temporary_settings(
-        {PREFECT_EXTRA_ENTRYPOINTS: "test_module_name:returns_test"}
+        {SYNTASK_EXTRA_ENTRYPOINTS: "test_module_name:returns_test"}
     ):
         result = load_extra_entrypoints()
 
@@ -114,7 +114,7 @@ def test_load_extra_entrypoints_callable():
 def test_load_extra_entrypoints_multiple_entrypoints():
     with temporary_settings(
         {
-            PREFECT_EXTRA_ENTRYPOINTS: (
+            SYNTASK_EXTRA_ENTRYPOINTS: (
                 "test_module_name:returns_foo,test_module_name:returns_bar"
             )
         }
@@ -130,7 +130,7 @@ def test_load_extra_entrypoints_multiple_entrypoints():
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_callable_given_no_arguments():
     with temporary_settings(
-        {PREFECT_EXTRA_ENTRYPOINTS: "test_module_name:mock_function"}
+        {SYNTASK_EXTRA_ENTRYPOINTS: "test_module_name:mock_function"}
     ):
         result = load_extra_entrypoints()
 
@@ -141,7 +141,7 @@ def test_load_extra_entrypoints_callable_given_no_arguments():
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_callable_that_raises(capsys):
     with temporary_settings(
-        {PREFECT_EXTRA_ENTRYPOINTS: "test_module_name:raises_value_error"}
+        {SYNTASK_EXTRA_ENTRYPOINTS: "test_module_name:raises_value_error"}
     ):
         result = load_extra_entrypoints()
 
@@ -160,7 +160,7 @@ def test_load_extra_entrypoints_callable_that_raises(capsys):
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_callable_that_raises_base_exception():
     with temporary_settings(
-        {PREFECT_EXTRA_ENTRYPOINTS: "test_module_name:raises_base_exception"}
+        {SYNTASK_EXTRA_ENTRYPOINTS: "test_module_name:raises_base_exception"}
     ):
         with pytest.raises(BaseException, match="test"):
             load_extra_entrypoints()
@@ -168,7 +168,7 @@ def test_load_extra_entrypoints_callable_that_raises_base_exception():
 
 @pytest.mark.usefixtures("raising_module_fixture")
 def test_load_extra_entrypoints_error_on_import(capsys):
-    with temporary_settings({PREFECT_EXTRA_ENTRYPOINTS: "raising_module_name"}):
+    with temporary_settings({SYNTASK_EXTRA_ENTRYPOINTS: "raising_module_name"}):
         result = load_extra_entrypoints()
 
     assert set(result.keys()) == {"raising_module_name"}
@@ -183,7 +183,7 @@ def test_load_extra_entrypoints_error_on_import(capsys):
 
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_missing_module(capsys):
-    with temporary_settings({PREFECT_EXTRA_ENTRYPOINTS: "nonexistant_module"}):
+    with temporary_settings({SYNTASK_EXTRA_ENTRYPOINTS: "nonexistant_module"}):
         result = load_extra_entrypoints()
 
     assert set(result.keys()) == {"nonexistant_module"}
@@ -202,7 +202,7 @@ def test_load_extra_entrypoints_missing_module(capsys):
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_missing_submodule(capsys):
     with temporary_settings(
-        {PREFECT_EXTRA_ENTRYPOINTS: "test_module_name.missing_module"}
+        {SYNTASK_EXTRA_ENTRYPOINTS: "test_module_name.missing_module"}
     ):
         result = load_extra_entrypoints()
 
@@ -225,7 +225,7 @@ def test_load_extra_entrypoints_missing_submodule(capsys):
 @pytest.mark.usefixtures("module_fixture")
 def test_load_extra_entrypoints_missing_attribute(capsys):
     with temporary_settings(
-        {PREFECT_EXTRA_ENTRYPOINTS: "test_module_name:missing_attr"}
+        {SYNTASK_EXTRA_ENTRYPOINTS: "test_module_name:missing_attr"}
     ):
         result = load_extra_entrypoints()
 
@@ -242,18 +242,18 @@ def test_load_extra_entrypoints_missing_attribute(capsys):
     )
 
 
-def test_plugin_load_on_prefect_package_init(monkeypatch):
-    mock_load_prefect_collections = Mock()
+def test_plugin_load_on_syntask_package_init(monkeypatch):
+    mock_load_syntask_collections = Mock()
     mock_load_extra_entrypoints = Mock()
 
     monkeypatch.setattr(
-        prefect.plugins, "load_prefect_collections", mock_load_prefect_collections
+        syntask.plugins, "load_syntask_collections", mock_load_syntask_collections
     )
     monkeypatch.setattr(
-        prefect.plugins, "load_extra_entrypoints", mock_load_extra_entrypoints
+        syntask.plugins, "load_extra_entrypoints", mock_load_extra_entrypoints
     )
 
-    importlib.reload(prefect)
+    importlib.reload(syntask)
 
-    mock_load_prefect_collections.assert_not_called()  # We no longer load collections on import due to high performance cost
+    mock_load_syntask_collections.assert_not_called()  # We no longer load collections on import due to high performance cost
     mock_load_extra_entrypoints.assert_called_once()

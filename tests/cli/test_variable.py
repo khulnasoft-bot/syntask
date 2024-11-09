@@ -1,9 +1,9 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.models.variables import create_variable
-from prefect.server.schemas.actions import VariableCreate
-from prefect.testing.cli import invoke_and_assert
+from syntask.server.models.variables import create_variable
+from syntask.server.schemas.actions import VariableCreate
+from syntask.testing.cli import invoke_and_assert
 
 
 @pytest.fixture

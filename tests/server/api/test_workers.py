@@ -2,7 +2,7 @@ from typing import List
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -10,22 +10,22 @@ else:
     import pydantic
 
 import pytest
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-import prefect
-from prefect.client.schemas.actions import WorkPoolCreate
-from prefect.client.schemas.objects import WorkPool, WorkQueue
-from prefect.server import models, schemas
+import syntask
+from syntask.client.schemas.actions import WorkPoolCreate
+from syntask.client.schemas.objects import WorkPool, WorkQueue
+from syntask.server import models, schemas
 
 RESERVED_POOL_NAMES = [
-    "Prefect",
-    "Prefect Pool",
-    "PrefectPool",
-    "Prefect-Pool",
-    "prefect",
-    "prefect pool",
-    "prefectpool",
-    "prefect-pool",
+    "Syntask",
+    "Syntask Pool",
+    "SyntaskPool",
+    "Syntask-Pool",
+    "syntask",
+    "syntask pool",
+    "syntaskpool",
+    "syntask-pool",
 ]
 
 
@@ -720,11 +720,11 @@ class TestWorkPoolStatus:
         assert result.is_paused
         assert result.status == schemas.statuses.WorkPoolStatus.PAUSED
 
-    async def test_work_pool_status_for_prefect_agent_work_pool(
-        self, client, prefect_agent_work_pool
+    async def test_work_pool_status_for_syntask_agent_work_pool(
+        self, client, syntask_agent_work_pool
     ):
-        """Work pools that are Prefect Agent work pools should have `null` for status."""
-        response = await client.get(f"/work_pools/{prefect_agent_work_pool.name}")
+        """Work pools that are Syntask Agent work pools should have `null` for status."""
+        response = await client.get(f"/work_pools/{syntask_agent_work_pool.name}")
         assert response.status_code == status.HTTP_200_OK
 
         result = pydantic.parse_obj_as(WorkPool, response.json())
@@ -968,7 +968,7 @@ class TestGetScheduledRuns:
                 session=session,
                 flow_run=schemas.core.FlowRun(
                     flow_id=flow.id,
-                    state=prefect.states.Running(),
+                    state=syntask.states.Running(),
                     work_queue_id=wq.id,
                 ),
             )
@@ -978,7 +978,7 @@ class TestGetScheduledRuns:
                 session=session,
                 flow_run=schemas.core.FlowRun(
                     flow_id=flow.id,
-                    state=prefect.states.Pending(),
+                    state=syntask.states.Pending(),
                     work_queue_id=wq.id,
                 ),
             )
@@ -991,7 +991,7 @@ class TestGetScheduledRuns:
                     session=session,
                     flow_run=schemas.core.FlowRun(
                         flow_id=flow.id,
-                        state=prefect.states.Scheduled(
+                        state=syntask.states.Scheduled(
                             scheduled_time=pendulum.now("UTC").add(hours=i)
                         ),
                         work_queue_id=wq.id,

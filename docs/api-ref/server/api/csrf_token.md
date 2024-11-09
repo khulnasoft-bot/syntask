@@ -1,9 +1,9 @@
 ---
-description: Prefect API routes for interacting with csrf token objects.
+description: Syntask API routes for interacting with csrf token objects.
 tags:
-    - Prefect API
+    - Syntask API
     - csrf
     - security
 ---
 
-::: prefect.server.api.csrf_token
+::: syntask.server.api.csrf_token

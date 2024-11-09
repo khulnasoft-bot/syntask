@@ -1,4 +1,4 @@
-import { Mapper } from '@prefecthq/prefect-ui-library'
+import { Mapper } from '@syntaskhq/syntask-ui-library'
 import { maps } from '@/maps'
 
 export const mapper = new Mapper(maps)

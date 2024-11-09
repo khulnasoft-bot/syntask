@@ -4,9 +4,9 @@ import pendulum
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from prefect.server import models, schemas
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.models.workers import DEFAULT_AGENT_WORK_POOL_NAME
+from syntask.server import models, schemas
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.models.workers import DEFAULT_AGENT_WORK_POOL_NAME
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-collectionName: # Your collection name. Should match your PyPI package name e.g. prefect-collection
+collectionName: # Your collection name. Should match your PyPI package name e.g. syntask-collection
 author: Your Name
 authorUrl: # A link to information about the author e.g. Company URL, GitHub user profile, etc
 documentation: # A link to the collection's documentation i.e. GitHub Pages

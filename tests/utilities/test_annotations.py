@@ -1,6 +1,6 @@
 import random
 
-from prefect.utilities.annotations import unmapped
+from syntask.utilities.annotations import unmapped
 
 
 class TestUnmapped:

@@ -5,15 +5,15 @@ import pytest
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions
-from prefect.server.events.models.automations import create_automation
-from prefect.server.events.models.composite_trigger_child_firing import (
+from syntask.server.events import actions
+from syntask.server.events.models.automations import create_automation
+from syntask.server.events.models.composite_trigger_child_firing import (
     clear_child_firings,
     clear_old_child_firings,
     get_child_firings,
     upsert_child_firing,
 )
-from prefect.server.events.schemas.automations import (
+from syntask.server.events.schemas.automations import (
     Automation,
     CompoundTrigger,
     EventTrigger,
@@ -21,8 +21,8 @@ from prefect.server.events.schemas.automations import (
     Posture,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.events.triggers import load_automation
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.triggers import load_automation
 
 
 @pytest.fixture
@@ -91,7 +91,7 @@ def baby_red_dragon_passed_by(start_of_test: DateTime) -> ReceivedEvent:
         resource={
             "age": "whelp",
             "color": "red",
-            "prefect.resource.id": "red-dragon-id",
+            "syntask.resource.id": "red-dragon-id",
         },
         id=uuid4(),
     )
@@ -105,7 +105,7 @@ def old_red_dragon_passed_by(start_of_test: DateTime) -> ReceivedEvent:
         resource={
             "age": "old",
             "color": "red",
-            "prefect.resource.id": "red-dragon-id",
+            "syntask.resource.id": "red-dragon-id",
         },
         id=uuid4(),
     )
@@ -118,7 +118,7 @@ def green_dragon_passed_by(start_of_test: DateTime) -> ReceivedEvent:
         event="dragon.seen",
         resource={
             "color": "green",
-            "prefect.resource.id": "green-dragon-id",
+            "syntask.resource.id": "green-dragon-id",
         },
         id=uuid4(),
     )

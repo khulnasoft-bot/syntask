@@ -1,18 +1,18 @@
 import yaml
 
-from prefect.infrastructure.kubernetes import KubernetesJob
-from prefect.settings import (
-    PREFECT_API_KEY,
-    PREFECT_API_URL,
-    PREFECT_LOGGING_SERVER_LEVEL,
+from syntask.infrastructure.kubernetes import KubernetesJob
+from syntask.settings import (
+    SYNTASK_API_KEY,
+    SYNTASK_API_URL,
+    SYNTASK_LOGGING_SERVER_LEVEL,
 )
-from prefect.testing.cli import invoke_and_assert
-from prefect.utilities.dockerutils import get_prefect_image_name
+from syntask.testing.cli import invoke_and_assert
+from syntask.utilities.dockerutils import get_syntask_image_name
 
 
 def test_printing_the_server_manifest_with_no_args():
-    """`prefect kubernetes manifest server` should print a valid YAML file
-    representing a basic Prefect server deployment to a cluster"""
+    """`syntask kubernetes manifest server` should print a valid YAML file
+    representing a basic Syntask server deployment to a cluster"""
     result = invoke_and_assert(
         ["kubernetes", "manifest", "server"],
         expected_output_contains="kind: Deployment",
@@ -28,16 +28,16 @@ def test_printing_the_server_manifest_with_no_args():
         assert manifest["metadata"]["namespace"] == "default"
 
         if manifest["kind"] == "Deployment":
-            assert manifest["metadata"]["name"] == "prefect-server"
+            assert manifest["metadata"]["name"] == "syntask-server"
             assert len(manifest["spec"]["template"]["spec"]["containers"]) == 1
 
             server_container = manifest["spec"]["template"]["spec"]["containers"][0]
-            assert server_container["image"] == get_prefect_image_name()
-            assert server_container["command"][0:3] == ["prefect", "server", "start"]
-            assert server_container["command"][0:3] == ["prefect", "server", "start"]
+            assert server_container["image"] == get_syntask_image_name()
+            assert server_container["command"][0:3] == ["syntask", "server", "start"]
+            assert server_container["command"][0:3] == ["syntask", "server", "start"]
             assert server_container["command"][5:] == [
                 "--log-level",
-                str(PREFECT_LOGGING_SERVER_LEVEL.value()),
+                str(SYNTASK_LOGGING_SERVER_LEVEL.value()),
             ]
 
 
@@ -61,7 +61,7 @@ def test_printing_the_server_manifest_with_image_tag_and_log_level():
     assert manifests
 
     deployment = next(m for m in manifests if m["kind"] == "Deployment")
-    assert deployment["metadata"]["name"] == "prefect-server"
+    assert deployment["metadata"]["name"] == "syntask-server"
     assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
 
     server_container = deployment["spec"]["template"]["spec"]["containers"][0]
@@ -82,7 +82,7 @@ def test_printing_the_server_manifest_with_namespace():
 
 
 def test_printing_the_agent_manifest_with_no_args():
-    """`prefect kubernetes manifest agent` should print a valid YAML file
+    """`syntask kubernetes manifest agent` should print a valid YAML file
     representing a basic agent deployment to a cluster"""
     result = invoke_and_assert(
         ["kubernetes", "manifest", "agent"],
@@ -99,23 +99,23 @@ def test_printing_the_agent_manifest_with_no_args():
             assert manifest["metadata"]["namespace"] == "default"
 
         if manifest["kind"] == "Deployment":
-            assert manifest["metadata"]["name"] == "prefect-agent"
+            assert manifest["metadata"]["name"] == "syntask-agent"
             assert len(manifest["spec"]["template"]["spec"]["containers"]) == 1
 
             agent_container = manifest["spec"]["template"]["spec"]["containers"][0]
-            assert agent_container["image"] == get_prefect_image_name()
+            assert agent_container["image"] == get_syntask_image_name()
             assert agent_container["command"] == [
-                "prefect",
+                "syntask",
                 "agent",
                 "start",
                 "-q",
                 "kubernetes",
             ]
             assert len(agent_container["env"]) == 2
-            assert agent_container["env"][0]["name"] == "PREFECT_API_URL"
-            assert agent_container["env"][1]["name"] == "PREFECT_API_KEY"
-            assert agent_container["env"][0]["value"] == str(PREFECT_API_URL.value())
-            assert agent_container["env"][1]["value"] == str(PREFECT_API_KEY.value())
+            assert agent_container["env"][0]["name"] == "SYNTASK_API_URL"
+            assert agent_container["env"][1]["name"] == "SYNTASK_API_KEY"
+            assert agent_container["env"][0]["value"] == str(SYNTASK_API_URL.value())
+            assert agent_container["env"][1]["value"] == str(SYNTASK_API_KEY.value())
 
 
 def test_printing_the_agent_manifest_with_api_url_image_tag_and_work_queue():
@@ -139,15 +139,15 @@ def test_printing_the_agent_manifest_with_api_url_image_tag_and_work_queue():
     assert manifests
 
     deployment = next(m for m in manifests if m["kind"] == "Deployment")
-    assert deployment["metadata"]["name"] == "prefect-agent"
+    assert deployment["metadata"]["name"] == "syntask-agent"
     assert len(deployment["spec"]["template"]["spec"]["containers"]) == 1
 
     agent_container = deployment["spec"]["template"]["spec"]["containers"][0]
     assert agent_container["image"] == "test_image_tag"
     assert agent_container["command"][3:5] == ["-q", "test_work_queue"]
     assert len(agent_container["env"]) == 2
-    assert agent_container["env"][0]["name"] == "PREFECT_API_URL"
-    assert agent_container["env"][1]["name"] == "PREFECT_API_KEY"
+    assert agent_container["env"][0]["name"] == "SYNTASK_API_URL"
+    assert agent_container["env"][1]["name"] == "SYNTASK_API_KEY"
     assert agent_container["env"][0]["value"] == "test_api_url"
     assert agent_container["env"][1]["value"] == "test_api_key"
 
@@ -166,7 +166,7 @@ def test_printing_the_agent_manifest_with_namespace():
 
 
 def test_printing_the_job_base_manifest():
-    """`prefect kubernetes manifest flow-run-job` should print a valid YAML file
+    """`syntask kubernetes manifest flow-run-job` should print a valid YAML file
     representing the minimum starting point for a Kubernetes Job"""
     result = invoke_and_assert(
         ["kubernetes", "manifest", "flow-run-job"],

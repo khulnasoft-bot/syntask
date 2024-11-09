@@ -1,4 +1,4 @@
-from prefect import flow, get_run_logger, task
+from syntask import flow, get_run_logger, task
 
 
 @task

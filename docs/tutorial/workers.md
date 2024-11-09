@@ -1,5 +1,5 @@
 ---
-description: Learn how Prefect flow deployments enable configuring flows for scheduled and remote execution with workers.
+description: Learn how Syntask flow deployments enable configuring flows for scheduled and remote execution with workers.
 tags:
     - workers
     - orchestration
@@ -19,7 +19,7 @@ search:
 
 ## Why workers
 
-In the previous section of the tutorial, you learned how work pools are a bridge between the Prefect orchestration layer and infrastructure for flow runs that can be dynamically provisioned.
+In the previous section of the tutorial, you learned how work pools are a bridge between the Syntask orchestration layer and infrastructure for flow runs that can be dynamically provisioned.
 You saw how you can transition from persistent infrastructure to dynamic infrastructure by using `flow.deploy` instead of `flow.serve`.
 
 Work pools that rely on client-side workers take this a step further by enabling you to run work flows in your own Docker containers, Kubernetes clusters, and serverless environments such as AWS ECS, Azure Container Instances, and GCP Cloud Run.
@@ -38,7 +38,7 @@ graph TD
     end      
     end
 
-    subgraph api["Prefect API"]
+    subgraph api["Syntask API"]
     Deployment --> |assigned to| work_pool
         work_pool(["Work Pool"])
     end
@@ -52,7 +52,7 @@ graph TD
 In context of this tutorial, that flow run infrastructure is an ephemeral Docker container to host each flow run.
 Different [worker types](/concepts/work-pools/#worker-types) create different types of flow run infrastructure.</sup>
 
-Now that we’ve reviewed the concepts of a work pool and worker, let’s create them so that you can deploy your tutorial flow, and execute it later using the Prefect API.
+Now that we’ve reviewed the concepts of a work pool and worker, let’s create them so that you can deploy your tutorial flow, and execute it later using the Syntask API.
 
 ## Set up a work pool and worker
 
@@ -73,7 +73,7 @@ In your terminal, run the following command to set up a **Docker** type work poo
 <div class="terminal">
 
 ```bash
-prefect work-pool create --type docker my-docker-pool
+syntask work-pool create --type docker my-docker-pool
 ```
 
 </div>
@@ -83,14 +83,14 @@ Let’s confirm that the work pool was successfully created by running the follo
 <div class="terminal">
 
 ```bash
-prefect work-pool ls
+syntask work-pool ls
 ```
 
 </div>
 
 You should see your new `my-docker-pool` listed in the output.
 
-Finally, let’s double check that you can see this work pool in your Prefect UI.
+Finally, let’s double check that you can see this work pool in your Syntask UI.
 
 Navigate to the **Work Pools** tab and verify that you see `my-docker-pool` listed.
 
@@ -101,21 +101,21 @@ To make the work pool ready, you need to start a worker.
 ### Start a worker
 
 Workers are a lightweight polling process that kick off scheduled flow runs on a specific type of infrastructure (such as Docker).
-To start a worker on your local machine, open a new terminal and confirm that your virtual environment has `prefect` installed.
+To start a worker on your local machine, open a new terminal and confirm that your virtual environment has `syntask` installed.
 
 Run the following command in this new terminal to start the worker:
 
 <div class="terminal">
 
 ```bash
-prefect worker start --pool my-docker-pool
+syntask worker start --pool my-docker-pool
 
 ```
 
 </div>
 
 You should see the worker start.
-It's now polling the Prefect API to check for any scheduled flow runs it should pick up and then submit for execution.
+It's now polling the Syntask API to check for any scheduled flow runs it should pick up and then submit for execution.
 You’ll see your new worker listed in the UI under the **Workers** tab of the Work Pools page with a recent last polled date.
 
 You should also be able to see a `Ready` status indicator on your work pool - progress!
@@ -148,11 +148,11 @@ Here's what the updated `repo_info.py` looks like:
 
 ```python hl_lines="17-22" title="repo_info.py"
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow(log_prints=True)
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "Synopkg/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     response = httpx.get(url)
     response.raise_for_status()
@@ -186,21 +186,21 @@ python repo_info.py
 
 </div>
 
-Prefect will build a custom Docker image containing your workflow code that the worker can use to dynamically spawn Docker containers whenever this workflow needs to run.
+Syntask will build a custom Docker image containing your workflow code that the worker can use to dynamically spawn Docker containers whenever this workflow needs to run.
 
 !!! note "What Dockerfile?"
-    In this example, Prefect generates a Dockerfile for you that will build an image based off of one of Prefect's published images. The generated Dockerfile will copy the current directory into the Docker image and install any dependencies listed in a `requirements.txt` file.
+    In this example, Syntask generates a Dockerfile for you that will build an image based off of one of Syntask's published images. The generated Dockerfile will copy the current directory into the Docker image and install any dependencies listed in a `requirements.txt` file.
 
     If you want to use a custom Dockerfile, you can specify the path to the Dockerfile using the `DeploymentImage` class:
 
     ```python hl_lines="21-25" title="repo_info.py"
     import httpx
-    from prefect import flow
-    from prefect.deployments import DeploymentImage
+    from syntask import flow
+    from syntask.deployments import DeploymentImage
 
 
     @flow(log_prints=True)
-    def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+    def get_repo_info(repo_name: str = "Synopkg/syntask"):
         url = f"https://api.github.com/repos/{repo_name}"
         response = httpx.get(url)
         response.raise_for_status()
@@ -235,11 +235,11 @@ Here's how you can quickly set the `image_pull_policy` to be `Never` for this tu
 
 ```python hl_lines="21" title="repo_info.py"
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow(log_prints=True)
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "Synopkg/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     response = httpx.get(url)
     response.raise_for_status()
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     )
 ```
 
-To register this update to your deployment's parameters with Prefect's API, run:
+To register this update to your deployment's parameters with Syntask's API, run:
 
 <div class="terminal">
 
@@ -274,7 +274,7 @@ Now everything is set for us to submit a flow-run to the work pool:
 <div class="terminal">
 
 ```bash
-prefect deployment run 'get_repo_info/my-deployment'
+syntask deployment run 'get_repo_info/my-deployment'
 ```
 
 </div>
@@ -283,14 +283,14 @@ prefect deployment run 'get_repo_info/my-deployment'
     - Store and run your deploy scripts at the **root of your repo**, otherwise the built Docker file may be missing files that it needs to execute!
 
 !!! tip "Did you know?"
-    A Prefect flow can have more than one deployment. 
+    A Syntask flow can have more than one deployment. 
     This pattern can be useful if you want your flow to run in different execution environments.
 
 ## Next steps
 
-- Go deeper with deployments and learn about configuring deployments in YAML with [`prefect.yaml`](/guides/prefect-deploy/).
-- [Concepts](/concepts/) contain deep dives into Prefect components.
-- [Guides](/guides/) provide step-by-step recipes for common Prefect operations including:
+- Go deeper with deployments and learn about configuring deployments in YAML with [`syntask.yaml`](/guides/syntask-deploy/).
+- [Concepts](/concepts/) contain deep dives into Syntask components.
+- [Guides](/guides/) provide step-by-step recipes for common Syntask operations including:
   - [Deploying flows on Kubernetes](/guides/deployment/kubernetes/)
   - [Deploying flows in Docker](/guides/deployment/docker/)
   - [Deploying flows on serverless infrastructure](/guides/deployment/serverless-workers/)

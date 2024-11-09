@@ -59,7 +59,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { Getter, PEmptyResults, media } from '@prefecthq/prefect-design'
+  import { Getter, PEmptyResults, media } from '@syntaskhq/syntask-design'
   import {
     PageHeadingFlowRuns,
     FlowRunsPageEmptyState,
@@ -77,8 +77,8 @@
     FlowRunSortValuesSortParam,
     FlowRunsFilter,
     mapper
-  } from '@prefecthq/prefect-ui-library'
-  import { BooleanRouteParam, useDebouncedRef, useRouteQueryParam, useSubscription } from '@prefecthq/vue-compositions'
+  } from '@syntaskhq/syntask-ui-library'
+  import { BooleanRouteParam, useDebouncedRef, useRouteQueryParam, useSubscription } from '@syntaskhq/vue-compositions'
   import merge from 'lodash.merge'
   import { computed, ref, toRef } from 'vue'
   import { useRouter } from 'vue-router'

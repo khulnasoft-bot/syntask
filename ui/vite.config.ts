@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const base = mode == 'development' ? '' : '/PREFECT_UI_SERVE_BASE_REPLACE_PLACEHOLDER'
+  const base = mode == 'development' ? '' : '/SYNTASK_UI_SERVE_BASE_REPLACE_PLACEHOLDER'
 
   return {
     plugins: [vue()],

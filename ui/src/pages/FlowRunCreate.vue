@@ -9,9 +9,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { showToast } from '@prefecthq/prefect-design'
-  import { PageHeadingFlowRunCreate, ToastFlowRunCreate, useWorkspaceApi, useDeployment, FlowRunCreateFormV2, DeploymentFlowRunCreateV2, getApiErrorMessage } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam, useRouteQueryParam } from '@prefecthq/vue-compositions'
+  import { showToast } from '@syntaskhq/syntask-design'
+  import { PageHeadingFlowRunCreate, ToastFlowRunCreate, useWorkspaceApi, useDeployment, FlowRunCreateFormV2, DeploymentFlowRunCreateV2, getApiErrorMessage } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam, useRouteQueryParam } from '@syntaskhq/vue-compositions'
   import { computed, h } from 'vue'
   import { useRouter } from 'vue-router'
   import { usePageTitle } from '@/compositions/usePageTitle'

@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.server.events.clients import AssertingEventsClient
+from syntask.server.events.clients import AssertingEventsClient
 
 
 @pytest.fixture
@@ -14,10 +14,10 @@ def workspace_events_client(
     clean_asserting_events_client: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        "prefect.server.events.clients.PrefectServerEventsClient",
+        "syntask.server.events.clients.SyntaskServerEventsClient",
         AssertingEventsClient,
     )
     monkeypatch.setattr(
-        "prefect.server.events.actions.PrefectServerEventsClient",
+        "syntask.server.events.actions.SyntaskServerEventsClient",
         AssertingEventsClient,
     )

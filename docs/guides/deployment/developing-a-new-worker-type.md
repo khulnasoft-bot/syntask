@@ -1,5 +1,5 @@
 ---
-description: Learn how to create a Prefect worker to run your flows.
+description: Learn how to create a Syntask worker to run your flows.
 tags:
     - work pools
     - workers
@@ -17,9 +17,9 @@ search:
 # Developing a New Worker Type
 
 !!! warning "Advanced Topic"
-    This tutorial is for users who want to extend the Prefect framework and completing this successfully will require deep knowledge of Prefect concepts. For standard use cases, we recommend using one of the [available workers](/concepts/work-pools/#worker-types) instead.
+    This tutorial is for users who want to extend the Syntask framework and completing this successfully will require deep knowledge of Syntask concepts. For standard use cases, we recommend using one of the [available workers](/concepts/work-pools/#worker-types) instead.
 
-Prefect workers are responsible for setting up execution infrastructure and starting flow runs on that infrastructure.
+Syntask workers are responsible for setting up execution infrastructure and starting flow runs on that infrastructure.
 
 A list of available workers can be found [here](/concepts/work-pools/#worker-types). What if you want to execute your flow runs on infrastructure that doesn't have an available worker type? This tutorial will walk you through creating a custom worker that can run your flows on your chosen infrastructure.
 
@@ -36,7 +36,7 @@ When setting up an execution environment for a flow run, a worker receives confi
 
 ### Implementing a `BaseJobConfiguration` subclass
 
-A worker developer defines their worker's configuration to function with a class extending [`BaseJobConfiguration`](/api-ref/prefect/workers/base/#prefect.workers.base.BaseJobConfiguration).
+A worker developer defines their worker's configuration to function with a class extending [`BaseJobConfiguration`](/api-ref/syntask/workers/base/#syntask.workers.base.BaseJobConfiguration).
 
 `BaseJobConfiguration` has attributes that are common to all workers:
 
@@ -47,7 +47,7 @@ A worker developer defines their worker's configuration to function with a class
 | `labels` | The labels assigned to the created execution environment for metadata purposes. |
 | `command` | The command to use when starting a flow run. |
 
-Prefect sets values for each attribute before giving the configuration to the worker. If you want to customize the values of these attributes, use the [`prepare_for_flow_run`](/api-ref/prefect/workers/base/#prefect.workers.base.BaseJobConfiguration.prepare_for_flow_run) method.
+Syntask sets values for each attribute before giving the configuration to the worker. If you want to customize the values of these attributes, use the [`prepare_for_flow_run`](/api-ref/syntask/workers/base/#syntask.workers.base.BaseJobConfiguration.prepare_for_flow_run) method.
 
 Here's an example `prepare_for_flow_run` method that adds a label to the execution environment:
 
@@ -63,7 +63,7 @@ A worker configuration class is a [Pydantic model](https://docs.pydantic.dev/usa
 
 ```python
 from pydantic import Field
-from prefect.workers.base import BaseJobConfiguration
+from syntask.workers.base import BaseJobConfiguration
 
 class MyWorkerConfiguration(BaseJobConfiguration):
     memory: int = Field(
@@ -135,7 +135,7 @@ You can customize the template for each attribute for situations where the confi
 
 ```python
 from pydantic import Field
-from prefect.workers.base import BaseJobConfiguration
+from syntask.workers.base import BaseJobConfiguration
 
 class MyWorkerConfiguration(BaseJobConfiguration):
     memory: str = Field(
@@ -188,7 +188,7 @@ In the pass-through pattern, template variables are passed through to the job co
 
 This pattern is useful when the execution environment is simple, and the deployment creators are expected to have high technical knowledge.
 
-The [Docker worker](https://prefecthq.github.io/prefect-docker/worker/) is an example of a worker that uses this pattern.
+The [Docker worker](https://syntaskhq.github.io/syntask-docker/worker/) is an example of a worker that uses this pattern.
 
 #### Infrastructure as code templating
 
@@ -198,7 +198,7 @@ In the IaC pattern, it's often useful to use template variables to template port
 
 This approach allows work pool creators to provide a simpler interface to deployment creators while also controlling which portions of infrastructure are configurable by deployment creators.
 
-The [Kubernetes worker](https://prefecthq.github.io/prefect-kubernetes/worker/) is an example of a worker that uses this pattern.
+The [Kubernetes worker](https://syntaskhq.github.io/syntask-kubernetes/worker/) is an example of a worker that uses this pattern.
 
 ### Configuring credentials
 
@@ -207,7 +207,7 @@ When executing flow runs within cloud services, workers will often need credenti
 For example, if you want to allow the user to configure AWS credentials, you can do so like this:
 
 ```python
-from prefect_aws import AwsCredentials
+from syntask_aws import AwsCredentials
 
 class MyWorkerConfiguration(BaseJobConfiguration):
     aws_credentials: AwsCredentials = Field(
@@ -235,7 +235,7 @@ Additional attributes can be added to the `BaseVariables` class to define additi
 
 ```python
 from pydantic import Field
-from prefect.workers.base import BaseVariables
+from syntask.workers.base import BaseVariables
 
 class MyWorkerTemplateVariables(BaseVariables):
     memory_request: int = Field(
@@ -301,7 +301,7 @@ We don't recommend using template variable classes within your worker implementa
 
 ## Worker implementation
 
-Workers set up execution environments using provided configuration. Workers also observe the execution environment as the flow run executes and report any crashes to the Prefect API.
+Workers set up execution environments using provided configuration. Workers also observe the execution environment as the flow run executes and report any crashes to the Syntask API.
 
 ### Attributes
 
@@ -336,7 +336,7 @@ The `run` method is passed: the flow run to execute, the execution environment c
 The `run` method must also return a `BaseWorkerResult` object. The `BaseWorkerResult` object returned contains information about the flow run execution. For the most part, you can implement the `BaseWorkerResult` with no modifications like so:
 
 ```python
-from prefect.workers.base import BaseWorkerResult
+from syntask.workers.base import BaseWorkerResult
 
 class MyWorkerResult(BaseWorkerResult):
     """Result returned by the MyWorker."""
@@ -359,7 +359,7 @@ If a worker cannot tear down infrastructure created for a flow run, the `kill_in
 Below is an example of a worker implementation. This example is not intended to be a complete implementation but to illustrate the aforementioned concepts.
 
 ```python
-from prefect.workers.base import BaseWorker, BaseWorkerResult, BaseJobConfiguration, BaseVariables
+from syntask.workers.base import BaseWorker, BaseWorkerResult, BaseJobConfiguration, BaseVariables
 
 class MyWorkerConfiguration(BaseJobConfiguration):
     memory: str = Field(
@@ -425,20 +425,20 @@ Most of the execution logic is omitted from the example above, but it shows that
     3. Monitor the execution
     4. Get the execution's final status from the infrastructure and return a `BaseWorkerResult` object
 
-To see other examples of worker implementations, see the [`ProcessWorker`](/api-ref/prefect/workers/process/) and [`KubernetesWorker`](https://prefecthq.github.io/prefect-kubernetes/worker/) implementations.
+To see other examples of worker implementations, see the [`ProcessWorker`](/api-ref/syntask/workers/process/) and [`KubernetesWorker`](https://syntaskhq.github.io/syntask-kubernetes/worker/) implementations.
 
-### Integrating with the Prefect CLI
+### Integrating with the Syntask CLI
 
-Workers can be started via the Prefect CLI by providing the `--type` option to the `prefect worker start` CLI command. To make your worker type available via the CLI, it must be available at import time.
+Workers can be started via the Syntask CLI by providing the `--type` option to the `syntask worker start` CLI command. To make your worker type available via the CLI, it must be available at import time.
 
 If your worker is in a package, you can add an entry point to your setup file in the following format:
 
 ```python
 entry_points={
-    "prefect.collections": [
+    "syntask.collections": [
         "my_package_name = my_worker_module",
     ]
 },
 ```
 
-Prefect will discover this entry point and load your work module in the specified module. The entry point will allow the worker to be available via the CLI.
+Syntask will discover this entry point and load your work module in the specified module. The entry point will allow the worker to be available via the CLI.

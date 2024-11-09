@@ -4,9 +4,9 @@ services:
     ports:
       - 15432:5432
     environment:
-      POSTGRES_USER: prefect
-      POSTGRES_PASSWORD: prefect
-      POSTGRES_DB: prefect
+      POSTGRES_USER: syntask
+      POSTGRES_PASSWORD: syntask
+      POSTGRES_DB: syntask
       LANG: 'C.UTF-8'
       LANGUAGE: 'C.UTF-8'
       LC_ALL: 'C.UTF-8'

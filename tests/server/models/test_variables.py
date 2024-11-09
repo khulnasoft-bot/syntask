@@ -4,7 +4,7 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 
-from prefect.server.models.variables import (
+from syntask.server.models.variables import (
     count_variables,
     create_variable,
     delete_variable,
@@ -15,15 +15,15 @@ from prefect.server.models.variables import (
     update_variable,
     update_variable_by_name,
 )
-from prefect.server.schemas.actions import VariableCreate, VariableUpdate
-from prefect.server.schemas.filters import (
+from syntask.server.schemas.actions import VariableCreate, VariableUpdate
+from syntask.server.schemas.filters import (
     VariableFilter,
     VariableFilterId,
     VariableFilterName,
     VariableFilterTags,
     VariableFilterValue,
 )
-from prefect.server.schemas.sorting import VariableSort
+from syntask.server.schemas.sorting import VariableSort
 
 
 @pytest.fixture

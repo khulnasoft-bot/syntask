@@ -1,7 +1,7 @@
 import { AxiosError, AxiosInstance, InternalAxiosRequestConfig, isAxiosError } from 'axios'
-import { randomId } from '@prefecthq/prefect-design'
-import { Api, AxiosInstanceSetupHook, PrefectConfig } from '@prefecthq/prefect-ui-library'
-import { CreateActions } from '@prefecthq/vue-compositions'
+import { randomId } from '@syntaskhq/syntask-design'
+import { Api, AxiosInstanceSetupHook, SyntaskConfig } from '@syntaskhq/syntask-ui-library'
+import { CreateActions } from '@syntaskhq/vue-compositions'
 import { CsrfToken } from '@/models/CsrfToken'
 import { CsrfTokenResponse } from '@/types/csrfTokenResponse'
 import { mapper } from '@/services/mapper'
@@ -15,7 +15,7 @@ export class CsrfTokenApi extends Api {
     private refreshTimeout: ReturnType<typeof setTimeout> | null = null
     private ongoingRefresh: Promise<void> | null = null
 
-    public constructor(apiConfig: PrefectConfig, instanceSetupHook: AxiosInstanceSetupHook | null = null) {
+    public constructor(apiConfig: SyntaskConfig, instanceSetupHook: AxiosInstanceSetupHook | null = null) {
         super(apiConfig, instanceSetupHook)
         this.startBackgroundTokenRefresh()
     }
@@ -24,9 +24,9 @@ export class CsrfTokenApi extends Api {
         if (this.csrfSupportEnabled) {
             const csrfToken = await this.getCsrfToken()
             config.headers = config.headers || {}
-            config.headers['Prefect-Csrf-Token'] = csrfToken.token
-            config.headers['Prefect-Csrf-Client'] = this.clientId
-            config.headers['Prefect-Csrf-Retry-Count'] = config.headers['Prefect-Csrf-Retry-Count'] ?? '0'
+            config.headers['Syntask-Csrf-Token'] = csrfToken.token
+            config.headers['Syntask-Csrf-Client'] = this.clientId
+            config.headers['Syntask-Csrf-Retry-Count'] = config.headers['Syntask-Csrf-Retry-Count'] ?? '0'
         }
     }
 
@@ -142,11 +142,11 @@ export function setupCsrfInterceptor(csrfTokenApi: CreateActions<CsrfTokenApi>, 
         if (isAxiosError(error) && csrfTokenApi.isInvalidCsrfToken(error)) {
             const config = error.config
 
-            if (config && config.headers['Prefect-Csrf-Retry-Count']) {
-                const retryCount = parseInt(config.headers['Prefect-Csrf-Retry-Count'], 10)
+            if (config && config.headers['Syntask-Csrf-Retry-Count']) {
+                const retryCount = parseInt(config.headers['Syntask-Csrf-Retry-Count'], 10)
                 if (retryCount < MAX_RETRIES) {
                     await csrfTokenApi.addCsrfHeaders(config)
-                    config.headers['Prefect-Csrf-Retry-Count'] = (retryCount + 1).toString()
+                    config.headers['Syntask-Csrf-Retry-Count'] = (retryCount + 1).toString()
                     return axiosInstance(config)
                 }
             }

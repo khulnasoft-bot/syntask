@@ -1,13 +1,13 @@
 import pytest
 
-from prefect.deprecated.packaging import FilePackager
-from prefect.deprecated.packaging.file import FilePackageManifest
-from prefect.deprecated.packaging.serializers import (
+from syntask.deprecated.packaging import FilePackager
+from syntask.deprecated.packaging.file import FilePackageManifest
+from syntask.deprecated.packaging.serializers import (
     ImportSerializer,
     PickleSerializer,
     SourceSerializer,
 )
-from prefect.utilities.callables import parameter_schema
+from syntask.utilities.callables import parameter_schema
 
 from . import howdy
 

@@ -22,57 +22,57 @@ search:
 # Read and Write Data to and from Cloud Provider Storage
 
 Writing data to cloud-based storage and reading data from that storage is a common task in data engineering.
-In this guide we'll learn how to use Prefect to move data to and from AWS, Azure, and GCP blob storage.
+In this guide we'll learn how to use Syntask to move data to and from AWS, Azure, and GCP blob storage.
 
 ## Prerequisites
 
-- Prefect [installed](/getting-started/installation/)
-- Authenticated with [Prefect Cloud](/cloud/cloud-quickstart/) (or self-hosted [Prefect server](/guides/host/) instance)
+- Syntask [installed](/getting-started/installation/)
+- Authenticated with [Syntask Cloud](/cloud/cloud-quickstart/) (or self-hosted [Syntask server](/guides/host/) instance)
 - A cloud provider account (e.g. [AWS](https://aws.amazon.com/))
 
-## Install relevant Prefect integration library
+## Install relevant Syntask integration library
 
-In the CLI, install the Prefect integration library for your cloud provider:
+In the CLI, install the Syntask integration library for your cloud provider:
 
 === "AWS"
 
-    [prefect-aws](https://prefecthq.github.io/prefect-aws/) provides blocks for interacting with AWS services.
+    [syntask-aws](https://syntaskhq.github.io/syntask-aws/) provides blocks for interacting with AWS services.
 
     <div class="terminal">
     ```bash
-    pip install -U prefect-aws
+    pip install -U syntask-aws
     ```
     </div>
 
 === "Azure"
 
-    [prefect-azure](https://prefecthq.github.io/prefect-azure/) provides blocks for interacting with Azure services.
+    [syntask-azure](https://syntaskhq.github.io/syntask-azure/) provides blocks for interacting with Azure services.
 
     <div class="terminal">
     ```bash
-     pip install -U prefect-azure
+     pip install -U syntask-azure
     ```
     </div>
 
 === "GCP"
 
-    [prefect-gcp](https://prefecthq.github.io/prefect-gcp/) provides blocks for interacting with GCP services.
+    [syntask-gcp](https://syntaskhq.github.io/syntask-gcp/) provides blocks for interacting with GCP services.
     
     <div class="terminal">
     ```bash
-     pip install -U prefect-gcp
+     pip install -U syntask-gcp
     ```
     </div>
 
 ## Register the block types
 
-Register the new block types with Prefect Cloud (or with your self-hosted Prefect server instance):
+Register the new block types with Syntask Cloud (or with your self-hosted Syntask server instance):
 
 === "AWS"
 
     <div class="terminal">
     ```bash
-    prefect block register -m prefect_aws  
+    syntask block register -m syntask_aws  
     ```
     </div>
 
@@ -80,7 +80,7 @@ Register the new block types with Prefect Cloud (or with your self-hosted Prefec
 
     <div class="terminal">
     ```bash
-    prefect block register -m prefect_azure 
+    syntask block register -m syntask_azure 
     ```
     </div>
 
@@ -88,7 +88,7 @@ Register the new block types with Prefect Cloud (or with your self-hosted Prefec
 
     <div class="terminal">
     ```bash
-    prefect block register -m prefect_gcp
+    syntask block register -m syntask_gcp
     ```
     </div>
 
@@ -120,7 +120,7 @@ Below we'll use Python code to create a credentials block for our cloud provider
 
     ```python
     import os
-    from prefect_aws import AwsCredentials
+    from syntask_aws import AwsCredentials
 
     my_aws_creds = AwsCredentials(
         aws_access_key_id="123abc",
@@ -133,7 +133,7 @@ Below we'll use Python code to create a credentials block for our cloud provider
 
     ```python
     import os
-    from prefect_azure import AzureBlobStorageCredentials
+    from syntask_azure import AzureBlobStorageCredentials
 
     my_azure_creds = AzureBlobStorageCredentials(
         connection_string=os.environ.get("MY_AZURE_CONNECTION_STRING"),
@@ -147,7 +147,7 @@ Below we'll use Python code to create a credentials block for our cloud provider
 
     ```python
     import os
-    from prefect_gcp import GCPCredentials
+    from syntask_gcp import GCPCredentials
 
     my_gcp_creds = GCPCredentials(
         service_account_info=os.environ.get("GCP_SERVICE_ACCOUNT_KEY_FILE_CONTENTS"), 
@@ -164,13 +164,13 @@ In this example we'll use Python code.
 
 === "AWS"
 
-    Note that the `S3Bucket` block is not the same as the `S3` block that ships with Prefect. 
-    The `S3Bucket` block we use in this example is part of the `prefect-aws` library and provides additional functionality. 
+    Note that the `S3Bucket` block is not the same as the `S3` block that ships with Syntask. 
+    The `S3Bucket` block we use in this example is part of the `syntask-aws` library and provides additional functionality. 
 
     We'll reference the credentials block created above.
 
     ```python
-    from prefect_aws import S3Bucket
+    from syntask_aws import S3Bucket
 
     s3bucket = S3Bucket.create(
         bucket="my-bucket-name",
@@ -181,21 +181,21 @@ In this example we'll use Python code.
 
 === "Azure"
 
-    Note that the `AzureBlobStorageCredentials` block is not the same as the Azure block that ships with Prefect. 
-    The `AzureBlobStorageCredentials` block we use in this example is part of the `prefect-azure` library and provides additional functionality. 
+    Note that the `AzureBlobStorageCredentials` block is not the same as the Azure block that ships with Syntask. 
+    The `AzureBlobStorageCredentials` block we use in this example is part of the `syntask-azure` library and provides additional functionality. 
 
     Azure blob storage doesn't require a separate block, the connection string used in the `AzureBlobStorageCredentials` block can encode the information needed. 
 
 === "GCP"
 
-    Note that the `GcsBucket` block is not the same as the `GCS` block that ships with Prefect. 
-    The `GcsBucket` block is part of the `prefect-gcp` library and provides additional functionality. 
+    Note that the `GcsBucket` block is not the same as the `GCS` block that ships with Syntask. 
+    The `GcsBucket` block is part of the `syntask-gcp` library and provides additional functionality. 
     We'll use it here.
 
     We'll reference the credentials block created above.
 
     ```python
-    from prefect_gcp.cloud_storage import GcsBucket
+    from syntask_gcp.cloud_storage import GcsBucket
 
     gcsbucket = GcsBucket(
         bucket="my-bucket-name", 
@@ -214,8 +214,8 @@ Use your new block inside a flow to write data to your cloud provider.
 
     ```python
     from pathlib import Path
-    from prefect import flow
-    from prefect_aws.s3 import S3Bucket
+    from syntask import flow
+    from syntask_aws.s3 import S3Bucket
 
     @flow()
     def upload_to_s3():
@@ -231,9 +231,9 @@ Use your new block inside a flow to write data to your cloud provider.
 === "Azure"
 
     ```python
-    from prefect import flow
-    from prefect_azure import AzureBlobStorageCredentials
-    from prefect_azure.blob_storage import blob_storage_upload
+    from syntask import flow
+    from syntask_azure import AzureBlobStorageCredentials
+    from syntask_azure.blob_storage import blob_storage_upload
 
     @flow
     def upload_to_azure():
@@ -258,8 +258,8 @@ Use your new block inside a flow to write data to your cloud provider.
 
     ```python
     from pathlib import Path
-    from prefect import flow
-    from prefect_gcp.cloud_storage import GcsBucket
+    from syntask import flow
+    from syntask_gcp.cloud_storage import GcsBucket
 
     @flow()
     def upload_to_gcs():
@@ -280,8 +280,8 @@ Use your block to read data from your cloud provider inside a flow.
 
     ```python
 
-    from prefect import flow
-    from prefect_aws import S3Bucket
+    from syntask import flow
+    from syntask_aws import S3Bucket
 
     @flow
     def download_from_s3():
@@ -299,9 +299,9 @@ Use your block to read data from your cloud provider inside a flow.
 === "Azure"
 
     ```python
-    from prefect import flow
-    from prefect_azure import AzureBlobStorageCredentials
-    from prefect_azure.blob_storage import blob_storage_download
+    from syntask import flow
+    from syntask_azure import AzureBlobStorageCredentials
+    from syntask_azure.blob_storage import blob_storage_download
 
     @flow
     def download_from_azure():
@@ -322,8 +322,8 @@ Use your block to read data from your cloud provider inside a flow.
 === "GCP"
 
     ```python
-    from prefect import flow
-    from prefect_gcp.cloud_storage import GcsBucket
+    from syntask import flow
+    from syntask_gcp.cloud_storage import GcsBucket
 
     @flow
     def download_from_gcs():
@@ -338,9 +338,9 @@ Use your block to read data from your cloud provider inside a flow.
 
     ```
 
-In this guide we've seen how to use Prefect to read data from and write data to cloud providers!
+In this guide we've seen how to use Syntask to read data from and write data to cloud providers!
 
 ## Next steps
 
-Check out the [`prefect-aws`](https://prefecthq.github.io/prefect-aws/), [`prefect-azure`](https://prefecthq.github.io/prefect-azure/), and [`prefect-gcp`](https://prefecthq.github.io/prefect-gcp/) docs to see additional methods for interacting with cloud storage providers.
+Check out the [`syntask-aws`](https://syntaskhq.github.io/syntask-aws/), [`syntask-azure`](https://syntaskhq.github.io/syntask-azure/), and [`syntask-gcp`](https://syntaskhq.github.io/syntask-gcp/) docs to see additional methods for interacting with cloud storage providers.
 Each library also contains blocks for interacting with other cloud-provider services.

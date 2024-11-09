@@ -1,5 +1,5 @@
 ---
-description: Learn about writing tests for Prefect flows and tasks.
+description: Learn about writing tests for Syntask flows and tasks.
 tags:
     - testing
     - unit testing
@@ -14,32 +14,32 @@ Once you have some awesome flows, you probably want to test them!
 
 ## Unit testing flows
 
-Prefect provides a simple context manager for unit tests that allows you to run flows and tasks against a temporary local SQLite database.
+Syntask provides a simple context manager for unit tests that allows you to run flows and tasks against a temporary local SQLite database.
 
 ```python
-from prefect import flow
-from prefect.testing.utilities import prefect_test_harness
+from syntask import flow
+from syntask.testing.utilities import syntask_test_harness
 
 @flow
 def my_favorite_flow():
     return 42
 
 def test_my_favorite_flow():
-  with prefect_test_harness():
+  with syntask_test_harness():
       # run the flow against a temporary testing database
       assert my_favorite_flow() == 42
 ```
 
-For more extensive testing, you can leverage `prefect_test_harness` as a fixture in your unit testing framework. For example, when using `pytest`:
+For more extensive testing, you can leverage `syntask_test_harness` as a fixture in your unit testing framework. For example, when using `pytest`:
 
 ```python
-from prefect import flow
+from syntask import flow
 import pytest
-from prefect.testing.utilities import prefect_test_harness
+from syntask.testing.utilities import syntask_test_harness
 
 @pytest.fixture(autouse=True, scope="session")
-def prefect_test_fixture():
-    with prefect_test_harness():
+def syntask_test_fixture():
+    with syntask_test_harness():
         yield
 
 @flow
@@ -58,7 +58,7 @@ def test_my_favorite_flow():
 To test an individual task, you can access the original function using `.fn`:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_favorite_task():
@@ -76,7 +76,7 @@ def test_my_favorite_task():
 !!! tip "Disable logger"
     If your task makes uses a logger, you can disable the logger in order to avoid the `RuntimeError` raised from a missing flow context.
     ```python
-    from prefect.logging import disable_run_logger
+    from syntask.logging import disable_run_logger
 
     def test_my_favorite_task():
         with disable_run_logger():

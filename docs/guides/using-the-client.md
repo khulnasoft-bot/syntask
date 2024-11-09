@@ -1,5 +1,5 @@
 ---
-description: Learn how to leverage the `PrefectClient` to interact with the API.
+description: Learn how to leverage the `SyntaskClient` to interact with the API.
 tags:
     - client
     - API
@@ -7,19 +7,19 @@ tags:
     - orchestration
 ---
 
-# Using the Prefect Orchestration Client
+# Using the Syntask Orchestration Client
 
 ## Overview
 
-In the [API reference for the `PrefectClient`](/api-ref/prefect/client/orchestration/), you can find many useful client methods that make it simpler to do things such as:
+In the [API reference for the `SyntaskClient`](/api-ref/syntask/client/orchestration/), you can find many useful client methods that make it simpler to do things such as:
 
 - [reschedule late flow runs](#rescheduling-late-flow-runs)
 - [get the last `N` completed flow runs from my workspace](#get-the-last-n-completed-flow-runs-from-my-workspace)
 
-The `PrefectClient` is an async context manager, so you can use it like this:
+The `SyntaskClient` is an async context manager, so you can use it like this:
 
 ```python hl_lines="3"
-from prefect import get_client
+from syntask import get_client
 
 async with get_client() as client:
     response = await client.hello()
@@ -41,13 +41,13 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from prefect import get_client
-from prefect.client.schemas.filters import (
+from syntask import get_client
+from syntask.client.schemas.filters import (
     DeploymentFilter, FlowRunFilter
 )
-from prefect.client.schemas.objects import FlowRun
-from prefect.client.schemas.sorting import FlowRunSort
-from prefect.states import Scheduled
+from syntask.client.schemas.objects import FlowRun
+from syntask.client.schemas.sorting import FlowRunSort
+from syntask.states import Scheduled
 
 async def reschedule_late_flow_runs(
     deployment_name: str,
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
 ### Get the last `N` completed flow runs from my workspace
 
-To get the last `N` completed flow runs from our workspace, we can make use of `read_flow_runs` and `prefect.client.schemas`.
+To get the last `N` completed flow runs from our workspace, we can make use of `read_flow_runs` and `syntask.client.schemas`.
 
 This example gets the last three completed flow runs from our workspace:
 
@@ -122,10 +122,10 @@ This example gets the last three completed flow runs from our workspace:
 import asyncio
 from typing import Optional
 
-from prefect import get_client
-from prefect.client.schemas.filters import FlowRunFilter
-from prefect.client.schemas.objects import FlowRun
-from prefect.client.schemas.sorting import FlowRunSort
+from syntask import get_client
+from syntask.client.schemas.filters import FlowRunFilter
+from syntask.client.schemas.objects import FlowRun
+from syntask.client.schemas.sorting import FlowRunSort
 
 async def get_most_recent_flow_runs(
     n: int = 3,
@@ -166,9 +166,9 @@ The code below will cancel all flow runs that are in `Pending`, `Running`, `Sche
 ```python
 import anyio
 
-from prefect import get_client
-from prefect.server.schemas.filters import FlowRunFilter, FlowRunFilterState, FlowRunFilterStateName
-from prefect.client.schemas.objects import StateType
+from syntask import get_client
+from syntask.server.schemas.filters import FlowRunFilter, FlowRunFilterState, FlowRunFilterStateName
+from syntask.client.schemas.objects import StateType
 
 async def list_flow_runs_with_states(states: list[str]):
     async with get_client() as client:
@@ -209,4 +209,4 @@ if __name__ == "__main__":
 ```
 
 !!! tip "There are other ways to filter objects like flow runs"
-    See [`the filters API reference`](/api-ref/prefect/client/schemas/#prefect.client.schemas.filters) for more ways to filter flow runs and other objects in your Prefect ecosystem.
+    See [`the filters API reference`](/api-ref/syntask/client/schemas/#syntask.client.schemas.filters) for more ways to filter flow runs and other objects in your Syntask ecosystem.

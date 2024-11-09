@@ -3,7 +3,7 @@ import urllib.parse
 import anyio
 import httpx
 import pytest
-from prefect._vendor.fastapi import (
+from syntask._vendor.fastapi import (
     Depends,
     FastAPI,
     HTTPException,
@@ -11,9 +11,9 @@ from prefect._vendor.fastapi import (
     Request,
     status,
 )
-from prefect._vendor.fastapi.testclient import TestClient
+from syntask._vendor.fastapi.testclient import TestClient
 
-from prefect.server.utilities.server import PrefectRouter, response_scoped_dependency
+from syntask.server.utilities.server import SyntaskRouter, response_scoped_dependency
 
 
 def test_response_scoped_dependency_is_resolved():
@@ -22,7 +22,7 @@ def test_response_scoped_dependency_is_resolved():
         yield "test"
 
     app = FastAPI()
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/")
     def foo(test=Depends(test)):
@@ -46,7 +46,7 @@ def test_response_scoped_dependency_can_have_dependencies():
         yield "test", bar
 
     app = FastAPI()
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/")
     def foo(test=Depends(test)):
@@ -66,7 +66,7 @@ def test_response_scoped_dependency_can_have_request_dependency():
         yield request.path_params
 
     app = FastAPI(name="test")
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/{param}")
     async def read_flow_run(param: str = Path(...), test=Depends(test)):
@@ -101,7 +101,7 @@ async def test_response_scoped_dependency_is_closed_before_request_scoped():
         return request_scoped
 
     app = FastAPI()
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/")
     def foo(
@@ -135,7 +135,7 @@ async def test_response_scoped_dependency_is_closed_before_response_is_returned(
         order.append("request exit")
 
     app = FastAPI()
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/")
     def foo(
@@ -178,7 +178,7 @@ def test_response_scoped_dependency_can_raise_after_yield():
         raise HTTPException(status_code=202)
 
     app = FastAPI()
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/")
     def foo(
@@ -201,7 +201,7 @@ def test_request_scoped_dependency_cannot_raise_after_yield():
         raise HTTPException(status_code=202)
 
     app = FastAPI()
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/")
     def foo(
@@ -228,7 +228,7 @@ def test_response_scoped_dependency_is_overridable():
         yield "test"
 
     app = FastAPI()
-    router = PrefectRouter()
+    router = SyntaskRouter()
 
     @router.get("/")
     def foo(test=Depends(test)):
@@ -250,7 +250,7 @@ class TestParsing:
     @pytest.fixture
     def client(self):
         app = FastAPI()
-        router = PrefectRouter()
+        router = SyntaskRouter()
 
         @router.get("/{x}")
         def echo(x: str):

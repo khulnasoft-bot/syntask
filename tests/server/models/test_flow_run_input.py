@@ -4,9 +4,9 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import prefect.server.schemas as schemas
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.server import models
+import syntask.server.schemas as schemas
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.server import models
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import ValidationError

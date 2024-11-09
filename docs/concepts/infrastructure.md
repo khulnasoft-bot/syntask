@@ -1,5 +1,5 @@
 ---
-description: Prefect infrastructure is responsible for creating and monitoring the execution environment for flow runs associated with deployments.
+description: Syntask infrastructure is responsible for creating and monitoring the execution environment for flow runs associated with deployments.
 tags:
     - orchestration
     - infrastructure
@@ -19,29 +19,29 @@ search:
 !!! warning "Workers are recommended"
     Infrastructure blocks are part of the agent based deployment model. [Work Pools and Workers](/concepts/work-pools/) simplify the specification of each flow's infrastructure and runtime environment. If you have existing agents, you can [upgrade from agents to workers](/guides/upgrade-guide-agents-to-workers/) to significantly enhance the experience of deploying flows.
 
-Users may specify an [infrastructure](/api-ref/prefect/infrastructure/) block when creating a deployment. This block will be used to specify infrastructure for flow runs created by the deployment at runtime.
+Users may specify an [infrastructure](/api-ref/syntask/infrastructure/) block when creating a deployment. This block will be used to specify infrastructure for flow runs created by the deployment at runtime.
 
 Infrastructure can only be used with a [deployment](/concepts/deployments/). When you run a flow directly by calling the flow yourself, you are responsible for the environment in which the flow executes.
 
 ## Infrastructure overview
 
-Prefect uses infrastructure to create the environment for a user's flow to execute.
+Syntask uses infrastructure to create the environment for a user's flow to execute.
 
 Infrastructure is attached to a deployment and is propagated to flow runs created for that deployment. Infrastructure is deserialized by the agent and it has two jobs:
 
 - Create execution environment infrastructure for the flow run.
-- Run a Python command to start the `prefect.engine` in the infrastructure, which retrieves the flow from storage and executes the flow.
+- Run a Python command to start the `syntask.engine` in the infrastructure, which retrieves the flow from storage and executes the flow.
 
 The engine acquires and calls the flow. Infrastructure doesn't know anything about how the flow is stored, it's just passing a flow run ID to the engine.
 
-Infrastructure is specific to the environments in which flows will run. Prefect currently provides the following infrastructure types:
+Infrastructure is specific to the environments in which flows will run. Syntask currently provides the following infrastructure types:
 
-- [`Process`](/api-ref/prefect/infrastructure/#prefect.infrastructure.Process) runs flows in a local subprocess.
-- [`DockerContainer`](/api-ref/prefect/infrastructure/#prefect.infrastructure.DockerContainer) runs flows in a Docker container.
-- [`KubernetesJob`](/api-ref/prefect/infrastructure/#prefect.infrastructure.KubernetesJob) runs flows in a Kubernetes Job.
-- [`ECSTask`](https://prefecthq.github.io/prefect-aws/ecs/) runs flows in an Amazon ECS Task.
-- [`Cloud Run`](https://prefecthq.github.io/prefect-gcp/cloud_run/) runs flows in a Google Cloud Run Job.
-- [`Container Instance`](https://prefecthq.github.io/prefect-azure/container_instance/) runs flows in an Azure Container Instance.
+- [`Process`](/api-ref/syntask/infrastructure/#syntask.infrastructure.Process) runs flows in a local subprocess.
+- [`DockerContainer`](/api-ref/syntask/infrastructure/#syntask.infrastructure.DockerContainer) runs flows in a Docker container.
+- [`KubernetesJob`](/api-ref/syntask/infrastructure/#syntask.infrastructure.KubernetesJob) runs flows in a Kubernetes Job.
+- [`ECSTask`](https://syntaskhq.github.io/syntask-aws/ecs/) runs flows in an Amazon ECS Task.
+- [`Cloud Run`](https://syntaskhq.github.io/syntask-gcp/cloud_run/) runs flows in a Google Cloud Run Job.
+- [`Container Instance`](https://syntaskhq.github.io/syntask-azure/container_instance/) runs flows in an Azure Container Instance.
 
 !!! question "What about tasks?"
     Flows and tasks can both use configuration objects to manage the environment in which code runs.
@@ -52,14 +52,14 @@ Infrastructure is specific to the environments in which flows will run. Prefect 
 
 ## Using infrastructure
 
-You may create customized infrastructure blocks through the Prefect UI or Prefect Cloud [Blocks](/ui/blocks/) page or create them in code and save them to the API using the blocks [`.save()`](/api-ref/prefect/blocks/core/#prefect.blocks.core.Block.save) method.
+You may create customized infrastructure blocks through the Syntask UI or Syntask Cloud [Blocks](/ui/blocks/) page or create them in code and save them to the API using the blocks [`.save()`](/api-ref/syntask/blocks/core/#syntask.blocks.core.Block.save) method.
 
 Once created, there are two distinct ways to use infrastructure in a deployment:
 
-- Starting with Prefect defaults &mdash; this is what happens when you pass  the `-i` or `--infra` flag and provide a type when building deployment files.
+- Starting with Syntask defaults &mdash; this is what happens when you pass  the `-i` or `--infra` flag and provide a type when building deployment files.
 - Pre-configure infrastructure settings as blocks and base your deployment infrastructure on those settings &mdash; by passing `-ib` or `--infra-block` and a block slug when building deployment files.
 
-For example, when creating your deployment files, the supported Prefect infrastrucure types are:
+For example, when creating your deployment files, the supported Syntask infrastrucure types are:
 
 - `process`
 - `docker-container`
@@ -70,7 +70,7 @@ For example, when creating your deployment files, the supported Prefect infrastr
 
 <div class="terminal">
 ```bash
-$ prefect deployment build ./my_flow.py:my_flow -n my-flow-deployment -t test -i docker-container -sb s3/my-bucket --override env.EXTRA_PIP_PACKAGES=s3fs
+$ syntask deployment build ./my_flow.py:my_flow -n my-flow-deployment -t test -i docker-container -sb s3/my-bucket --override env.EXTRA_PIP_PACKAGES=s3fs
 Found flow 'my-flow'
 Successfully uploaded 2 files to s3://bucket-full-of-sunshine
 Deployment YAML created at '/Users/terry/test/flows/infra/deployment.yaml'.
@@ -83,7 +83,7 @@ The default deployment YAML filename may be edited as needed to add an infrastru
 
 ```yaml
 ###
-### A complete description of a Prefect Deployment for flow 'my-flow'
+### A complete description of a Syntask Deployment for flow 'my-flow'
 ###
 name: my-flow-deployment
 description: null
@@ -106,8 +106,8 @@ infrastructure:
   command:
   - python
   - -m
-  - prefect.engine
-  image: prefecthq/prefect:2-latest
+  - syntask.engine
+  image: syntaskhq/syntask:2-latest
   image_pull_policy: null
   networks: []
   network_mode: null
@@ -146,18 +146,18 @@ timestamp: '2023-02-08T23:00:14.974642+00:00'
 ```
 
 !!! note "Editing deployment YAML"
-    Note the big **DO NOT EDIT** comment in the deployment YAML: In practice, anything above this block can be freely edited _before_ running `prefect deployment apply` to create the deployment on the API.
+    Note the big **DO NOT EDIT** comment in the deployment YAML: In practice, anything above this block can be freely edited _before_ running `syntask deployment apply` to create the deployment on the API.
 
 Once the deployment exists, any flow runs that this deployment starts will use `DockerContainer` infrastructure.
 
-You can also create custom infrastructure blocks &mdash; either in the Prefect UI for in code via the API &mdash; and use the settings in the block to configure your infastructure. For example, here we specify settings for Kubernetes infrastructure in a block named `k8sdev`.
+You can also create custom infrastructure blocks &mdash; either in the Syntask UI for in code via the API &mdash; and use the settings in the block to configure your infastructure. For example, here we specify settings for Kubernetes infrastructure in a block named `k8sdev`.
 
 ```python
-from prefect.infrastructure import KubernetesJob, KubernetesImagePullPolicy
+from syntask.infrastructure import KubernetesJob, KubernetesImagePullPolicy
 
 k8s_job = KubernetesJob(
     namespace="dev",
-    image="prefecthq/prefect:2.0.0-python3.9",
+    image="syntaskhq/syntask:2.0.0-python3.9",
     image_pull_policy=KubernetesImagePullPolicy.IF_NOT_PRESENT,
 )
 k8s_job.save("k8sdev")
@@ -167,7 +167,7 @@ Now we can apply the infrastrucure type and settings in the block by specifying 
 
 <div class="terminal">
 ```bash
-prefect deployment build flows/k8s_example.py:k8s_flow --name k8sdev --tag k8s -sb s3/dev -ib kubernetes-job/k8sdev
+syntask deployment build flows/k8s_example.py:k8s_flow --name k8sdev --tag k8s -sb s3/dev -ib kubernetes-job/k8sdev
 ```
 </div>
 
@@ -179,9 +179,9 @@ Every infrastrcture type has type-specific options.
 
 ### Process
 
-[`Process`](/api-ref/prefect/infrastructure/#prefect.infrastructure.process.Process) infrastructure runs a command in a new process.
+[`Process`](/api-ref/syntask/infrastructure/#syntask.infrastructure.process.Process) infrastructure runs a command in a new process.
 
-Current environment variables and Prefect settings will be included in the created process. Configured environment variables will override any current environment variables.
+Current environment variables and Syntask settings will be included in the created process. Configured environment variables will override any current environment variables.
 
 `Process` supports the following settings:
 
@@ -194,14 +194,14 @@ Current environment variables and Prefect settings will be included in the creat
 
 ### DockerContainer
 
-[`DockerContainer`](/api-ref/prefect/infrastructure/#prefect.infrastructure.docker.DockerContainer) infrastructure  executes flow runs in a container.
+[`DockerContainer`](/api-ref/syntask/infrastructure/#syntask.infrastructure.docker.DockerContainer) infrastructure  executes flow runs in a container.
 
 Requirements for `DockerContainer`:
 
 - Docker Engine must be available.
 - You must configure remote [Storage](/concepts/storage/). Local storage is not supported for Docker.
 - The API must be available from within the flow run container. To facilitate connections to locally hosted APIs, `localhost` and `127.0.0.1` will be replaced with `host.docker.internal`.
-- The ephemeral Prefect API won't work with Docker and Kubernetes. You must have a Prefect server or Prefect Cloud API endpoint set in your [agent's configuration](/concepts/work-pools/).
+- The ephemeral Syntask API won't work with Docker and Kubernetes. You must have a Syntask server or Syntask Cloud API endpoint set in your [agent's configuration](/concepts/work-pools/).
 
 `DockerContainer` supports the following settings:
 
@@ -210,9 +210,9 @@ Requirements for `DockerContainer`:
 | auto_remove | Bool indicating whether the container will be removed on completion. If False, the container will remain after exit for inspection. |
 | command | A list of strings specifying the command to run in the container to start the flow run. In most cases you should not override this. |
 | env | Environment variables to set for the container. |
-| image | An optional string specifying the name of a Docker image to use. Defaults to the Prefect image. If the image is stored anywhere other than a public Docker Hub registry, use a corresponding registry block, e.g. `DockerRegistry` or ensure otherwise that your execution layer is authenticated to pull the image from the image registry. |
+| image | An optional string specifying the name of a Docker image to use. Defaults to the Syntask image. If the image is stored anywhere other than a public Docker Hub registry, use a corresponding registry block, e.g. `DockerRegistry` or ensure otherwise that your execution layer is authenticated to pull the image from the image registry. |
 | image_pull_policy | Specifies if the image should be pulled. One of 'ALWAYS', 'NEVER', 'IF_NOT_PRESENT'. |
-| image_registry | A [`DockerRegistry`](/api-ref/prefect/infrastructure/#prefect.infrastructure.docker.DockerRegistry) block containing credentials to use if `image` is stored in a private image registry. |
+| image_registry | A [`DockerRegistry`](/api-ref/syntask/infrastructure/#syntask.infrastructure.docker.DockerRegistry) block containing credentials to use if `image` is stored in a private image registry. |
 | labels | An optional dictionary of labels, mapping name to value. |
 | name | An optional name for the container. |
 | networks | An optional list of strings specifying Docker networks to connect the container to. |
@@ -220,19 +220,19 @@ Requirements for `DockerContainer`:
 | stream_output | Bool indicating whether to stream output from the subprocess to local standard output. |
 | volumes | An optional list of volume mount strings in the format of "local_path:container_path". |
 
-Prefect automatically sets a Docker image matching the Python and Prefect version you're using at deployment time. You can see all available images at [Docker Hub](https://hub.docker.com/r/prefecthq/prefect/tags?page=1&name=2.0).
+Syntask automatically sets a Docker image matching the Python and Syntask version you're using at deployment time. You can see all available images at [Docker Hub](https://hub.docker.com/r/syntaskhq/syntask/tags?page=1&name=2.0).
 
 ### KubernetesJob
 
-[`KubernetesJob`](/api-ref/prefect/infrastructure/#prefect.infrastructure.kubernetes.KubernetesJob) infrastructure executes flow runs in a Kubernetes Job.
+[`KubernetesJob`](/api-ref/syntask/infrastructure/#syntask.infrastructure.kubernetes.KubernetesJob) infrastructure executes flow runs in a Kubernetes Job.
 
 Requirements for `KubernetesJob`:
 
 - `kubectl` must be available.
 - You must configure remote [Storage](/concepts/storage/). Local storage is not supported for Kubernetes.
-- The ephemeral Prefect API won't work with Docker and Kubernetes. You must have a Prefect server or Prefect Cloud API endpoint set in your [agent's configuration](/concepts/work-pools/).
+- The ephemeral Syntask API won't work with Docker and Kubernetes. You must have a Syntask server or Syntask Cloud API endpoint set in your [agent's configuration](/concepts/work-pools/).
 
-The Prefect CLI command `prefect kubernetes manifest server` automatically generates a Kubernetes manifest with default settings for Prefect deployments. By default, it simply prints out the YAML configuration for a manifest. You can pipe this output to a file of your choice and edit as necessary.
+The Syntask CLI command `syntask kubernetes manifest server` automatically generates a Kubernetes manifest with default settings for Syntask deployments. By default, it simply prints out the YAML configuration for a manifest. You can pipe this output to a file of your choice and edit as necessary.
 
 `KubernetesJob` supports the following settings:
 
@@ -290,7 +290,7 @@ k8s_job = KubernetesJob(
         finished_job_ttl=300,
         job_watch_timeout_seconds=600,
         pod_watch_timeout_seconds=600,
-        service_account_name="prefect-server",
+        service_account_name="syntask-server",
         customizations=customizations,
     )
 k8s_job.save("devk8s")
@@ -337,25 +337,25 @@ deployment.apply()
 
 ### ECSTask
 
-[`ECSTask`](https://prefecthq.github.io/prefect-aws/ecs/) infrastructure runs your flow in an ECS Task.
+[`ECSTask`](https://syntaskhq.github.io/syntask-aws/ecs/) infrastructure runs your flow in an ECS Task.
 
 Requirements for `ECSTask`:
 
-- The ephemeral Prefect API won't work with ECS directly. You must have a Prefect server or Prefect Cloud API endpoint set in your [agent's configuration](/concepts/work-pools/).
-- The `prefect-aws` [collection](https://github.com/PrefectHQ/prefect-aws) must be installed within the agent environment: `pip install prefect-aws`
-- The `ECSTask` and `AwsCredentials` blocks must be registered within the agent environment: `prefect block register -m prefect_aws.ecs`
+- The ephemeral Syntask API won't work with ECS directly. You must have a Syntask server or Syntask Cloud API endpoint set in your [agent's configuration](/concepts/work-pools/).
+- The `syntask-aws` [collection](https://github.com/Synopkg/syntask-aws) must be installed within the agent environment: `pip install syntask-aws`
+- The `ECSTask` and `AwsCredentials` blocks must be registered within the agent environment: `syntask block register -m syntask_aws.ecs`
 - You must configure remote [Storage](/concepts/storage/). Local storage is not supported for ECS tasks. The most commonly used type of storage with `ECSTask` is S3. If you leverage that type of block, make sure that [`s3fs`](https://s3fs.readthedocs.io/en/latest/) is installed within your agent and flow run environment. The easiest way to satisfy all the installation-related points mentioned above is to include the following commands in your Dockerfile:  
 
 ```Dockerfile
-FROM prefecthq/prefect:2-python3.9  # example base image 
-RUN pip install s3fs prefect-aws
+FROM syntaskhq/syntask:2-python3.9  # example base image 
+RUN pip install s3fs syntask-aws
 ```
 
 !!! tip "Make sure to allocate enough CPU and memory to your agent, and consider adding retries"
-    When you start a Prefect agent on AWS ECS Fargate, allocate as much [CPU and memory](https://docs.aws.amazon.com/AmazonECS/latest/userguide/fargate-task-defs.html#fargate-tasks-size) as needed for your workloads. Your agent needs enough resources to appropriately provision infrastructure for your flow runs and to monitor their execution. Otherwise, your flow runs may [get stuck](https://github.com/PrefectHQ/prefect-aws/issues/156#issuecomment-1320748748) in a `Pending` state. Alternatively, set a work-queue concurrency limit to ensure that the agent will not try to process all runs at the same time.
+    When you start a Syntask agent on AWS ECS Fargate, allocate as much [CPU and memory](https://docs.aws.amazon.com/AmazonECS/latest/userguide/fargate-task-defs.html#fargate-tasks-size) as needed for your workloads. Your agent needs enough resources to appropriately provision infrastructure for your flow runs and to monitor their execution. Otherwise, your flow runs may [get stuck](https://github.com/Synopkg/syntask-aws/issues/156#issuecomment-1320748748) in a `Pending` state. Alternatively, set a work-queue concurrency limit to ensure that the agent will not try to process all runs at the same time.
 
     Some API calls to provision infrastructure may fail due to unexpected issues on the client side (for example, transient errors such as `ConnectionError`, `HTTPClientError`, or `RequestTimeout`), or due to server-side rate limiting from the AWS service. To mitigate those issues, we recommend adding [environment variables](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-environment-variables) such as `AWS_MAX_ATTEMPTS` (can be set to an integer value such as 10) and `AWS_RETRY_MODE` (can be set to a string value including `standard` or `adaptive` modes). Those environment variables must be added within the *agent* environment, e.g. on your ECS service running the agent, rather than on the `ECSTask` infrastructure block. 
 
 ## Docker images
 
-Learn about options for Prefect-maintained Docker images in the [Docker guide](/guides/docker/).
+Learn about options for Syntask-maintained Docker images in the [Docker guide](/guides/docker/).

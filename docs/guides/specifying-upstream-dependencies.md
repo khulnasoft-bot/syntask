@@ -10,15 +10,15 @@ search:
 
 # Specifying Upstream Dependencies
 
-Results from a task can be provided to other tasks (or subflows) as upstream dependencies. Prefect uses upstream dependencies in two ways:
+Results from a task can be provided to other tasks (or subflows) as upstream dependencies. Syntask uses upstream dependencies in two ways:
 
 1. To populate dependency arrows in the flow run graph
 2. To determine execution order for [concurrently submitted](/concepts/task-runners) units of work that depend on each other
 
 !!! note "Tasks vs. other functions"
-    **Only results from tasks** inform Prefect's ability to determine dependencies. Return values from functions without task decorators, including subflows, do not carry the same information about their origin as task results.
+    **Only results from tasks** inform Syntask's ability to determine dependencies. Return values from functions without task decorators, including subflows, do not carry the same information about their origin as task results.
 
-When using non-sequential task runners such as the [`ConcurrentTaskRunner`](/api-ref/prefect/task-runners/#prefect.task_runners.ConcurrentTaskRunner) or [`DaskTaskRunner`](https://prefecthq.github.io/prefect-dask/), the order of execution for submitted tasks is not guaranteed unless their dependencies are specified.
+When using non-sequential task runners such as the [`ConcurrentTaskRunner`](/api-ref/syntask/task-runners/#syntask.task_runners.ConcurrentTaskRunner) or [`DaskTaskRunner`](https://syntaskhq.github.io/syntask-dask/), the order of execution for submitted tasks is not guaranteed unless their dependencies are specified.
 
 For example, compare how tasks submitted to the `ConcurrentTaskRunner` behave with and without upstream dependencies by clicking on the tabs below.
 
@@ -106,12 +106,12 @@ A task or subflow's upstream dependencies can be inferred automatically via its 
 
 ### Automatic
 
-When a result from a task is used as input for another task, Prefect automatically recognizes the task that result originated from as an upstream dependency.
+When a result from a task is used as input for another task, Syntask automatically recognizes the task that result originated from as an upstream dependency.
 
-This applies to every way you can run tasks with Prefect, whether you're calling the task function directly, calling [`.submit()`](/api-ref/prefect/tasks/#prefect.tasks.Task.submit), or calling [`.map()`](/api-ref/prefect/tasks/#prefect.tasks.Task.map). Subflows similarly recognize tasks results as upstream dependencies.
+This applies to every way you can run tasks with Syntask, whether you're calling the task function directly, calling [`.submit()`](/api-ref/syntask/tasks/#syntask.tasks.Task.submit), or calling [`.map()`](/api-ref/syntask/tasks/#syntask.tasks.Task.map). Subflows similarly recognize tasks results as upstream dependencies.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 
 @flow(log_prints=True)
@@ -151,13 +151,13 @@ def final_task(input):
 
 ### Manual
 
-Tasks that do not share data can be informed of their upstream dependencies through the `wait_for` parameter. Just as with automatic dependencies, this applies to direct task function calls, [`.submit()`](/api-ref/prefect/tasks/#prefect.tasks.Task.submit), [`.map()`](/api-ref/prefect/tasks/#prefect.tasks.Task.map), and subflows.
+Tasks that do not share data can be informed of their upstream dependencies through the `wait_for` parameter. Just as with automatic dependencies, this applies to direct task function calls, [`.submit()`](/api-ref/syntask/tasks/#syntask.tasks.Task.submit), [`.map()`](/api-ref/syntask/tasks/#syntask.tasks.Task.map), and subflows.
 
 !!! warning "Differences with `.map()`"
     Manually defined upstream dependencies apply to all tasks submitted by `.map()`, so each mapped task must wait for _all_ upstream dependencies passed into `wait_for` to finish. This is distinct from automatic dependencies for mapped tasks, where each mapped task must only wait for the upstream tasks whose results it depends on.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 
 @flow(log_prints=True)
@@ -198,13 +198,13 @@ def final_task():
 
 For more complex workflows, parts of your logic may require additional resources, different infrastructure, or independent parallel execution. A typical approach for addressing these needs is to execute that logic as separate [deployment](/concepts/deployments) runs from within a flow.
 
-Composing deployment runs into a flow so that they can be treated as upstream dependencies is as simple as calling [`run_deployment`](/api-ref/prefect/deployments/deployments/#prefect.deployments.deployments.run_deployment) from within a task.
+Composing deployment runs into a flow so that they can be treated as upstream dependencies is as simple as calling [`run_deployment`](/api-ref/syntask/deployments/deployments/#syntask.deployments.deployments.run_deployment) from within a task.
 
 Given a deployment `process-user` of flow `parallel-work`, a flow of deployments might look like this:
 
 ```python
-from prefect import flow, task
-from prefect.deployments import run_deployment
+from syntask import flow, task
+from syntask.deployments import run_deployment
 
 
 @flow

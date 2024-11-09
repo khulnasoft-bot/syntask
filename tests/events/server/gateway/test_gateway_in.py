@@ -3,17 +3,17 @@ from unittest import mock
 
 import pendulum
 import pytest
-from prefect._vendor.fastapi.testclient import TestClient
-from prefect._vendor.starlette.testclient import WebSocketTestSession
+from syntask._vendor.fastapi.testclient import TestClient
+from syntask._vendor.starlette.testclient import WebSocketTestSession
 
-from prefect.server.events import messaging
-from prefect.server.events.schemas.events import Event
+from syntask.server.events import messaging
+from syntask.server.events.schemas.events import Event
 
 
 @pytest.fixture(autouse=True)
 def publish(monkeypatch: pytest.MonkeyPatch) -> mock.AsyncMock:
     mock_publish = mock.AsyncMock()
-    monkeypatch.setattr("prefect.server.events.messaging.publish", mock_publish)
+    monkeypatch.setattr("syntask.server.events.messaging.publish", mock_publish)
     return mock_publish
 
 
@@ -28,7 +28,7 @@ async def stream_publish(
     )
 
     monkeypatch.setattr(
-        "prefect.server.events.messaging.create_event_publisher", mock_create_publisher
+        "syntask.server.events.messaging.create_event_publisher", mock_create_publisher
     )
 
     return mock_publish

@@ -1,14 +1,14 @@
 import pytest
 from anyio.abc._tasks import TaskStatus
 
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
-from prefect.infrastructure.base import Infrastructure, InfrastructureResult
-from prefect.infrastructure.container import (
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
+from syntask.infrastructure.base import Infrastructure, InfrastructureResult
+from syntask.infrastructure.container import (
     DockerContainer,
     DockerRegistry,
 )
-from prefect.infrastructure.kubernetes import KubernetesJob
-from prefect.infrastructure.process import Process
+from syntask.infrastructure.kubernetes import KubernetesJob
+from syntask.infrastructure.process import Process
 
 
 class PretendInfrastructure(Infrastructure):
@@ -29,28 +29,28 @@ class PretendInfrastructure(Infrastructure):
     [
         (
             PretendInfrastructure,
-            "prefect.infrastructure.base.Infrastructure has been deprecated."
+            "syntask.infrastructure.base.Infrastructure has been deprecated."
             " It will not be available after Sep 2024."
             " Use the `BaseWorker` class to create custom infrastructure integrations instead."
             " Refer to the upgrade guide for more information",
         ),
         (
             KubernetesJob,
-            "prefect.infrastructure.kubernetes.KubernetesJob has been deprecated."
+            "syntask.infrastructure.kubernetes.KubernetesJob has been deprecated."
             " It will not be available after Sep 2024."
-            " Use the Kubernetes worker from prefect-kubernetes instead."
+            " Use the Kubernetes worker from syntask-kubernetes instead."
             " Refer to the upgrade guide for more information",
         ),
         (
             DockerContainer,
-            "prefect.infrastructure.container.DockerContainer has been deprecated."
+            "syntask.infrastructure.container.DockerContainer has been deprecated."
             " It will not be available after Sep 2024."
-            " Use the Docker worker from prefect-docker instead."
+            " Use the Docker worker from syntask-docker instead."
             " Refer to the upgrade guide for more information",
         ),
         (
             Process,
-            "prefect.infrastructure.process.Process has been deprecated."
+            "syntask.infrastructure.process.Process has been deprecated."
             " It will not be available after Sep 2024."
             " Use the process worker instead."
             " Refer to the upgrade guide for more information",
@@ -58,17 +58,17 @@ class PretendInfrastructure(Infrastructure):
     ],
 )
 def test_infra_blocks_emit_a_deprecation_warning(InfraBlock, expected_message):
-    with pytest.warns(PrefectDeprecationWarning, match=expected_message):
+    with pytest.warns(SyntaskDeprecationWarning, match=expected_message):
         InfraBlock()
 
 
 def test_docker_registry_emits_a_deprecation_warning():
     with pytest.warns(
-        PrefectDeprecationWarning,
+        SyntaskDeprecationWarning,
         match=(
-            "prefect.infrastructure.container.DockerRegistry has been deprecated."
+            "syntask.infrastructure.container.DockerRegistry has been deprecated."
             " It will not be available after Sep 2024."
-            " Use the `DockerRegistryCredentials` class from prefect-docker instead."
+            " Use the `DockerRegistryCredentials` class from syntask-docker instead."
         ),
     ):
         DockerRegistry(username="foo", password="bar", registry_url="baz")

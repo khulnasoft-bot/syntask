@@ -4,17 +4,17 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models.concurrency_limits_v2 import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models.concurrency_limits_v2 import (
     bulk_update_denied_slots,
     create_concurrency_limit,
     read_concurrency_limit,
 )
-from prefect.server.schemas.actions import (
+from syntask.server.schemas.actions import (
     ConcurrencyLimitV2Create,
     ConcurrencyLimitV2Update,
 )
-from prefect.server.schemas.core import ConcurrencyLimitV2
+from syntask.server.schemas.core import ConcurrencyLimitV2
 
 
 @pytest.fixture
@@ -253,7 +253,7 @@ async def test_increment_concurrency_limit_simple(
 async def test_increment_concurrency_limit_multi(
     concurrency_limit: ConcurrencyLimitV2,
     client: AsyncClient,
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
 ):
     async with db.session_context() as session:
         other_model = await create_concurrency_limit(

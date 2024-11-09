@@ -7,28 +7,28 @@ import orjson
 import pytest
 import yaml
 
-from prefect.events.actions import CancelFlowRun, DoNothing, PauseAutomation
-from prefect.events.schemas.automations import (
+from syntask.events.actions import CancelFlowRun, DoNothing, PauseAutomation
+from syntask.events.schemas.automations import (
     Automation,
     EventTrigger,
     MetricTrigger,
     MetricTriggerQuery,
     Posture,
 )
-from prefect.settings import PREFECT_EXPERIMENTAL_EVENTS, temporary_settings
-from prefect.testing.cli import invoke_and_assert
+from syntask.settings import SYNTASK_EXPERIMENTAL_EVENTS, temporary_settings
+from syntask.testing.cli import invoke_and_assert
 
 
 @pytest.fixture(autouse=True, scope="module")
 def enable_events():
-    with temporary_settings({PREFECT_EXPERIMENTAL_EVENTS: True}):
+    with temporary_settings({SYNTASK_EXPERIMENTAL_EVENTS: True}):
         yield
 
 
 @pytest.fixture
 def read_automations() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.read_automations", autospec=True
+        "syntask.client.orchestration.SyntaskClient.read_automations", autospec=True
     ) as m:
         yield m
 
@@ -135,7 +135,7 @@ def test_listing_various_automations(various_automations: List[Automation]):
 @pytest.fixture
 def read_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.read_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.read_automation", autospec=True
     ) as m:
         yield m
 
@@ -203,7 +203,7 @@ def test_inspecting_in_yaml(various_automations: List[Automation]):
 @pytest.fixture
 def pause_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.pause_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.pause_automation", autospec=True
     ) as m:
         yield m
 
@@ -237,7 +237,7 @@ def test_pausing_not_found(
 @pytest.fixture
 def resume_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.resume_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.resume_automation", autospec=True
     ) as m:
         yield m
 
@@ -271,7 +271,7 @@ def test_resuming_not_found(
 @pytest.fixture
 def delete_automation() -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.client.orchestration.PrefectClient.delete_automation", autospec=True
+        "syntask.client.orchestration.SyntaskClient.delete_automation", autospec=True
     ) as m:
         yield m
 

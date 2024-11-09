@@ -1,10 +1,10 @@
 ---
-description: Manage teams of users in Prefect Cloud. 
+description: Manage teams of users in Syntask Cloud. 
 tags:
     - UI
     - Permissions
     - Access
-    - Prefect Cloud
+    - Syntask Cloud
     - enterprise
     - teams
     - workspaces
@@ -17,15 +17,15 @@ search:
 
 # Teams <span class="badge cloud"></span></span> <span class="badge custom"></span>
 
-Prefect Cloud's [Custom plan](https://www.prefect.io/pricing) offers team management to simplify access control governance.
+Syntask Cloud's [Custom plan](https://www.syntask.io/pricing) offers team management to simplify access control governance.
 
 Account Admins can configure teams and team membership from the account settings menu by clicking **Teams**.
 Teams are composed of users and service accounts.
 Teams can be added to workspaces or object access control lists just like users and service accounts.
 
-![Viewing a team in the Prefect Cloud UI.](/img/ui/teams.png)
+![Viewing a team in the Syntask Cloud UI.](/img/ui/teams.png)
 
 If SCIM is enabled on your account, the set of teams and the users within them is governed by your IDP.
-Prefect Cloud service accounts, which are not governed by your IDP, can be still be added to your existing set of teams.
+Syntask Cloud service accounts, which are not governed by your IDP, can be still be added to your existing set of teams.
 
-See the [Prefect Cloud plans](https://www.prefect.io/pricing) to learn more about options for supporting teams.
+See the [Syntask Cloud plans](https://www.syntask.io/pricing) to learn more about options for supporting teams.

@@ -6,6 +6,6 @@ export function MODE(): string {
   return import.meta.env.MODE
 }
 
-export function VITE_PREFECT_CANARY(): boolean {
-  return import.meta.env.VITE_PREFECT_CANARY === 'true'
+export function VITE_SYNTASK_CANARY(): boolean {
+  return import.meta.env.VITE_SYNTASK_CANARY === 'true'
 }

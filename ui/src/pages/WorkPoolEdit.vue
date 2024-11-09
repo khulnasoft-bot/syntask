@@ -9,8 +9,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { useWorkspaceApi, PageHeadingWorkPoolEdit, WorkPoolEditForm } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam } from '@prefecthq/vue-compositions'
+  import { useWorkspaceApi, PageHeadingWorkPoolEdit, WorkPoolEditForm } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam } from '@syntaskhq/vue-compositions'
   import { usePageTitle } from '@/compositions/usePageTitle'
 
   const api = useWorkspaceApi()

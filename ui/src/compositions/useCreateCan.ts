@@ -1,5 +1,5 @@
-import { Can, createCan, workspacePermissions } from '@prefecthq/prefect-ui-library'
-import { useSubscription } from '@prefecthq/vue-compositions'
+import { Can, createCan, workspacePermissions } from '@syntaskhq/syntask-ui-library'
+import { useSubscription } from '@syntaskhq/vue-compositions'
 import { computed, Ref } from 'vue'
 import { uiSettings } from '@/services/uiSettings'
 import { Permission } from '@/utilities/permissions'

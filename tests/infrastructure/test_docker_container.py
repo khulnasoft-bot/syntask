@@ -8,16 +8,16 @@ import anyio.abc
 import docker
 import pytest
 
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
-from prefect.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
-from prefect.infrastructure.container import (
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
+from syntask.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
+from syntask.infrastructure.container import (
     CONTAINER_LABELS,
     DockerContainer,
     DockerRegistry,
     ImagePullPolicy,
 )
-from prefect.testing.utilities import assert_does_not_warn
-from prefect.utilities.dockerutils import get_prefect_image_name
+from syntask.testing.utilities import assert_does_not_warn
+from syntask.utilities.dockerutils import get_syntask_image_name
 
 if TYPE_CHECKING:
     from docker import DockerClient
@@ -301,10 +301,10 @@ def test_uses_env_setting(
 def test_allows_unsetting_environment_variables(
     mock_docker_client,
 ):
-    DockerContainer(command=["echo", "hello"], env={"PREFECT_TEST_MODE": None}).run()
+    DockerContainer(command=["echo", "hello"], env={"SYNTASK_TEST_MODE": None}).run()
     mock_docker_client.containers.create.assert_called_once()
     call_env = mock_docker_client.containers.create.call_args[1].get("environment")
-    assert "PREFECT_TEST_MODE" not in call_env
+    assert "SYNTASK_TEST_MODE" not in call_env
 
 
 def test_uses_image_registry_setting(mock_docker_client):
@@ -396,7 +396,7 @@ def test_network_mode_defaults_to_host_if_using_localhost_api_on_linux(
     monkeypatch.setattr("sys.platform", "linux")
 
     DockerContainer(
-        command=["echo", "hello"], env=dict(PREFECT_API_URL=f"http://{localhost}/test")
+        command=["echo", "hello"], env=dict(SYNTASK_API_URL=f"http://{localhost}/test")
     ).run()
     mock_docker_client.containers.create.assert_called_once()
     network_mode = mock_docker_client.containers.create.call_args[1].get("network_mode")
@@ -408,7 +408,7 @@ def test_network_mode_defaults_to_none_if_using_networks(mock_docker_client):
     # because `networks` and `network_mode` cannot both be set.
     DockerContainer(
         command=["echo", "hello"],
-        env=dict(PREFECT_API_URL="http://localhost/test"),
+        env=dict(SYNTASK_API_URL="http://localhost/test"),
         networks=["test"],
     ).run()
     mock_docker_client.containers.create.assert_called_once()
@@ -418,7 +418,7 @@ def test_network_mode_defaults_to_none_if_using_networks(mock_docker_client):
 
 def test_network_mode_defaults_to_none_if_using_nonlocal_api(mock_docker_client):
     DockerContainer(
-        command=["echo", "hello"], env=dict(PREFECT_API_URL="http://foo/test")
+        command=["echo", "hello"], env=dict(SYNTASK_API_URL="http://foo/test")
     ).run()
     mock_docker_client.containers.create.assert_called_once()
     network_mode = mock_docker_client.containers.create.call_args[1].get("network_mode")
@@ -429,7 +429,7 @@ def test_network_mode_defaults_to_none_if_not_on_linux(mock_docker_client, monke
     monkeypatch.setattr("sys.platform", "darwin")
 
     DockerContainer(
-        command=["echo", "hello"], env=dict(PREFECT_API_URL="http://localhost/test")
+        command=["echo", "hello"], env=dict(SYNTASK_API_URL="http://localhost/test")
     ).run()
 
     mock_docker_client.containers.create.assert_called_once()
@@ -450,7 +450,7 @@ def test_network_mode_defaults_to_none_if_api_url_cannot_be_parsed(
 
     with pytest.warns(UserWarning, match="Failed to parse host"):
         DockerContainer(
-            command=["echo", "hello"], env=dict(PREFECT_API_URL="foo")
+            command=["echo", "hello"], env=dict(SYNTASK_API_URL="foo")
         ).run()
 
     mock_docker_client.containers.create.assert_called_once()
@@ -468,8 +468,8 @@ def test_replaces_localhost_api_with_dockerhost_when_not_using_host_network(
     ).run()
     mock_docker_client.containers.create.assert_called_once()
     call_env = mock_docker_client.containers.create.call_args[1].get("environment")
-    assert "PREFECT_API_URL" in call_env
-    assert call_env["PREFECT_API_URL"] == hosted_api_server.replace(
+    assert "SYNTASK_API_URL" in call_env
+    assert call_env["SYNTASK_API_URL"] == hosted_api_server.replace(
         "localhost", "host.docker.internal"
     )
 
@@ -489,8 +489,8 @@ def test_does_not_replace_localhost_api_when_using_host_network(
     ).run()
     mock_docker_client.containers.create.assert_called_once()
     call_env = mock_docker_client.containers.create.call_args[1].get("environment")
-    assert "PREFECT_API_URL" in call_env
-    assert call_env["PREFECT_API_URL"] == hosted_api_server
+    assert "SYNTASK_API_URL" in call_env
+    assert call_env["SYNTASK_API_URL"] == hosted_api_server
 
 
 @pytest.mark.usefixtures("use_hosted_api_server")
@@ -500,7 +500,7 @@ def test_warns_at_runtime_when_using_host_network_mode_on_non_linux_platform(
 ):
     monkeypatch.setattr("sys.platform", "darwin")
 
-    with assert_does_not_warn(ignore_warnings=[PrefectDeprecationWarning]):
+    with assert_does_not_warn(ignore_warnings=[SyntaskDeprecationWarning]):
         runner = DockerContainer(
             command=["echo", "hello"],
             network_mode="host",
@@ -521,11 +521,11 @@ def test_does_not_override_user_provided_api_host(
     mock_docker_client,
 ):
     DockerContainer(
-        command=["echo", "hello"], env={"PREFECT_API_URL": "http://localhost/api"}
+        command=["echo", "hello"], env={"SYNTASK_API_URL": "http://localhost/api"}
     ).run()
     mock_docker_client.containers.create.assert_called_once()
     call_env = mock_docker_client.containers.create.call_args[1].get("environment")
-    assert call_env.get("PREFECT_API_URL") == "http://localhost/api"
+    assert call_env.get("SYNTASK_API_URL") == "http://localhost/api"
 
 
 def test_adds_docker_host_gateway_on_linux(mock_docker_client, monkeypatch):
@@ -545,17 +545,17 @@ def test_adds_docker_host_gateway_on_linux(mock_docker_client, monkeypatch):
 def test_default_image_pull_policy_pulls_image_with_latest_tag(
     mock_docker_client,
 ):
-    DockerContainer(command=["echo", "hello"], image="prefect:latest").run()
+    DockerContainer(command=["echo", "hello"], image="syntask:latest").run()
     mock_docker_client.images.pull.assert_called_once()
-    mock_docker_client.images.pull.assert_called_with("prefect", "latest")
+    mock_docker_client.images.pull.assert_called_with("syntask", "latest")
 
 
 def test_default_image_pull_policy_pulls_image_with_no_tag(
     mock_docker_client,
 ):
-    DockerContainer(command=["echo", "hello"], image="prefect").run()
+    DockerContainer(command=["echo", "hello"], image="syntask").run()
     mock_docker_client.images.pull.assert_called_once()
-    mock_docker_client.images.pull.assert_called_with("prefect", None)
+    mock_docker_client.images.pull.assert_called_with("syntask", None)
 
 
 def test_default_image_pull_policy_pulls_image_with_tag_other_than_latest_if_not_present(
@@ -565,9 +565,9 @@ def test_default_image_pull_policy_pulls_image_with_tag_other_than_latest_if_not
 
     mock_docker_client.images.get.side_effect = ImageNotFound("No way, bub")
 
-    DockerContainer(command=["echo", "hello"], image="prefect:omega").run()
+    DockerContainer(command=["echo", "hello"], image="syntask:omega").run()
     mock_docker_client.images.pull.assert_called_once()
-    mock_docker_client.images.pull.assert_called_with("prefect", "omega")
+    mock_docker_client.images.pull.assert_called_with("syntask", "omega")
 
 
 def test_default_image_pull_policy_does_not_pull_image_with_tag_other_than_latest_if_present(
@@ -577,7 +577,7 @@ def test_default_image_pull_policy_does_not_pull_image_with_tag_other_than_lates
 
     mock_docker_client.images.get.return_value = Image()
 
-    DockerContainer(command=["echo", "hello"], image="prefect:omega").run()
+    DockerContainer(command=["echo", "hello"], image="syntask:omega").run()
     mock_docker_client.images.pull.assert_not_called()
 
 
@@ -586,12 +586,12 @@ def test_image_pull_policy_always_pulls(
 ):
     DockerContainer(
         command=["echo", "hello"],
-        image="prefect",
+        image="syntask",
         image_pull_policy=ImagePullPolicy.ALWAYS,
     ).run()
     mock_docker_client.images.get.assert_not_called()
     mock_docker_client.images.pull.assert_called_once()
-    mock_docker_client.images.pull.assert_called_with("prefect", None)
+    mock_docker_client.images.pull.assert_called_with("syntask", None)
 
 
 def test_image_pull_policy_never_does_not_pull(
@@ -599,7 +599,7 @@ def test_image_pull_policy_never_does_not_pull(
 ):
     DockerContainer(
         command=["echo", "hello"],
-        image="prefect",
+        image="syntask",
         image_pull_policy=ImagePullPolicy.NEVER,
     ).run()
     mock_docker_client.images.pull.assert_not_called()
@@ -614,11 +614,11 @@ def test_image_pull_policy_if_not_present_pulls_image_if_not_present(
 
     DockerContainer(
         command=["echo", "hello"],
-        image="prefect",
+        image="syntask",
         image_pull_policy=ImagePullPolicy.IF_NOT_PRESENT,
     ).run()
     mock_docker_client.images.pull.assert_called_once()
-    mock_docker_client.images.pull.assert_called_with("prefect", None)
+    mock_docker_client.images.pull.assert_called_with("syntask", None)
 
 
 def test_image_pull_policy_if_not_present_does_not_pull_image_if_present(
@@ -630,7 +630,7 @@ def test_image_pull_policy_if_not_present_does_not_pull_image_if_present(
 
     DockerContainer(
         command=["echo", "hello"],
-        image="prefect",
+        image="syntask",
         image_pull_policy=ImagePullPolicy.IF_NOT_PRESENT,
     ).run()
     mock_docker_client.images.pull.assert_not_called()
@@ -681,7 +681,7 @@ def test_warns_if_docker_version_does_not_support_host_gateway_on_linux(
     ):
         DockerContainer(
             command=["echo", "hello"],
-            env={"PREFECT_API_URL": explicit_api_url} if explicit_api_url else {},
+            env={"SYNTASK_API_URL": explicit_api_url} if explicit_api_url else {},
         ).run()
 
     mock_docker_client.containers.create.assert_called_once()
@@ -698,10 +698,10 @@ def test_does_not_warn_about_gateway_if_user_has_provided_nonlocal_api_url(
     monkeypatch.setattr("sys.platform", "linux")
     mock_docker_client.version.return_value = {"Version": "19.1.1"}
 
-    with assert_does_not_warn(ignore_warnings=[PrefectDeprecationWarning]):
+    with assert_does_not_warn(ignore_warnings=[SyntaskDeprecationWarning]):
         DockerContainer(
             command=["echo", "hello"],
-            env={"PREFECT_API_URL": "http://my-domain.test/api"},
+            env={"SYNTASK_API_URL": "http://my-domain.test/api"},
         ).run()
 
     mock_docker_client.containers.create.assert_called_once()
@@ -737,7 +737,7 @@ def test_does_not_warn_about_gateway_if_not_using_linux(
     monkeypatch.setattr("sys.platform", platform)
     mock_docker_client.version.return_value = {"Version": "19.1.1"}
 
-    with assert_does_not_warn(ignore_warnings=[PrefectDeprecationWarning]):
+    with assert_does_not_warn(ignore_warnings=[SyntaskDeprecationWarning]):
         DockerContainer(
             command=["echo", "hello"],
         ).run()
@@ -787,7 +787,7 @@ def test_container_metadata(docker: "DockerClient"):
     assert container.name == name
     assert container.labels["test.foo"] == "a"
     assert container.labels["test.bar"] == "b"
-    assert container.image.tags[0] == get_prefect_image_name()
+    assert container.image.tags[0] == get_syntask_image_name()
 
     for key, value in CONTAINER_LABELS.items():
         assert container.labels[key] == value

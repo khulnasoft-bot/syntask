@@ -1,5 +1,5 @@
 ---
-description: Prefect will run your deployment on our infrastructure.
+description: Syntask will run your deployment on our infrastructure.
 tags:
     - managed infrastructure
     - infrastructure
@@ -9,9 +9,9 @@ search:
 
 # Managed Execution <span class="badge cloud"></span> <span class="badge beta"/>
 
-Prefect Cloud can run your flows on your behalf with Prefect Managed work pools.
+Syntask Cloud can run your flows on your behalf with Syntask Managed work pools.
 Flows run with this work pool do not require a worker or cloud provider account.
-Prefect handles the infrastructure and code execution for you.
+Syntask handles the infrastructure and code execution for you.
 
 Managed execution is a great option for users who want to get started quickly, with no infrastructure setup.
 
@@ -25,23 +25,23 @@ Run a flow with managed infrastructure in three steps.
 
 ### Step 1
 
-Create a new work pool of type Prefect Managed in the UI or the CLI.
+Create a new work pool of type Syntask Managed in the UI or the CLI.
 Here's the command to create a new work pool using the CLI:
 
 <div class="terminal">
 ```bash
-prefect work-pool create my-managed-pool --type prefect:managed
+syntask work-pool create my-managed-pool --type syntask:managed
 ```
 </div>
 
 ### Step 2
 
-Create a deployment using the flow `deploy` method or `prefect.yaml`.
+Create a deployment using the flow `deploy` method or `syntask.yaml`.
 
 Specify the name of your managed work pool, as shown in this example that uses the `deploy` method:
 
 ```python hl_lines="9" title="managed-execution.py"
-from prefect import flow
+from syntask import flow
 
 if __name__ == "__main__":
     flow.from_source(
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     )
 ```
 
-With your [CLI authenticated to your Prefect Cloud workspace](/cloud/users/api-keys/), run the script to create your deployment:
+With your [CLI authenticated to your Syntask Cloud workspace](/cloud/users/api-keys/), run the script to create your deployment:
 
 <div class="terminal">
 ```bash
@@ -71,11 +71,11 @@ That's it! You ran a flow on remote infrastructure without any infrastructure se
 
 ### Adding dependencies
 
-Prefect can install Python packages in the container that runs your flow at runtime.
-You can specify these dependencies in the **Pip Packages** field in the UI, or by configuring `job_variables={"pip_packages": ["pandas", "prefect-aws"]}` in your deployment creation like this:
+Syntask can install Python packages in the container that runs your flow at runtime.
+You can specify these dependencies in the **Pip Packages** field in the UI, or by configuring `job_variables={"pip_packages": ["pandas", "syntask-aws"]}` in your deployment creation like this:
 
 ```python hl_lines="10"
-from prefect import flow
+from syntask import flow
 
 if __name__ == "__main__":
     flow.from_source(
@@ -84,15 +84,15 @@ if __name__ == "__main__":
     ).deploy(
         name="test-managed-flow",
         work_pool_name="my-managed-pool",
-        job_variables={"pip_packages": ["pandas", "prefect-aws"]}
+        job_variables={"pip_packages": ["pandas", "syntask-aws"]}
     )
 ```
 
-Alternatively, you can create a `requirements.txt` file and reference it in your `prefect.yaml` `pull_step`.
+Alternatively, you can create a `requirements.txt` file and reference it in your `syntask.yaml` `pull_step`.
 
 ## Limitations
 
-Managed execution requires Prefect 2.14.4 or newer.
+Managed execution requires Syntask 2.14.4 or newer.
 
 All limitations listed below may change without warning during the beta period.
 We will update this page as we make changes.
@@ -101,17 +101,17 @@ We will update this page as we make changes.
 
 Free tier accounts are limited to:
 
-- Maximum of 1 concurrent flow run per workspace across all `prefect:managed` pools.
+- Maximum of 1 concurrent flow run per workspace across all `syntask:managed` pools.
 - Maximum of 1 managed execution work pool per workspace.
 
 Pro tier and above accounts are limited to:
 
-- Maximum of 10 concurrent flow runs per workspace across all `prefect:managed` pools.
+- Maximum of 10 concurrent flow runs per workspace across all `syntask:managed` pools.
 - Maximum of 5 managed execution work pools per workspace.
 
 ### Images
 
-At this time, managed execution requires that you run the official Prefect Docker image: `prefecthq/prefect:2-latest`. However, as noted above, you can install Python package dependencies at runtime. If you need to use your own image, we recommend using another type of work pool.
+At this time, managed execution requires that you run the official Syntask Docker image: `syntaskhq/syntask:2-latest`. However, as noted above, you can install Python package dependencies at runtime. If you need to use your own image, we recommend using another type of work pool.
 
 ### Code storage
 
@@ -129,7 +129,7 @@ Free tier accounts are limited to ten compute hours per workspace per month. Pro
 
 ## Next steps
 
-Read more about creating deployments in the [deployment guide](/guides/prefect-deploy/).
+Read more about creating deployments in the [deployment guide](/guides/syntask-deploy/).
 
 If you find that you need more control over your infrastructure, such as the ability to run custom Docker images, serverless push work pools might be a good option.
 Read more [here](/guides/deployment/push-work-pools/).

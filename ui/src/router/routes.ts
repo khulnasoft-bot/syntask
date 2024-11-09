@@ -1,4 +1,4 @@
-import { createWorkspaceRoutes } from '@prefecthq/prefect-ui-library'
+import { createWorkspaceRoutes } from '@syntaskhq/syntask-ui-library'
 import { RouteLocationRaw, RouteRecordName, RouteRecordRaw } from 'vue-router'
 
 export const routes = {

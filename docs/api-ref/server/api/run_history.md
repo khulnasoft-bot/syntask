@@ -1,10 +1,10 @@
 ---
-description: Prefect API routes for querying flow and task run history.
+description: Syntask API routes for querying flow and task run history.
 tags:
-    - Prefect API
+    - Syntask API
     - flow runs
     - task runs
     - observability
 ---
 
-::: prefect.server.api.run_history
+::: syntask.server.api.run_history

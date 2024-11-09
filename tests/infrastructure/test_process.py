@@ -10,13 +10,13 @@ import anyio
 import anyio.abc
 import pytest
 
-import prefect
-import prefect.infrastructure
-import prefect.infrastructure.process
-import prefect.utilities.processutils
-from prefect.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
-from prefect.infrastructure.process import Process
-from prefect.testing.utilities import AsyncMock
+import syntask
+import syntask.infrastructure
+import syntask.infrastructure.process
+import syntask.utilities.processutils
+from syntask.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
+from syntask.infrastructure.process import Process
+from syntask.testing.utilities import AsyncMock
 
 CTRL_BREAK_EVENT = signal.CTRL_BREAK_EVENT if sys.platform == "win32" else None
 
@@ -25,13 +25,13 @@ CTRL_BREAK_EVENT = signal.CTRL_BREAK_EVENT if sys.platform == "win32" else None
 def mock_open_process(monkeypatch):
     if sys.platform == "win32":
         monkeypatch.setattr(
-            "prefect.utilities.processutils._open_anyio_process", AsyncMock()
+            "syntask.utilities.processutils._open_anyio_process", AsyncMock()
         )
-        prefect.utilities.processutils._open_anyio_process.return_value.terminate = (  # noqa
+        syntask.utilities.processutils._open_anyio_process.return_value.terminate = (  # noqa
             MagicMock()
         )
 
-        yield prefect.utilities.processutils._open_anyio_process  # noqa
+        yield syntask.utilities.processutils._open_anyio_process  # noqa
     else:
         monkeypatch.setattr("anyio.open_process", AsyncMock())
         anyio.open_process.return_value.terminate = MagicMock()  # noqa
@@ -204,11 +204,11 @@ def test_run_requires_command():
 
 async def test_prepare_for_flow_run_uses_sys_executable(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = Process().prepare_for_flow_run(flow_run)
-    assert infrastructure.command == [sys.executable, "-m", "prefect.engine"]
+    assert infrastructure.command == [sys.executable, "-m", "syntask.engine"]
 
 
 @pytest.mark.parametrize(
@@ -230,7 +230,7 @@ def test_process_logs_exit_code_help_message(
         pid = 0
 
     mock = AsyncMock(return_value=fake_process)
-    monkeypatch.setattr("prefect.infrastructure.process.run_process", mock)
+    monkeypatch.setattr("syntask.infrastructure.process.run_process", mock)
 
     result = Process(command=["noop"]).run()
     assert result.status_code == exit_code
@@ -318,7 +318,7 @@ async def test_process_kill_early_return(monkeypatch):
     os_kill = MagicMock(side_effect=[None, ProcessLookupError])
     anyio_sleep = AsyncMock()
     monkeypatch.setattr("os.kill", os_kill)
-    monkeypatch.setattr("prefect.infrastructure.process.anyio.sleep", anyio_sleep)
+    monkeypatch.setattr("syntask.infrastructure.process.anyio.sleep", anyio_sleep)
 
     infrastructure_pid = f"{socket.gethostname()}:12345"
     grace_seconds = 30
@@ -369,10 +369,10 @@ def test_windows_process_run_sets_process_group_creation_flag(monkeypatch):
     mock_run_process_call = AsyncMock(return_value=mock_process)
 
     monkeypatch.setattr(
-        prefect.infrastructure.process, "run_process", mock_run_process_call
+        syntask.infrastructure.process, "run_process", mock_run_process_call
     )
 
-    prefect.infrastructure.Process(command=["echo", "hello world"]).run()
+    syntask.infrastructure.Process(command=["echo", "hello world"]).run()
 
     mock_run_process_call.assert_awaited_once()
     (_, kwargs) = mock_run_process_call.call_args
@@ -393,10 +393,10 @@ def test_unix_process_run_does_not_set_creation_flag(monkeypatch):
     mock_run_process_call = AsyncMock(return_value=mock_process)
 
     monkeypatch.setattr(
-        prefect.infrastructure.process, "run_process", mock_run_process_call
+        syntask.infrastructure.process, "run_process", mock_run_process_call
     )
 
-    prefect.infrastructure.Process(command=["echo", "hello world"]).run()
+    syntask.infrastructure.Process(command=["echo", "hello world"]).run()
 
     mock_run_process_call.assert_awaited_once()
     (_, kwargs) = mock_run_process_call.call_args

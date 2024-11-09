@@ -1,5 +1,5 @@
 ---
-description: CI/CD resources for working with Prefect.
+description: CI/CD resources for working with Syntask.
 tags:
   - CI/CD
   - continuous integration
@@ -8,24 +8,24 @@ search:
   boost: 2
 ---
 
-# CI/CD With Prefect
+# CI/CD With Syntask
 
-Many organizations deploy Prefect workflows via their CI/CD process.
-Each organization has their own unique CI/CD setup, but a common pattern is to use CI/CD to manage Prefect [deployments](/concepts/deployments).
-Combining Prefect's deployment features with CI/CD tools enables efficient management of flow code updates, scheduling changes, and container builds.
+Many organizations deploy Syntask workflows via their CI/CD process.
+Each organization has their own unique CI/CD setup, but a common pattern is to use CI/CD to manage Syntask [deployments](/concepts/deployments).
+Combining Syntask's deployment features with CI/CD tools enables efficient management of flow code updates, scheduling changes, and container builds.
 This guide uses [GitHub Actions](https://docs.github.com/en/actions) to implement a CI/CD process, but these concepts are generally applicable across many CI/CD tools.
 
-Note that Prefect's primary ways for creating deployments, a `.deploy` flow method or a `prefect.yaml` configuration file, are both designed with building and pushing images to a Docker registry in mind.
+Note that Syntask's primary ways for creating deployments, a `.deploy` flow method or a `syntask.yaml` configuration file, are both designed with building and pushing images to a Docker registry in mind.
 
-## Getting started with GitHub Actions and Prefect
+## Getting started with GitHub Actions and Syntask
 
-In this example, you'll write a GitHub Actions workflow that will run each time you push to your repository's `main` branch. This workflow will build and push a Docker image containing your flow code to Docker Hub, then deploy the flow to Prefect Cloud.
+In this example, you'll write a GitHub Actions workflow that will run each time you push to your repository's `main` branch. This workflow will build and push a Docker image containing your flow code to Docker Hub, then deploy the flow to Syntask Cloud.
 
 ### Repository secrets
 
-Your CI/CD process must be able to authenticate with Prefect in order to deploy flows.
+Your CI/CD process must be able to authenticate with Syntask in order to deploy flows.
 
-Deploying flows securely and non-interactively in your CI/CD process can be accomplished by saving your `PREFECT_API_URL` and `PREFECT_API_KEY` [as secrets in your repository's settings](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) so they can be accessed in your CI/CD runner's environment without exposing them in any scripts or configuration files.
+Deploying flows securely and non-interactively in your CI/CD process can be accomplished by saving your `SYNTASK_API_URL` and `SYNTASK_API_KEY` [as secrets in your repository's settings](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) so they can be accessed in your CI/CD runner's environment without exposing them in any scripts or configuration files.
 
 In this scenario, deploying flows involves building and pushing Docker images, so add `DOCKER_USERNAME` and `DOCKER_PASSWORD` as secrets to your repository as well.
 
@@ -44,7 +44,7 @@ The `deploy` job is comprised of four `steps`:
 - **`Checkout`** clones your repository into the GitHub Actions runner so you can reference files or run scripts from your repository in later steps.
 - **`Log in to Docker Hub`** authenticates to DockerHub so your image can be pushed to the Docker registry in your DockerHub account. [docker/login-action](https://github.com/docker/login-action) is an existing GitHub action maintained by Docker. `with:` passes values into the Action, similar to passing parameters to a function.
 - **`Setup Python`** installs your selected version of Python.
-- **`Prefect Deploy`** installs the dependencies used in your flow, then deploys your flow. `env:` makes the `PREFECT_API_KEY` and `PREFECT_API_URL` secrets from your repository available as environment variables during this step's execution.
+- **`Syntask Deploy`** installs the dependencies used in your flow, then deploys your flow. `env:` makes the `SYNTASK_API_KEY` and `SYNTASK_API_URL` secrets from your repository available as environment variables during this step's execution.
 
 For reference, the examples below can be found on their respective branches of [this repository](https://github.com/kevingrismore/cicd-example).
 
@@ -54,7 +54,7 @@ For reference, the examples below can be found on their respective branches of [
     .
     ├── .github/
     │   └── workflows/
-    │       └── deploy-prefect-flow.yaml
+    │       └── deploy-syntask-flow.yaml
     ├── flow.py
     └── requirements.txt
     ```
@@ -62,7 +62,7 @@ For reference, the examples below can be found on their respective branches of [
     `flow.py`
 
     ```python
-    from prefect import flow
+    from syntask import flow
 
     @flow(log_prints=True)
     def hello():
@@ -76,10 +76,10 @@ For reference, the examples below can be found on their respective branches of [
         )
     ```
 
-    `.github/workflows/deploy-prefect-flow.yaml`
+    `.github/workflows/deploy-syntask-flow.yaml`
 
     ```yaml
-    name: Deploy Prefect flow
+    name: Deploy Syntask flow
 
     on:
       push:
@@ -106,54 +106,54 @@ For reference, the examples below can be found on their respective branches of [
             with:
               python-version: '3.11'
 
-          - name: Prefect Deploy
+          - name: Syntask Deploy
             env:
-              PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
-              PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
+              SYNTASK_API_KEY: ${{ secrets.SYNTASK_API_KEY }}
+              SYNTASK_API_URL: ${{ secrets.SYNTASK_API_URL }}
             run: |
               pip install -r requirements.txt
               python flow.py
     ```
 
-=== "prefect.yaml"
+=== "syntask.yaml"
 
     ```
     .
     ├── .github/
     │   └── workflows/
-    │       └── deploy-prefect-flow.yaml
+    │       └── deploy-syntask-flow.yaml
     ├── flow.py
-    ├── prefect.yaml
+    ├── syntask.yaml
     └── requirements.txt
     ```
 
     `flow.py`
 
     ```python
-    from prefect import flow
+    from syntask import flow
 
     @flow(log_prints=True)
     def hello():
       print("Hello!")
     ```
 
-    `prefect.yaml`
+    `syntask.yaml`
 
     ```yaml
     name: cicd-example
-    prefect-version: 2.14.11
+    syntask-version: 2.14.11
 
     build:
-      - prefect_docker.deployments.steps.build_docker_image:
+      - syntask_docker.deployments.steps.build_docker_image:
           id: build_image
-          requires: prefect-docker>=0.3.1
+          requires: syntask-docker>=0.3.1
           image_name: my_registry/my_image
           tag: my_image_tag
           dockerfile: auto
 
     push:
-      - prefect_docker.deployments.steps.push_docker_image:
-          requires: prefect-docker>=0.3.1
+      - syntask_docker.deployments.steps.push_docker_image:
+          requires: syntask-docker>=0.3.1
           image_name: "{{ build_image.image_name }}"
           tag: "{{ build_image.tag }}"
 
@@ -169,10 +169,10 @@ For reference, the examples below can be found on their respective branches of [
             image: "{{ build-image.image }}"
     ```
 
-    `.github/workflows/deploy-prefect-flow.yaml`
+    `.github/workflows/deploy-syntask-flow.yaml`
 
     ```yaml
-    name: Deploy Prefect flow
+    name: Deploy Syntask flow
 
     on:
       push:
@@ -199,13 +199,13 @@ For reference, the examples below can be found on their respective branches of [
             with:
               python-version: '3.11'
 
-          - name: Prefect Deploy
+          - name: Syntask Deploy
             env:
-              PREFECT_API_KEY: ${{ secrets.PREFECT_API_KEY }}
-              PREFECT_API_URL: ${{ secrets.PREFECT_API_URL }}
+              SYNTASK_API_KEY: ${{ secrets.SYNTASK_API_KEY }}
+              SYNTASK_API_URL: ${{ secrets.SYNTASK_API_URL }}
             run: |
               pip install -r requirements.txt
-              prefect deploy -n my-deployment
+              syntask deploy -n my-deployment
     ```
 
 ### Running a GitHub workflow
@@ -214,7 +214,7 @@ After pushing commits to your repository, GitHub will automatically trigger a ru
 
 ![A GitHub Action triggered via push](/img/guides/github-actions-trigger.png)
 
-You can view the logs from each workflow step as they run. The `Prefect Deploy` step will include output about your image build and push, and the creation/update of your deployment.
+You can view the logs from each workflow step as they run. The `Syntask Deploy` step will include output about your image build and push, and the creation/update of your deployment.
 
 <div class="terminal">
 ```bash
@@ -241,7 +241,7 @@ In more complex scenarios, CI/CD processes often need to accommodate several add
 - Handling independent deployment of distinct groupings of work, as in a monorepo
 - Efficiently using build time to avoid repeated work
 
-This [example repository](https://github.com/kevingrismore/cicd-example-workspaces) demonstrates how each of these considerations can be addressed using a combination of Prefect's and GitHub's capabilities.
+This [example repository](https://github.com/kevingrismore/cicd-example-workspaces) demonstrates how each of these considerations can be addressed using a combination of Syntask's and GitHub's capabilities.
 
 ### Deploying to multiple workspaces
 
@@ -257,10 +257,10 @@ on:
       - "project_1/**"
 ```
 
-1. **`branches:`** - which branch has changed. This will ultimately select which Prefect workspace a deployment is created or updated in. In this example, changes on the `stg` branch will deploy flows to a staging workspace, and changes on the `main` branch will deploy flows to a production workspace.
-2. **`paths:`** - which project folders' files have changed. Since each project folder contains its own flows, dependencies, and `prefect.yaml`, it represents a complete set of logic and configuration that can be deployed independently. Each project in this repository gets its own GitHub Actions workflow YAML file.
+1. **`branches:`** - which branch has changed. This will ultimately select which Syntask workspace a deployment is created or updated in. In this example, changes on the `stg` branch will deploy flows to a staging workspace, and changes on the `main` branch will deploy flows to a production workspace.
+2. **`paths:`** - which project folders' files have changed. Since each project folder contains its own flows, dependencies, and `syntask.yaml`, it represents a complete set of logic and configuration that can be deployed independently. Each project in this repository gets its own GitHub Actions workflow YAML file.
 
-The `prefect.yaml` file in each project folder depends on environment variables that are dictated by the selected job in each CI/CD workflow, enabling external code storage for Prefect deployments that is clearly separated across projects and environments.
+The `syntask.yaml` file in each project folder depends on environment variables that are dictated by the selected job in each CI/CD workflow, enabling external code storage for Syntask deployments that is clearly separated across projects and environments.
 
 ```
   .
@@ -289,8 +289,8 @@ The `setup-python` action offers [caching options](https://github.com/actions/se
 ```
 
 ```
-Using cached prefect-2.16.1-py3-none-any.whl (2.9 MB)
-Using cached prefect_aws-0.4.10-py3-none-any.whl (61 kB)
+Using cached syntask-2.16.1-py3-none-any.whl (2.9 MB)
+Using cached syntask_aws-0.4.10-py3-none-any.whl (61 kB)
 ```
 
 The `build-push-action` for building Docker images also offers [caching options for GitHub Actions](https://docs.docker.com/build/cache/backends/gha/). If you are not using GitHub, other remote [cache backends](https://docs.docker.com/build/cache/backends/) are available as well.
@@ -324,14 +324,14 @@ CACHED
 CACHED
 ```
 
-## Prefect GitHub Actions
+## Syntask GitHub Actions
 
-Prefect provides its own GitHub Actions for [authentication](https://github.com/PrefectHQ/actions-prefect-auth) and [deployment creation](https://github.com/PrefectHQ/actions-prefect-deploy). These actions can simplify deploying with CI/CD when using `prefect.yaml`, especially in cases where a repository contains flows that are used in multiple deployments across multiple Prefect Cloud workspaces.
+Syntask provides its own GitHub Actions for [authentication](https://github.com/Synopkg/actions-syntask-auth) and [deployment creation](https://github.com/Synopkg/actions-syntask-deploy). These actions can simplify deploying with CI/CD when using `syntask.yaml`, especially in cases where a repository contains flows that are used in multiple deployments across multiple Syntask Cloud workspaces.
 
 Here's an example of integrating these actions into the workflow we created above:
 
 ```yaml
-name: Deploy Prefect flow
+name: Deploy Syntask flow
 
 on:
   push:
@@ -358,14 +358,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Prefect Auth
-        uses: PrefectHQ/actions-prefect-auth@v1
+      - name: Syntask Auth
+        uses: Synopkg/actions-syntask-auth@v1
         with:
-          prefect-api-key: ${{ secrets.PREFECT_API_KEY }}
-          prefect-workspace: ${{ secrets.PREFECT_WORKSPACE }}
+          syntask-api-key: ${{ secrets.SYNTASK_API_KEY }}
+          syntask-workspace: ${{ secrets.SYNTASK_WORKSPACE }}
 
-      - name: Run Prefect Deploy
-        uses: PrefectHQ/actions-prefect-deploy@v3
+      - name: Run Syntask Deploy
+        uses: Synopkg/actions-syntask-deploy@v3
         with:
           deployment-names: my-deployment
           requirements-file-paths: requirements.txt
@@ -388,4 +388,4 @@ For example, if you are storing Docker images in AWS Elastic Container Registry,
 
 ## Other resources
 
-Check out the [Prefect Cloud Terraform provider](https://registry.terraform.io/providers/PrefectHQ/prefect/latest/docs/guides/getting-started) if you're using Terraform to manage your infrastructure.
+Check out the [Syntask Cloud Terraform provider](https://registry.terraform.io/providers/Synopkg/syntask/latest/docs/guides/getting-started) if you're using Terraform to manage your infrastructure.

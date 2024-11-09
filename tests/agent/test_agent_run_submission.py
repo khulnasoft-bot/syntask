@@ -7,27 +7,27 @@ from unittest.mock import MagicMock
 import pendulum
 import pytest
 
-from prefect import flow
-from prefect.agent import PrefectAgent
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.actions import WorkPoolCreate
-from prefect.client.schemas.objects import DEFAULT_AGENT_WORK_POOL_NAME
-from prefect.exceptions import Abort, CrashedRun, FailedRun
-from prefect.infrastructure.base import Infrastructure
-from prefect.server import models, schemas
-from prefect.states import Completed, Pending, Running, Scheduled, State, StateType
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.callables import parameter_schema
-from prefect.utilities.dispatch import get_registry_for_type
+from syntask import flow
+from syntask.agent import SyntaskAgent
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.actions import WorkPoolCreate
+from syntask.client.schemas.objects import DEFAULT_AGENT_WORK_POOL_NAME
+from syntask.exceptions import Abort, CrashedRun, FailedRun
+from syntask.infrastructure.base import Infrastructure
+from syntask.server import models, schemas
+from syntask.states import Completed, Pending, Running, Scheduled, State, StateType
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.callables import parameter_schema
+from syntask.utilities.dispatch import get_registry_for_type
 
 
 @pytest.fixture
-def prefect_caplog(caplog):
+def syntask_caplog(caplog):
     # TODO: Determine a better pattern for this and expose for all tests
     import logging
 
-    logger = logging.getLogger("prefect")
+    logger = logging.getLogger("syntask")
     logger.propagate = True
 
     try:
@@ -37,7 +37,7 @@ def prefect_caplog(caplog):
 
 
 async def test_agent_start_will_not_run_without_start():
-    agent = PrefectAgent(work_queues=["foo"])
+    agent = SyntaskAgent(work_queues=["foo"])
     mock = AsyncMock()
     with pytest.raises(RuntimeError, match="Agent is not started"):
         agent.client = mock
@@ -47,7 +47,7 @@ async def test_agent_start_will_not_run_without_start():
 
 
 async def test_agent_start_and_shutdown():
-    async with PrefectAgent(work_queues=["foo"]) as agent:
+    async with SyntaskAgent(work_queues=["foo"]) as agent:
         assert agent.started
         assert agent.task_group is not None
         assert agent.client is not None
@@ -57,13 +57,13 @@ async def test_agent_start_and_shutdown():
     assert agent.client is None, "Shuts down the client"
 
 
-async def test_agent_with_work_queue(prefect_client, deployment):
+async def test_agent_with_work_queue(syntask_client, deployment):
     @flow
     def foo():
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment.id, state=state
         )
 
@@ -83,12 +83,12 @@ async def test_agent_with_work_queue(prefect_client, deployment):
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(foo, state=Scheduled()),
+        await syntask_client.create_flow_run(foo, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
     # Pull runs from the work queue to get expected runs
-    work_queue_runs = await prefect_client.get_runs_in_work_queue(
+    work_queue_runs = await syntask_client.get_runs_in_work_queue(
         deployment.work_queue.id, scheduled_before=pendulum.now("UTC").add(seconds=10)
     )
     work_queue_flow_run_ids = {run.id for run in work_queue_runs}
@@ -97,7 +97,7 @@ async def test_agent_with_work_queue(prefect_client, deployment):
     # Should not include runs without deployments
     assert work_queue_flow_run_ids == set(flow_run_ids[1:4])
 
-    agent = PrefectAgent(work_queues=[deployment.work_queue.name], prefetch_seconds=10)
+    agent = SyntaskAgent(work_queues=[deployment.work_queue.name], prefetch_seconds=10)
 
     async with agent:
         agent.submit_run = AsyncMock()  # do not actually run anything
@@ -107,13 +107,13 @@ async def test_agent_with_work_queue(prefect_client, deployment):
     assert submitted_flow_run_ids == work_queue_flow_run_ids
 
 
-async def test_agent_with_work_queue_and_limit(prefect_client, deployment):
+async def test_agent_with_work_queue_and_limit(syntask_client, deployment):
     @flow
     def foo():
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment.id, state=state
         )
 
@@ -133,12 +133,12 @@ async def test_agent_with_work_queue_and_limit(prefect_client, deployment):
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(foo, state=Scheduled()),
+        await syntask_client.create_flow_run(foo, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
     # Pull runs from the work queue to get expected runs
-    work_queue_runs = await prefect_client.get_runs_in_work_queue(
+    work_queue_runs = await syntask_client.get_runs_in_work_queue(
         deployment.work_queue.id, scheduled_before=pendulum.now("UTC").add(seconds=10)
     )
     work_queue_runs.sort(key=lambda run: run.next_scheduled_start_time)
@@ -148,7 +148,7 @@ async def test_agent_with_work_queue_and_limit(prefect_client, deployment):
     # Should not include runs without deployments
     assert set(work_queue_flow_run_ids) == set(flow_run_ids[1:4])
 
-    agent = PrefectAgent(
+    agent = SyntaskAgent(
         work_queues=[deployment.work_queue.name], prefetch_seconds=10, limit=2
     )
 
@@ -171,29 +171,29 @@ async def test_agent_with_work_queue_and_limit(prefect_client, deployment):
 
 
 async def test_agent_matches_work_queues_dynamically(
-    session, work_queue, prefect_caplog
+    session, work_queue, syntask_caplog
 ):
     assert await models.work_queues.read_work_queue_by_name(
         session=session, name=work_queue.name
     )
-    async with PrefectAgent(work_queue_prefix=["wq-"]) as agent:
+    async with SyntaskAgent(work_queue_prefix=["wq-"]) as agent:
         assert work_queue.name not in agent.work_queues
         await agent.get_and_submit_flow_runs()
         assert work_queue.name in agent.work_queues
 
-    assert "Matched new work queues:" in prefect_caplog.text
-    assert work_queue.name in prefect_caplog.text
+    assert "Matched new work queues:" in syntask_caplog.text
+    assert work_queue.name in syntask_caplog.text
 
 
-async def test_agent_matches_multiple_work_queues_dynamically(prefect_client):
+async def test_agent_matches_multiple_work_queues_dynamically(syntask_client):
     prod1 = "prod-deployment-1"
     prod2 = "prod-deployment-2"
     prod3 = "prod-deployment-3"
     dev1 = "dev-data-producer-1"
-    await prefect_client.create_work_queue(name=prod1)
-    await prefect_client.create_work_queue(name=prod2)
+    await syntask_client.create_work_queue(name=prod1)
+    await syntask_client.create_work_queue(name=prod2)
 
-    async with PrefectAgent(work_queue_prefix=["prod-"]) as agent:
+    async with SyntaskAgent(work_queue_prefix=["prod-"]) as agent:
         assert not agent.work_queues
         await agent.get_and_submit_flow_runs()
         assert prod1 in agent.work_queues
@@ -203,8 +203,8 @@ async def test_agent_matches_multiple_work_queues_dynamically(prefect_client):
         agent._work_queue_cache_expiration = pendulum.now("UTC") - pendulum.duration(
             minutes=1
         )
-        await prefect_client.create_work_queue(name=prod3)
-        await prefect_client.create_work_queue(name=dev1)
+        await syntask_client.create_work_queue(name=prod3)
+        await syntask_client.create_work_queue(name=dev1)
         await agent.get_and_submit_flow_runs()
         assert prod3 in agent.work_queues
         assert (
@@ -212,13 +212,13 @@ async def test_agent_matches_multiple_work_queues_dynamically(prefect_client):
         ), "work queue matcher should not match partial names"
 
 
-async def test_agent_matches_multiple_work_queue_prefixes(prefect_client):
+async def test_agent_matches_multiple_work_queue_prefixes(syntask_client):
     prod = "prod-deployment-4"
     dev = "dev-data-producer-2"
-    await prefect_client.create_work_queue(name=prod)
-    await prefect_client.create_work_queue(name=dev)
+    await syntask_client.create_work_queue(name=prod)
+    await syntask_client.create_work_queue(name=dev)
 
-    async with PrefectAgent(work_queue_prefix=["prod-", "dev-"]) as agent:
+    async with SyntaskAgent(work_queue_prefix=["prod-", "dev-"]) as agent:
         assert not agent.work_queues
         await agent.get_and_submit_flow_runs()
         assert prod in agent.work_queues
@@ -226,12 +226,12 @@ async def test_agent_matches_multiple_work_queue_prefixes(prefect_client):
 
 
 async def test_matching_work_queues_handes_work_queue_deletion(
-    session, work_queue, prefect_client, prefect_caplog
+    session, work_queue, syntask_client, syntask_caplog
 ):
     assert await models.work_queues.read_work_queue_by_name(
         session=session, name=work_queue.name
     )
-    async with PrefectAgent(work_queue_prefix=["wq-"]) as agent:
+    async with SyntaskAgent(work_queue_prefix=["wq-"]) as agent:
         await agent.get_and_submit_flow_runs()
         assert work_queue.name in agent.work_queues
 
@@ -239,76 +239,76 @@ async def test_matching_work_queues_handes_work_queue_deletion(
         agent._work_queue_cache_expiration = pendulum.now("UTC") - pendulum.duration(
             minutes=1
         )
-        assert "Matched new work queues:" in prefect_caplog.text
-        assert work_queue.name in prefect_caplog.text
-        await prefect_client.delete_work_queue_by_id(work_queue.id)
+        assert "Matched new work queues:" in syntask_caplog.text
+        assert work_queue.name in syntask_caplog.text
+        await syntask_client.delete_work_queue_by_id(work_queue.id)
         await agent.get_and_submit_flow_runs()
         assert work_queue.name not in agent.work_queues
         assert (
-            f"Work queues no longer matched: {work_queue.name}" in prefect_caplog.text
+            f"Work queues no longer matched: {work_queue.name}" in syntask_caplog.text
         )
 
 
-async def test_agent_creates_work_queue_if_doesnt_exist(session, prefect_caplog):
+async def test_agent_creates_work_queue_if_doesnt_exist(session, syntask_caplog):
     name = f"hello-there-{uuid.uuid4()}"
     assert not await models.work_queues.read_work_queue_by_name(
         session=session, name=name
     )
-    async with PrefectAgent(work_queues=[name]) as agent:
+    async with SyntaskAgent(work_queues=[name]) as agent:
         await agent.get_and_submit_flow_runs()
     assert await models.work_queues.read_work_queue_by_name(session=session, name=name)
 
-    assert f"Created work queue '{name}'." in prefect_caplog.text
+    assert f"Created work queue '{name}'." in syntask_caplog.text
 
 
 async def test_agent_creates_work_queue_if_doesnt_exist_in_work_pool(
     session,
     work_pool,
-    prefect_caplog,
+    syntask_caplog,
 ):
     name = f"hello-there-{uuid.uuid4()}"
     assert not await models.workers.read_work_queue_by_name(
         session=session, work_pool_name=work_pool.name, work_queue_name=name
     )
-    async with PrefectAgent(work_queues=[name], work_pool_name=work_pool.name) as agent:
+    async with SyntaskAgent(work_queues=[name], work_pool_name=work_pool.name) as agent:
         await agent.get_and_submit_flow_runs()
     assert await models.workers.read_work_queue_by_name(
         session=session, work_pool_name=work_pool.name, work_queue_name=name
     )
     assert (
         f"Created work queue '{name}' in work pool '{work_pool.name}'."
-        in prefect_caplog.text
+        in syntask_caplog.text
     )
 
 
 async def test_agent_does_not_create_work_queues_if_matching_with_prefix(
-    session, prefect_caplog, prefect_client: PrefectClient
+    session, syntask_caplog, syntask_client: SyntaskClient
 ):
-    default_work_pool = await prefect_client.read_work_pool(
+    default_work_pool = await syntask_client.read_work_pool(
         DEFAULT_AGENT_WORK_POOL_NAME
     )
     if not default_work_pool:
-        await prefect_client.create_work_pool(
-            WorkPoolCreate(name=DEFAULT_AGENT_WORK_POOL_NAME, type="prefect-agent")
+        await syntask_client.create_work_pool(
+            WorkPoolCreate(name=DEFAULT_AGENT_WORK_POOL_NAME, type="syntask-agent")
         )
 
     name = f"hello-there-{uuid.uuid4()}"
     assert not await models.work_queues.read_work_queue_by_name(
         session=session, name=name
     )
-    async with PrefectAgent(work_queues=[name]) as agent:
+    async with SyntaskAgent(work_queues=[name]) as agent:
         agent.work_queue_prefix = ["goodbye-"]
         await agent.get_and_submit_flow_runs()
     assert not await models.work_queues.read_work_queue_by_name(
         session=session, name=name
     )
-    assert f"Created work queue '{name}'." not in prefect_caplog.text
+    assert f"Created work queue '{name}'." not in syntask_caplog.text
 
 
 async def test_agent_gracefully_handles_error_when_creating_work_queue(
     session,
     monkeypatch,
-    prefect_caplog,
+    syntask_caplog,
     work_pool,
 ):
     """
@@ -326,9 +326,9 @@ async def test_agent_gracefully_handles_error_when_creating_work_queue(
     async def bad_create(self, **kwargs):
         raise ValueError("No!")
 
-    monkeypatch.setattr("prefect.client.PrefectClient.create_work_queue", bad_create)
+    monkeypatch.setattr("syntask.client.SyntaskClient.create_work_queue", bad_create)
 
-    async with PrefectAgent(work_queues=[name], work_pool_name=work_pool.name) as agent:
+    async with SyntaskAgent(work_queues=[name], work_pool_name=work_pool.name) as agent:
         await agent.get_and_submit_flow_runs()
 
     # work queue was not created
@@ -336,19 +336,19 @@ async def test_agent_gracefully_handles_error_when_creating_work_queue(
         session=session, work_queue_name=name, work_pool_name=work_pool.name
     )
 
-    assert "No!" in prefect_caplog.text
+    assert "No!" in syntask_caplog.text
 
 
-async def test_agent_caches_work_queues(prefect_client, deployment, monkeypatch):
-    work_queue = await prefect_client.read_work_queue(deployment.work_queue.id)
+async def test_agent_caches_work_queues(syntask_client, deployment, monkeypatch):
+    work_queue = await syntask_client.read_work_queue(deployment.work_queue.id)
 
     async def read_queue(name, work_pool_name=None):
         return work_queue
 
     mock = AsyncMock(side_effect=read_queue)
-    monkeypatch.setattr("prefect.client.PrefectClient.read_work_queue_by_name", mock)
+    monkeypatch.setattr("syntask.client.SyntaskClient.read_work_queue_by_name", mock)
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[work_queue.name], prefetch_seconds=10
     ) as agent:
         await agent.get_and_submit_flow_runs()
@@ -362,12 +362,12 @@ async def test_agent_caches_work_queues(prefect_client, deployment, monkeypatch)
 
 
 async def test_agent_with_work_queue_name_survives_queue_deletion(
-    prefect_client, deployment
+    syntask_client, deployment
 ):
     """Ensure that cached work queues don't create errors if deleted"""
-    work_queue = await prefect_client.read_work_queue(deployment.work_queue.id)
+    work_queue = await syntask_client.read_work_queue(deployment.work_queue.id)
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[work_queue.name], prefetch_seconds=10
     ) as agent:
         agent.submit_run = AsyncMock()  # do not actually run
@@ -375,19 +375,19 @@ async def test_agent_with_work_queue_name_survives_queue_deletion(
         await agent.get_and_submit_flow_runs()
 
         # delete the work queue
-        await prefect_client.delete_work_queue_by_id(work_queue.id)
+        await syntask_client.delete_work_queue_by_id(work_queue.id)
 
         # gracefully handled
         await agent.get_and_submit_flow_runs()
 
 
-async def test_agent_internal_submit_run_called(prefect_client, deployment):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+async def test_agent_internal_submit_run_called(syntask_client, deployment):
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=Scheduled(scheduled_time=pendulum.now("utc")),
     )
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name], prefetch_seconds=10
     ) as agent:
         agent.submit_run = AsyncMock()
@@ -396,7 +396,7 @@ async def test_agent_internal_submit_run_called(prefect_client, deployment):
     agent.submit_run.assert_called_once_with(flow_run)
 
 
-async def test_agent_runs_multiple_work_queues(prefect_client, session, flow):
+async def test_agent_runs_multiple_work_queues(syntask_client, session, flow):
     # create two deployments
     deployment_a = await models.deployments.create_deployment(
         session=session,
@@ -417,16 +417,16 @@ async def test_agent_runs_multiple_work_queues(prefect_client, session, flow):
     await session.commit()
 
     # create two runs
-    flow_run_a = await prefect_client.create_flow_run_from_deployment(
+    flow_run_a = await syntask_client.create_flow_run_from_deployment(
         deployment_a.id,
         state=Scheduled(scheduled_time=pendulum.now("utc")),
     )
-    flow_run_b = await prefect_client.create_flow_run_from_deployment(
+    flow_run_b = await syntask_client.create_flow_run_from_deployment(
         deployment_b.id,
         state=Scheduled(scheduled_time=pendulum.now("utc")),
     )
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment_a.work_queue_name, deployment_b.work_queue_name],
         prefetch_seconds=10,
     ) as agent:
@@ -497,24 +497,24 @@ class TestInfrastructureIntegration:
     @pytest.fixture
     def mock_propose_state(self, monkeypatch):
         mock = AsyncMock()
-        monkeypatch.setattr("prefect.agent.propose_state", mock)
+        monkeypatch.setattr("syntask.agent.propose_state", mock)
 
         yield mock
 
     async def test_agent_submits_using_the_retrieved_infrastructure(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
         infra_doc_id = deployment.infrastructure_document_id
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
-        flow = await prefect_client.read_flow(deployment.flow_id)
+        flow = await syntask_client.read_flow(deployment.flow_id)
 
-        infra_document = await prefect_client.read_block_document(infra_doc_id)
+        infra_document = await syntask_client.read_block_document(infra_doc_id)
         infrastructure = Block._from_block_document(infra_document)
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             await agent.get_and_submit_flow_runs()
@@ -526,58 +526,58 @@ class TestInfrastructureIntegration:
         )
 
     async def test_agent_submit_run_sets_pending_state(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             await agent.get_and_submit_flow_runs()
 
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
         assert flow_run.state.is_pending()
         mock_infrastructure_run.assert_called_once()
 
     async def test_agent_sets_infrastructure_pid(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             await agent.get_and_submit_flow_runs()
 
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
         assert flow_run.infrastructure_pid == "id-1234"
 
     async def test_agent_submit_run_does_not_wait_for_scheduled_time_before_submitting(
         self,
-        prefect_client,
+        syntask_client,
         deployment,
         mock_infrastructure_run,
         mock_anyio_sleep,
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc").add(seconds=10)),
         )
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             agent.submitting_flow_run_ids.add(flow_run.id)
             with mock_anyio_sleep.assert_sleeps_for(0):
                 await agent.submit_run(flow_run)
 
-        state = (await prefect_client.read_flow_run(flow_run.id)).state
+        state = (await syntask_client.read_flow_run(flow_run.id)).state
         assert (
             state.timestamp.add(seconds=1) < flow_run.state.state_details.scheduled_time
         ), "Pending state time should be before the scheduled time"
@@ -587,18 +587,18 @@ class TestInfrastructureIntegration:
     @pytest.mark.parametrize("return_state", [Scheduled(), Running()])
     async def test_agent_submit_run_aborts_if_server_returns_non_pending_state(
         self,
-        prefect_client,
+        syntask_client,
         deployment,
         mock_infrastructure_run,
         return_state,
         mock_propose_state,
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10, limit=2
         ) as agent:
             agent.submitting_flow_run_ids.add(flow_run.id)
@@ -621,16 +621,16 @@ class TestInfrastructureIntegration:
         )
 
     async def test_agent_submit_run_aborts_if_flow_run_is_missing(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
 
-        await prefect_client.delete_flow_run(flow_run.id)
+        await syntask_client.delete_flow_run(flow_run.id)
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10, limit=2
         ) as agent:
             agent.submitting_flow_run_ids.add(flow_run.id)
@@ -651,14 +651,14 @@ class TestInfrastructureIntegration:
         )
 
     async def test_agent_submit_run_aborts_without_raising_if_server_raises_abort(
-        self, prefect_client, deployment, mock_infrastructure_run, mock_propose_state
+        self, syntask_client, deployment, mock_infrastructure_run, mock_propose_state
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10, limit=2
         ) as agent:
             agent.submitting_flow_run_ids.add(flow_run.id)
@@ -679,14 +679,14 @@ class TestInfrastructureIntegration:
         )
 
     async def test_agent_fails_flow_if_get_infrastructure_fails(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10, limit=2
         ) as agent:
             agent.submitting_flow_run_ids.add(flow_run.id)
@@ -706,30 +706,30 @@ class TestInfrastructureIntegration:
             agent.limiter.borrowed_tokens == 0
         ), "The concurrency slot should be released"
 
-        state = (await prefect_client.read_flow_run(flow_run.id)).state
+        state = (await syntask_client.read_flow_run(flow_run.id)).state
         assert state.is_failed()
         with pytest.raises(FailedRun, match="Submission failed. ValueError: Bad!"):
             await state.result()
 
     async def test_agent_crashes_flow_if_infrastructure_submission_fails(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
         infra_doc_id = deployment.infrastructure_document_id
-        infra_document = await prefect_client.read_block_document(infra_doc_id)
+        infra_document = await syntask_client.read_block_document(infra_doc_id)
         infrastructure = Block._from_block_document(infra_document)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
-        flow = await prefect_client.read_flow(deployment.flow_id)
+        flow = await syntask_client.read_flow(deployment.flow_id)
 
         def raise_value_error():
             raise ValueError("Hello!")
 
         mock_infrastructure_run.pre_start_side_effect = raise_value_error
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             [deployment.work_queue_name], prefetch_seconds=10, limit=2
         ) as agent:
             agent.logger = MagicMock()
@@ -748,7 +748,7 @@ class TestInfrastructureIntegration:
             agent.limiter.borrowed_tokens == 0
         ), "The concurrency slot should be released"
 
-        state = (await prefect_client.read_flow_run(flow_run.id)).state
+        state = (await syntask_client.read_flow_run(flow_run.id)).state
         assert state.is_crashed()
         with pytest.raises(
             CrashedRun, match="Flow run could not be submitted to infrastructure"
@@ -756,24 +756,24 @@ class TestInfrastructureIntegration:
             await state.result()
 
     async def test_agent_does_not_fail_flow_if_infrastructure_watch_fails(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
         infra_doc_id = deployment.infrastructure_document_id
-        infra_document = await prefect_client.read_block_document(infra_doc_id)
+        infra_document = await syntask_client.read_block_document(infra_doc_id)
         infrastructure = Block._from_block_document(infra_document)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
-        flow = await prefect_client.read_flow(deployment.flow_id)
+        flow = await syntask_client.read_flow(deployment.flow_id)
 
         def raise_value_error():
             raise ValueError("Hello!")
 
         mock_infrastructure_run.post_start_side_effect = raise_value_error
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             [deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             agent.logger = MagicMock()
@@ -790,13 +790,13 @@ class TestInfrastructureIntegration:
             "occurred."
         )
 
-        state = (await prefect_client.read_flow_run(flow_run.id)).state
+        state = (await syntask_client.read_flow_run(flow_run.id)).state
         assert state.is_pending(), f"State should be PENDING: {state!r}"
 
     async def test_agent_logs_if_infrastructure_does_not_mark_as_started(
-        self, prefect_client, deployment, mock_infrastructure_run
+        self, syntask_client, deployment, mock_infrastructure_run
     ):
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
@@ -806,7 +806,7 @@ class TestInfrastructureIntegration:
         # submission the same as if it had thrown an error.
         mock_infrastructure_run.mark_as_started = False
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             work_queues=[deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             agent.logger = MagicMock()
@@ -820,21 +820,21 @@ class TestInfrastructureIntegration:
         )
 
     async def test_agent_crashes_flow_if_infrastructure_returns_nonzero_status_code(
-        self, prefect_client, deployment, mock_infrastructure_run, caplog
+        self, syntask_client, deployment, mock_infrastructure_run, caplog
     ):
         infra_doc_id = deployment.infrastructure_document_id
-        infra_document = await prefect_client.read_block_document(infra_doc_id)
+        infra_document = await syntask_client.read_block_document(infra_doc_id)
         infrastructure = Block._from_block_document(infra_document)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
-        flow = await prefect_client.read_flow(deployment.flow_id)
+        flow = await syntask_client.read_flow(deployment.flow_id)
 
         mock_infrastructure_run.result_status_code = 9
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             [deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             await agent.get_and_submit_flow_runs()
@@ -849,7 +849,7 @@ class TestInfrastructureIntegration:
             "Flow run infrastructure exited with non-zero status code 9." in caplog.text
         )
 
-        state = (await prefect_client.read_flow_run(flow_run.id)).state
+        state = (await syntask_client.read_flow_run(flow_run.id)).state
         assert state.is_crashed()
         with pytest.raises(CrashedRun, match="exited with non-zero status code 9"):
             await state.result()
@@ -860,31 +860,31 @@ class TestInfrastructureIntegration:
     )
     async def test_agent_does_not_crashes_flow_if_already_in_terminal_state(
         self,
-        prefect_client,
+        syntask_client,
         deployment,
         mock_infrastructure_run,
         caplog,
         terminal_state_type,
     ):
         infra_doc_id = deployment.infrastructure_document_id
-        infra_document = await prefect_client.read_block_document(infra_doc_id)
+        infra_document = await syntask_client.read_block_document(infra_doc_id)
         infrastructure = Block._from_block_document(infra_document)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment.id,
             state=Scheduled(scheduled_time=pendulum.now("utc")),
         )
-        flow = await prefect_client.read_flow(deployment.flow_id)
+        flow = await syntask_client.read_flow(deployment.flow_id)
 
         async def update_flow_run_state():
-            await prefect_client.set_flow_run_state(
+            await syntask_client.set_flow_run_state(
                 flow_run.id, State(type=terminal_state_type, message="test")
             )
 
         mock_infrastructure_run.result_status_code = 9
         mock_infrastructure_run.post_start_side_effect = update_flow_run_state
 
-        async with PrefectAgent(
+        async with SyntaskAgent(
             [deployment.work_queue_name], prefetch_seconds=10
         ) as agent:
             await agent.get_and_submit_flow_runs()
@@ -897,15 +897,15 @@ class TestInfrastructureIntegration:
 
         assert f"Reported flow run '{flow_run.id}' as crashed" not in caplog.text
 
-        state = (await prefect_client.read_flow_run(flow_run.id)).state
+        state = (await syntask_client.read_flow_run(flow_run.id)).state
         assert state.type == terminal_state_type
         assert state.message == "test"
 
 
 async def test_agent_displays_message_on_work_queue_pause(
-    prefect_client, prefect_caplog, deployment_in_default_work_pool
+    syntask_client, syntask_caplog, deployment_in_default_work_pool
 ):
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment_in_default_work_pool.work_queue.name],
         prefetch_seconds=10,
     ) as agent:
@@ -915,10 +915,10 @@ async def test_agent_displays_message_on_work_queue_pause(
 
         assert (
             f"Work queue {deployment_in_default_work_pool.work_queue.name!r} ({deployment_in_default_work_pool.work_queue.id}) is paused."
-            not in prefect_caplog.text
+            not in syntask_caplog.text
         ), "Message should not be displayed before pausing"
 
-        await prefect_client.update_work_queue(
+        await syntask_client.update_work_queue(
             deployment_in_default_work_pool.work_queue.id, is_paused=True
         )
 
@@ -929,12 +929,12 @@ async def test_agent_displays_message_on_work_queue_pause(
         await agent.get_and_submit_flow_runs()
         assert (
             f"Work queue {deployment_in_default_work_pool.work_queue.name!r} ({deployment_in_default_work_pool.work_queue.id}) is paused."
-            in prefect_caplog.text
+            in syntask_caplog.text
         )
 
 
 async def test_agent_with_work_queue_and_work_pool(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment_in_non_default_work_pool: schemas.core.Deployment,
     work_pool: schemas.core.WorkPool,
     work_queue_1: schemas.core.WorkQueue,
@@ -944,7 +944,7 @@ async def test_agent_with_work_queue_and_work_pool(
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment_in_non_default_work_pool.id, state=state
         )
 
@@ -964,12 +964,12 @@ async def test_agent_with_work_queue_and_work_pool(
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(foo, state=Scheduled()),
+        await syntask_client.create_flow_run(foo, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
     # Pull runs from the work queue to get expected runs
-    responses = await prefect_client.get_scheduled_flow_runs_for_work_pool(
+    responses = await syntask_client.get_scheduled_flow_runs_for_work_pool(
         work_pool_name=work_pool.name,
         work_queue_names=[work_queue_1.name],
         scheduled_before=pendulum.now("UTC").add(seconds=10),
@@ -980,7 +980,7 @@ async def test_agent_with_work_queue_and_work_pool(
     # Should not include runs without deployments
     assert work_queue_flow_run_ids == set(flow_run_ids[1:4])
 
-    agent = PrefectAgent(
+    agent = SyntaskAgent(
         work_queues=[work_queue_1.name],
         work_pool_name=work_pool.name,
         prefetch_seconds=10,
@@ -995,7 +995,7 @@ async def test_agent_with_work_queue_and_work_pool(
 
 
 async def test_agent_with_work_pool(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment_in_non_default_work_pool: schemas.core.Deployment,
     work_pool: schemas.core.WorkPool,
     work_queue_1: schemas.core.WorkQueue,
@@ -1005,7 +1005,7 @@ async def test_agent_with_work_pool(
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment_in_non_default_work_pool.id, state=state
         )
 
@@ -1025,16 +1025,16 @@ async def test_agent_with_work_pool(
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(foo, state=Scheduled()),
+        await syntask_client.create_flow_run(foo, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
     # Pull runs from the work queue to get expected runs
-    work_queue = await prefect_client.read_work_queue_by_name(
+    work_queue = await syntask_client.read_work_queue_by_name(
         work_pool_name=work_pool.name,
         name=work_queue_1.name,
     )
-    responses = await prefect_client.get_scheduled_flow_runs_for_work_pool(
+    responses = await syntask_client.get_scheduled_flow_runs_for_work_pool(
         work_pool_name=work_pool.name,
         work_queue_names=[work_queue.name],
         scheduled_before=pendulum.now("UTC").add(seconds=10),
@@ -1045,7 +1045,7 @@ async def test_agent_with_work_pool(
     # Should not include runs without deployments
     assert work_queue_flow_run_ids == set(flow_run_ids[1:4])
 
-    agent = PrefectAgent(
+    agent = SyntaskAgent(
         work_pool_name=work_pool.name,
         prefetch_seconds=10,
     )
@@ -1059,7 +1059,7 @@ async def test_agent_with_work_pool(
 
 
 async def test_agent_with_work_pool_and_work_queue_prefix(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment_in_non_default_work_pool: schemas.core.Deployment,
     work_pool: schemas.core.WorkPool,
     work_queue_1: schemas.core.WorkQueue,
@@ -1069,7 +1069,7 @@ async def test_agent_with_work_pool_and_work_queue_prefix(
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment_in_non_default_work_pool.id, state=state
         )
 
@@ -1089,16 +1089,16 @@ async def test_agent_with_work_pool_and_work_queue_prefix(
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(foo, state=Scheduled()),
+        await syntask_client.create_flow_run(foo, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
     # Pull runs from the work queue to get expected runs
-    work_queue = await prefect_client.read_work_queue_by_name(
+    work_queue = await syntask_client.read_work_queue_by_name(
         work_pool_name=work_pool.name,
         name=work_queue_1.name,
     )
-    responses = await prefect_client.get_scheduled_flow_runs_for_work_pool(
+    responses = await syntask_client.get_scheduled_flow_runs_for_work_pool(
         work_pool_name=work_pool.name,
         work_queue_names=[work_queue.name],
         scheduled_before=pendulum.now("UTC").add(seconds=10),
@@ -1109,7 +1109,7 @@ async def test_agent_with_work_pool_and_work_queue_prefix(
     # Should not include runs without deployments
     assert work_queue_flow_run_ids == set(flow_run_ids[1:4])
 
-    agent = PrefectAgent(
+    agent = SyntaskAgent(
         work_pool_name=work_pool.name,
         work_queue_prefix="test",
         prefetch_seconds=10,
@@ -1159,7 +1159,7 @@ async def deployment_on_default_queue(
 
 
 async def test_agent_runs_high_priority_flow_runs_first(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment_in_non_default_work_pool: schemas.core.Deployment,
     deployment_on_default_queue: schemas.core.Deployment,
     work_pool: schemas.core.WorkPool,
@@ -1180,12 +1180,12 @@ async def test_agent_runs_high_priority_flow_runs_first(
         pass
 
     def create_high_priority_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment_on_default_queue.id, state=state
         )
 
     def create_low_priority_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             deployment_in_non_default_work_pool.id, state=state
         )
 
@@ -1205,11 +1205,11 @@ async def test_agent_runs_high_priority_flow_runs_first(
         ),
         await create_low_priority_run_with_deployment(Running()),
         await create_low_priority_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(foo, state=Scheduled()),
+        await syntask_client.create_flow_run(foo, state=Scheduled()),
     ]
     flow_run_ids = [run.id for run in flow_runs]
 
-    agent = PrefectAgent(work_pool_name=work_pool.name, prefetch_seconds=10, limit=1)
+    agent = SyntaskAgent(work_pool_name=work_pool.name, prefetch_seconds=10, limit=1)
 
     async with agent:
         agent.submit_run = AsyncMock()  # do not actually run anything

@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -9,9 +9,9 @@ else:
 
 import pytest
 
-from prefect._internal.compatibility.deprecated import (
+from syntask._internal.compatibility.deprecated import (
     DeprecatedInfraOverridesField,
-    PrefectDeprecationWarning,
+    SyntaskDeprecationWarning,
     deprecated_callable,
     deprecated_class,
     deprecated_field,
@@ -70,7 +70,7 @@ def test_deprecated_callable():
         pass
 
     with pytest.warns(
-        PrefectDeprecationWarning,
+        SyntaskDeprecationWarning,
         match=(
             "test_deprecated.test_deprecated_callable.<locals>.foo has been deprecated."
             " It will not be available after Jul 2022. test help"
@@ -92,7 +92,7 @@ def test_deprecated_parameter():
     foo()
 
     with pytest.warns(
-        PrefectDeprecationWarning,
+        SyntaskDeprecationWarning,
         match=(
             "The parameter 'y' for 'foo' has been deprecated. It will not be available"
             " after Jul 2022. test help"
@@ -101,7 +101,7 @@ def test_deprecated_parameter():
         foo(y=10)
 
     # positional
-    with pytest.warns(PrefectDeprecationWarning):
+    with pytest.warns(SyntaskDeprecationWarning):
         foo(0, 10)
 
 
@@ -117,7 +117,7 @@ def test_deprecated_parameter_when():
     foo()
 
     with pytest.warns(
-        PrefectDeprecationWarning,
+        SyntaskDeprecationWarning,
         match=(
             "The parameter 'x' for 'foo' has been deprecated. It will not be available"
             " after Jul 2022. test help"
@@ -126,11 +126,11 @@ def test_deprecated_parameter_when():
         foo(10)
 
     # positional
-    with pytest.warns(PrefectDeprecationWarning):
+    with pytest.warns(SyntaskDeprecationWarning):
         foo(10)
 
     # kwarg
-    with pytest.warns(PrefectDeprecationWarning):
+    with pytest.warns(SyntaskDeprecationWarning):
         foo(x=10)
 
 
@@ -145,7 +145,7 @@ def test_deprecated_field():
     Foo()
 
     with pytest.warns(
-        PrefectDeprecationWarning,
+        SyntaskDeprecationWarning,
         match=(
             "The field 'y' in 'Foo' has been deprecated. It will not be available after"
             " Jul 2022. test help"
@@ -168,7 +168,7 @@ def test_deprecated_field_when():
     Foo()
 
     with pytest.warns(
-        PrefectDeprecationWarning,
+        SyntaskDeprecationWarning,
         match=(
             "The field 'x' in 'Foo' has been deprecated. It will not be available after"
             " Jul 2022. test help"
@@ -184,7 +184,7 @@ def test_deprecated_class():
             pass
 
     with pytest.warns(
-        PrefectDeprecationWarning,
+        SyntaskDeprecationWarning,
         match=(
             "MyClass has been deprecated. It will not be available after Jul 2022."
             " test help"

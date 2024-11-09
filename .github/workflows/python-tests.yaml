@@ -106,9 +106,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -119,7 +119,7 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
         # Parallelize tests by scope to reduce expensive service fixture duplication
         # Do not allow the test suite to build images, as we want the prebuilt images to be tested
@@ -219,9 +219,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -232,7 +232,7 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
         # Parallelize tests by scope to reduce expensive service fixture duplication
         # Do not allow the test suite to build images, as we want the prebuilt images to be tested
@@ -327,8 +327,8 @@ jobs:
           python -m pip install -U uv
           uv pip install --upgrade --system -e .[dev] 'pydantic>=2.4,<3'
 
-      - name: Set PREFECT_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS env var
-        run: echo "PREFECT_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS=1" >> $GITHUB_ENV
+      - name: Set SYNTASK_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS env var
+        run: echo "SYNTASK_EXPERIMENTAL_ENABLE_PYDANTIC_V2_INTERNALS=1" >> $GITHUB_ENV
 
       - name: Start database container
         if: ${{ startsWith(matrix.database, 'postgres') }}
@@ -342,9 +342,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -355,7 +355,7 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
         # Parallelize tests by scope to reduce expensive service fixture duplication
         # Do not allow the test suite to build images, as we want the prebuilt images to be tested
@@ -456,9 +456,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -469,7 +469,7 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
         # Parallelize tests by scope to reduce expensive service fixture duplication
         # Do not allow the test suite to build images, as we want the prebuilt images to be tested
@@ -540,11 +540,11 @@ jobs:
         if: ${{ steps.check_failure.outputs.too_many_tests_failed == 'true' }}
         uses: 8398a7/action-slack@v3
         with:
-          author_name: Prefect OSS Tests Failing on Main
+          author_name: Syntask OSS Tests Failing on Main
           channel: CBH18KG8G # This is #engineering
           fields: message,commit,author,workflowRun
           status: failure
-          text: ":warning: Unit tests are failing in Prefect's main branch. Commit author: please either fix or remove the failing tests. If you remove the failing tests create a GitHub issue with the details."
+          text: ":warning: Unit tests are failing in Syntask's main branch. Commit author: please either fix or remove the failing tests. If you remove the failing tests create a GitHub issue with the details."
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ENGINEERING_REVIEW_SLACK_WEBHOOK_URL }}
 
@@ -607,14 +607,14 @@ jobs:
           context: .
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
-            PREFECT_EXTRAS=[dev]
-          tags: prefecthq/prefect-dev:${{ steps.get_image_tag.outputs.image_tag }}
+            SYNTASK_EXTRAS=[dev]
+          tags: syntaskhq/syntask-dev:${{ steps.get_image_tag.outputs.image_tag }}
           outputs: type=docker,dest=/tmp/image.tar
 
       - name: Test Docker image
         run: |
           docker load --input /tmp/image.tar
-          docker run --rm prefecthq/prefect-dev:${{ steps.get_image_tag.outputs.image_tag }} prefect version
+          docker run --rm syntaskhq/syntask-dev:${{ steps.get_image_tag.outputs.image_tag }} syntask version
 
       - name: Install packages
         run: |
@@ -632,9 +632,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -645,7 +645,7 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
       - name: Run tests
         run: >
@@ -664,7 +664,7 @@ jobs:
           DD_API_KEY: ${{ secrets.DD_API_KEY_CI_VISIBILITY }}
           DD_SITE: datadoghq.com
           DD_ENV: ci
-          DD_SERVICE: prefect
+          DD_SERVICE: syntask
 
   run-docker-tests:
     runs-on:
@@ -728,14 +728,14 @@ jobs:
           context: .
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
-            PREFECT_EXTRAS=[dev]
-          tags: prefecthq/prefect-dev:${{ steps.get_image_tag.outputs.image_tag }}
+            SYNTASK_EXTRAS=[dev]
+          tags: syntaskhq/syntask-dev:${{ steps.get_image_tag.outputs.image_tag }}
           outputs: type=docker,dest=/tmp/image.tar
 
       - name: Test Docker image
         run: |
           docker load --input /tmp/image.tar
-          docker run --rm prefecthq/prefect-dev:${{ steps.get_image_tag.outputs.image_tag }} prefect version
+          docker run --rm syntaskhq/syntask-dev:${{ steps.get_image_tag.outputs.image_tag }} syntask version
 
       - name: Install packages
         run: |
@@ -754,9 +754,9 @@ jobs:
           --health-retries 5
           --publish 5432:5432
           --tmpfs /var/lib/postgresql/data
-          --env POSTGRES_USER="prefect"
-          --env POSTGRES_PASSWORD="prefect"
-          --env POSTGRES_DB="prefect"
+          --env POSTGRES_USER="syntask"
+          --env POSTGRES_PASSWORD="syntask"
+          --env POSTGRES_DB="syntask"
           --env LANG="C.UTF-8"
           --env LANGUAGE="C.UTF-8"
           --env LC_ALL="C.UTF-8"
@@ -767,7 +767,7 @@ jobs:
 
           ./scripts/wait-for-healthy-container.sh postgres 30
 
-          echo "PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect@localhost/prefect" >> $GITHUB_ENV
+          echo "SYNTASK_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://syntask:syntask@localhost/syntask" >> $GITHUB_ENV
 
         # Parallelize tests by scope to reduce expensive service fixture duplication
         # Do not allow the test suite to build images, as we want the prebuilt images to be tested

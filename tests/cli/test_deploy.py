@@ -17,51 +17,51 @@ import readchar
 import yaml
 from typer import Exit
 
-import prefect
-from prefect.blocks.system import JSON, Secret
-from prefect.cli.deploy import (
-    _check_for_matching_deployment_name_and_entrypoint_in_prefect_file,
+import syntask
+from syntask.blocks.system import JSON, Secret
+from syntask.cli.deploy import (
+    _check_for_matching_deployment_name_and_entrypoint_in_syntask_file,
     _create_deployment_triggers,
     _initialize_deployment_triggers,
 )
-from prefect.client.orchestration import PrefectClient, ServerType
-from prefect.client.schemas.objects import WorkPool
-from prefect.client.schemas.schedules import (
+from syntask.client.orchestration import SyntaskClient, ServerType
+from syntask.client.schemas.objects import WorkPool
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,
 )
-from prefect.deployments.base import (
-    _save_deployment_to_prefect_file,
+from syntask.deployments.base import (
+    _save_deployment_to_syntask_file,
     initialize_project,
 )
-from prefect.deployments.steps.core import StepExecutionError
-from prefect.events import DeploymentEventTrigger, Posture
-from prefect.exceptions import ObjectAlreadyExists, ObjectNotFound
-from prefect.infrastructure.container import DockerRegistry
-from prefect.server.schemas.actions import (
+from syntask.deployments.steps.core import StepExecutionError
+from syntask.events import DeploymentEventTrigger, Posture
+from syntask.exceptions import ObjectAlreadyExists, ObjectNotFound
+from syntask.infrastructure.container import DockerRegistry
+from syntask.server.schemas.actions import (
     BlockDocumentCreate,
     BlockSchemaCreate,
     BlockTypeCreate,
     WorkPoolCreate,
 )
-from prefect.settings import (
-    PREFECT_DEFAULT_WORK_POOL_NAME,
-    PREFECT_UI_URL,
+from syntask.settings import (
+    SYNTASK_DEFAULT_WORK_POOL_NAME,
+    SYNTASK_UI_URL,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
-from prefect.utilities.filesystem import tmpchdir
-from prefect.utilities.slugify import slugify
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.utilities.filesystem import tmpchdir
+from syntask.utilities.slugify import slugify
 
-TEST_PROJECTS_DIR = prefect.__development_base_path__ / "tests" / "test-projects"
+TEST_PROJECTS_DIR = syntask.__development_base_path__ / "tests" / "test-projects"
 
 
 @pytest.fixture
 def interactive_console(monkeypatch):
-    monkeypatch.setattr("prefect.cli.deploy.is_interactive", lambda: True)
+    monkeypatch.setattr("syntask.cli.deploy.is_interactive", lambda: True)
 
     # `readchar` does not like the fake stdin provided by typer isolation so we provide
     # a version that does not require a fd to be attached
@@ -83,14 +83,14 @@ def project_dir(tmp_path):
     with tmpchdir(tmp_path):
         if sys.version_info >= (3, 8):
             shutil.copytree(TEST_PROJECTS_DIR, tmp_path, dirs_exist_ok=True)
-            prefect_home = tmp_path / ".prefect"
-            prefect_home.mkdir(exist_ok=True, mode=0o0700)
+            syntask_home = tmp_path / ".syntask"
+            syntask_home.mkdir(exist_ok=True, mode=0o0700)
             initialize_project()
             yield tmp_path
         else:
             shutil.copytree(TEST_PROJECTS_DIR, tmp_path / "three-seven")
-            prefect_home = tmp_path / "three-seven" / ".prefect"
-            prefect_home.mkdir(exist_ok=True, mode=0o0700)
+            syntask_home = tmp_path / "three-seven" / ".syntask"
+            syntask_home.mkdir(exist_ok=True, mode=0o0700)
             initialize_project()
             yield tmp_path / "three-seven"
 
@@ -100,11 +100,11 @@ def project_dir_with_single_deployment_format(tmp_path):
     with tmpchdir(tmp_path):
         if sys.version_info >= (3, 8):
             shutil.copytree(TEST_PROJECTS_DIR, tmp_path, dirs_exist_ok=True)
-            prefect_home = tmp_path / ".prefect"
-            prefect_home.mkdir(exist_ok=True, mode=0o0700)
+            syntask_home = tmp_path / ".syntask"
+            syntask_home.mkdir(exist_ok=True, mode=0o0700)
             initialize_project()
 
-            with open("prefect.yaml", "r") as f:
+            with open("syntask.yaml", "r") as f:
                 contents = yaml.safe_load(f)
 
             contents["deployments"][0]["schedule"] = None
@@ -115,10 +115,10 @@ def project_dir_with_single_deployment_format(tmp_path):
             yield tmp_path
         else:
             shutil.copytree(TEST_PROJECTS_DIR, tmp_path / "three-seven")
-            (tmp_path / "three-seven" / ".prefect").mkdir(exist_ok=True, mode=0o0700)
+            (tmp_path / "three-seven" / ".syntask").mkdir(exist_ok=True, mode=0o0700)
             initialize_project()
 
-            with open("prefect.yaml", "r") as f:
+            with open("syntask.yaml", "r") as f:
                 contents = yaml.safe_load(f)
 
             contents["deployments"][0]["schedule"] = None
@@ -131,7 +131,7 @@ def project_dir_with_single_deployment_format(tmp_path):
 
 @pytest.fixture
 def uninitialized_project_dir(project_dir):
-    Path(project_dir, "prefect.yaml").unlink()
+    Path(project_dir, "syntask.yaml").unlink()
     return project_dir
 
 
@@ -154,18 +154,18 @@ def uninitialized_project_dir_with_git_with_remote(
 
 
 @pytest.fixture
-async def default_agent_pool(prefect_client):
+async def default_agent_pool(syntask_client):
     try:
-        return await prefect_client.create_work_pool(
-            WorkPoolCreate(name="default-agent-pool", type="prefect-agent")
+        return await syntask_client.create_work_pool(
+            WorkPoolCreate(name="default-agent-pool", type="syntask-agent")
         )
     except ObjectAlreadyExists:
-        return await prefect_client.read_work_pool("default-agent-pool")
+        return await syntask_client.read_work_pool("default-agent-pool")
 
 
 @pytest.fixture
-async def docker_work_pool(prefect_client: PrefectClient) -> WorkPool:
-    return await prefect_client.create_work_pool(
+async def docker_work_pool(syntask_client: SyntaskClient) -> WorkPool:
+    return await syntask_client.create_work_pool(
         work_pool=WorkPoolCreate(
             name="test-docker-work-pool",
             type="docker",
@@ -194,8 +194,8 @@ async def mock_prompt(monkeypatch):
         else:
             return original_prompt(message, password=password, **kwargs)
 
-    original_prompt = prefect.cli._prompts.prompt
-    monkeypatch.setattr("prefect.cli._prompts.prompt", new_prompt)
+    original_prompt = syntask.cli._prompts.prompt
+    monkeypatch.setattr("syntask.cli._prompts.prompt", new_prompt)
 
 
 @pytest.fixture
@@ -206,8 +206,8 @@ def mock_provide_password(monkeypatch):
         else:
             return original_prompt(message, password=password, **kwargs)
 
-    original_prompt = prefect.cli._prompts.prompt
-    monkeypatch.setattr("prefect.cli.deploy.prompt", new_prompt)
+    original_prompt = syntask.cli._prompts.prompt
+    monkeypatch.setattr("syntask.cli.deploy.prompt", new_prompt)
 
 
 @pytest.fixture
@@ -216,11 +216,11 @@ def mock_build_docker_image(monkeypatch):
     mock_build.return_value = {"build-image": {"image": "{{ build-image.image }}"}}
 
     monkeypatch.setattr(
-        "prefect.deployments.steps.core.import_object",
+        "syntask.deployments.steps.core.import_object",
         lambda x: mock_build,
     )
     monkeypatch.setattr(
-        "prefect.deployments.steps.core.import_module",
+        "syntask.deployments.steps.core.import_module",
         lambda x: None,
     )
 
@@ -228,22 +228,22 @@ def mock_build_docker_image(monkeypatch):
 
 
 @pytest.fixture
-async def aws_credentials(prefect_client):
-    aws_credentials_type = await prefect_client.create_block_type(
+async def aws_credentials(syntask_client):
+    aws_credentials_type = await syntask_client.create_block_type(
         block_type=BlockTypeCreate(
             name="AWS Credentials",
             slug="aws-credentials",
         )
     )
 
-    aws_credentials_schema = await prefect_client.create_block_schema(
+    aws_credentials_schema = await syntask_client.create_block_schema(
         block_schema=BlockSchemaCreate(
             block_type_id=aws_credentials_type.id,
             fields={"properties": {"aws_access_key_id": {"type": "string"}}},
         )
     )
 
-    return await prefect_client.create_block_document(
+    return await syntask_client.create_block_document(
         block_document=BlockDocumentCreate(
             name="bezos-creds",
             block_type_id=aws_credentials_type.id,
@@ -255,14 +255,14 @@ async def aws_credentials(prefect_client):
 
 @pytest.fixture
 def set_ui_url():
-    with temporary_settings({PREFECT_UI_URL: "http://gimmedata.com"}):
+    with temporary_settings({SYNTASK_UI_URL: "http://gimmedata.com"}):
         yield
 
 
 class TestProjectDeploy:
     @pytest.fixture
     def uninitialized_project_dir(self, project_dir):
-        Path(project_dir, "prefect.yaml").unlink()
+        Path(project_dir, "syntask.yaml").unlink()
         return project_dir
 
     @pytest.fixture
@@ -281,8 +281,8 @@ class TestProjectDeploy:
         )
         return uninitialized_project_dir_with_git_no_remote
 
-    async def test_project_deploy(self, project_dir, prefect_client):
-        await prefect_client.create_work_pool(
+    async def test_project_deploy(self, project_dir, syntask_client):
+        await syntask_client.create_work_pool(
             WorkPoolCreate(name="test-pool", type="test")
         )
         await run_sync_in_worker_thread(
@@ -294,11 +294,11 @@ class TestProjectDeploy:
             expected_code=0,
             expected_output_contains=[
                 "An important name/test-name",
-                "prefect worker start --pool 'test-pool'",
+                "syntask worker start --pool 'test-pool'",
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -309,12 +309,12 @@ class TestProjectDeploy:
         assert deployment.enforce_parameter_schema is False
 
     async def test_project_deploy_with_default_work_pool(
-        self, project_dir, prefect_client
+        self, project_dir, syntask_client
     ):
-        await prefect_client.create_work_pool(
+        await syntask_client.create_work_pool(
             WorkPoolCreate(name="test-pool", type="test")
         )
-        with temporary_settings(updates={PREFECT_DEFAULT_WORK_POOL_NAME: "test-pool"}):
+        with temporary_settings(updates={SYNTASK_DEFAULT_WORK_POOL_NAME: "test-pool"}):
             await run_sync_in_worker_thread(
                 invoke_and_assert,
                 command=(
@@ -324,11 +324,11 @@ class TestProjectDeploy:
                 expected_code=0,
                 expected_output_contains=[
                     "An important name/test-name",
-                    "prefect worker start --pool 'test-pool'",
+                    "syntask worker start --pool 'test-pool'",
                 ],
             )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -339,9 +339,9 @@ class TestProjectDeploy:
         assert deployment.enforce_parameter_schema is False
 
     async def test_project_deploy_with_no_deployment_file(
-        self, project_dir, prefect_client
+        self, project_dir, syntask_client
     ):
-        await prefect_client.create_work_pool(
+        await syntask_client.create_work_pool(
             WorkPoolCreate(name="test-pool", type="test")
         )
         result = await run_sync_in_worker_thread(
@@ -354,7 +354,7 @@ class TestProjectDeploy:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -364,8 +364,8 @@ class TestProjectDeploy:
         assert deployment.job_variables == {"env": "prod"}
         assert deployment.enforce_parameter_schema is True
 
-    async def test_project_deploy_with_no_prefect_yaml(self, project_dir, work_pool):
-        Path(project_dir, "prefect.yaml").unlink()
+    async def test_project_deploy_with_no_syntask_yaml(self, project_dir, work_pool):
+        Path(project_dir, "syntask.yaml").unlink()
 
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -375,24 +375,24 @@ class TestProjectDeploy:
             ),
             expected_code=0,
             expected_output_contains=[
-                "Your Prefect workers will attempt to load your flow from:",
+                "Your Syntask workers will attempt to load your flow from:",
                 "To see more options for managing your flow's code, run:",
-                "$ prefect init",
+                "$ syntask init",
             ],
         )
 
     async def test_deploy_does_not_prompt_storage_when_pull_step_exists(
         self, project_dir, work_pool, interactive_console
     ):
-        # write a pull step to the prefect.yaml
-        with open("prefect.yaml", "r") as f:
+        # write a pull step to the syntask.yaml
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         config["pull"] = [
-            {"prefect.deployments.steps.set_working_directory": {"directory": "."}}
+            {"syntask.deployments.steps.set_working_directory": {"directory": "."}}
         ]
 
-        with open("prefect.yaml", "w") as f:
+        with open("syntask.yaml", "w") as f:
             yaml.safe_dump(config, f)
 
         await run_sync_in_worker_thread(
@@ -415,7 +415,7 @@ class TestProjectDeploy:
 
     class TestGeneratedPullAction:
         async def test_project_deploy_generates_pull_action(
-            self, work_pool, prefect_client, uninitialized_project_dir
+            self, work_pool, syntask_client, uninitialized_project_dir
         ):
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -426,21 +426,21 @@ class TestProjectDeploy:
                 expected_code=0,
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
             assert deployment.pull_steps == [
                 {
-                    "prefect.deployments.steps.set_working_directory": {
+                    "syntask.deployments.steps.set_working_directory": {
                         "directory": str(uninitialized_project_dir)
                     }
                 }
             ]
 
-        async def test_project_deploy_with_no_prefect_yaml_git_repo_no_remote(
+        async def test_project_deploy_with_no_syntask_yaml_git_repo_no_remote(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             uninitialized_project_dir_with_git_no_remote,
         ):
             await run_sync_in_worker_thread(
@@ -453,22 +453,22 @@ class TestProjectDeploy:
                 expected_code=0,
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
             assert deployment.pull_steps == [
                 {
-                    "prefect.deployments.steps.set_working_directory": {
+                    "syntask.deployments.steps.set_working_directory": {
                         "directory": str(uninitialized_project_dir_with_git_no_remote)
                     }
                 }
             ]
 
         @pytest.mark.usefixtures("interactive_console")
-        async def test_project_deploy_with_no_prefect_yaml_git_repo_user_rejects(
+        async def test_project_deploy_with_no_syntask_yaml_git_repo_user_rejects(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             uninitialized_project_dir_with_git_with_remote,
         ):
             await run_sync_in_worker_thread(
@@ -484,12 +484,12 @@ class TestProjectDeploy:
                 expected_code=0,
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
             assert deployment.pull_steps == [
                 {
-                    "prefect.deployments.steps.set_working_directory": {
+                    "syntask.deployments.steps.set_working_directory": {
                         "directory": str(uninitialized_project_dir_with_git_with_remote)
                     }
                 }
@@ -498,8 +498,8 @@ class TestProjectDeploy:
         @pytest.mark.usefixtures(
             "interactive_console", "uninitialized_project_dir_with_git_with_remote"
         )
-        async def test_project_deploy_with_no_prefect_yaml_git_repo(
-            self, work_pool, prefect_client
+        async def test_project_deploy_with_no_syntask_yaml_git_repo(
+            self, work_pool, syntask_client
         ):
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -535,22 +535,22 @@ class TestProjectDeploy:
                 ],
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
             assert deployment.pull_steps == [
                 {
-                    "prefect.deployments.steps.git_clone": {
+                    "syntask.deployments.steps.git_clone": {
                         "repository": "https://example.com/org/repo.git",
                         "branch": "main",
                     }
                 }
             ]
 
-            prefect_file_contents = yaml.safe_load(Path("prefect.yaml").read_text())
-            assert prefect_file_contents["pull"] == [
+            syntask_file_contents = yaml.safe_load(Path("syntask.yaml").read_text())
+            assert syntask_file_contents["pull"] == [
                 {
-                    "prefect.deployments.steps.git_clone": {
+                    "syntask.deployments.steps.git_clone": {
                         "repository": "https://example.com/org/repo.git",
                         "branch": "main",
                     }
@@ -560,8 +560,8 @@ class TestProjectDeploy:
         @pytest.mark.usefixtures(
             "interactive_console", "uninitialized_project_dir_with_git_with_remote"
         )
-        async def test_project_deploy_with_no_prefect_yaml_git_repo_user_overrides(
-            self, work_pool, prefect_client
+        async def test_project_deploy_with_no_syntask_yaml_git_repo_user_overrides(
+            self, work_pool, syntask_client
         ):
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -607,12 +607,12 @@ class TestProjectDeploy:
                 ],
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
             assert deployment.pull_steps == [
                 {
-                    "prefect.deployments.steps.git_clone": {
+                    "syntask.deployments.steps.git_clone": {
                         "repository": "https://example.com/org/repo-override.git",
                         "branch": "dev",
                     }
@@ -624,10 +624,10 @@ class TestProjectDeploy:
             "uninitialized_project_dir_with_git_with_remote",
             "mock_provide_password",
         )
-        async def test_project_deploy_with_no_prefect_yaml_git_repo_with_token(
+        async def test_project_deploy_with_no_syntask_yaml_git_repo_with_token(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
         ):
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -666,16 +666,16 @@ class TestProjectDeploy:
                 ],
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
             assert deployment.pull_steps == [
                 {
-                    "prefect.deployments.steps.git_clone": {
+                    "syntask.deployments.steps.git_clone": {
                         "repository": "https://example.com/org/repo.git",
                         "branch": "main",
                         "access_token": (
-                            "{{ prefect.blocks.secret.deployment-test-name-an-important-name-repo-token }}"
+                            "{{ syntask.blocks.secret.deployment-test-name-an-important-name-repo-token }}"
                         ),
                     }
                 }
@@ -690,16 +690,16 @@ class TestProjectDeploy:
         async def test_deploy_with_blob_storage_select_existing_credentials(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             aws_credentials,
             monkeypatch,
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
@@ -734,17 +734,17 @@ class TestProjectDeploy:
                 ],
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
 
             assert deployment.pull_steps == [
                 {
-                    "prefect_aws.deployments.steps.pull_from_s3": {
+                    "syntask_aws.deployments.steps.pull_from_s3": {
                         "bucket": "my-bucket",
                         "folder": "",
                         "credentials": (
-                            "{{ prefect.blocks.aws-credentials.bezos-creds }}"
+                            "{{ syntask.blocks.aws-credentials.bezos-creds }}"
                         ),
                     }
                 }
@@ -754,17 +754,17 @@ class TestProjectDeploy:
         async def test_deploy_with_blob_storage_create_credentials(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             aws_credentials,
             set_ui_url,
             monkeypatch,
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
             await run_sync_in_worker_thread(
@@ -803,21 +803,21 @@ class TestProjectDeploy:
                         " remote storage location when running this flow?"
                     ),
                     "View/Edit your new credentials block in the UI:",
-                    PREFECT_UI_URL.value(),
+                    SYNTASK_UI_URL.value(),
                 ],
             )
 
-            deployment = await prefect_client.read_deployment_by_name(
+            deployment = await syntask_client.read_deployment_by_name(
                 "An important name/test-name"
             )
 
             assert deployment.pull_steps == [
                 {
-                    "prefect_aws.deployments.steps.pull_from_s3": {
+                    "syntask_aws.deployments.steps.pull_from_s3": {
                         "bucket": "my-bucket",
                         "folder": "",
                         "credentials": (
-                            "{{ prefect.blocks.aws-credentials.s3-storage-credentials }}"
+                            "{{ syntask.blocks.aws-credentials.s3-storage-credentials }}"
                         ),
                     }
                 }
@@ -827,23 +827,23 @@ class TestProjectDeploy:
         async def test_build_docker_image_step_auto_build_dockerfile(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             monkeypatch,
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
-            prefect_yaml = {
+            syntask_yaml = {
                 "build": [
                     {
-                        "prefect_docker.deployments.steps.build_docker_image": {
-                            "requires": "prefect-docker",
+                        "syntask_docker.deployments.steps.build_docker_image": {
+                            "requires": "syntask-docker",
                             "image_name": "repo-name/image-name",
                             "tag": "dev",
                             "dockerfile": "auto",
@@ -852,8 +852,8 @@ class TestProjectDeploy:
                 ]
             }
 
-            with open("prefect.yaml", "w") as f:
-                yaml.dump(prefect_yaml, f)
+            with open("syntask.yaml", "w") as f:
+                yaml.dump(syntask_yaml, f)
 
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -873,21 +873,21 @@ class TestProjectDeploy:
                     + readchar.key.ENTER
                 ),
                 expected_output_contains=[
-                    "prefect deployment run 'An important name/test-name'"
+                    "syntask deployment run 'An important name/test-name'"
                 ],
             )
 
-            prefect_file = Path("prefect.yaml")
-            assert prefect_file.exists()
+            syntask_file = Path("syntask.yaml")
+            assert syntask_file.exists()
 
-            with open(prefect_file, "r") as f:
+            with open(syntask_file, "r") as f:
                 config = yaml.safe_load(f)
             dir_name = os.path.basename(os.getcwd())
 
             assert config["deployments"][0]["pull"] == [
                 {
-                    "prefect.deployments.steps.set_working_directory": {
-                        "directory": f"/opt/prefect/{dir_name}"
+                    "syntask.deployments.steps.set_working_directory": {
+                        "directory": f"/opt/syntask/{dir_name}"
                     }
                 }
             ]
@@ -897,9 +897,9 @@ class TestProjectDeploy:
                 tag="dev",
                 dockerfile="auto",
             )
-            # check to make sure prefect-docker is not installed
+            # check to make sure syntask-docker is not installed
             with pytest.raises(ImportError):
-                import prefect_docker  # noqa
+                import syntask_docker  # noqa
 
         @pytest.mark.usefixtures(
             "interactive_console", "uninitialized_project_dir_with_git_with_remote"
@@ -907,27 +907,27 @@ class TestProjectDeploy:
         async def test_build_docker_image_step_custom_dockerfile_remote_flow_code_confirm(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             monkeypatch,
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
             with open("Dockerfile", "w") as f:
                 f.write("FROM python:3.8-slim\n")
 
-            prefect_yaml = {
+            syntask_yaml = {
                 "build": [
                     {
-                        "prefect_docker.deployments.steps.build_docker_image": {
+                        "syntask_docker.deployments.steps.build_docker_image": {
                             "id": "build-image",
-                            "requires": "prefect-docker",
+                            "requires": "syntask-docker",
                             "image_name": "repo-name/image-name",
                             "tag": "dev",
                             "dockerfile": "Dockerfile",
@@ -936,8 +936,8 @@ class TestProjectDeploy:
                 ]
             }
 
-            with open("prefect.yaml", "w") as f:
-                yaml.dump(prefect_yaml, f)
+            with open("syntask.yaml", "w") as f:
+                yaml.dump(syntask_yaml, f)
 
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -973,18 +973,18 @@ class TestProjectDeploy:
                         " remote storage location when running this flow?"
                     ),
                     "Is this a private repository?",
-                    "prefect deployment run 'An important name/test-name'",
+                    "syntask deployment run 'An important name/test-name'",
                 ],
             )
 
-            prefect_file = Path("prefect.yaml")
-            assert prefect_file.exists()
+            syntask_file = Path("syntask.yaml")
+            assert syntask_file.exists()
 
-            with open(prefect_file, "r") as f:
+            with open(syntask_file, "r") as f:
                 config = yaml.safe_load(f)
             assert config["deployments"][0]["pull"] == [
                 {
-                    "prefect.deployments.steps.git_clone": {
+                    "syntask.deployments.steps.git_clone": {
                         "repository": "https://example.com/org/repo.git",
                         "branch": "main",
                     }
@@ -997,9 +997,9 @@ class TestProjectDeploy:
                 dockerfile="Dockerfile",
             )
 
-            # check to make sure prefect-docker is not installed
+            # check to make sure syntask-docker is not installed
             with pytest.raises(ImportError):
-                import prefect_docker  # noqa
+                import syntask_docker  # noqa
 
         @pytest.mark.usefixtures(
             "interactive_console", "uninitialized_project_dir_with_git_with_remote"
@@ -1007,27 +1007,27 @@ class TestProjectDeploy:
         async def test_build_docker_image_step_custom_dockerfile_remote_flow_code_reject(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             monkeypatch,
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
             with open("Dockerfile", "w") as f:
                 f.write("FROM python:3.8-slim\n")
 
-            prefect_yaml = {
+            syntask_yaml = {
                 "build": [
                     {
-                        "prefect_docker.deployments.steps.build_docker_image": {
+                        "syntask_docker.deployments.steps.build_docker_image": {
                             "id": "build-image",
-                            "requires": "prefect-docker",
+                            "requires": "syntask-docker",
                             "image_name": "repo-name/image-name",
                             "tag": "dev",
                             "dockerfile": "Dockerfile",
@@ -1036,8 +1036,8 @@ class TestProjectDeploy:
                 ]
             }
 
-            with open("prefect.yaml", "w") as f:
-                yaml.dump(prefect_yaml, f)
+            with open("syntask.yaml", "w") as f:
+                yaml.dump(syntask_yaml, f)
 
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -1057,7 +1057,7 @@ class TestProjectDeploy:
                     + readchar.key.ENTER
                     +
                     # Provide path to flow code
-                    "/opt/prefect/hello-projects/"
+                    "/opt/syntask/hello-projects/"
                     + readchar.key.ENTER
                     # Accept saving the deployment configuration
                     + "y"
@@ -1073,20 +1073,20 @@ class TestProjectDeploy:
                         " working directory"
                     ),
                     "What is the path to your flow code in your Dockerfile?",
-                    "prefect deployment run 'An important name/test-name'",
+                    "syntask deployment run 'An important name/test-name'",
                 ],
             )
 
-            prefect_file = Path("prefect.yaml")
-            assert prefect_file.exists()
+            syntask_file = Path("syntask.yaml")
+            assert syntask_file.exists()
 
-            with open(prefect_file, "r") as f:
+            with open(syntask_file, "r") as f:
                 config = yaml.safe_load(f)
 
             assert config["deployments"][0]["pull"] == [
                 {
-                    "prefect.deployments.steps.set_working_directory": {
-                        "directory": "/opt/prefect/hello-projects/"
+                    "syntask.deployments.steps.set_working_directory": {
+                        "directory": "/opt/syntask/hello-projects/"
                     }
                 }
             ]
@@ -1097,9 +1097,9 @@ class TestProjectDeploy:
                 dockerfile="Dockerfile",
             )
 
-            # check to make sure prefect-docker is not installed
+            # check to make sure syntask-docker is not installed
             with pytest.raises(ImportError):
-                import prefect_docker  # noqa
+                import syntask_docker  # noqa
 
         @pytest.mark.usefixtures(
             "interactive_console", "uninitialized_project_dir_with_git_with_remote"
@@ -1107,26 +1107,26 @@ class TestProjectDeploy:
         async def test_build_docker_image_step_custom_dockerfile_reject_copy_confirm(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             monkeypatch,
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
             with open("Dockerfile", "w") as f:
                 f.write("FROM python:3.8-slim\n")
-            prefect_yaml = {
+            syntask_yaml = {
                 "build": [
                     {
-                        "prefect_docker.deployments.steps.build_docker_image": {
+                        "syntask_docker.deployments.steps.build_docker_image": {
                             "id": "build-image",
-                            "requires": "prefect-docker",
+                            "requires": "syntask-docker",
                             "image_name": "repo-name/image-name",
                             "tag": "dev",
                             "dockerfile": "Dockerfile",
@@ -1135,8 +1135,8 @@ class TestProjectDeploy:
                 ]
             }
 
-            with open("prefect.yaml", "w") as f:
-                yaml.dump(prefect_yaml, f)
+            with open("syntask.yaml", "w") as f:
+                yaml.dump(syntask_yaml, f)
 
             await run_sync_in_worker_thread(
                 invoke_and_assert,
@@ -1170,9 +1170,9 @@ class TestProjectDeploy:
                 ],
             )
 
-            # check to make sure prefect-docker is not installed
+            # check to make sure syntask-docker is not installed
             with pytest.raises(ImportError):
-                import prefect_docker  # noqa
+                import syntask_docker  # noqa
 
     class TestGeneratedPushAction:
         @pytest.mark.usefixtures(
@@ -1181,16 +1181,16 @@ class TestProjectDeploy:
         async def test_deploy_select_blob_storage_configures_push_step(
             self,
             work_pool,
-            prefect_client,
+            syntask_client,
             aws_credentials,
             monkeypatch,
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
@@ -1231,19 +1231,19 @@ class TestProjectDeploy:
                 credentials={"aws_access_key_id": "AKIA1234"},
             )
 
-            prefect_file = Path("prefect.yaml")
-            assert prefect_file.exists()
+            syntask_file = Path("syntask.yaml")
+            assert syntask_file.exists()
 
-            with open(prefect_file, "r") as f:
+            with open(syntask_file, "r") as f:
                 config = yaml.safe_load(f)
 
             assert config["push"] == [
                 {
-                    "prefect_aws.deployments.steps.push_to_s3": {
+                    "syntask_aws.deployments.steps.push_to_s3": {
                         "bucket": "my-bucket",
                         "folder": "",
                         "credentials": (
-                            "{{ prefect.blocks.aws-credentials.bezos-creds }}"
+                            "{{ syntask.blocks.aws-credentials.bezos-creds }}"
                         ),
                     }
                 }
@@ -1251,18 +1251,18 @@ class TestProjectDeploy:
 
             assert config["pull"] == [
                 {
-                    "prefect_aws.deployments.steps.pull_from_s3": {
+                    "syntask_aws.deployments.steps.pull_from_s3": {
                         "bucket": "my-bucket",
                         "folder": "",
                         "credentials": (
-                            "{{ prefect.blocks.aws-credentials.bezos-creds }}"
+                            "{{ syntask.blocks.aws-credentials.bezos-creds }}"
                         ),
                     }
                 }
             ]
 
     async def test_project_deploy_with_empty_dep_file(
-        self, project_dir, prefect_client, work_pool
+        self, project_dir, syntask_client, work_pool
     ):
         deployment_file = project_dir / "deployment.yaml"
         with deployment_file.open(mode="w") as f:
@@ -1275,17 +1275,17 @@ class TestProjectDeploy:
             expected_code=0,
             expected_output_contains=["An important name/test"],
         )
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             f"An important name/{deployment_name}"
         )
         assert deployment.name == deployment_name
         assert deployment.work_pool_name == work_pool.name
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_project_deploy_templates_values(self, work_pool, prefect_client):
+    async def test_project_deploy_templates_values(self, work_pool, syntask_client):
         # prepare a templated deployment
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"][0]["name"] = "test-name"
@@ -1294,22 +1294,22 @@ class TestProjectDeploy:
         contents["deployments"][0]["description"] = "{{ output1 }}"
 
         # save it back
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
-        # update prefect.yaml to include a new build step
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # update syntask.yaml to include a new build step
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
         # test step that returns a dictionary of inputs and output1, output2
-        prefect_config["build"] = [
-            {"prefect.testing.utilities.a_test_step": {"input": "foo"}}
+        syntask_config["build"] = [
+            {"syntask.testing.utilities.a_test_step": {"input": "foo"}}
         ]
 
         # save it back
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         deployment_name = f"test-name-{uuid4()}"
         result = await run_sync_in_worker_thread(
@@ -1319,7 +1319,7 @@ class TestProjectDeploy:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             f"An important name/{deployment_name}"
         )
         assert deployment.name == deployment_name
@@ -1330,11 +1330,11 @@ class TestProjectDeploy:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_project_deploy_templates_env_var_values(
-        self, prefect_client, work_pool, monkeypatch
+        self, syntask_client, work_pool, monkeypatch
     ):
         # prepare a templated deployment
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         deployment_name = f"test-name-{uuid4()}"
@@ -1344,20 +1344,20 @@ class TestProjectDeploy:
         contents["deployments"][0]["description"] = "{{ $MY_DESCRIPTION }}"
 
         # save it back
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
-        # update prefect.yaml to include some new build steps
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # update syntask.yaml to include some new build steps
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
         monkeypatch.setenv("MY_DIRECTORY", "bar")
         monkeypatch.setenv("MY_FILE", "foo.txt")
 
-        prefect_config["build"] = [
+        syntask_config["build"] = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "id": "get-dir",
                     "script": "echo '{{ $MY_DIRECTORY }}'",
                     "stream_output": True,
@@ -1366,8 +1366,8 @@ class TestProjectDeploy:
         ]
 
         # save it back
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         monkeypatch.setenv("MY_VERSION", "foo")
         monkeypatch.setenv("MY_TAGS", "b,2,3")
@@ -1381,7 +1381,7 @@ class TestProjectDeploy:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             f"An important name/{deployment_name}"
         )
 
@@ -1393,10 +1393,10 @@ class TestProjectDeploy:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_project_deploy_with_default_parameters(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["parameters"] = {
@@ -1407,7 +1407,7 @@ class TestProjectDeploy:
         deploy_config["deployments"][0]["entrypoint"] = "flows/hello.py:my_flow"
         deploy_config["deployments"][0]["work_pool"]["name"] = work_pool.name
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -1417,7 +1417,7 @@ class TestProjectDeploy:
             expected_output_contains="An important name/test-name",
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.parameters == {"number": 1, "message": "hello"}
@@ -1426,10 +1426,10 @@ class TestProjectDeploy:
         "option", ["--param number=2", "--params '{\"number\": 2}'"]
     )
     async def test_project_deploy_with_default_parameters_from_cli(
-        self, project_dir, prefect_client, work_pool, option
+        self, project_dir, syntask_client, work_pool, option
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         config["deployments"][0]["parameters"] = {
@@ -1440,7 +1440,7 @@ class TestProjectDeploy:
         config["deployments"][0]["entrypoint"] = "flows/hello.py:my_flow"
         config["deployments"][0]["work_pool"]["name"] = work_pool.name
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(config, f)
 
         await run_sync_in_worker_thread(
@@ -1450,14 +1450,14 @@ class TestProjectDeploy:
             expected_output_contains="An important name/test-name",
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.parameters == {"number": 2, "message": "hello"}
 
     @pytest.mark.usefixtures("project_dir")
     async def test_project_deploy_templates_pull_step_safely(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         """
         We want step outputs to get templated, but block references to only be
@@ -1469,34 +1469,34 @@ class TestProjectDeploy:
 
         await Secret(value="super-secret-name").save(name="test-secret")
 
-        # update prefect.yaml to include a new build step
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # update syntask.yaml to include a new build step
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
         # test step that returns a dictionary of inputs and output1, output2
-        prefect_config["build"] = [
-            {"prefect.testing.utilities.a_test_step": {"input": "foo"}}
+        syntask_config["build"] = [
+            {"syntask.testing.utilities.a_test_step": {"input": "foo"}}
         ]
 
-        prefect_config["pull"] = [
+        syntask_config["pull"] = [
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "id": "b-test-step",
                     "input": "{{ output1 }}",
-                    "secret-input": "{{ prefect.blocks.secret.test-secret }}",
+                    "secret-input": "{{ syntask.blocks.secret.test-secret }}",
                 },
             },
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "input": "foo-{{ b-test-step.output1 }}",
                     "secret-input": "{{ b-test-step.output1 }}",
                 },
             },
         ]
         # save it back
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1505,19 +1505,19 @@ class TestProjectDeploy:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.pull_steps == [
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "id": "b-test-step",
                     "input": 1,
-                    "secret-input": "{{ prefect.blocks.secret.test-secret }}",
+                    "secret-input": "{{ syntask.blocks.secret.test-secret }}",
                 }
             },
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "input": "foo-{{ b-test-step.output1 }}",
                     "secret-input": "{{ b-test-step.output1 }}",
                 }
@@ -1526,7 +1526,7 @@ class TestProjectDeploy:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_project_deploy_templates_pull_step_in_deployments_section_safely(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         """
         We want step outputs to get templated, but block references to only be
@@ -1538,34 +1538,34 @@ class TestProjectDeploy:
 
         await Secret(value="super-secret-name").save(name="test-secret")
 
-        # update prefect.yaml to include a new build step
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # update syntask.yaml to include a new build step
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
         # test step that returns a dictionary of inputs and output1, output2
-        prefect_config["build"] = [
-            {"prefect.testing.utilities.a_test_step": {"input": "foo"}}
+        syntask_config["build"] = [
+            {"syntask.testing.utilities.a_test_step": {"input": "foo"}}
         ]
 
-        prefect_config["deployments"][0]["pull"] = [
+        syntask_config["deployments"][0]["pull"] = [
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "id": "b-test-step",
                     "input": "{{ output1 }}",
-                    "secret-input": "{{ prefect.blocks.secret.test-secret }}",
+                    "secret-input": "{{ syntask.blocks.secret.test-secret }}",
                 },
             },
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "input": "foo-{{ b-test-step.output1 }}",
                     "secret-input": "{{ b-test-step.output1 }}",
                 },
             },
         ]
         # save it back
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1574,19 +1574,19 @@ class TestProjectDeploy:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.pull_steps == [
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "id": "b-test-step",
                     "input": 1,
-                    "secret-input": "{{ prefect.blocks.secret.test-secret }}",
+                    "secret-input": "{{ syntask.blocks.secret.test-secret }}",
                 }
             },
             {
-                "prefect.testing.utilities.b_test_step": {
+                "syntask.testing.utilities.b_test_step": {
                     "input": "foo-{{ b-test-step.output1 }}",
                     "secret-input": "{{ b-test-step.output1 }}",
                 }
@@ -1594,16 +1594,16 @@ class TestProjectDeploy:
         ]
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_project_deploy_reads_entrypoint_from_prefect_yaml(self, work_pool):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+    async def test_project_deploy_reads_entrypoint_from_syntask_yaml(self, work_pool):
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
         deploy_config["deployments"][0]["entrypoint"] = "flows/hello.py:my_flow"
         deploy_config["deployments"][0]["work_pool"]["name"] = work_pool.name
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -1615,14 +1615,14 @@ class TestProjectDeploy:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_project_deploy_exits_with_no_entrypoint_configured(self, work_pool):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
         deploy_config["deployments"][0]["work_pool"]["name"] = work_pool.name
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -1633,7 +1633,7 @@ class TestProjectDeploy:
         )
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_without_name_interactive(self, work_pool, prefect_client):
+    async def test_deploy_without_name_interactive(self, work_pool, syntask_client):
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=(
@@ -1656,7 +1656,7 @@ class TestProjectDeploy:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-prompt-name"
         )
         assert deployment.name == "test-prompt-name"
@@ -1671,13 +1671,13 @@ class TestProjectDeploy:
             expected_code=1,
             expected_output_contains=[
                 "A work pool is required to deploy this flow. Please specify a"
-                " work pool name via the '--pool' flag or in your prefect.yaml file."
+                " work pool name via the '--pool' flag or in your syntask.yaml file."
             ],
         )
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
     async def test_deploy_without_work_pool_interactive(
-        self, work_pool, prefect_client
+        self, work_pool, syntask_client
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1698,7 +1698,7 @@ class TestProjectDeploy:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -1706,7 +1706,7 @@ class TestProjectDeploy:
         assert deployment.entrypoint == "./flows/hello.py:my_flow"
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploy_with_prefect_agent_work_pool_non_interactive(
+    async def test_deploy_with_syntask_agent_work_pool_non_interactive(
         self, default_agent_pool
     ):
         await run_sync_in_worker_thread(
@@ -1718,14 +1718,14 @@ class TestProjectDeploy:
             expected_code=1,
             expected_output_contains=(
                 "Cannot create a project-style deployment with work pool of type"
-                " 'prefect-agent'. If you wish to use an agent with your deployment,"
-                " please use the `prefect deployment build` command."
+                " 'syntask-agent'. If you wish to use an agent with your deployment,"
+                " please use the `syntask deployment build` command."
             ),
         )
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_with_prefect_agent_work_pool_interactive(
-        self, work_pool, prefect_client, default_agent_pool
+    async def test_deploy_with_syntask_agent_work_pool_interactive(
+        self, work_pool, syntask_client, default_agent_pool
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1746,14 +1746,14 @@ class TestProjectDeploy:
             ),
             expected_output_contains=[
                 (
-                    "You've chosen a work pool with type 'prefect-agent' which cannot"
+                    "You've chosen a work pool with type 'syntask-agent' which cannot"
                     " be used for project-style deployments. Let's pick another work"
                     " pool to deploy to."
                 ),
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -1778,12 +1778,12 @@ class TestProjectDeploy:
                 + readchar.key.ENTER
             ),
             expected_output_does_not_contain=[
-                f"$ prefect worker start --pool {push_work_pool.name!r}",
+                f"$ syntask worker start --pool {push_work_pool.name!r}",
             ],
         )
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_with_no_available_work_pool_interactive(self, prefect_client):
+    async def test_deploy_with_no_available_work_pool_interactive(self, syntask_client):
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command="deploy ./flows/hello.py:my_flow -n test-name --interval 3600",
@@ -1816,7 +1816,7 @@ class TestProjectDeploy:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -1824,10 +1824,10 @@ class TestProjectDeploy:
         assert deployment.entrypoint == "./flows/hello.py:my_flow"
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploy_with_entrypoint_does_not_fail_with_missing_prefect_folder(
+    async def test_deploy_with_entrypoint_does_not_fail_with_missing_syntask_folder(
         self, work_pool
     ):
-        Path(".prefect").rmdir()
+        Path(".syntask").rmdir()
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=f"deploy ./flows/hello.py:my_flow -n test-name -p {work_pool.name}",
@@ -1839,11 +1839,11 @@ class TestProjectDeploy:
 
     @pytest.mark.parametrize("schedule_value", [None, {}])
     @pytest.mark.usefixtures("project_dir", "interactive_console")
-    async def test_deploy_does_not_prompt_schedule_when_empty_schedule_prefect_yaml(
-        self, schedule_value, work_pool, prefect_client
+    async def test_deploy_does_not_prompt_schedule_when_empty_schedule_syntask_yaml(
+        self, schedule_value, work_pool, syntask_client
     ):
-        prefect_yaml_file = Path("prefect.yaml")
-        with prefect_yaml_file.open(mode="r") as f:
+        syntask_yaml_file = Path("syntask.yaml")
+        with syntask_yaml_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"] = [
@@ -1857,7 +1857,7 @@ class TestProjectDeploy:
             }
         ]
 
-        with prefect_yaml_file.open(mode="w") as f:
+        with syntask_yaml_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -1874,18 +1874,18 @@ class TestProjectDeploy:
             expected_code=0,
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.schedule is None
 
     @pytest.mark.parametrize("build_value", [None, {}])
     @pytest.mark.usefixtures("project_dir", "interactive_console")
-    async def test_deploy_does_not_prompt_build_docker_image_when_empty_build_action_prefect_yaml(
-        self, build_value, work_pool, prefect_client
+    async def test_deploy_does_not_prompt_build_docker_image_when_empty_build_action_syntask_yaml(
+        self, build_value, work_pool, syntask_client
     ):
-        prefect_yaml_file = Path("prefect.yaml")
-        with prefect_yaml_file.open(mode="r") as f:
+        syntask_yaml_file = Path("syntask.yaml")
+        with syntask_yaml_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"] = [
@@ -1900,7 +1900,7 @@ class TestProjectDeploy:
             }
         ]
 
-        with prefect_yaml_file.open(mode="w") as f:
+        with syntask_yaml_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -1918,7 +1918,7 @@ class TestProjectDeploy:
             expected_output_does_not_contain="Would you like to build a Docker image?",
         )
 
-        assert await prefect_client.read_deployment_by_name(
+        assert await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
 
@@ -1929,13 +1929,13 @@ class TestProjectDeploy:
         Regression test for a bug where deployment steps would continue even when
         a `run_shell_script` step failed.
         """
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         config["build"] = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "id": "test",
                     "script": "cat nothing",
                     "stream_output": True,
@@ -1943,7 +1943,7 @@ class TestProjectDeploy:
             }
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(config, f)
 
         with pytest.raises(StepExecutionError):
@@ -1957,18 +1957,18 @@ class TestProjectDeploy:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_deploy_templates_env_vars(
-        self, prefect_client, monkeypatch, work_pool
+        self, syntask_client, monkeypatch, work_pool
     ):
         # set up environment variables
         monkeypatch.setenv("WORK_POOL", work_pool.name)
         monkeypatch.setenv("MY_VAR", "my-value")
 
-        # set up prefect.yaml that has env var placeholders for the work pool name
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # set up syntask.yaml that has env var placeholders for the work pool name
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
-        prefect_config["deployments"] = [
+        syntask_config["deployments"] = [
             {
                 "name": "test-deployment",
                 "entrypoint": "flows/hello.py:my_flow",
@@ -1980,13 +1980,13 @@ class TestProjectDeploy:
                 "work_pool": {"name": "{{ $WORK_POOL }}"},
             },
         ]
-        prefect_config["build"] = [
-            {"prefect.testing.utilities.a_test_step": {"input": "{{ $MY_VAR }}"}}
+        syntask_config["build"] = [
+            {"syntask.testing.utilities.a_test_step": {"input": "{{ $MY_VAR }}"}}
         ]
 
-        # save config to prefect.yaml
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        # save config to syntask.yaml
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1996,13 +1996,13 @@ class TestProjectDeploy:
                 "This deployment configuration references work pool",
                 (
                     "This means no worker will be able to pick up its runs. You can"
-                    " create a work pool in the Prefect UI."
+                    " create a work pool in the Syntask UI."
                 ),
             ),
         )
         assert result.exit_code == 0
 
-        deployments = await prefect_client.read_deployments()
+        deployments = await syntask_client.read_deployments()
 
         assert len(deployments) == 2
 
@@ -2012,11 +2012,11 @@ class TestProjectDeploy:
         assert deployments[1].name == "test-deployment2"
         assert deployments[1].work_pool_name == work_pool.name
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert (
-            config["build"][0]["prefect.testing.utilities.a_test_step"]["input"]
+            config["build"][0]["syntask.testing.utilities.a_test_step"]["input"]
             == "{{ $MY_VAR }}"
         )
 
@@ -2032,10 +2032,10 @@ class TestProjectDeploy:
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
@@ -2076,10 +2076,10 @@ class TestProjectDeploy:
         ):
             mock_step = mock.MagicMock()
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_object", lambda x: mock_step
+                "syntask.deployments.steps.core.import_object", lambda x: mock_step
             )
             monkeypatch.setattr(
-                "prefect.deployments.steps.core.import_module",
+                "syntask.deployments.steps.core.import_module",
                 lambda x: None,
             )
 
@@ -2117,7 +2117,7 @@ class TestProjectDeploy:
 
 class TestSchedules:
     @pytest.mark.usefixtures("project_dir")
-    async def test_passing_cron_schedules_to_deploy(self, work_pool, prefect_client):
+    async def test_passing_cron_schedules_to_deploy(self, work_pool, syntask_client):
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
             command=(
@@ -2127,7 +2127,7 @@ class TestSchedules:
         )
         assert result.exit_code == 0
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
 
@@ -2136,16 +2136,16 @@ class TestSchedules:
         assert schedule.timezone == "Europe/Berlin"
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deployment_yaml_cron_schedule(self, work_pool, prefect_client):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+    async def test_deployment_yaml_cron_schedule(self, work_pool, syntask_client):
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
         deploy_config["deployments"][0]["schedule"]["cron"] = "0 4 * * *"
         deploy_config["deployments"][0]["schedule"]["timezone"] = "America/Chicago"
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         result = await run_sync_in_worker_thread(
@@ -2156,7 +2156,7 @@ class TestSchedules:
         )
         assert result.exit_code == 0
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         schedule = deployment.schedules[0].schedule
@@ -2165,17 +2165,17 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_deployment_yaml_cron_schedule_timezone_cli(
-        self, work_pool, prefect_client
+        self, work_pool, syntask_client
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
         deploy_config["deployments"][0]["schedule"]["cron"] = "0 4 * * *"
         deploy_config["deployments"][0]["schedule"]["timezone"] = "America/Chicago"
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         result = await run_sync_in_worker_thread(
@@ -2187,7 +2187,7 @@ class TestSchedules:
         )
         assert result.exit_code == 0
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.schedule.cron == "0 4 * * *"
@@ -2195,7 +2195,7 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_passing_interval_schedules_to_deploy(
-        self, work_pool, prefect_client
+        self, work_pool, syntask_client
     ):
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -2207,7 +2207,7 @@ class TestSchedules:
         )
         assert result.exit_code == 0
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.schedule.interval == timedelta(seconds=42)
@@ -2215,9 +2215,9 @@ class TestSchedules:
         assert deployment.schedule.timezone == "America/New_York"
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_interval_schedule_deployment_yaml(self, prefect_client, work_pool):
-        prefect_yaml = Path("prefect.yaml")
-        with prefect_yaml.open(mode="r") as f:
+    async def test_interval_schedule_deployment_yaml(self, syntask_client, work_pool):
+        syntask_yaml = Path("syntask.yaml")
+        with syntask_yaml.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
@@ -2225,7 +2225,7 @@ class TestSchedules:
         deploy_config["deployments"][0]["schedule"]["anchor_date"] = "2040-02-02"
         deploy_config["deployments"][0]["schedule"]["timezone"] = "America/Chicago"
 
-        with prefect_yaml.open(mode="w") as f:
+        with syntask_yaml.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         result = await run_sync_in_worker_thread(
@@ -2236,7 +2236,7 @@ class TestSchedules:
         )
         assert result.exit_code == 0
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.schedule.interval == timedelta(seconds=42)
@@ -2245,7 +2245,7 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_parsing_rrule_schedule_string_literal(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -2257,7 +2257,7 @@ class TestSchedules:
             expected_code=0,
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert (
@@ -2266,16 +2266,16 @@ class TestSchedules:
         )
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_rrule_deployment_yaml(self, work_pool, prefect_client):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+    async def test_rrule_deployment_yaml(self, work_pool, syntask_client):
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["schedule"][
             "rrule"
         ] = "DTSTART:20220910T110000\nRRULE:FREQ=HOURLY;BYDAY=MO,TU,WE,TH,FR,SA;BYHOUR=9,10,11,12,13,14,15,16,17"
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -2288,7 +2288,7 @@ class TestSchedules:
             expected_code=0,
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert (
@@ -2298,7 +2298,7 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_can_provide_multiple_schedules_via_command(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -2309,7 +2309,7 @@ class TestSchedules:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
 
@@ -2333,10 +2333,10 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_can_provide_multiple_schedules_via_yaml(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
-        prefect_yaml = Path("prefect.yaml")
-        with prefect_yaml.open(mode="r") as f:
+        syntask_yaml = Path("syntask.yaml")
+        with syntask_yaml.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
@@ -2346,7 +2346,7 @@ class TestSchedules:
             {"rrule": "FREQ=HOURLY"},
         ]
 
-        with prefect_yaml.open(mode="w") as f:
+        with syntask_yaml.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -2358,7 +2358,7 @@ class TestSchedules:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
 
@@ -2382,15 +2382,15 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_yaml_with_schedule_and_schedules_raises_error(self, work_pool):
-        prefect_yaml = Path("prefect.yaml")
-        with prefect_yaml.open(mode="r") as f:
+        syntask_yaml = Path("syntask.yaml")
+        with syntask_yaml.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
         deploy_config["deployments"][0]["schedule"]["interval"] = 42
         deploy_config["deployments"][0]["schedules"] = [{"interval": 42}]
 
-        with prefect_yaml.open(mode="w") as f:
+        with syntask_yaml.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -2404,14 +2404,14 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_yaml_with_schedule_prints_deprecation_warning(self, work_pool):
-        prefect_yaml = Path("prefect.yaml")
-        with prefect_yaml.open(mode="r") as f:
+        syntask_yaml = Path("syntask.yaml")
+        with syntask_yaml.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
         deploy_config["deployments"][0]["schedule"]["interval"] = 42
 
-        with prefect_yaml.open(mode="w") as f:
+        with syntask_yaml.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         await run_sync_in_worker_thread(
@@ -2425,7 +2425,7 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_can_provide_multiple_schedules_of_the_same_type_via_command(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -2436,7 +2436,7 @@ class TestSchedules:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
 
@@ -2453,7 +2453,7 @@ class TestSchedules:
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
     async def test_deploy_interval_schedule_interactive(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -2490,13 +2490,13 @@ class TestSchedules:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.schedules[0].schedule.interval == timedelta(seconds=42)
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_cron_schedule_interactive(self, prefect_client, work_pool):
+    async def test_deploy_cron_schedule_interactive(self, syntask_client, work_pool):
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=(
@@ -2536,13 +2536,13 @@ class TestSchedules:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.schedules[0].schedule.cron == "* * * * *"
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_rrule_schedule_interactive(self, prefect_client, work_pool):
+    async def test_deploy_rrule_schedule_interactive(self, syntask_client, work_pool):
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=(
@@ -2577,7 +2577,7 @@ class TestSchedules:
             expected_code=0,
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert (
@@ -2586,7 +2586,7 @@ class TestSchedules:
         )
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_no_schedule_interactive(self, prefect_client, work_pool):
+    async def test_deploy_no_schedule_interactive(self, syntask_client, work_pool):
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=(
@@ -2606,15 +2606,15 @@ class TestSchedules:
             expected_code=0,
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.schedule is None
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploy_with_inactive_schedule(self, work_pool, prefect_client):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+    async def test_deploy_with_inactive_schedule(self, work_pool, syntask_client):
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             deploy_config = yaml.safe_load(f)
 
         deploy_config["deployments"][0]["name"] = "test-name"
@@ -2622,7 +2622,7 @@ class TestSchedules:
         deploy_config["deployments"][0]["schedule"]["timezone"] = "America/Chicago"
         deploy_config["deployments"][0]["schedule"]["active"] = False
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(deploy_config, f)
 
         result = await run_sync_in_worker_thread(
@@ -2633,7 +2633,7 @@ class TestSchedules:
         )
         assert result.exit_code == 0
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
 
@@ -2645,9 +2645,9 @@ class TestSchedules:
 
 class TestMultiDeploy:
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploy_all(self, prefect_client, work_pool):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+    async def test_deploy_all(self, syntask_client, work_pool):
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         # Create multiple deployments
@@ -2664,7 +2664,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
         # Deploy all
         await run_sync_in_worker_thread(
@@ -2683,10 +2683,10 @@ class TestMultiDeploy:
         )
 
         # Check if deployments were created correctly
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
 
@@ -2697,10 +2697,10 @@ class TestMultiDeploy:
 
     @pytest.mark.usefixtures("project_dir")
     async def test_deploy_all_schedules_remain_inactive(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -2718,7 +2718,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         await run_sync_in_worker_thread(
@@ -2736,10 +2736,10 @@ class TestMultiDeploy:
             ],
         )
 
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
 
@@ -2749,10 +2749,10 @@ class TestMultiDeploy:
         assert deployment2.schedules[0].active is False
 
     async def test_deploy_selected_deployments(
-        self, project_dir, prefect_client, work_pool
+        self, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -2774,7 +2774,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy only two deployments by name
@@ -2806,10 +2806,10 @@ class TestMultiDeploy:
         )
 
         # Check if the two deployments were created correctly
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
 
@@ -2822,15 +2822,15 @@ class TestMultiDeploy:
 
         # Check if the third deployment was not created
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-3"
             )
 
     async def test_deploy_single_with_cron_schedule(
-        self, project_dir, prefect_client, work_pool
+        self, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         # Create multiple deployments
@@ -2847,7 +2847,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
         # Deploy a single deployment with a cron schedule
         cron_schedule = "0 * * * *"
@@ -2864,7 +2864,7 @@ class TestMultiDeploy:
         )
 
         # Check if the deployment was created correctly
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
 
@@ -2874,7 +2874,7 @@ class TestMultiDeploy:
 
         # Check if the second deployment was not created
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-2"
             )
 
@@ -2882,10 +2882,10 @@ class TestMultiDeploy:
         "deployment_selector_options", ["--all", "-n test-name-1 -n test-name-2"]
     )
     async def test_deploy_multiple_with_cli_options(
-        self, project_dir, prefect_client, work_pool, deployment_selector_options
+        self, project_dir, syntask_client, work_pool, deployment_selector_options
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         # Create multiple deployments
@@ -2902,7 +2902,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy multiple deployments with CLI options
@@ -2922,10 +2922,10 @@ class TestMultiDeploy:
         )
 
         # Check if deployments were created correctly and without the provided CLI options
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
 
@@ -2938,10 +2938,10 @@ class TestMultiDeploy:
         assert deployment2.schedule is None
 
     async def test_deploy_with_cli_option_name(
-        self, project_dir, prefect_client, work_pool
+        self, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -2952,7 +2952,7 @@ class TestMultiDeploy:
             }
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -2969,19 +2969,19 @@ class TestMultiDeploy:
 
         # Check name from deployment.yaml was not used
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-1"
             )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/from-cli-name"
         )
         deployment.name = "from-cli-name"
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploy_without_name_in_prefect_yaml(self, prefect_client, work_pool):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+    async def test_deploy_without_name_in_syntask_yaml(self, syntask_client, work_pool):
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         # Create multiple deployments
@@ -3000,7 +3000,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Attempt to deploy all
@@ -3012,16 +3012,16 @@ class TestMultiDeploy:
         )
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-2"
             )
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_without_name_in_prefect_yaml_interactive(
-        self, prefect_client, work_pool
+    async def test_deploy_without_name_in_syntask_yaml_interactive(
+        self, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         # Create multiple deployments
@@ -3040,7 +3040,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Attempt to deploy all
@@ -3072,16 +3072,16 @@ class TestMultiDeploy:
             ],
         )
 
-        assert await prefect_client.read_deployment_by_name(
+        assert await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
-    async def test_deploy_without_name_in_prefect_yaml_interactive_user_skips(
-        self, prefect_client: PrefectClient, work_pool
+    async def test_deploy_without_name_in_syntask_yaml_interactive_user_skips(
+        self, syntask_client: SyntaskClient, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         # Create multiple deployments
@@ -3100,7 +3100,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Attempt to deploy all
@@ -3126,13 +3126,13 @@ class TestMultiDeploy:
             ],
         )
 
-        assert len(await prefect_client.read_deployments()) == 1
+        assert len(await syntask_client.read_deployments()) == 1
 
-    async def test_deploy_with_name_not_in_prefect_yaml(
-        self, project_dir, prefect_client, work_pool
+    async def test_deploy_with_name_not_in_syntask_yaml(
+        self, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3148,7 +3148,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Attempt to deploy all
@@ -3164,22 +3164,22 @@ class TestMultiDeploy:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
         assert deployment.name == "test-name-2"
         assert deployment.work_pool_name == work_pool.name
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-3"
             )
 
     async def test_deploy_with_single_deployment_with_name_in_file(
-        self, project_dir, prefect_client, work_pool
+        self, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3190,7 +3190,7 @@ class TestMultiDeploy:
             }
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
         # Deploy the deployment with a name
         await run_sync_in_worker_thread(
@@ -3203,7 +3203,7 @@ class TestMultiDeploy:
         )
 
         # Check if the deployment was created correctly
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment.name == "test-name-1"
@@ -3212,13 +3212,13 @@ class TestMultiDeploy:
     async def test_deploy_errors_with_empty_deployments_list_and_no_cli_options(
         self, project_dir
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = []
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3232,10 +3232,10 @@ class TestMultiDeploy:
         )
 
     async def test_deploy_single_allows_options_override(
-        self, project_dir, prefect_client, work_pool
+        self, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3244,7 +3244,7 @@ class TestMultiDeploy:
             }
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3260,7 +3260,7 @@ class TestMultiDeploy:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -3270,10 +3270,10 @@ class TestMultiDeploy:
         assert deployment.job_variables == {"env": "prod"}
 
     async def test_deploy_single_deployment_with_name_in_cli(
-        self, project_dir, prefect_client, work_pool
+        self, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3289,7 +3289,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3303,7 +3303,7 @@ class TestMultiDeploy:
         )
 
         # Check if the deployment was created correctly
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment.name == "test-name-1"
@@ -3319,10 +3319,10 @@ class TestMultiDeploy:
         ],
     )
     async def test_deploy_existing_deployment_and_nonexistent_deployment_deploys_former(
-        self, deploy_names, project_dir, prefect_client, work_pool
+        self, deploy_names, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3338,7 +3338,7 @@ class TestMultiDeploy:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3360,14 +3360,14 @@ class TestMultiDeploy:
         )
 
         # Check if the deployment was created correctly
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment.name == "test-name-1"
         assert deployment.work_pool_name == work_pool.name
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-3"
             )
 
@@ -3387,10 +3387,10 @@ class TestDeployPattern:
         ],
     )
     async def test_pattern_deploy_multiple_existing_deployments(
-        self, deploy_name, project_dir, prefect_client, work_pool
+        self, deploy_name, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3411,7 +3411,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         if isinstance(deploy_name, tuple):
@@ -3436,20 +3436,20 @@ class TestDeployPattern:
         )
 
         # Check if the deployment was created correctly
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment1.name == "test-name-1"
         assert deployment1.work_pool_name == work_pool.name
 
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
         assert deployment2.name == "test-name-2"
         assert deployment2.work_pool_name == work_pool.name
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/dont-deploy-me"
             )
 
@@ -3465,7 +3465,7 @@ class TestDeployPattern:
         ],
     )
     async def test_pattern_deploy_nonexistent_deployments_no_existing_deployments(
-        self, deploy_name, project_dir, prefect_client, work_pool
+        self, deploy_name, project_dir, syntask_client, work_pool
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -3487,10 +3487,10 @@ class TestDeployPattern:
         ],
     )
     async def test_pattern_deploy_nonexistent_deployments_with_existing_deployments(
-        self, deploy_name, project_dir, prefect_client, work_pool
+        self, deploy_name, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3506,7 +3506,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         await run_sync_in_worker_thread(
@@ -3528,12 +3528,12 @@ class TestDeployPattern:
 
         # Check if the deployments were not created
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-1"
             )
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-2"
             )
 
@@ -3547,10 +3547,10 @@ class TestDeployPattern:
         ],
     )
     async def test_pattern_deploy_one_existing_deployment_one_nonexistent_deployment(
-        self, project_dir, prefect_client, work_pool, deploy_name
+        self, project_dir, syntask_client, work_pool, deploy_name
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3570,7 +3570,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         if isinstance(deploy_name, tuple):
@@ -3600,19 +3600,19 @@ class TestDeployPattern:
         )
 
         # Check if the deployment was created correctly
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment1.name == "test-name-1"
         assert deployment1.work_pool_name == work_pool.name
 
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
         assert deployment2.name == "test-name-2"
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/dont-deploy-me"
             )
 
@@ -3627,10 +3627,10 @@ class TestDeployPattern:
     )
     @pytest.mark.usefixtures("project_dir")
     async def test_deploy_multiple_nonexistent_deployments_raises(
-        self, deploy_names, work_pool, prefect_client
+        self, deploy_names, work_pool, syntask_client
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3646,7 +3646,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3670,12 +3670,12 @@ class TestDeployPattern:
         )
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-3"
             )
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-4"
             )
 
@@ -3688,10 +3688,10 @@ class TestDeployPattern:
         ],
     )
     async def test_deploy_multiple_existing_deployments_deploys_both(
-        self, deploy_names, project_dir, prefect_client, work_pool
+        self, deploy_names, project_dir, syntask_client, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3707,7 +3707,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3724,13 +3724,13 @@ class TestDeployPattern:
         )
 
         # Check if the deployment was created correctly
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment1.name == "test-name-1"
         assert deployment1.work_pool_name == work_pool.name
 
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-2"
         )
         assert deployment2.name == "test-name-2"
@@ -3739,8 +3739,8 @@ class TestDeployPattern:
     async def test_deploy_exits_with_multiple_deployments_with_no_name(
         self, project_dir
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3754,7 +3754,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
         # Deploy the deployment with a name
         await run_sync_in_worker_thread(
@@ -3780,8 +3780,8 @@ class TestDeployPattern:
     async def test_deploy_with_single_deployment_with_no_name(
         self, deploy_names, project_dir, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3795,7 +3795,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3814,10 +3814,10 @@ class TestDeployPattern:
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
     async def test_deploy_with_two_deployments_with_same_name_interactive_prompts_select(
-        self, work_pool, prefect_client
+        self, work_pool, syntask_client
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3833,7 +3833,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         await run_sync_in_worker_thread(
@@ -3861,23 +3861,23 @@ class TestDeployPattern:
         )
 
         # Check if the deployment was created correctly
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "Second important name/test-name-1"
         )
         assert deployment.name == "test-name-1"
         assert deployment.work_pool_name == work_pool.name
 
         with pytest.raises(ObjectNotFound):
-            await prefect_client.read_deployment_by_name(
+            await syntask_client.read_deployment_by_name(
                 "An important name/test-name-1"
             )
 
     @pytest.mark.usefixtures("project_dir")
     async def test_deploy_with_two_deployments_with_same_name_noninteractive_deploys_both(
-        self, work_pool, prefect_client
+        self, work_pool, syntask_client
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3893,7 +3893,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         await run_sync_in_worker_thread(
@@ -3908,13 +3908,13 @@ class TestDeployPattern:
         )
 
         # Check if the deployments were created correctly
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment1.name == "test-name-1"
         assert deployment1.work_pool_name == work_pool.name
 
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "Second important name/test-name-1"
         )
         assert deployment2.name == "test-name-1"
@@ -3923,8 +3923,8 @@ class TestDeployPattern:
     async def test_deploy_warns_with_single_deployment_and_multiple_names(
         self, project_dir, work_pool
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3935,7 +3935,7 @@ class TestDeployPattern:
             }
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         # Deploy the deployment with a name
@@ -3953,10 +3953,10 @@ class TestDeployPattern:
 
     @pytest.mark.usefixtures("interactive_console", "project_dir")
     async def test_deploy_select_from_existing_deployments(
-        self, work_pool, prefect_client
+        self, work_pool, syntask_client
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             contents = yaml.safe_load(f)
 
         contents["deployments"] = [
@@ -3976,7 +3976,7 @@ class TestDeployPattern:
             },
         ]
 
-        with prefect_file.open(mode="w") as f:
+        with syntask_file.open(mode="w") as f:
             yaml.safe_dump(contents, f)
 
         await run_sync_in_worker_thread(
@@ -4001,7 +4001,7 @@ class TestDeployPattern:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name-1"
         )
         assert deployment.name == "test-name-1"
@@ -4009,10 +4009,10 @@ class TestDeployPattern:
 
 @pytest.mark.usefixtures("interactive_console", "project_dir")
 class TestSaveUserInputs:
-    def test_save_user_inputs_no_existing_prefect_file(self):
-        prefect_file = Path("prefect.yaml")
-        prefect_file.unlink()
-        assert not prefect_file.exists()
+    def test_save_user_inputs_no_existing_syntask_file(self):
+        syntask_file = Path("syntask.yaml")
+        syntask_file.unlink()
+        assert not syntask_file.exists()
 
         invoke_and_assert(
             command="deploy flows/hello.py:my_flow",
@@ -4046,12 +4046,12 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        assert prefect_file.exists()
-        with prefect_file.open(mode="r") as f:
+        assert syntask_file.exists()
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 1
@@ -4060,9 +4060,9 @@ class TestSaveUserInputs:
         assert config["deployments"][0]["schedules"] == []
         assert config["deployments"][0]["work_pool"]["name"] == "inflatable"
 
-    def test_save_user_inputs_existing_prefect_file(self):
-        prefect_file = Path("prefect.yaml")
-        assert prefect_file.exists()
+    def test_save_user_inputs_existing_syntask_file(self):
+        syntask_file = Path("syntask.yaml")
+        assert syntask_file.exists()
 
         invoke_and_assert(
             command="deploy flows/hello.py:my_flow",
@@ -4093,11 +4093,11 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4127,11 +4127,11 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        with open("prefect.yaml", mode="r") as f:
+        with open("syntask.yaml", mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4167,11 +4167,11 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        with open("prefect.yaml", mode="r") as f:
+        with open("syntask.yaml", mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4210,12 +4210,12 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4241,13 +4241,13 @@ class TestSaveUserInputs:
                 (
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
-                    "Deployment configuration saved to prefect.yaml"
+                    "Deployment configuration saved to syntask.yaml"
                 ),
             ],
         )
 
-        # assert that the deployment was updated in the prefect.yaml
-        with open("prefect.yaml", mode="r") as f:
+        # assert that the deployment was updated in the syntask.yaml
+        with open("syntask.yaml", mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4292,12 +4292,12 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4331,12 +4331,12 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        # assert that the deployment was updated in the prefect.yaml
-        with open("prefect.yaml", mode="r") as f:
+        # assert that the deployment was updated in the syntask.yaml
+        with open("syntask.yaml", mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4389,11 +4389,11 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        with open("prefect.yaml", mode="r") as f:
+        with open("syntask.yaml", mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4419,7 +4419,7 @@ class TestSaveUserInputs:
 
         build_steps = [
             {
-                "prefect.steps.set_working_directory": {
+                "syntask.steps.set_working_directory": {
                     "directory": "/path/to/working/directory"
                 }
             },
@@ -4427,8 +4427,8 @@ class TestSaveUserInputs:
 
         push_steps = [
             {
-                "prefect_aws.deployments.steps.push_to_s3": {
-                    "requires": "prefect-aws>=0.3.0",
+                "syntask_aws.deployments.steps.push_to_s3": {
+                    "requires": "syntask-aws>=0.3.0",
                     "bucket": "my-bucket",
                     "folder": "project-name",
                     "credentials": None,
@@ -4438,8 +4438,8 @@ class TestSaveUserInputs:
 
         pull_steps = [
             {
-                "prefect_aws.deployments.steps.pull_from_s3": {
-                    "requires": "prefect-aws>=0.3.0",
+                "syntask_aws.deployments.steps.pull_from_s3": {
+                    "requires": "syntask-aws>=0.3.0",
                     "bucket": "my-bucket",
                     "folder": "{{ push-code.folder }}",
                     "credentials": None,
@@ -4447,17 +4447,17 @@ class TestSaveUserInputs:
             },
         ]
 
-        _save_deployment_to_prefect_file(
+        _save_deployment_to_syntask_file(
             new_deployment_to_save,
             build_steps=build_steps,
             push_steps=push_steps,
             pull_steps=pull_steps,
         )
 
-        prefect_file = Path("prefect.yaml")
-        assert prefect_file.exists()
+        syntask_file = Path("syntask.yaml")
+        assert syntask_file.exists()
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4478,7 +4478,7 @@ class TestSaveUserInputs:
         assert config["deployments"][1]["pull"] == pull_steps
 
     def test_save_new_deployment_with_same_name_as_existing_deployment_overwrites(self):
-        # Set up initial 'prefect.yaml' file with a deployment
+        # Set up initial 'syntask.yaml' file with a deployment
         initial_deployment = {
             "name": "existing_deployment",
             "entrypoint": "flows/existing_flow.py:my_flow",
@@ -4487,12 +4487,12 @@ class TestSaveUserInputs:
             "parameter_openapi_schema": None,
         }
 
-        _save_deployment_to_prefect_file(initial_deployment)
+        _save_deployment_to_syntask_file(initial_deployment)
 
-        prefect_file = Path("prefect.yaml")
-        assert prefect_file.exists()
+        syntask_file = Path("syntask.yaml")
+        assert syntask_file.exists()
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4508,10 +4508,10 @@ class TestSaveUserInputs:
             "parameter_openapi_schema": None,
         }
 
-        _save_deployment_to_prefect_file(new_deployment)
+        _save_deployment_to_syntask_file(new_deployment)
 
         # Check that the new deployment has overwritten the old one
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4548,12 +4548,12 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
-        prefect_file = Path("prefect.yaml")
+        syntask_file = Path("syntask.yaml")
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "default"
@@ -4597,11 +4597,11 @@ class TestSaveUserInputs:
             expected_code=0,
             expected_output_contains=[
                 "Found existing deployment configuration",
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4640,12 +4640,12 @@ class TestSaveUserInputs:
                     "Would you like to save configuration for this deployment for"
                     " faster deployments in the future?"
                 ),
-                "Deployment configuration saved to prefect.yaml",
+                "Deployment configuration saved to syntask.yaml",
             ],
         )
-        prefect_file = Path("prefect.yaml")
+        syntask_file = Path("syntask.yaml")
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "default"
@@ -4686,7 +4686,7 @@ class TestSaveUserInputs:
             ],
         )
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -4697,39 +4697,39 @@ class TestSaveUserInputs:
 
     @pytest.mark.usefixtures("project_dir", "interactive_console")
     async def test_deploy_resolves_block_references_in_deployments_section(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         """
-        Ensure block references are resolved in deployments section of prefect.yaml
+        Ensure block references are resolved in deployments section of syntask.yaml
         """
         await JSON(value={"work_pool_name": work_pool.name}).save(
             name="test-json-block"
         )
 
-        # add block reference to prefect.yaml
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # add block reference to syntask.yaml
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
-        prefect_config["deployments"] = [
+        syntask_config["deployments"] = [
             {
                 "name": "test-name",
                 "entrypoint": "flows/hello.py:my_flow",
                 "work_pool": {
                     "name": (
-                        "{{ prefect.blocks.json.test-json-block.value.work_pool_name }}"
+                        "{{ syntask.blocks.json.test-json-block.value.work_pool_name }}"
                     ),
                 },
             }
         ]
 
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         # ensure block reference was added
         assert (
-            prefect_config["deployments"][0]["work_pool"]["name"]
-            == "{{ prefect.blocks.json.test-json-block.value.work_pool_name }}"
+            syntask_config["deployments"][0]["work_pool"]["name"]
+            == "{{ syntask.blocks.json.test-json-block.value.work_pool_name }}"
         )
 
         # run deploy
@@ -4756,58 +4756,58 @@ class TestSaveUserInputs:
                 ),
                 "Would you like",
                 "to overwrite that entry?",
-                "Deployment configuration saved to prefect.yaml!",
+                "Deployment configuration saved to syntask.yaml!",
             ],
         )
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
         assert deployment.work_pool_name == work_pool.name
 
         # ensure block reference was resolved
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
-        assert prefect_config["deployments"][0]["work_pool"]["name"] == work_pool.name
+        assert syntask_config["deployments"][0]["work_pool"]["name"] == work_pool.name
 
     @pytest.mark.usefixtures("project_dir", "interactive_console")
     async def test_deploy_resolves_variables_in_deployments_section(
-        self, prefect_client, work_pool
+        self, syntask_client, work_pool
     ):
         """
-        Ensure deployments section of prefect.yaml placeholders are resolved
+        Ensure deployments section of syntask.yaml placeholders are resolved
         """
         # create variable
-        await prefect_client._client.post(
+        await syntask_client._client.post(
             "/variables/", json={"name": "my_work_pool", "value": work_pool.name}
         )
 
-        # add variable to deployments section of prefect.yaml
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # add variable to deployments section of syntask.yaml
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
-        prefect_config["deployments"] = [
+        syntask_config["deployments"] = [
             {
                 "name": "test-name",
                 "entrypoint": "flows/hello.py:my_flow",
                 "work_pool": {
-                    "name": "{{ prefect.variables.my_work_pool }}",
+                    "name": "{{ syntask.variables.my_work_pool }}",
                 },
             }
         ]
 
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         # ensure it is there!
         assert (
-            prefect_config["deployments"][0]["work_pool"]["name"]
-            == "{{ prefect.variables.my_work_pool }}"
+            syntask_config["deployments"][0]["work_pool"]["name"]
+            == "{{ syntask.variables.my_work_pool }}"
         )
 
         # run deploy
@@ -4834,28 +4834,28 @@ class TestSaveUserInputs:
                 ),
                 "Would you like",
                 "to overwrite that entry?",
-                "Deployment configuration saved to prefect.yaml!",
+                "Deployment configuration saved to syntask.yaml!",
             ],
         )
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
         assert deployment.work_pool_name == work_pool.name
 
-        # ensure variable is resolved in prefect.yaml
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        # ensure variable is resolved in syntask.yaml
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
-        assert prefect_config["deployments"][0]["work_pool"]["name"] == work_pool.name
+        assert syntask_config["deployments"][0]["work_pool"]["name"] == work_pool.name
 
 
 @pytest.mark.usefixtures("project_dir", "interactive_console", "work_pool")
 class TestDeployWithoutEntrypoint:
-    async def test_deploy_without_entrypoint(self, prefect_client: PrefectClient):
+    async def test_deploy_without_entrypoint(self, syntask_client: SyntaskClient):
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command="deploy",
@@ -4898,7 +4898,7 @@ class TestDeployWithoutEntrypoint:
         )
 
     async def test_deploy_without_entrypoint_manually_enter(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -4937,13 +4937,13 @@ class TestDeployWithoutEntrypoint:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             name="An important name/default"
         )
         assert deployment.entrypoint == "flows/hello.py:my_flow"
 
     async def test_deploy_validates_manually_entered_entrypoints(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -4996,14 +4996,14 @@ class TestDeployWithoutEntrypoint:
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             name="An important name/default"
         )
         assert deployment.entrypoint == "flows/hello.py:my_flow"
 
 
 class TestCheckForMatchingDeployment:
-    async def test_matching_deployment_in_prefect_file_returns_true(self):
+    async def test_matching_deployment_in_syntask_file_returns_true(self):
         deployment = {
             "name": "existing_deployment",
             "entrypoint": "flows/existing_flow.py:my_flow",
@@ -5011,11 +5011,11 @@ class TestCheckForMatchingDeployment:
             "work_pool": {"name": "existing_pool"},
             "parameter_openapi_schema": None,
         }
-        _save_deployment_to_prefect_file(deployment)
+        _save_deployment_to_syntask_file(deployment)
 
-        prefect_file = Path("prefect.yaml")
+        syntask_file = Path("syntask.yaml")
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         matching_deployment_exists = any(
@@ -5031,13 +5031,13 @@ class TestCheckForMatchingDeployment:
             "entrypoint": "flows/existing_flow.py:my_flow",
         }
         matching_deployment_exists = (
-            _check_for_matching_deployment_name_and_entrypoint_in_prefect_file(
+            _check_for_matching_deployment_name_and_entrypoint_in_syntask_file(
                 new_deployment
             )
         )
         assert matching_deployment_exists is True
 
-    async def test_no_matching_deployment_in_prefect_file_returns_false(self):
+    async def test_no_matching_deployment_in_syntask_file_returns_false(self):
         deployment = {
             "name": "existing_deployment",
             "entrypoint": "flows/existing_flow.py:my_flow",
@@ -5045,11 +5045,11 @@ class TestCheckForMatchingDeployment:
             "work_pool": {"name": "existing_pool"},
             "parameter_openapi_schema": None,
         }
-        _save_deployment_to_prefect_file(deployment)
+        _save_deployment_to_syntask_file(deployment)
 
-        prefect_file = Path("prefect.yaml")
+        syntask_file = Path("syntask.yaml")
 
-        with prefect_file.open(mode="r") as f:
+        with syntask_file.open(mode="r") as f:
             config = yaml.safe_load(f)
 
         matching_deployment_exists = any(
@@ -5065,7 +5065,7 @@ class TestCheckForMatchingDeployment:
             "entrypoint": "flows/existing_flow.py:my_flow",
         }
         matching_deployment_exists_1 = (
-            _check_for_matching_deployment_name_and_entrypoint_in_prefect_file(
+            _check_for_matching_deployment_name_and_entrypoint_in_syntask_file(
                 deployment_with_same_entrypoint_but_different_name
             )
         )
@@ -5076,7 +5076,7 @@ class TestCheckForMatchingDeployment:
             "entrypoint": "flows/new_flow.py:my_flow",
         }
         matching_deployment_exists_2 = (
-            _check_for_matching_deployment_name_and_entrypoint_in_prefect_file(
+            _check_for_matching_deployment_name_and_entrypoint_in_syntask_file(
                 deployment_with_same_name_but_different_entrypoint
             )
         )
@@ -5089,11 +5089,11 @@ class TestDeploymentTrigger:
             trigger_spec = {
                 "name": "Trigger McTriggerson",
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "match_related": {
-                    "prefect.resource.name": "seed",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.name": "seed",
+                    "syntask.resource.role": "flow",
                 },
                 "job_variables": {"foo": "bar"},
             }
@@ -5105,13 +5105,13 @@ class TestDeploymentTrigger:
                         "name": "Trigger McTriggerson",
                         "description": "",
                         "enabled": True,
-                        "match": {"prefect.resource.id": "prefect.flow-run.*"},
+                        "match": {"syntask.resource.id": "syntask.flow-run.*"},
                         "match_related": {
-                            "prefect.resource.name": "seed",
-                            "prefect.resource.role": "flow",
+                            "syntask.resource.name": "seed",
+                            "syntask.resource.role": "flow",
                         },
                         "after": set(),
-                        "expect": {"prefect.flow-run.Completed"},
+                        "expect": {"syntask.flow-run.Completed"},
                         "for_each": set(),
                         "posture": Posture.Reactive,
                         "threshold": 1,
@@ -5124,11 +5124,11 @@ class TestDeploymentTrigger:
         async def test_initialize_deployment_triggers_implicit_name(self):
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "match_related": {
-                    "prefect.resource.name": "seed",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.name": "seed",
+                    "syntask.resource.role": "flow",
                 },
             }
 
@@ -5138,11 +5138,11 @@ class TestDeploymentTrigger:
         async def test_deployment_triggers_without_job_variables(self):
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "match_related": {
-                    "prefect.resource.name": "seed",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.name": "seed",
+                    "syntask.resource.role": "flow",
                 },
             }
 
@@ -5155,11 +5155,11 @@ class TestDeploymentTrigger:
 
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "match_related": {
-                    "prefect.resource.name": "seed",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.name": "seed",
+                    "syntask.resource.role": "flow",
                 },
                 "job_variables": {"nested": {"foo": "bar"}},
             }
@@ -5171,7 +5171,7 @@ class TestDeploymentTrigger:
 
             assert triggers[0]._deployment_id == deployment_id
             client.delete_resource_owned_automations.assert_called_once_with(
-                f"prefect.deployment.{deployment_id}"
+                f"syntask.deployment.{deployment_id}"
             )
             client.create_automation.assert_called_once_with(
                 triggers[0].as_automation()
@@ -5183,11 +5183,11 @@ class TestDeploymentTrigger:
 
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "match_related": {
-                    "prefect.resource.name": "seed",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.name": "seed",
+                    "syntask.resource.role": "flow",
                 },
             }
 
@@ -5200,10 +5200,10 @@ class TestDeploymentTrigger:
             client.create_automation.assert_not_called()
 
         async def test_triggers_creation_orchestrated(
-            self, project_dir, prefect_client, work_pool
+            self, project_dir, syntask_client, work_pool
         ):
-            prefect_file = Path("prefect.yaml")
-            with prefect_file.open(mode="r") as f:
+            syntask_file = Path("syntask.yaml")
+            with syntask_file.open(mode="r") as f:
                 contents = yaml.safe_load(f)
 
             contents["deployments"] = [
@@ -5215,11 +5215,11 @@ class TestDeploymentTrigger:
                     "triggers": [
                         {
                             "enabled": True,
-                            "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                            "expect": ["prefect.flow-run.Completed"],
+                            "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                            "expect": ["syntask.flow-run.Completed"],
                             "match_related": {
-                                "prefect.resource.name": "seed",
-                                "prefect.resource.role": "flow",
+                                "syntask.resource.name": "seed",
+                                "syntask.resource.role": "flow",
                             },
                             "job_variables": {"foo": 123},
                         }
@@ -5231,11 +5231,11 @@ class TestDeploymentTrigger:
                 "test-name-1", contents["deployments"][0]["triggers"]
             )
 
-            with prefect_file.open(mode="w") as f:
+            with syntask_file.open(mode="w") as f:
                 yaml.safe_dump(contents, f)
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ) as create_triggers:
                 await run_sync_in_worker_thread(
@@ -5247,7 +5247,7 @@ class TestDeploymentTrigger:
                 assert create_triggers.call_count == 1
 
                 client, deployment_id, triggers = create_triggers.call_args[0]
-                assert isinstance(client, PrefectClient)
+                assert isinstance(client, SyntaskClient)
                 assert isinstance(deployment_id, UUID)
 
                 expected_triggers[0].set_deployment_id(deployment_id)
@@ -5255,10 +5255,10 @@ class TestDeploymentTrigger:
                 assert triggers == expected_triggers
 
         async def test_deploy_command_warns_triggers_not_created_not_cloud(
-            self, project_dir, prefect_client, work_pool
+            self, project_dir, syntask_client, work_pool
         ):
-            prefect_file = Path("prefect.yaml")
-            with prefect_file.open(mode="r") as f:
+            syntask_file = Path("syntask.yaml")
+            with syntask_file.open(mode="r") as f:
                 contents = yaml.safe_load(f)
 
             contents["deployments"] = [
@@ -5270,18 +5270,18 @@ class TestDeploymentTrigger:
                     "triggers": [
                         {
                             "enabled": True,
-                            "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                            "expect": ["prefect.flow-run.Completed"],
+                            "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                            "expect": ["syntask.flow-run.Completed"],
                             "match_related": {
-                                "prefect.resource.name": "seed",
-                                "prefect.resource.role": "flow",
+                                "syntask.resource.name": "seed",
+                                "syntask.resource.role": "flow",
                             },
                         }
                     ],
                 }
             ]
 
-            with prefect_file.open(mode="w") as f:
+            with syntask_file.open(mode="w") as f:
                 yaml.safe_dump(contents, f)
 
             # Deploy the deployment with a name
@@ -5290,7 +5290,7 @@ class TestDeploymentTrigger:
                 command="deploy ./flows/hello.py:my_flow -n test-name-1",
                 expected_code=0,
                 expected_output_contains=[
-                    "Deployment triggers are only supported on Prefect Cloud"
+                    "Deployment triggers are only supported on Syntask Cloud"
                 ],
             )
 
@@ -5302,8 +5302,8 @@ class TestDeploymentTrigger:
 
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "job_variables": {"foo": "bar"},
             }
 
@@ -5312,7 +5312,7 @@ class TestDeploymentTrigger:
             )
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ) as create_triggers:
                 await run_sync_in_worker_thread(
@@ -5339,8 +5339,8 @@ class TestDeploymentTrigger:
 
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "job_variables": {"foo": "bar"},
             }
 
@@ -5352,7 +5352,7 @@ class TestDeploymentTrigger:
             )
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ) as create_triggers:
                 await run_sync_in_worker_thread(
@@ -5379,8 +5379,8 @@ class TestDeploymentTrigger:
 
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "job_variables": {"foo": "bar"},
             }
 
@@ -5392,7 +5392,7 @@ class TestDeploymentTrigger:
             )
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ) as create_triggers:
                 await run_sync_in_worker_thread(
@@ -5419,8 +5419,8 @@ class TestDeploymentTrigger:
 
             trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
             }
             triggers_file = tmpdir.mkdir("my_stuff") / "triggers.yaml"
             with open(triggers_file, "w") as f:
@@ -5431,7 +5431,7 @@ class TestDeploymentTrigger:
             )
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ) as create_triggers:
                 await run_sync_in_worker_thread(
@@ -5458,15 +5458,15 @@ class TestDeploymentTrigger:
 
             trigger_spec_1 = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
                 "job_variables": {"foo": "bar"},
             }
 
             trigger_spec_2 = {
                 "enabled": False,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Failed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Failed"],
             }
 
             with open("triggers.yaml", "w") as f:
@@ -5477,7 +5477,7 @@ class TestDeploymentTrigger:
             )
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ) as create_triggers:
                 await run_sync_in_worker_thread(
@@ -5506,16 +5506,16 @@ class TestDeploymentTrigger:
 
             cli_trigger_spec = {
                 "enabled": True,
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Failed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Failed"],
             }
 
             expected_triggers = _initialize_deployment_triggers(
                 "test-name-1", [cli_trigger_spec]
             )
 
-            prefect_file = Path("prefect.yaml")
-            with prefect_file.open(mode="r") as f:
+            syntask_file = Path("syntask.yaml")
+            with syntask_file.open(mode="r") as f:
                 contents = yaml.safe_load(f)
 
             contents["deployments"] = [
@@ -5525,16 +5525,16 @@ class TestDeploymentTrigger:
                         "name": docker_work_pool.name,
                     },
                     "triggers": [
-                        {**cli_trigger_spec, "expect": ["prefect.flow-run.Completed"]}
+                        {**cli_trigger_spec, "expect": ["syntask.flow-run.Completed"]}
                     ],
                 }
             ]
 
-            with prefect_file.open(mode="w") as f:
+            with syntask_file.open(mode="w") as f:
                 yaml.safe_dump(contents, f)
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ) as create_triggers:
                 await run_sync_in_worker_thread(
@@ -5563,7 +5563,7 @@ class TestDeploymentTrigger:
 
             for invalid_trigger in [invalid_json_str_trigger, invalid_yaml_trigger]:
                 with mock.patch(
-                    "prefect.cli.deploy._create_deployment_triggers",
+                    "syntask.cli.deploy._create_deployment_triggers",
                     AsyncMock(),
                 ):
                     await run_sync_in_worker_thread(
@@ -5577,18 +5577,18 @@ class TestDeploymentTrigger:
                     )
 
         @pytest.mark.usefixtures("interactive_console", "project_dir")
-        async def test_triggers_saved_to_prefect_yaml(self, docker_work_pool):
+        async def test_triggers_saved_to_syntask_yaml(self, docker_work_pool):
             client = AsyncMock()
             client.server_type = ServerType.CLOUD
 
             cli_trigger_spec = {
                 "name": "Trigger McTriggerson",
-                "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                "expect": ["prefect.flow-run.Completed"],
+                "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                "expect": ["syntask.flow-run.Completed"],
             }
 
             with mock.patch(
-                "prefect.cli.deploy._create_deployment_triggers",
+                "syntask.cli.deploy._create_deployment_triggers",
                 AsyncMock(),
             ):
                 await run_sync_in_worker_thread(
@@ -5612,9 +5612,9 @@ class TestDeploymentTrigger:
                     expected_code=0,
                 )
 
-            # Read the updated prefect.yaml
-            prefect_file = Path("prefect.yaml")
-            with prefect_file.open(mode="r") as f:
+            # Read the updated syntask.yaml
+            syntask_file = Path("syntask.yaml")
+            with syntask_file.open(mode="r") as f:
                 contents = yaml.safe_load(f)
 
             assert "deployments" in contents
@@ -5629,17 +5629,17 @@ class TestDeployDockerBuildSteps:
         docker_work_pool,
         mock_build_docker_image,
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
         with open("Dockerfile", "w") as f:
             f.write("FROM python:3.8-slim\n")
 
-        prefect_config["build"] = [
+        syntask_config["build"] = [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
-                    "requires": "prefect-docker",
+                "syntask_docker.deployments.steps.build_docker_image": {
+                    "requires": "syntask-docker",
                     "image_name": "local/repo",
                     "tag": "dev",
                     "id": "build-image",
@@ -5649,8 +5649,8 @@ class TestDeployDockerBuildSteps:
         ]
 
         # save it back
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -5674,20 +5674,20 @@ class TestDeployDockerBuildSteps:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
     async def test_other_build_step_exists_prompts_build_custom_docker_image(
         self,
         docker_work_pool,
     ):
-        prefect_file = Path("prefect.yaml")
-        with prefect_file.open(mode="r") as f:
-            prefect_config = yaml.safe_load(f)
+        syntask_file = Path("syntask.yaml")
+        with syntask_file.open(mode="r") as f:
+            syntask_config = yaml.safe_load(f)
 
-        prefect_config["build"] = [
+        syntask_config["build"] = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "id": "sample-bash-cmd",
                     "script": "echo 'Hello, World!'",
                     "stream_output": False,
@@ -5696,8 +5696,8 @@ class TestDeployDockerBuildSteps:
         ]
 
         # save it back
-        with prefect_file.open(mode="w") as f:
-            yaml.safe_dump(prefect_config, f)
+        with syntask_file.open(mode="w") as f:
+            yaml.safe_dump(syntask_config, f)
 
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -5721,9 +5721,9 @@ class TestDeployDockerBuildSteps:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        prefect_file = Path("prefect.yaml")
+        syntask_file = Path("syntask.yaml")
 
-        with open(prefect_file, "r") as f:
+        with open(syntask_file, "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -5755,9 +5755,9 @@ class TestDeployDockerBuildSteps:
         assert result.exit_code == 0
         assert "An important name/test" in result.output
 
-        prefect_file = Path("prefect.yaml")
+        syntask_file = Path("syntask.yaml")
 
-        with open(prefect_file, "r") as f:
+        with open(syntask_file, "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
@@ -5784,7 +5784,7 @@ class TestDeployDockerBuildSteps:
                 + "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 +
                 # Default image_name
@@ -5803,7 +5803,7 @@ class TestDeployDockerBuildSteps:
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
                 "Would you like to use the Dockerfile in the current directory?",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Would you like to save configuration for this deployment",
             ],
@@ -5812,18 +5812,18 @@ class TestDeployDockerBuildSteps:
 
         assert result.exit_code == 0
         assert "An important name/test" in result.output
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "Dockerfile",
-                    "image_name": "prefecthq/prefect/test-name",
+                    "image_name": "syntaskhq/syntask/test-name",
                     "tag": "latest",
                 }
             }
@@ -5856,7 +5856,7 @@ class TestDeployDockerBuildSteps:
                 "Dockerfile.backup"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 +
                 # Default image_name
@@ -5876,7 +5876,7 @@ class TestDeployDockerBuildSteps:
                 "Would you like to build a custom Docker image",
                 "Would you like to use the Dockerfile in the current directory?",
                 "A Dockerfile exists. You chose not to use it.",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Would you like to save configuration for this deployment",
             ],
@@ -5885,18 +5885,18 @@ class TestDeployDockerBuildSteps:
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
-                    "image_name": "prefecthq/prefect/test-name",
+                    "image_name": "syntaskhq/syntask/test-name",
                     "tag": "latest",
                 }
             }
@@ -5954,7 +5954,7 @@ class TestDeployDockerBuildSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -5969,7 +5969,7 @@ class TestDeployDockerBuildSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Would you like to save configuration for this deployment",
             ],
@@ -5978,18 +5978,18 @@ class TestDeployDockerBuildSteps:
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
-                    "image_name": "prefecthq/prefect/test-name",
+                    "image_name": "syntaskhq/syntask/test-name",
                     "tag": "latest",
                 }
             }
@@ -5998,10 +5998,10 @@ class TestDeployDockerBuildSteps:
     async def test_no_existing_work_pool_image_gets_updated_after_adding_build_docker_image_step(
         self, docker_work_pool, monkeypatch, mock_build_docker_image
     ):
-        prefect_file = Path("prefect.yaml")
-        if prefect_file.exists():
-            prefect_file.unlink()
-        assert not prefect_file.exists()
+        syntask_file = Path("syntask.yaml")
+        if syntask_file.exists():
+            syntask_file.unlink()
+        assert not syntask_file.exists()
 
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -6014,7 +6014,7 @@ class TestDeployDockerBuildSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -6032,7 +6032,7 @@ class TestDeployDockerBuildSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Would you like to save configuration for this deployment",
             ],
@@ -6041,7 +6041,7 @@ class TestDeployDockerBuildSteps:
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 1
@@ -6053,11 +6053,11 @@ class TestDeployDockerBuildSteps:
         )
         assert config["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
-                    "image_name": "prefecthq/prefect/test-name",
+                    "image_name": "syntaskhq/syntask/test-name",
                     "tag": "latest",
                 }
             }
@@ -6066,8 +6066,8 @@ class TestDeployDockerBuildSteps:
     async def test_work_pool_image_already_exists_not_updated_after_adding_build_docker_image_step(
         self, docker_work_pool, monkeypatch, mock_build_docker_image
     ):
-        prefect_file = Path("prefect.yaml")
-        with open("prefect.yaml", "w") as f:
+        syntask_file = Path("syntask.yaml")
+        with open("syntask.yaml", "w") as f:
             contents = {
                 "work_pool": {
                     "name": docker_work_pool.name,
@@ -6075,7 +6075,7 @@ class TestDeployDockerBuildSteps:
                 }
             }
             yaml.dump(contents, f)
-        assert prefect_file.exists()
+        assert syntask_file.exists()
 
         result = await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -6088,7 +6088,7 @@ class TestDeployDockerBuildSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -6106,7 +6106,7 @@ class TestDeployDockerBuildSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Would you like to save configuration for this deployment",
             ],
@@ -6115,7 +6115,7 @@ class TestDeployDockerBuildSteps:
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 1
@@ -6133,12 +6133,12 @@ class TestDeployDockerBuildSteps:
 
 class TestDeployInfraOverrides:
     @pytest.fixture
-    async def work_pool(self, prefect_client):
-        await prefect_client.create_work_pool(
+    async def work_pool(self, syntask_client):
+        await syntask_client.create_work_pool(
             WorkPoolCreate(name="test-pool", type="test")
         )
 
-    async def test_uses_job_variables(self, project_dir, work_pool, prefect_client):
+    async def test_uses_job_variables(self, project_dir, work_pool, syntask_client):
         await run_sync_in_worker_thread(
             invoke_and_assert,
             command=(
@@ -6149,11 +6149,11 @@ class TestDeployInfraOverrides:
             expected_code=0,
             expected_output_contains=[
                 "An important name/test-name",
-                "prefect worker start --pool 'test-pool'",
+                "syntask worker start --pool 'test-pool'",
             ],
         )
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             "An important name/test-name"
         )
         assert deployment.name == "test-name"
@@ -6222,7 +6222,7 @@ class TestDeployDockerPushSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -6237,7 +6237,7 @@ class TestDeployDockerPushSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Would you like to save configuration for this deployment",
             ],
@@ -6246,18 +6246,18 @@ class TestDeployDockerPushSteps:
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
-                    "image_name": "prefecthq/prefect/test-name",
+                    "image_name": "syntaskhq/syntask/test-name",
                     "tag": "latest",
                 }
             }
@@ -6278,7 +6278,7 @@ class TestDeployDockerPushSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -6299,31 +6299,31 @@ class TestDeployDockerPushSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Is this a private registry?",
                 "Would you like to save configuration for this deployment",
             ],
             expected_output_does_not_contain=[
-                "Would you like use prefect-docker to manage Docker registry"
+                "Would you like use syntask-docker to manage Docker registry"
                 " credentials?"
             ],
         )
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
-                    "image_name": "https://hub.docker.com/prefecthq/prefect/test-name",
+                    "image_name": "https://hub.docker.com/syntaskhq/syntask/test-name",
                     "tag": "latest",
                 }
             }
@@ -6331,8 +6331,8 @@ class TestDeployDockerPushSteps:
 
         assert config["deployments"][1]["push"] == [
             {
-                "prefect_docker.deployments.steps.push_docker_image": {
-                    "requires": "prefect-docker>=0.3.1",
+                "syntask_docker.deployments.steps.push_docker_image": {
+                    "requires": "syntask-docker>=0.3.1",
                     "image_name": "{{ build-image.image_name }}",
                     "tag": "{{ build-image.tag }}",
                 }
@@ -6364,7 +6364,7 @@ class TestDeployDockerPushSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -6379,7 +6379,7 @@ class TestDeployDockerPushSteps:
                 # Accept private registry
                 + "y"
                 + readchar.key.ENTER
-                # Reject use prefect-docker
+                # Reject use syntask-docker
                 + "n"
                 + readchar.key.ENTER
                 # Accept use existing creds
@@ -6391,34 +6391,34 @@ class TestDeployDockerPushSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Is this a private registry?",
                 (
-                    "Would you like use prefect-docker to manage Docker registry"
+                    "Would you like use syntask-docker to manage Docker registry"
                     " credentials?"
                 ),
                 "Would you like to use the existing Docker registry credentials",
                 "Would you like to save configuration for this deployment",
             ],
-            expected_output_does_not_contain=["Installing prefect-docker..."],
+            expected_output_does_not_contain=["Installing syntask-docker..."],
         )
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
                     "image_name": (
-                        "https://private.docker.com/prefecthq/prefect/test-name"
+                        "https://private.docker.com/syntaskhq/syntask/test-name"
                     ),
                     "tag": "latest",
                 }
@@ -6427,19 +6427,19 @@ class TestDeployDockerPushSteps:
 
         assert config["deployments"][1]["push"] == [
             {
-                "prefect_docker.deployments.steps.push_docker_image": {
-                    "requires": "prefect-docker>=0.3.1",
+                "syntask_docker.deployments.steps.push_docker_image": {
+                    "requires": "syntask-docker>=0.3.1",
                     "image_name": "{{ build-image.image_name }}",
                     "tag": "{{ build-image.tag }}",
                     "credentials": (
-                        "{{ prefect.docker-registry.docker_registry_creds_name }}"
+                        "{{ syntask.docker-registry.docker_registry_creds_name }}"
                     ),
                 }
             }
         ]
 
         with pytest.raises(ImportError):
-            import prefect_docker  # noqa
+            import syntask_docker  # noqa
 
     async def test_prompt_push_docker_image_accepted_private_registry_use_new_core_creds(
         self, docker_work_pool, monkeypatch, mock_prompt, mock_build_docker_image
@@ -6460,7 +6460,7 @@ class TestDeployDockerPushSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -6475,7 +6475,7 @@ class TestDeployDockerPushSteps:
                 # Accept private registry
                 + "y"
                 + readchar.key.ENTER
-                # Reject use prefect-docker
+                # Reject use syntask-docker
                 + "n"
                 + readchar.key.ENTER
                 # Enter username
@@ -6490,11 +6490,11 @@ class TestDeployDockerPushSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Is this a private registry?",
                 (
-                    "Would you like use prefect-docker to manage Docker registry"
+                    "Would you like use syntask-docker to manage Docker registry"
                     " credentials?"
                 ),
                 "Docker registry username",
@@ -6502,25 +6502,25 @@ class TestDeployDockerPushSteps:
             ],
             expected_output_does_not_contain=[
                 "Would you like to use the existing Docker registry credentials",
-                "Installing prefect-docker...",
+                "Installing syntask-docker...",
             ],
         )
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
                     "image_name": (
-                        "https://private.docker.com/prefecthq/prefect/test-name"
+                        "https://private.docker.com/syntaskhq/syntask/test-name"
                     ),
                     "tag": "latest",
                 }
@@ -6529,12 +6529,12 @@ class TestDeployDockerPushSteps:
 
         assert config["deployments"][1]["push"] == [
             {
-                "prefect_docker.deployments.steps.push_docker_image": {
-                    "requires": "prefect-docker>=0.3.1",
+                "syntask_docker.deployments.steps.push_docker_image": {
+                    "requires": "syntask-docker>=0.3.1",
                     "image_name": "{{ build-image.image_name }}",
                     "tag": "{{ build-image.tag }}",
                     "credentials": (
-                        "{{ prefect.docker-registry.docker_registry_creds_name }}"
+                        "{{ syntask.docker-registry.docker_registry_creds_name }}"
                     ),
                 }
             }
@@ -6547,7 +6547,7 @@ class TestDeployDockerPushSteps:
         assert new_block.registry_url == "https://private.docker.com"
 
         with pytest.raises(ImportError):
-            import prefect_docker  # noqa
+            import syntask_docker  # noqa
 
     async def test_prompt_push_docker_image_accepted_private_registry_reject_use_existing_core_creds(
         self, docker_work_pool, monkeypatch, mock_prompt, mock_build_docker_image
@@ -6577,7 +6577,7 @@ class TestDeployDockerPushSteps:
                 "y"
                 + readchar.key.ENTER
                 # Enter repo name
-                + "prefecthq/prefect"
+                + "syntaskhq/syntask"
                 + readchar.key.ENTER
                 # Default image_name
                 + readchar.key.ENTER
@@ -6592,7 +6592,7 @@ class TestDeployDockerPushSteps:
                 # Accept private registry
                 + "y"
                 + readchar.key.ENTER
-                # Reject use prefect-docker
+                # Reject use syntask-docker
                 + "n"
                 + readchar.key.ENTER
                 # Reject use existing creds
@@ -6610,35 +6610,35 @@ class TestDeployDockerPushSteps:
             ),
             expected_output_contains=[
                 "Would you like to build a custom Docker image",
-                "Image prefecthq/prefect/test-name:latest will be built",
+                "Image syntaskhq/syntask/test-name:latest will be built",
                 "Would you like to push this image to a remote registry?",
                 "Is this a private registry?",
                 (
-                    "Would you like use prefect-docker to manage Docker registry"
+                    "Would you like use syntask-docker to manage Docker registry"
                     " credentials?"
                 ),
                 "Would you like to use the existing Docker registry credentials",
                 "Docker registry username",
                 "Would you like to save configuration for this deployment",
             ],
-            expected_output_does_not_contain=["Installing prefect-docker..."],
+            expected_output_does_not_contain=["Installing syntask-docker..."],
         )
 
         assert result.exit_code == 0
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             config = yaml.safe_load(f)
 
         assert len(config["deployments"]) == 2
         assert config["deployments"][1]["name"] == "test-name"
         assert config["deployments"][1]["build"] == [
             {
-                "prefect_docker.deployments.steps.build_docker_image": {
+                "syntask_docker.deployments.steps.build_docker_image": {
                     "id": "build-image",
-                    "requires": "prefect-docker>=0.3.1",
+                    "requires": "syntask-docker>=0.3.1",
                     "dockerfile": "auto",
                     "image_name": (
-                        "https://private2.docker.com/prefecthq/prefect/test-name"
+                        "https://private2.docker.com/syntaskhq/syntask/test-name"
                     ),
                     "tag": "latest",
                 }
@@ -6647,12 +6647,12 @@ class TestDeployDockerPushSteps:
 
         assert config["deployments"][1]["push"] == [
             {
-                "prefect_docker.deployments.steps.push_docker_image": {
-                    "requires": "prefect-docker>=0.3.1",
+                "syntask_docker.deployments.steps.push_docker_image": {
+                    "requires": "syntask-docker>=0.3.1",
                     "image_name": "{{ build-image.image_name }}",
                     "tag": "{{ build-image.tag }}",
                     "credentials": (
-                        "{{ prefect.docker-registry.docker_registry_creds_name }}"
+                        "{{ syntask.docker-registry.docker_registry_creds_name }}"
                     ),
                 }
             }
@@ -6666,11 +6666,11 @@ class TestDeployDockerPushSteps:
         assert new_block.registry_url == "https://private2.docker.com"
 
         with pytest.raises(ImportError):
-            import prefect_docker  # noqa
+            import syntask_docker  # noqa
 
 
-class TestDeployingUsingCustomPrefectFile:
-    def customize_from_existing_prefect_file(
+class TestDeployingUsingCustomSyntaskFile:
+    def customize_from_existing_syntask_file(
         self,
         existing_file: Path,
         new_file: io.TextIOBase,
@@ -6696,18 +6696,18 @@ class TestDeployingUsingCustomPrefectFile:
         yaml.dump(contents, new_file)
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploying_using_custom_prefect_file(
-        self, prefect_client: PrefectClient, work_pool: WorkPool
+    async def test_deploying_using_custom_syntask_file(
+        self, syntask_client: SyntaskClient, work_pool: WorkPool
     ):
-        # Create and use a temporary prefect.yaml file
+        # Create and use a temporary syntask.yaml file
         with tempfile.NamedTemporaryFile("w+") as fp:
-            self.customize_from_existing_prefect_file(
-                Path("prefect.yaml"), fp, work_pool
+            self.customize_from_existing_syntask_file(
+                Path("syntask.yaml"), fp, work_pool
             )
 
             await run_sync_in_worker_thread(
                 invoke_and_assert,
-                command=f"deploy --all --prefect-file {fp.name}",
+                command=f"deploy --all --syntask-file {fp.name}",
                 expected_code=0,
                 user_input=(
                     # decline remote storage
@@ -6733,10 +6733,10 @@ class TestDeployingUsingCustomPrefectFile:
             )
 
         # Check if deployments were created correctly
-        deployment1 = await prefect_client.read_deployment_by_name(
+        deployment1 = await syntask_client.read_deployment_by_name(
             "An important name/test-deployment1",
         )
-        deployment2 = await prefect_client.read_deployment_by_name(
+        deployment2 = await syntask_client.read_deployment_by_name(
             "An important name/test-deployment2"
         )
 
@@ -6746,10 +6746,10 @@ class TestDeployingUsingCustomPrefectFile:
         assert deployment2.work_pool_name == work_pool.name
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploying_using_missing_prefect_file(self):
+    async def test_deploying_using_missing_syntask_file(self):
         await run_sync_in_worker_thread(
             invoke_and_assert,
-            command="deploy --all --prefect-file THIS_FILE_DOES_NOT_EXIST",
+            command="deploy --all --syntask-file THIS_FILE_DOES_NOT_EXIST",
             expected_code=1,
             expected_output_contains=[
                 "Unable to read the specified config file. Reason: [Errno 2] "
@@ -6761,13 +6761,13 @@ class TestDeployingUsingCustomPrefectFile:
     @pytest.mark.parametrize(
         "content", ["{this isn't valid YAML!}", "unbalanced blackets: ]["]
     )
-    async def test_deploying_using_malformed_prefect_file(self, content: str):
+    async def test_deploying_using_malformed_syntask_file(self, content: str):
         with tempfile.NamedTemporaryFile("w+") as fp:
             fp.write(content)
 
             await run_sync_in_worker_thread(
                 invoke_and_assert,
-                command=f"deploy --all --prefect-file {fp.name}",
+                command=f"deploy --all --syntask-file {fp.name}",
                 expected_code=1,
                 expected_output_contains=[
                     "Unable to parse the specified config file. Skipping."
@@ -6775,10 +6775,10 @@ class TestDeployingUsingCustomPrefectFile:
             )
 
     @pytest.mark.usefixtures("project_dir")
-    async def test_deploying_directory_as_prefect_file(self):
+    async def test_deploying_directory_as_syntask_file(self):
         await run_sync_in_worker_thread(
             invoke_and_assert,
-            command="deploy --all --prefect-file ./",
+            command="deploy --all --syntask-file ./",
             expected_code=1,
             expected_output_contains=[
                 "Unable to read the specified config file. Reason: [Errno 21] "

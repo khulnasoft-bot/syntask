@@ -3,7 +3,7 @@ from itertools import combinations
 
 import pytest
 
-from prefect.client.schemas.schedules import (
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,

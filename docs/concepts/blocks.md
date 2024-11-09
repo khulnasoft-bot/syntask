@@ -1,5 +1,5 @@
 ---
-description: Prefect blocks package configuration storage, infrastructure, and secrets for use with deployments or flow scripts.
+description: Syntask blocks package configuration storage, infrastructure, and secrets for use with deployments or flow scripts.
 tags:
   - blocks
   - storage
@@ -13,115 +13,115 @@ search:
 
 # Blocks
 
-Blocks are a primitive within Prefect that enable the storage of configuration and provide an interface for interacting with external systems.
+Blocks are a primitive within Syntask that enable the storage of configuration and provide an interface for interacting with external systems.
 
-With blocks, you can securely store credentials for authenticating with services like AWS, GitHub, Slack, and any other system you'd like to orchestrate with Prefect. 
+With blocks, you can securely store credentials for authenticating with services like AWS, GitHub, Slack, and any other system you'd like to orchestrate with Syntask. 
 
 Blocks expose methods that provide pre-built functionality for performing actions against an external system. They can be used to download data from or upload data to an S3 bucket, query data from or write data to a database, or send a message to a Slack channel.
 
-You may configure blocks through code or via the Prefect Cloud and the Prefect server UI.
+You may configure blocks through code or via the Syntask Cloud and the Syntask server UI.
 
 You can access blocks for both configuring flow [deployments](/concepts/deployments/) and directly from within your flow code.
 
-Prefect provides some built-in block types that you can use right out of the box. Additional blocks are available through [Prefect Integrations](/integrations/). To use these blocks you can `pip install` the package, then register the blocks you want to use with Prefect Cloud or a Prefect server.
+Syntask provides some built-in block types that you can use right out of the box. Additional blocks are available through [Syntask Integrations](/integrations/). To use these blocks you can `pip install` the package, then register the blocks you want to use with Syntask Cloud or a Syntask server.
 
-Prefect Cloud and the Prefect server UI display a library of block types available for you to configure blocks that may be used by your flows.
+Syntask Cloud and the Syntask server UI display a library of block types available for you to configure blocks that may be used by your flows.
 
-![Viewing the new block library in the Prefect UI](/img/ui/block-library.png)
+![Viewing the new block library in the Syntask UI](/img/ui/block-library.png)
 
 !!! tip "Blocks and parameters"
     Blocks are useful for configuration that needs to be shared across flow runs and between flows.
 
     For configuration that will change between flow runs, we recommend using [parameters](/concepts/flows/#parameters).
 
-## Prefect built-in blocks
+## Syntask built-in blocks
 
-Prefect provides a broad range of commonly used, built-in block types. These block types are available in Prefect Cloud and the Prefect server UI.
+Syntask provides a broad range of commonly used, built-in block types. These block types are available in Syntask Cloud and the Syntask server UI.
 
 | Block                                                                                                                | Slug                                                     | Description                                                                                                                             |
 | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | [Azure](/concepts/filesystems/#azure)                                                                                | `azure`                                                  | Store data as a file on Azure Datalake and Azure Blob Storage.                                                                          |
-| [Date Time](/api-ref/prefect/blocks/system/#prefect.blocks.system.DateTime)                                          | `date-time`                                              | A block that represents a datetime.                                                                                                     |
-| [Docker Container](/api-ref/prefect/infrastructure/#prefect.infrastructure.DockerContainer)                          | `docker-container`                                       | Runs a command in a container.                                                                                                          |
-| [Docker Registry](/api-ref/prefect/infrastructure/#prefect.infrastructure.docker.DockerRegistry)                     | `docker-registry`                                        | Connects to a Docker registry.  Requires a Docker Engine to be connectable.                                                             |
+| [Date Time](/api-ref/syntask/blocks/system/#syntask.blocks.system.DateTime)                                          | `date-time`                                              | A block that represents a datetime.                                                                                                     |
+| [Docker Container](/api-ref/syntask/infrastructure/#syntask.infrastructure.DockerContainer)                          | `docker-container`                                       | Runs a command in a container.                                                                                                          |
+| [Docker Registry](/api-ref/syntask/infrastructure/#syntask.infrastructure.docker.DockerRegistry)                     | `docker-registry`                                        | Connects to a Docker registry.  Requires a Docker Engine to be connectable.                                                             |
 | [GCS](/concepts/filesystems/#gcs)                                                                                    | `gcs`                                                    | Store data as a file on Google Cloud Storage.                                                                                           |
 | [GitHub](/concepts/filesystems/#github)                                                                              | `github`                                                 | Interact with files stored on public GitHub repositories.                                                                               |
-| [JSON](/api-ref/prefect/blocks/system/#prefect.blocks.system.JSON)                                                   | `json`                                                   | A block that represents JSON.                                                                                                           |
-| [Kubernetes Cluster Config](/api-ref/prefect/blocks/kubernetes/#prefect.blocks.kubernetes.KubernetesClusterConfig)   | <span class="no-wrap">`kubernetes-cluster-config`</span> | Stores configuration for interaction with Kubernetes clusters.                                                                          |
-| [Kubernetes Job](/api-ref/prefect/infrastructure/#prefect.infrastructure.KubernetesJob)                              | `kubernetes-job`                                         | Runs a command as a Kubernetes Job.                                                                                                     |
+| [JSON](/api-ref/syntask/blocks/system/#syntask.blocks.system.JSON)                                                   | `json`                                                   | A block that represents JSON.                                                                                                           |
+| [Kubernetes Cluster Config](/api-ref/syntask/blocks/kubernetes/#syntask.blocks.kubernetes.KubernetesClusterConfig)   | <span class="no-wrap">`kubernetes-cluster-config`</span> | Stores configuration for interaction with Kubernetes clusters.                                                                          |
+| [Kubernetes Job](/api-ref/syntask/infrastructure/#syntask.infrastructure.KubernetesJob)                              | `kubernetes-job`                                         | Runs a command as a Kubernetes Job.                                                                                                     |
 | [Local File System](/concepts/filesystems/#local-filesystem)                                                         | `local-file-system`                                      | Store data as a file on a local file system.                                                                                            |
-| [Microsoft Teams Webhook](/api-ref/prefect/blocks/notifications/#prefect.blocks.notifications.MicrosoftTeamsWebhook) | `ms-teams-webhook`                                       | Enables sending notifications via a provided Microsoft Teams webhook.                                                                   |
-| [Opsgenie Webhook](/api-ref/prefect/blocks/notifications/#prefect.blocks.notifications.OpsgenieWebhook)              | `opsgenie-webhook`                                       | Enables sending notifications via a provided Opsgenie webhook.                                                                          |
-| [Pager Duty Webhook](/api-ref/prefect/blocks/notifications/#prefect.blocks.notifications.PagerDutyWebHook)           | `pager-duty-webhook`                                     | Enables sending notifications via a provided PagerDuty webhook.                                                                         |
+| [Microsoft Teams Webhook](/api-ref/syntask/blocks/notifications/#syntask.blocks.notifications.MicrosoftTeamsWebhook) | `ms-teams-webhook`                                       | Enables sending notifications via a provided Microsoft Teams webhook.                                                                   |
+| [Opsgenie Webhook](/api-ref/syntask/blocks/notifications/#syntask.blocks.notifications.OpsgenieWebhook)              | `opsgenie-webhook`                                       | Enables sending notifications via a provided Opsgenie webhook.                                                                          |
+| [Pager Duty Webhook](/api-ref/syntask/blocks/notifications/#syntask.blocks.notifications.PagerDutyWebHook)           | `pager-duty-webhook`                                     | Enables sending notifications via a provided PagerDuty webhook.                                                                         |
 | [Process](/concepts/infrastructure/#process)                                                                         | `process`                                                | Run a command in a new process.                                                                                                         |
 | [Remote File System](/concepts/filesystems/#remote-file-system)                                                      | `remote-file-system`                                     | Store data as a file on a remote file system.  Supports any remote file system supported by `fsspec`.                                   |
 | [S3](/concepts/filesystems/#s3)                                                                                      | `s3`                                                     | Store data as a file on AWS S3.                                                                                                         |
-| [Secret](/api-ref/prefect/blocks/system/#prefect.blocks.system.Secret)                                               | `secret`                                                 | A block that represents a secret value. The value stored in this block will be obfuscated when this block is logged or shown in the UI. |
-| [Slack Webhook](/api-ref/prefect/blocks/notifications/#prefect.blocks.notifications.SlackWebhook)                    | `slack-webhook`                                          | Enables sending notifications via a provided Slack webhook.                                                                             |
+| [Secret](/api-ref/syntask/blocks/system/#syntask.blocks.system.Secret)                                               | `secret`                                                 | A block that represents a secret value. The value stored in this block will be obfuscated when this block is logged or shown in the UI. |
+| [Slack Webhook](/api-ref/syntask/blocks/notifications/#syntask.blocks.notifications.SlackWebhook)                    | `slack-webhook`                                          | Enables sending notifications via a provided Slack webhook.                                                                             |
 | [SMB](/concepts/filesystems/#smb)                                                                                    | `smb`                                                    | Store data as a file on a SMB share.                                                                                                    |
-| [String](/api-ref/prefect/blocks/system/#prefect.blocks.system.String)                                               | `string`                                                 | A block that represents a string.                                                                                                       |
-| [Twilio SMS](/api-ref/prefect/blocks/notifications/#prefect.blocks.notifications.TwilioSMS)                          | `twilio-sms`                                             | Enables sending notifications via Twilio SMS.                                                                                           |
-| [Webhook](/api-ref/prefect/blocks/webhook/#prefect.blocks.webhook.Webhook)                                           | `webhook`                                                | Block that enables calling webhooks.                                                                                                    |
+| [String](/api-ref/syntask/blocks/system/#syntask.blocks.system.String)                                               | `string`                                                 | A block that represents a string.                                                                                                       |
+| [Twilio SMS](/api-ref/syntask/blocks/notifications/#syntask.blocks.notifications.TwilioSMS)                          | `twilio-sms`                                             | Enables sending notifications via Twilio SMS.                                                                                           |
+| [Webhook](/api-ref/syntask/blocks/webhook/#syntask.blocks.webhook.Webhook)                                           | `webhook`                                                | Block that enables calling webhooks.                                                                                                    |
 
-## Blocks in Prefect Integrations
+## Blocks in Syntask Integrations
 
-Blocks can also be created by anyone and shared with the community. You'll find blocks that are available for consumption in many of the published [Prefect Integrations](/integrations/). The following table provides an overview of the blocks available from our most popular Prefect Integrations.
+Blocks can also be created by anyone and shared with the community. You'll find blocks that are available for consumption in many of the published [Syntask Integrations](/integrations/). The following table provides an overview of the blocks available from our most popular Syntask Integrations.
 
 | Integration                                                             | Block                                                                                                                                                       | Slug                                   |
 | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| [prefect-airbyte](https://prefecthq.github.io/prefect-airbyte/)         | [Airbyte Connection](https://prefecthq.github.io/prefect-airbyte/connections/#prefect_airbyte.connections.AirbyteConnection)                                | `airbyte-connection`                   |
-| [prefect-airbyte](https://prefecthq.github.io/prefect-airbyte/)         | [Airbyte Server](https://prefecthq.github.io/prefect-airbyte/server/#prefect_airbyte.server.AirbyteServer)                                                  | `airbyte-server`                       |
-| [prefect-aws](https://prefecthq.github.io/prefect-aws/)                 | [AWS Credentials](https://prefecthq.github.io/prefect-aws/credentials/#prefect_aws.credentials.AwsCredentials)                                              | `aws-credentials`                      |
-| [prefect-aws](https://prefecthq.github.io/prefect-aws/)                 | [ECS Task](https://prefecthq.github.io/prefect-aws/ecs/#prefect_aws.ecs.ECSTask)                                                                            | `ecs-task`                             |
-| [prefect-aws](https://prefecthq.github.io/prefect-aws/)                 | [MinIO Credentials](https://prefecthq.github.io/prefect-aws/credentials/#prefect_aws.credentials.MinIOCredentials)                                          | `minio-credentials`                    |
-| [prefect-aws](https://prefecthq.github.io/prefect-aws/)                 | [S3 Bucket](https://prefecthq.github.io/prefect-aws/s3/#prefect_aws.s3.S3Bucket)                                                                            | `s3-bucket`                            |
-| [prefect-azure](https://prefecthq.github.io/prefect-azure/)             | [Azure Blob Storage Credentials](https://prefecthq.github.io/prefect-azure/credentials/#prefect_azure.credentials.AzureBlobStorageCredentials)              | `azure-blob-storage-credentials`       |
-| [prefect-azure](https://prefecthq.github.io/prefect-azure/)             | [Azure Container Instance Credentials](https://prefecthq.github.io/prefect-azure/credentials/#prefect_azure.credentials.AzureContainerInstanceCredentials)  | `azure-container-instance-credentials` |
-| [prefect-azure](https://prefecthq.github.io/prefect-azure/)             | [Azure Container Instance Job](https://prefecthq.github.io/prefect-azure/container_instance/#prefect_azure.container_instance.AzureContainerInstanceJob)    | `azure-container-instance-job`         |
-| [prefect-azure](https://prefecthq.github.io/prefect-azure/)             | [Azure Cosmos DB Credentials](https://prefecthq.github.io/prefect-azure/credentials/#prefect_azure.credentials.AzureCosmosDbCredentials)                    | `azure-cosmos-db-credentials`          |
-| [prefect-azure](https://prefecthq.github.io/prefect-azure/)             | [AzureML Credentials](https://prefecthq.github.io/prefect-azure/credentials/#prefect_azure.credentials.AzureMlCredentials)                                  | `azureml-credentials`                  |
-| [prefect-bitbucket](https://prefecthq.github.io/prefect-bitbucket/)     | [BitBucket Credentials](https://prefecthq.github.io/prefect-bitbucket/credentials/)                                                                         | `bitbucket-credentials`                |
-| [prefect-bitbucket](https://prefecthq.github.io/prefect-bitbucket/)     | [BitBucket Repository](https://prefecthq.github.io/prefect-bitbucket/repository/)                                                                           | `bitbucket-repository`                 |
-| [prefect-census](https://prefecthq.github.io/prefect-census/)           | [Census Credentials](https://prefecthq.github.io/prefect-census/credentials/)                                                                               | `census-credentials`                   |
-| [prefect-census](https://prefecthq.github.io/prefect-census/)           | [Census Sync](https://prefecthq.github.io/prefect-census/syncs/)                                                                                            | `census-sync`                          |
-| [prefect-databricks](https://prefecthq.github.io/prefect-databricks/)   | [Databricks Credentials](https://prefecthq.github.io/prefect-databricks/credentials/#prefect_databricks.credentials.DatabricksCredentials)                  | `databricks-credentials`               |
-| [prefect-dbt](https://prefecthq.github.io/prefect-dbt/)                 | [dbt CLI BigQuery Target Configs](https://prefecthq.github.io/prefect-dbt/cli/configs/bigquery/#prefect_dbt.cli.configs.bigquery.BigQueryTargetConfigs)     | `dbt-cli-bigquery-target-configs`      |
-| [prefect-dbt](https://prefecthq.github.io/prefect-dbt/)                 | [dbt CLI Profile](https://prefecthq.github.io/prefect-dbt/cli/credentials/#prefect_dbt.cli.credentials.DbtCliProfile)                                       | `dbt-cli-profile`                      |
-| [prefect-dbt](https://prefecthq.github.io/prefect-dbt/)                 | [dbt Cloud Credentials](https://prefecthq.github.io/prefect-dbt/cloud/credentials/#prefect_dbt.cloud.credentials.DbtCloudCredentials)                       | `dbt-cloud-credentials`                |
-| [prefect-dbt](https://prefecthq.github.io/prefect-dbt/)                 | [dbt CLI Global Configs](https://prefecthq.github.io/prefect-dbt/cli/configs/base/#prefect_dbt.cli.configs.base.GlobalConfigs)                              | `dbt-cli-global-configs`               |
-| [prefect-dbt](https://prefecthq.github.io/prefect-dbt/)                 | [dbt CLI Postgres Target Configs](https://prefecthq.github.io/prefect-dbt/cli/configs/postgres/#prefect_dbt.cli.configs.postgres.PostgresTargetConfigs)     | `dbt-cli-postgres-target-configs`      |
-| [prefect-dbt](https://prefecthq.github.io/prefect-dbt/)                 | [dbt CLI Snowflake Target Configs](https://prefecthq.github.io/prefect-dbt/cli/configs/snowflake/#prefect_dbt.cli.configs.snowflake.SnowflakeTargetConfigs) | `dbt-cli-snowflake-target-configs`     |
-| [prefect-dbt](https://prefecthq.github.io/prefect-dbt/)                 | [dbt CLI Target Configs](https://prefecthq.github.io/prefect-dbt/cli/configs/base/#prefect_dbt.cli.configs.base.TargetConfigs)                              | `dbt-cli-target-configs`               |
-| [prefect-docker](https://prefecthq.github.io/prefect-docker/)           | [Docker Host](https://prefecthq.github.io/prefect-docker/host/)                                                                                             | `docker-host`                          |
-| [prefect-docker](https://prefecthq.github.io/prefect-docker/)           | [Docker Registry Credentials](https://prefecthq.github.io/prefect-docker/credentials/)                                                                      | `docker-registry-credentials`          |
-| [prefect-email](https://prefecthq.github.io/prefect-email/)             | [Email Server Credentials](https://prefecthq.github.io/prefect-email/credentials/)                                                                          | `email-server-credentials`             |
-| [prefect-firebolt](https://prefecthq.github.io/prefect-firebolt/)       | [Firebolt Credentials](https://prefecthq.github.io/prefect-firebolt/credentials/)                                                                           | `firebolt-credentials`                 |
-| [prefect-firebolt](https://prefecthq.github.io/prefect-firebolt/)       | [Firebolt Database](https://prefecthq.github.io/prefect-firebolt/database/)                                                                                 | `firebolt-database`                    |
-| [prefect-gcp](https://prefecthq.github.io/prefect-gcp/)                 | [BigQuery Warehouse](https://prefecthq.github.io/prefect-gcp/bigquery/#prefect_gcp.bigquery.BigQueryWarehouse)                                              | `bigquery-warehouse`                   |
-| [prefect-gcp](https://prefecthq.github.io/prefect-gcp/)                 | [GCP Cloud Run Job](https://prefecthq.github.io/prefect-gcp/cloud_run/#prefect_gcp.cloud_run.CloudRunJob)                                                   | `cloud-run-job`                        |
-| [prefect-gcp](https://prefecthq.github.io/prefect-gcp/)                 | [GCP Credentials](https://prefecthq.github.io/prefect-gcp/credentials/#prefect_gcp.credentials.GcpCredentials)                                              | `gcp-credentials`                      |
-| [prefect-gcp](https://prefecthq.github.io/prefect-gcp/)                 | [GcpSecret](https://prefecthq.github.io/prefect-gcp/secret_manager/#prefect_gcp.secret_manager.GcpSecret)                                                   | `gcpsecret`                            |
-| [prefect-gcp](https://prefecthq.github.io/prefect-gcp/)                 | [GCS Bucket](https://prefecthq.github.io/prefect-gcp/cloud_storage/#prefect_gcp.cloud_storage.GcsBucket)                                                    | `gcs-bucket`                           |
-| [prefect-gcp](https://prefecthq.github.io/prefect-gcp/)                 | [Vertex AI Custom Training Job](https://prefecthq.github.io/prefect-gcp/aiplatform/#prefect_gcp.aiplatform.VertexAICustomTrainingJob)                       | `vertex-ai-custom-training-job`        |
-| [prefect-github](https://prefecthq.github.io/prefect-github/)           | [GitHub Credentials](https://prefecthq.github.io/prefect-github/credentials/)                                                                               | `github-credentials`                   |
-| [prefect-github](https://prefecthq.github.io/prefect-github/)           | [GitHub Repository](https://prefecthq.github.io/prefect-github/repository/)                                                                                 | `github-repository`                    |
-| [prefect-gitlab](https://prefecthq.github.io/prefect-gitlab/)           | [GitLab Credentials](https://prefecthq.github.io/prefect-gitlab/credentials/)                                                                               | `gitlab-credentials`                   |
-| [prefect-gitlab](https://prefecthq.github.io/prefect-gitlab/)           | [GitLab Repository](https://prefecthq.github.io/prefect-gitlab/repositories/)                                                                               | `gitlab-repository`                    |
-| [prefect-hex](https://prefecthq.github.io/prefect-hex/)                 | [Hex Credentials](https://prefecthq.github.io/prefect-hex/credentials/#prefect_hex.credentials.HexCredentials)                                              | `hex-credentials`                      |
-| [prefect-hightouch](https://prefecthq.github.io/prefect-hightouch/)     | [Hightouch Credentials](https://prefecthq.github.io/prefect-hightouch/credentials/)                                                                         | `hightouch-credentials`                |
-| [prefect-kubernetes](https://prefecthq.github.io/prefect-kubernetes/)   | [Kubernetes Credentials](https://prefecthq.github.io/prefect-kubernetes/credentials/)                                                                       | `kubernetes-credentials`               |
-| [prefect-monday](https://prefecthq.github.io/prefect-monday/)           | [Monday Credentials](https://prefecthq.github.io/prefect-monday/credentials/)                                                                               | `monday-credentials`                   |
-| [prefect-monte-carlo](https://prefecthq.github.io/prefect-monte-carlo/) | [Monte Carlo Credentials](https://prefecthq.github.io/prefect-monte-carlo/credentials/)                                                                     | `monte-carlo-credentials`              |
-| [prefect-openai](https://prefecthq.github.io/prefect-openai/)           | [OpenAI Completion Model](https://prefecthq.github.io/prefect-openai/completion/#prefect_openai.completion.CompletionModel)                                 | `openai-completion-model`              |
-| [prefect-openai](https://prefecthq.github.io/prefect-openai/)           | [OpenAI Image Model](https://prefecthq.github.io/prefect-openai/image/#prefect_openai.image.ImageModel)                                                     | `openai-image-model`                   |
-| [prefect-openai](https://prefecthq.github.io/prefect-openai/)           | [OpenAI Credentials](https://prefecthq.github.io/prefect-openai/credentials/#prefect_openai.credentials.OpenAICredentials)                                  | `openai-credentials`                   |
-| [prefect-slack](https://prefecthq.github.io/prefect-slack/)             | [Slack Credentials](https://prefecthq.github.io/prefect-slack/credentials/#prefect_slack.credentials.SlackCredentials)                                      | `slack-credentials`                    |
-| [prefect-slack](https://prefecthq.github.io/prefect-slack/)             | [Slack Incoming Webhook](https://prefecthq.github.io/prefect-slack/credentials/#prefect_slack.credentials.SlackWebhook)                                     | `slack-incoming-webhook`               |
-| [prefect-snowflake](https://prefecthq.github.io/prefect-snowflake/)     | [Snowflake Connector](https://prefecthq.github.io/prefect-snowflake/database/#prefect_snowflake.database.SnowflakeConnector)                                | `snowflake-connector`                  |
-| [prefect-snowflake](https://prefecthq.github.io/prefect-snowflake/)     | [Snowflake Credentials](https://prefecthq.github.io/prefect-snowflake/credentials/#prefect_snowflake.credentials.SnowflakeCredentials)                      | `snowflake-credentials`                |
-| [prefect-sqlalchemy](https://prefecthq.github.io/prefect-sqlalchemy/)   | [Database Credentials](https://prefecthq.github.io/prefect-sqlalchemy/credentials/#prefect_sqlalchemy.credentials.DatabaseCredentials)                      | `database-credentials`                 |
-| [prefect-sqlalchemy](https://prefecthq.github.io/prefect-sqlalchemy/)   | [SQLAlchemy Connector](https://prefecthq.github.io/prefect-sqlalchemy/database/#prefect_sqlalchemy.database.SqlAlchemyConnector)                            | `sqlalchemy-connector`                 |
-| [prefect-twitter](https://prefecthq.github.io/prefect-twitter/)         | [Twitter Credentials](https://prefecthq.github.io/prefect-twitter/credentials/)                                                                             | `twitter-credentials`                  |
+| [syntask-airbyte](https://syntaskhq.github.io/syntask-airbyte/)         | [Airbyte Connection](https://syntaskhq.github.io/syntask-airbyte/connections/#syntask_airbyte.connections.AirbyteConnection)                                | `airbyte-connection`                   |
+| [syntask-airbyte](https://syntaskhq.github.io/syntask-airbyte/)         | [Airbyte Server](https://syntaskhq.github.io/syntask-airbyte/server/#syntask_airbyte.server.AirbyteServer)                                                  | `airbyte-server`                       |
+| [syntask-aws](https://syntaskhq.github.io/syntask-aws/)                 | [AWS Credentials](https://syntaskhq.github.io/syntask-aws/credentials/#syntask_aws.credentials.AwsCredentials)                                              | `aws-credentials`                      |
+| [syntask-aws](https://syntaskhq.github.io/syntask-aws/)                 | [ECS Task](https://syntaskhq.github.io/syntask-aws/ecs/#syntask_aws.ecs.ECSTask)                                                                            | `ecs-task`                             |
+| [syntask-aws](https://syntaskhq.github.io/syntask-aws/)                 | [MinIO Credentials](https://syntaskhq.github.io/syntask-aws/credentials/#syntask_aws.credentials.MinIOCredentials)                                          | `minio-credentials`                    |
+| [syntask-aws](https://syntaskhq.github.io/syntask-aws/)                 | [S3 Bucket](https://syntaskhq.github.io/syntask-aws/s3/#syntask_aws.s3.S3Bucket)                                                                            | `s3-bucket`                            |
+| [syntask-azure](https://syntaskhq.github.io/syntask-azure/)             | [Azure Blob Storage Credentials](https://syntaskhq.github.io/syntask-azure/credentials/#syntask_azure.credentials.AzureBlobStorageCredentials)              | `azure-blob-storage-credentials`       |
+| [syntask-azure](https://syntaskhq.github.io/syntask-azure/)             | [Azure Container Instance Credentials](https://syntaskhq.github.io/syntask-azure/credentials/#syntask_azure.credentials.AzureContainerInstanceCredentials)  | `azure-container-instance-credentials` |
+| [syntask-azure](https://syntaskhq.github.io/syntask-azure/)             | [Azure Container Instance Job](https://syntaskhq.github.io/syntask-azure/container_instance/#syntask_azure.container_instance.AzureContainerInstanceJob)    | `azure-container-instance-job`         |
+| [syntask-azure](https://syntaskhq.github.io/syntask-azure/)             | [Azure Cosmos DB Credentials](https://syntaskhq.github.io/syntask-azure/credentials/#syntask_azure.credentials.AzureCosmosDbCredentials)                    | `azure-cosmos-db-credentials`          |
+| [syntask-azure](https://syntaskhq.github.io/syntask-azure/)             | [AzureML Credentials](https://syntaskhq.github.io/syntask-azure/credentials/#syntask_azure.credentials.AzureMlCredentials)                                  | `azureml-credentials`                  |
+| [syntask-bitbucket](https://syntaskhq.github.io/syntask-bitbucket/)     | [BitBucket Credentials](https://syntaskhq.github.io/syntask-bitbucket/credentials/)                                                                         | `bitbucket-credentials`                |
+| [syntask-bitbucket](https://syntaskhq.github.io/syntask-bitbucket/)     | [BitBucket Repository](https://syntaskhq.github.io/syntask-bitbucket/repository/)                                                                           | `bitbucket-repository`                 |
+| [syntask-census](https://syntaskhq.github.io/syntask-census/)           | [Census Credentials](https://syntaskhq.github.io/syntask-census/credentials/)                                                                               | `census-credentials`                   |
+| [syntask-census](https://syntaskhq.github.io/syntask-census/)           | [Census Sync](https://syntaskhq.github.io/syntask-census/syncs/)                                                                                            | `census-sync`                          |
+| [syntask-databricks](https://syntaskhq.github.io/syntask-databricks/)   | [Databricks Credentials](https://syntaskhq.github.io/syntask-databricks/credentials/#syntask_databricks.credentials.DatabricksCredentials)                  | `databricks-credentials`               |
+| [syntask-dbt](https://syntaskhq.github.io/syntask-dbt/)                 | [dbt CLI BigQuery Target Configs](https://syntaskhq.github.io/syntask-dbt/cli/configs/bigquery/#syntask_dbt.cli.configs.bigquery.BigQueryTargetConfigs)     | `dbt-cli-bigquery-target-configs`      |
+| [syntask-dbt](https://syntaskhq.github.io/syntask-dbt/)                 | [dbt CLI Profile](https://syntaskhq.github.io/syntask-dbt/cli/credentials/#syntask_dbt.cli.credentials.DbtCliProfile)                                       | `dbt-cli-profile`                      |
+| [syntask-dbt](https://syntaskhq.github.io/syntask-dbt/)                 | [dbt Cloud Credentials](https://syntaskhq.github.io/syntask-dbt/cloud/credentials/#syntask_dbt.cloud.credentials.DbtCloudCredentials)                       | `dbt-cloud-credentials`                |
+| [syntask-dbt](https://syntaskhq.github.io/syntask-dbt/)                 | [dbt CLI Global Configs](https://syntaskhq.github.io/syntask-dbt/cli/configs/base/#syntask_dbt.cli.configs.base.GlobalConfigs)                              | `dbt-cli-global-configs`               |
+| [syntask-dbt](https://syntaskhq.github.io/syntask-dbt/)                 | [dbt CLI Postgres Target Configs](https://syntaskhq.github.io/syntask-dbt/cli/configs/postgres/#syntask_dbt.cli.configs.postgres.PostgresTargetConfigs)     | `dbt-cli-postgres-target-configs`      |
+| [syntask-dbt](https://syntaskhq.github.io/syntask-dbt/)                 | [dbt CLI Snowflake Target Configs](https://syntaskhq.github.io/syntask-dbt/cli/configs/snowflake/#syntask_dbt.cli.configs.snowflake.SnowflakeTargetConfigs) | `dbt-cli-snowflake-target-configs`     |
+| [syntask-dbt](https://syntaskhq.github.io/syntask-dbt/)                 | [dbt CLI Target Configs](https://syntaskhq.github.io/syntask-dbt/cli/configs/base/#syntask_dbt.cli.configs.base.TargetConfigs)                              | `dbt-cli-target-configs`               |
+| [syntask-docker](https://syntaskhq.github.io/syntask-docker/)           | [Docker Host](https://syntaskhq.github.io/syntask-docker/host/)                                                                                             | `docker-host`                          |
+| [syntask-docker](https://syntaskhq.github.io/syntask-docker/)           | [Docker Registry Credentials](https://syntaskhq.github.io/syntask-docker/credentials/)                                                                      | `docker-registry-credentials`          |
+| [syntask-email](https://syntaskhq.github.io/syntask-email/)             | [Email Server Credentials](https://syntaskhq.github.io/syntask-email/credentials/)                                                                          | `email-server-credentials`             |
+| [syntask-firebolt](https://syntaskhq.github.io/syntask-firebolt/)       | [Firebolt Credentials](https://syntaskhq.github.io/syntask-firebolt/credentials/)                                                                           | `firebolt-credentials`                 |
+| [syntask-firebolt](https://syntaskhq.github.io/syntask-firebolt/)       | [Firebolt Database](https://syntaskhq.github.io/syntask-firebolt/database/)                                                                                 | `firebolt-database`                    |
+| [syntask-gcp](https://syntaskhq.github.io/syntask-gcp/)                 | [BigQuery Warehouse](https://syntaskhq.github.io/syntask-gcp/bigquery/#syntask_gcp.bigquery.BigQueryWarehouse)                                              | `bigquery-warehouse`                   |
+| [syntask-gcp](https://syntaskhq.github.io/syntask-gcp/)                 | [GCP Cloud Run Job](https://syntaskhq.github.io/syntask-gcp/cloud_run/#syntask_gcp.cloud_run.CloudRunJob)                                                   | `cloud-run-job`                        |
+| [syntask-gcp](https://syntaskhq.github.io/syntask-gcp/)                 | [GCP Credentials](https://syntaskhq.github.io/syntask-gcp/credentials/#syntask_gcp.credentials.GcpCredentials)                                              | `gcp-credentials`                      |
+| [syntask-gcp](https://syntaskhq.github.io/syntask-gcp/)                 | [GcpSecret](https://syntaskhq.github.io/syntask-gcp/secret_manager/#syntask_gcp.secret_manager.GcpSecret)                                                   | `gcpsecret`                            |
+| [syntask-gcp](https://syntaskhq.github.io/syntask-gcp/)                 | [GCS Bucket](https://syntaskhq.github.io/syntask-gcp/cloud_storage/#syntask_gcp.cloud_storage.GcsBucket)                                                    | `gcs-bucket`                           |
+| [syntask-gcp](https://syntaskhq.github.io/syntask-gcp/)                 | [Vertex AI Custom Training Job](https://syntaskhq.github.io/syntask-gcp/aiplatform/#syntask_gcp.aiplatform.VertexAICustomTrainingJob)                       | `vertex-ai-custom-training-job`        |
+| [syntask-github](https://syntaskhq.github.io/syntask-github/)           | [GitHub Credentials](https://syntaskhq.github.io/syntask-github/credentials/)                                                                               | `github-credentials`                   |
+| [syntask-github](https://syntaskhq.github.io/syntask-github/)           | [GitHub Repository](https://syntaskhq.github.io/syntask-github/repository/)                                                                                 | `github-repository`                    |
+| [syntask-gitlab](https://syntaskhq.github.io/syntask-gitlab/)           | [GitLab Credentials](https://syntaskhq.github.io/syntask-gitlab/credentials/)                                                                               | `gitlab-credentials`                   |
+| [syntask-gitlab](https://syntaskhq.github.io/syntask-gitlab/)           | [GitLab Repository](https://syntaskhq.github.io/syntask-gitlab/repositories/)                                                                               | `gitlab-repository`                    |
+| [syntask-hex](https://syntaskhq.github.io/syntask-hex/)                 | [Hex Credentials](https://syntaskhq.github.io/syntask-hex/credentials/#syntask_hex.credentials.HexCredentials)                                              | `hex-credentials`                      |
+| [syntask-hightouch](https://syntaskhq.github.io/syntask-hightouch/)     | [Hightouch Credentials](https://syntaskhq.github.io/syntask-hightouch/credentials/)                                                                         | `hightouch-credentials`                |
+| [syntask-kubernetes](https://syntaskhq.github.io/syntask-kubernetes/)   | [Kubernetes Credentials](https://syntaskhq.github.io/syntask-kubernetes/credentials/)                                                                       | `kubernetes-credentials`               |
+| [syntask-monday](https://syntaskhq.github.io/syntask-monday/)           | [Monday Credentials](https://syntaskhq.github.io/syntask-monday/credentials/)                                                                               | `monday-credentials`                   |
+| [syntask-monte-carlo](https://syntaskhq.github.io/syntask-monte-carlo/) | [Monte Carlo Credentials](https://syntaskhq.github.io/syntask-monte-carlo/credentials/)                                                                     | `monte-carlo-credentials`              |
+| [syntask-openai](https://syntaskhq.github.io/syntask-openai/)           | [OpenAI Completion Model](https://syntaskhq.github.io/syntask-openai/completion/#syntask_openai.completion.CompletionModel)                                 | `openai-completion-model`              |
+| [syntask-openai](https://syntaskhq.github.io/syntask-openai/)           | [OpenAI Image Model](https://syntaskhq.github.io/syntask-openai/image/#syntask_openai.image.ImageModel)                                                     | `openai-image-model`                   |
+| [syntask-openai](https://syntaskhq.github.io/syntask-openai/)           | [OpenAI Credentials](https://syntaskhq.github.io/syntask-openai/credentials/#syntask_openai.credentials.OpenAICredentials)                                  | `openai-credentials`                   |
+| [syntask-slack](https://syntaskhq.github.io/syntask-slack/)             | [Slack Credentials](https://syntaskhq.github.io/syntask-slack/credentials/#syntask_slack.credentials.SlackCredentials)                                      | `slack-credentials`                    |
+| [syntask-slack](https://syntaskhq.github.io/syntask-slack/)             | [Slack Incoming Webhook](https://syntaskhq.github.io/syntask-slack/credentials/#syntask_slack.credentials.SlackWebhook)                                     | `slack-incoming-webhook`               |
+| [syntask-snowflake](https://syntaskhq.github.io/syntask-snowflake/)     | [Snowflake Connector](https://syntaskhq.github.io/syntask-snowflake/database/#syntask_snowflake.database.SnowflakeConnector)                                | `snowflake-connector`                  |
+| [syntask-snowflake](https://syntaskhq.github.io/syntask-snowflake/)     | [Snowflake Credentials](https://syntaskhq.github.io/syntask-snowflake/credentials/#syntask_snowflake.credentials.SnowflakeCredentials)                      | `snowflake-credentials`                |
+| [syntask-sqlalchemy](https://syntaskhq.github.io/syntask-sqlalchemy/)   | [Database Credentials](https://syntaskhq.github.io/syntask-sqlalchemy/credentials/#syntask_sqlalchemy.credentials.DatabaseCredentials)                      | `database-credentials`                 |
+| [syntask-sqlalchemy](https://syntaskhq.github.io/syntask-sqlalchemy/)   | [SQLAlchemy Connector](https://syntaskhq.github.io/syntask-sqlalchemy/database/#syntask_sqlalchemy.database.SqlAlchemyConnector)                            | `sqlalchemy-connector`                 |
+| [syntask-twitter](https://syntaskhq.github.io/syntask-twitter/)         | [Twitter Credentials](https://syntaskhq.github.io/syntask-twitter/credentials/)                                                                             | `twitter-credentials`                  |
 
 ## Using existing block types
 
@@ -132,14 +132,14 @@ Blocks are classes that subclass the `Block` base class. They can be instantiate
 For example, to instantiate a block that stores a JSON value, use the `JSON` block:
 
 ```python
-from prefect.blocks.system import JSON
+from syntask.blocks.system import JSON
 
 json_block = JSON(value={"the_answer": 42})
 ```
 
 ### Saving blocks
 
-If this JSON value needs to be retrieved later to be used within a flow or task, we can use the `.save()` method on the block to store the value in a block document on the Prefect database for retrieval later:
+If this JSON value needs to be retrieved later to be used within a flow or task, we can use the `.save()` method on the block to store the value in a block document on the Syntask database for retrieval later:
 
 ```python
 json_block.save(name="life-the-universe-everything")
@@ -161,15 +161,15 @@ json_block.save(name="actually-life-the-universe-everything")
 ```
 
 !!! tip "Utilizing the UI"
-    Blocks documents can also be created and updated via the [Prefect UI](/ui/blocks/).
+    Blocks documents can also be created and updated via the [Syntask UI](/ui/blocks/).
 
 ### Loading blocks
 
 The name given when saving the value stored in the JSON block can be used when retrieving the value during a flow or task run:
 
 ```python hl_lines="6"
-from prefect import flow
-from prefect.blocks.system import JSON
+from syntask import flow
+from syntask.blocks.system import JSON
 
 @flow
 def what_is_the_answer():
@@ -184,32 +184,32 @@ Blocks can also be loaded with a unique slug that is a combination of a block ty
 To load our JSON block document from before, we can run the following:
 
 ```python hl_lines="3"
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 json_block = Block.load("json/life-the-universe-everything")
 print(json_block.value["the-answer"]) #42
 ```
 
 !!! tip "Sharing Blocks"
-    Blocks can also be loaded by fellow Workspace Collaborators, available on [Prefect Cloud](/ui/cloud/).
+    Blocks can also be loaded by fellow Workspace Collaborators, available on [Syntask Cloud](/ui/cloud/).
 
 ### Deleting blocks
 
 You can delete a block by using the `.delete()` method on the block:
 
 ```python
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 Block.delete("json/life-the-universe-everything")
 ```
 
 You can also use the CLI to delete specific blocks with a given slug or id:
 
 ```bash
-prefect block delete json/life-the-universe-everything
+syntask block delete json/life-the-universe-everything
 ```
 
 ```bash
-prefect block delete --id <my-id>
+syntask block delete --id <my-id>
 ```
 
 
@@ -220,7 +220,7 @@ To create a custom block type, define a class that subclasses `Block`. The `Bloc
 Here's a block that represents a cube and holds information about the length of each edge in inches:
 
 ```python
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 class Cube(Block):
     edge_length_inches: float
@@ -229,7 +229,7 @@ class Cube(Block):
 You can also include methods on a block include useful functionality. Here's the same cube block with methods to calculate the volume and surface area of the cube:
 
 ```python hl_lines="6-10"
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 class Cube(Block):
     edge_length_inches: float
@@ -244,7 +244,7 @@ class Cube(Block):
 Now the `Cube` block can be used to store different cube configuration that can later be used in a flow:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 rubiks_cube = Cube(edge_length_inches=2.25)
 rubiks_cube.save("rubiks-cube")
@@ -266,7 +266,7 @@ Here's an example of an `AWSCredentials` block that uses `SecretStr`:
 ```python hl_lines="8"
 from typing import Optional
 
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 from pydantic import SecretStr  # if pydantic version >= 2.0, use: from pydantic.v1 import SecretStr
 
 class AWSCredentials(Block):
@@ -289,15 +289,15 @@ print(aws_credentials_block)
 # aws_access_key_id='AKIAJKLJKLJKLJKLJKLJK' aws_secret_access_key=SecretStr('**********') aws_session_token=None profile_name=None region_name=None
 ```
 
-There's  also use the `SecretDict` field type provided by Prefect. This type will allow you to add a dictionary field to your block that will have values at all levels automatically obfuscated in the UI or in logs. This is useful for blocks where typing or structure of secret fields is not known until configuration time.
+There's  also use the `SecretDict` field type provided by Syntask. This type will allow you to add a dictionary field to your block that will have values at all levels automatically obfuscated in the UI or in logs. This is useful for blocks where typing or structure of secret fields is not known until configuration time.
 
 Here's an example of a block that uses `SecretDict`:
 
 ```python
 from typing import Dict
 
-from prefect.blocks.core import Block
-from prefect.blocks.fields import SecretDict
+from syntask.blocks.core import Block
+from syntask.blocks.fields import SecretDict
 
 
 class SystemConfiguration(Block):
@@ -350,7 +350,7 @@ To illustrate, here's a an expanded `AWSCredentials` block that includes the abi
 from typing import Optional
 
 import boto3
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 from pydantic import SecretStr
 
 class AWSCredentials(Block):
@@ -426,7 +426,7 @@ my_s3_bucket.save("my_s3_bucket")
 In the above example, the values for `AWSCredentials` are saved with `my_s3_bucket` and will not be usable with any other blocks.
 
 ### Handling updates to custom `Block` types
-Let's say that you now want to add a `bucket_folder` field to your custom `S3Bucket` block that represents the default path to read and write objects from (this field exists on [our implementation](https://github.com/PrefectHQ/prefect-aws/blob/main/prefect_aws/s3.py#L292)).
+Let's say that you now want to add a `bucket_folder` field to your custom `S3Bucket` block that represents the default path to read and write objects from (this field exists on [our implementation](https://github.com/Synopkg/syntask-aws/blob/main/syntask_aws/s3.py#L292)).
 
 We can add the new field to the class definition:
 
@@ -439,7 +439,7 @@ class S3Bucket(Block):
     ...
 ```
 
-Then [register the updated block type](#registering-blocks-for-use-in-the-prefect-ui) with either Prefect Cloud or your self-hosted Prefect server.
+Then [register the updated block type](#registering-blocks-for-use-in-the-syntask-ui) with either Syntask Cloud or your self-hosted Syntask server.
 
 
 If you have any existing blocks of this type that were created before the update and you'd prefer to not re-create them, you can migrate them to the new version of your block type by adding the missing values:
@@ -455,24 +455,24 @@ my_s3_bucket_block.bucket_path = "my-default-bucket-path"
 my_s3_bucket_block.save("my-s3-bucket", overwrite=True)
 ```
 
-## Registering blocks for use in the Prefect UI
+## Registering blocks for use in the Syntask UI
 
 Blocks can be registered from a Python module available in the current virtual environment with a CLI command like this:
 
 <div class="terminal">
 ```bash
-prefect block register --module prefect_aws.credentials
+syntask block register --module syntask_aws.credentials
 ```
 </div>
 
-This command is useful for registering all blocks found in the credentials module within [Prefect Integrations](/integrations/).
+This command is useful for registering all blocks found in the credentials module within [Syntask Integrations](/integrations/).
 
 Or, if a block has been created in a `.py` file, the block can also be registered with the CLI command:
 
 <div class="terminal">
 ```bash
-prefect block register --file my_block.py
+syntask block register --file my_block.py
 ```
 </div>
 
-The registered block will then be available in the [Prefect UI](/ui/blocks/) for configuration.
+The registered block will then be available in the [Syntask UI](/ui/blocks/) for configuration.

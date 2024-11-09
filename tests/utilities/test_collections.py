@@ -4,7 +4,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -13,8 +13,8 @@ else:
 
 import pytest
 
-from prefect.utilities.annotations import BaseAnnotation, quote
-from prefect.utilities.collections import (
+from syntask.utilities.annotations import BaseAnnotation, quote
+from syntask.utilities.collections import (
     AutoEnum,
     StopVisiting,
     dict_to_flatdict,
@@ -169,7 +169,7 @@ class TestPydanticObjects:
     """
     Checks that the Pydantic test objects defined in this file behave as expected.
 
-    These tests do not cover Prefect functionality and may break if Pydantic introduces
+    These tests do not cover Syntask functionality and may break if Pydantic introduces
     breaking changes.
     """
 
@@ -343,10 +343,10 @@ class TestVisitCollection:
     @pytest.mark.parametrize(
         "input",
         [
-            {"name": "prefect"},
-            {"name": "prefect", "num": 1},
-            {"name": "prefect", "num": 1, "val": uuid.UUID(int=0)},
-            {"name": "prefect", "val": uuid.UUID(int=0)},
+            {"name": "syntask"},
+            {"name": "syntask", "num": 1},
+            {"name": "syntask", "num": 1, "val": uuid.UUID(int=0)},
+            {"name": "syntask", "val": uuid.UUID(int=0)},
         ],
     )
     def test_visit_collection_remembers_unset_pydantic_fields(self, input: dict):

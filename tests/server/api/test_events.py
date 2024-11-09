@@ -9,20 +9,20 @@ import pytest
 from httpx import AsyncClient
 from pendulum.datetime import DateTime
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.server.events.counting import Countable, TimeUnit
-from prefect.server.events.filters import (
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.server.events.counting import Countable, TimeUnit
+from syntask.server.events.filters import (
     EventFilter,
     EventOccurredFilter,
     EventResourceFilter,
 )
-from prefect.server.events.schemas.events import (
+from syntask.server.events.schemas.events import (
     EventCount,
     EventPage,
     ReceivedEvent,
     Resource,
 )
-from prefect.server.events.storage import INTERACTIVE_PAGE_SIZE, InvalidTokenError
+from syntask.server.events.storage import INTERACTIVE_PAGE_SIZE, InvalidTokenError
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -43,7 +43,7 @@ def events_page_one() -> List[ReceivedEvent]:
         ReceivedEvent(
             occurred=pendulum.now("UTC"),
             event="first.page.material",
-            resource=Resource(__root__={"prefect.resource.id": "my.resource"}),
+            resource=Resource(__root__={"syntask.resource.id": "my.resource"}),
             payload={"goodbye": "moon"},
             id=UUID(int=i),
         )
@@ -57,7 +57,7 @@ def events_page_two() -> List[ReceivedEvent]:
         ReceivedEvent(
             occurred=pendulum.now("UTC"),
             event="second.page.material",
-            resource=Resource(__root__={"prefect.resource.id": "my.resource"}),
+            resource=Resource(__root__={"syntask.resource.id": "my.resource"}),
             payload={"goodbye": "moon"},
             id=UUID(int=i),
         )
@@ -71,7 +71,7 @@ def events_page_three() -> List[ReceivedEvent]:
         ReceivedEvent(
             occurred=pendulum.now("UTC"),
             event="second.page.material",
-            resource=Resource(__root__={"prefect.resource.id": "my.resource"}),
+            resource=Resource(__root__={"syntask.resource.id": "my.resource"}),
             payload={"goodbye": "moon"},
             id=UUID(int=i),
         )
@@ -87,7 +87,7 @@ ENCODED_MOCK_PAGE_TOKEN = base64.b64encode(MOCK_PAGE_TOKEN.encode()).decode()
 def query_events(
     events_page_one: List[ReceivedEvent],
 ) -> Generator[mock.AsyncMock, None, None]:
-    with mock.patch("prefect.server.api.events.query_events") as query_events:
+    with mock.patch("syntask.server.api.events.query_events") as query_events:
         query_events.return_value = (events_page_one, 123, MOCK_PAGE_TOKEN)
         yield query_events
 
@@ -97,7 +97,7 @@ def query_next_page(
     events_page_two: List[ReceivedEvent],
 ) -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.server.api.events.query_next_page", new_callable=mock.AsyncMock
+        "syntask.server.api.events.query_next_page", new_callable=mock.AsyncMock
     ) as query_next_page:
         query_next_page.return_value = (events_page_two, 123, "THAT:NEXTNEXTTOKEN")
         yield query_next_page
@@ -108,7 +108,7 @@ def last_events_page(
     events_page_three: List[ReceivedEvent],
 ) -> Generator[mock.AsyncMock, None, None]:
     with mock.patch(
-        "prefect.server.api.events.query_next_page", new_callable=mock.AsyncMock
+        "syntask.server.api.events.query_next_page", new_callable=mock.AsyncMock
     ) as query_next_page:
         query_next_page.return_value = (events_page_three, 123, None)
         yield query_next_page
@@ -294,7 +294,7 @@ async def test_events_api_returns_times_with_timezone_offsets(
 
 @pytest.fixture
 def count_events() -> Generator[mock.AsyncMock, None, None]:
-    with mock.patch("prefect.server.api.events.count_events") as count_events:
+    with mock.patch("syntask.server.api.events.count_events") as count_events:
         count_events.return_value = [
             EventCount(
                 value="hello",

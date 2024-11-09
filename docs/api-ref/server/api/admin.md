@@ -1,8 +1,8 @@
 ---
-description: Prefect API routes for admin-level interactions.
+description: Syntask API routes for admin-level interactions.
 tags:
-    - Prefect API
+    - Syntask API
     - administration
 ---
 
-::: prefect.server.api.admin
+::: syntask.server.api.admin

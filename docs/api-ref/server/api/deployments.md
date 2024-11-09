@@ -1,8 +1,8 @@
 ---
-description: Prefect API routes for interacting with Deployment objects.
+description: Syntask API routes for interacting with Deployment objects.
 tags:
-    - Prefect API
+    - Syntask API
     - deployments
 ---
 
-::: prefect.server.api.deployments
+::: syntask.server.api.deployments

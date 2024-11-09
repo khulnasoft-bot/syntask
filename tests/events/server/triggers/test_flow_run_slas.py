@@ -9,16 +9,16 @@ import pytest
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions, triggers
-from prefect.server.events.models import automations
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions, triggers
+from syntask.server.events.models import automations
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
     Posture,
     TriggerState,
 )
-from prefect.server.events.schemas.events import Event, ReceivedEvent
+from syntask.server.events.schemas.events import Event, ReceivedEvent
 
 
 @pytest.fixture
@@ -35,14 +35,14 @@ async def stuck_flow_runs_sla(
             trigger=EventTrigger(
                 # Match flow runs with a wildcard on the resource ID
                 match={
-                    "prefect.resource.id": "prefect.flow-run.*",
+                    "syntask.resource.id": "syntask.flow-run.*",
                 },
                 # Track the SLA of _each_ flow run resource that matches
-                for_each={"prefect.resource.id"},
+                for_each={"syntask.resource.id"},
                 # the expected start events
-                after={"prefect.flow-run.running"},
+                after={"syntask.flow-run.running"},
                 # the expected end events
-                expect={"prefect.flow-run.completed", "prefect.flow-run.cancelled"},
+                expect={"syntask.flow-run.completed", "syntask.flow-run.cancelled"},
                 posture=Posture.Proactive,
                 threshold=1,
                 within=timedelta(minutes=1),
@@ -64,32 +64,32 @@ def fast_and_happy_flow(frozen_time: pendulum.DateTime) -> List[Event]:
         # First scheduled run
         Event(
             occurred=frozen_time + timedelta(seconds=1),
-            event="prefect.flow-run.scheduled",
-            resource={"prefect.resource.id": "prefect.flow-run.FASTBOI-1"},
+            event="syntask.flow-run.scheduled",
+            resource={"syntask.resource.id": "syntask.flow-run.FASTBOI-1"},
             related=[],
             payload={},
             id=uuid4(),
         ),
         Event(
             occurred=frozen_time + timedelta(seconds=2),
-            event="prefect.flow-run.pending",
-            resource={"prefect.resource.id": "prefect.flow-run.FASTBOI-1"},
+            event="syntask.flow-run.pending",
+            resource={"syntask.resource.id": "syntask.flow-run.FASTBOI-1"},
             related=[],
             payload={},
             id=uuid4(),
         ),
         Event(
             occurred=frozen_time + timedelta(seconds=3),
-            event="prefect.flow-run.running",
-            resource={"prefect.resource.id": "prefect.flow-run.FASTBOI-1"},
+            event="syntask.flow-run.running",
+            resource={"syntask.resource.id": "syntask.flow-run.FASTBOI-1"},
             related=[],
             payload={},
             id=uuid4(),
         ),
         Event(
             occurred=frozen_time + timedelta(seconds=10),
-            event="prefect.flow-run.completed",
-            resource={"prefect.resource.id": "prefect.flow-run.FASTBOI-1"},
+            event="syntask.flow-run.completed",
+            resource={"syntask.resource.id": "syntask.flow-run.FASTBOI-1"},
             related=[],
             payload={},
             id=uuid4(),
@@ -97,24 +97,24 @@ def fast_and_happy_flow(frozen_time: pendulum.DateTime) -> List[Event]:
         # Second run (not scheduled)
         Event(
             occurred=frozen_time + timedelta(seconds=22),
-            event="prefect.flow-run.pending",
-            resource={"prefect.resource.id": "prefect.flow-run.FASTBOI-2"},
+            event="syntask.flow-run.pending",
+            resource={"syntask.resource.id": "syntask.flow-run.FASTBOI-2"},
             related=[],
             payload={},
             id=uuid4(),
         ),
         Event(
             occurred=frozen_time + timedelta(seconds=23),
-            event="prefect.flow-run.running",
-            resource={"prefect.resource.id": "prefect.flow-run.FASTBOI-2"},
+            event="syntask.flow-run.running",
+            resource={"syntask.resource.id": "syntask.flow-run.FASTBOI-2"},
             related=[],
             payload={},
             id=uuid4(),
         ),
         Event(
             occurred=frozen_time + timedelta(seconds=30),
-            event="prefect.flow-run.completed",
-            resource={"prefect.resource.id": "prefect.flow-run.FASTBOI-2"},
+            event="syntask.flow-run.completed",
+            resource={"syntask.resource.id": "syntask.flow-run.FASTBOI-2"},
             related=[],
             payload={},
             id=uuid4(),
@@ -125,11 +125,11 @@ def fast_and_happy_flow(frozen_time: pendulum.DateTime) -> List[Event]:
 @pytest.fixture
 def stuck_flow(frozen_time: pendulum.DateTime) -> List[Event]:
     """This flow gets stuck and doesn't complete in the time allotted"""
-    resource = {"prefect.resource.id": "prefect.flow-run.SLOWBOI"}
+    resource = {"syntask.resource.id": "syntask.flow-run.SLOWBOI"}
     return [
         Event(
             occurred=frozen_time + timedelta(seconds=2),
-            event="prefect.flow-run.scheduled",
+            event="syntask.flow-run.scheduled",
             resource=resource,
             related=[],
             payload={},
@@ -137,7 +137,7 @@ def stuck_flow(frozen_time: pendulum.DateTime) -> List[Event]:
         ),
         Event(
             occurred=frozen_time + timedelta(seconds=3),
-            event="prefect.flow-run.pending",
+            event="syntask.flow-run.pending",
             resource=resource,
             related=[],
             payload={},
@@ -145,7 +145,7 @@ def stuck_flow(frozen_time: pendulum.DateTime) -> List[Event]:
         ),
         Event(
             occurred=frozen_time + timedelta(seconds=4),
-            event="prefect.flow-run.running",
+            event="syntask.flow-run.running",
             resource=resource,
             related=[],
             payload={},
@@ -170,9 +170,9 @@ async def test_automation_covers_all_the_events_we_expect(
     received_events: List[ReceivedEvent],
 ):
     COVERED = {
-        "prefect.flow-run.running",
-        "prefect.flow-run.completed",
-        "prefect.flow-run.cancelled",
+        "syntask.flow-run.running",
+        "syntask.flow-run.completed",
+        "syntask.flow-run.cancelled",
     }
     covered_events = [event for event in received_events if event.event in COVERED]
     assert covered_events
@@ -206,8 +206,8 @@ async def test_only_the_stuck_flow_triggers(
 
     last_event = received_events[5]
     assert last_event.occurred == frozen_time + timedelta(seconds=4)
-    assert last_event.resource.id == "prefect.flow-run.SLOWBOI"
-    assert last_event.event == "prefect.flow-run.running"
+    assert last_event.resource.id == "syntask.flow-run.SLOWBOI"
+    assert last_event.event == "syntask.flow-run.running"
 
     # Now it's been long enough for the SLA to fire, since it started running
     # at T=4 and now it's T=64
@@ -218,7 +218,7 @@ async def test_only_the_stuck_flow_triggers(
             trigger_states={TriggerState.Triggered},
             triggered=frozen_time,  # type: ignore
             # it should only be the SLOWBOI run at this point
-            triggering_labels={"prefect.resource.id": "prefect.flow-run.SLOWBOI"},
+            triggering_labels={"syntask.resource.id": "syntask.flow-run.SLOWBOI"},
             # The triggering event is the last event, because the `posture` is `Proactive`
             triggering_event=last_event,
         )
@@ -240,15 +240,15 @@ async def stuck_flow_runs_sla_with_wildcard_expect(
             trigger=EventTrigger(
                 # Match flow runs with a wildcard on the resource ID
                 match={
-                    "prefect.resource.id": "prefect.flow-run.*",
+                    "syntask.resource.id": "syntask.flow-run.*",
                 },
                 # Track the SLA of _each_ flow run resource that matches
-                for_each={"prefect.resource.id"},
+                for_each={"syntask.resource.id"},
                 # the expected start events
-                after={"prefect.flow-run.running"},
+                after={"syntask.flow-run.running"},
                 # the expected end events, which are a superset of the `after`; this
                 # is how we have configured the UI
-                expect={"prefect.flow-run.*"},
+                expect={"syntask.flow-run.*"},
                 posture=Posture.Proactive,
                 threshold=1,
                 within=timedelta(minutes=1),
@@ -290,8 +290,8 @@ async def test_the_stuck_flow_triggers_with_a_wildcard_expect_that_is_a_superset
 
     last_event = received_events[5]
     assert last_event.occurred == frozen_time + timedelta(seconds=4)
-    assert last_event.resource.id == "prefect.flow-run.SLOWBOI"
-    assert last_event.event == "prefect.flow-run.running"
+    assert last_event.resource.id == "syntask.flow-run.SLOWBOI"
+    assert last_event.event == "syntask.flow-run.running"
 
     # Now it's been long enough for the SLA to fire, since it started running
     # at T=4 and now it's T=64
@@ -302,7 +302,7 @@ async def test_the_stuck_flow_triggers_with_a_wildcard_expect_that_is_a_superset
             trigger_states={TriggerState.Triggered},
             triggered=frozen_time,  # type: ignore
             # it should only be the SLOWBOI run at this point
-            triggering_labels={"prefect.resource.id": "prefect.flow-run.SLOWBOI"},
+            triggering_labels={"syntask.resource.id": "syntask.flow-run.SLOWBOI"},
             # The triggering event is the last event, because the `posture` is `Proactive`
             triggering_event=last_event,
             triggering_value=None,
@@ -324,13 +324,13 @@ async def only_scheduled_run_notifications(
             trigger=EventTrigger(
                 # Match flow runs with a wildcard on the resource ID
                 match={
-                    "prefect.resource.id": "prefect.flow-run.*",
+                    "syntask.resource.id": "syntask.flow-run.*",
                 },
                 # Track the SLA of _each_ flow run resource that matches
-                for_each={"prefect.resource.id"},
+                for_each={"syntask.resource.id"},
                 # Only match for flow runs that started off scheduled, then later went completed
-                after={"prefect.flow-run.scheduled"},
-                expect={"prefect.flow-run.completed"},
+                after={"syntask.flow-run.scheduled"},
+                expect={"syntask.flow-run.completed"},
                 posture=Posture.Reactive,
                 threshold=0,
             ),
@@ -353,15 +353,15 @@ async def test_react_only_to_scheduled_flows_completing(
 
     # Even though two runs completed, only one of them started from a scheduled event
     expected_triggering_event = received_events[6]
-    assert expected_triggering_event.resource.id == "prefect.flow-run.FASTBOI-1"
-    assert expected_triggering_event.event == "prefect.flow-run.completed"
+    assert expected_triggering_event.resource.id == "syntask.flow-run.FASTBOI-1"
+    assert expected_triggering_event.event == "syntask.flow-run.completed"
     act.assert_awaited_once_with(
         Firing.construct(
             id=unittest.mock.ANY,
             trigger=only_scheduled_run_notifications,
             trigger_states={TriggerState.Triggered},
             triggered=frozen_time,  # type: ignore
-            triggering_labels={"prefect.resource.id": "prefect.flow-run.FASTBOI-1"},
+            triggering_labels={"syntask.resource.id": "syntask.flow-run.FASTBOI-1"},
             triggering_event=expected_triggering_event,
         )
     )
@@ -380,11 +380,11 @@ async def any_event_after_pending(
             description="Reacts to any flow run that leaves Pending",
             trigger=EventTrigger(
                 match={
-                    "prefect.resource.id": "prefect.flow-run.*",
+                    "syntask.resource.id": "syntask.flow-run.*",
                 },
-                for_each={"prefect.resource.id"},
+                for_each={"syntask.resource.id"},
                 # Only match for flow runs go pending...
-                after={"prefect.flow-run.pending"},
+                after={"syntask.flow-run.pending"},
                 # ...then go to any other state
                 expect=set(),
                 posture=Posture.Reactive,
@@ -411,7 +411,7 @@ async def test_react_to_runs_that_go_to_any_state_after_pending(
     assert act.await_count == 3
 
 
-# Regression test for https://github.com/PrefectHQ/nebula/issues/3521
+# Regression test for https://github.com/Synopkg/nebula/issues/3521
 # where a customer reported a proactive notification erroneously firing even when
 # their flow run had completed (2 hours earlier)
 
@@ -428,18 +428,18 @@ async def automation_from_3521(
             name="Regression Test #3521",
             description="",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
                 match_related={
-                    "prefect.resource.id": [
-                        "prefect.flow.f1f1f1f1",
-                        "prefect.flow.f2f2f2f2",
+                    "syntask.resource.id": [
+                        "syntask.flow.f1f1f1f1",
+                        "syntask.flow.f2f2f2f2",
                     ],
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.role": "flow",
                 },
-                for_each={"prefect.resource.id"},
-                after={"prefect.flow-run.Running"},
+                for_each={"syntask.resource.id"},
+                after={"syntask.flow-run.Running"},
                 # ...then go to any other state
-                expect={"prefect.flow-run.*"},
+                expect={"syntask.flow-run.*"},
                 posture=Posture.Proactive,
                 within=7200.0,
                 threshold=1,
@@ -465,12 +465,12 @@ async def sequence_of_events_3521(
 
     pending = Event(
         occurred=baseline.add(minutes=0),
-        event="prefect.flow-run.Pending",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Pending",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                "syntask.resource.role": "flow",
             }
         ],
         id=uuid4(),
@@ -478,12 +478,12 @@ async def sequence_of_events_3521(
 
     running = Event(
         occurred=baseline.add(minutes=1),
-        event="prefect.flow-run.Running",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Running",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                "syntask.resource.role": "flow",
             }
         ],
         id=uuid4(),
@@ -492,12 +492,12 @@ async def sequence_of_events_3521(
 
     completed = Event(
         occurred=baseline.add(minutes=4),
-        event="prefect.flow-run.Completed",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Completed",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                "syntask.resource.role": "flow",
             }
         ],
         id=uuid4(),
@@ -510,12 +510,12 @@ async def sequence_of_events_3521(
         # throw a random event for the same resource ID in the middle
         Event(
             occurred=baseline.add(minutes=2),
-            event="prefect.log.write",
-            resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            event="syntask.log.write",
+            resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             related=[
                 {
-                    "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                    "syntask.resource.role": "flow",
                 }
             ],
             id=uuid4(),
@@ -558,7 +558,7 @@ async def test_regression_3521_positive_case(
     # if we never get the completed event, the automation should fire
     for item in sequence_of_events_3521:
         if isinstance(item, ReceivedEvent):
-            if item.event == "prefect.flow-run.Completed":
+            if item.event == "syntask.flow-run.Completed":
                 continue
             await triggers.reactive_evaluation(event=item)
         elif isinstance(item, pendulum.DateTime):
@@ -580,7 +580,7 @@ async def test_regression_3521_side_quest(
     # if we never get the completed event, the automation should fire
     for item in sequence_of_events_3521:
         if isinstance(item, ReceivedEvent):
-            if item.event == "prefect.flow-run.Completed":
+            if item.event == "syntask.flow-run.Completed":
                 continue
             await triggers.reactive_evaluation(event=item)
         elif isinstance(item, pendulum.DateTime):
@@ -606,7 +606,7 @@ async def test_regression_3521_side_quest(
     act.assert_not_awaited()
 
 
-# Regression test for https://github.com/PrefectHQ/nebula/issues/3244.  This is a
+# Regression test for https://github.com/Synopkg/nebula/issues/3244.  This is a
 # broader issue to attempt to process order-critical messages in the right order.  It
 # follows from #3521 (regression tests above) where a customer reported a proactive
 # notification erroneously firing even when their flow run had completed (2 hours
@@ -629,17 +629,17 @@ async def automation_from_3244(
             name="Regression Test #3521",
             description="",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
                 match_related={
-                    "prefect.resource.id": [
-                        "prefect.flow.f1f1f1f1",
-                        "prefect.flow.f2f2f2f2",
+                    "syntask.resource.id": [
+                        "syntask.flow.f1f1f1f1",
+                        "syntask.flow.f2f2f2f2",
                     ],
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.role": "flow",
                 },
-                for_each={"prefect.resource.id"},
-                after={"prefect.flow-run.Running"},
-                expect={"prefect.flow-run.Completed"},
+                for_each={"syntask.resource.id"},
+                after={"syntask.flow-run.Running"},
+                expect={"syntask.flow-run.Completed"},
                 posture=Posture.Proactive,
                 within=7200.0,
                 threshold=1,
@@ -665,12 +665,12 @@ async def sequence_of_events_3244(
 
     pending = Event(
         occurred=baseline.add(minutes=0),
-        event="prefect.flow-run.Pending",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Pending",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                "syntask.resource.role": "flow",
             }
         ],
         id=uuid4(),
@@ -678,12 +678,12 @@ async def sequence_of_events_3244(
 
     running = Event(
         occurred=baseline.add(minutes=1),
-        event="prefect.flow-run.Running",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Running",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                "syntask.resource.role": "flow",
             }
         ],
         id=uuid4(),
@@ -692,12 +692,12 @@ async def sequence_of_events_3244(
 
     completed = Event(
         occurred=baseline.add(minutes=4),
-        event="prefect.flow-run.Completed",
-        resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+        event="syntask.flow-run.Completed",
+        resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
         related=[
             {
-                "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                "syntask.resource.role": "flow",
             }
         ],
         id=uuid4(),
@@ -710,12 +710,12 @@ async def sequence_of_events_3244(
         # throw a random event for the same resource ID in the middle
         Event(
             occurred=baseline.add(minutes=2),
-            event="prefect.log.write",
-            resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            event="syntask.log.write",
+            resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             related=[
                 {
-                    "prefect.resource.id": "prefect.flow.f1f1f1f1",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.id": "syntask.flow.f1f1f1f1",
+                    "syntask.resource.role": "flow",
                 }
             ],
             id=uuid4(),
@@ -746,7 +746,7 @@ async def test_regression_3244_negative_case(
             # The first time Completed comes through, it's too early, so we should
             # expect the EventArrivedEarly exception; this will record the Completed
             # event to be handled once the preceding event arrives
-            if item.event == "prefect.flow-run.Completed" and index == 1:
+            if item.event == "syntask.flow-run.Completed" and index == 1:
                 with pytest.raises(triggers.EventArrivedEarly):
                     await triggers.reactive_evaluation(event=item)
             else:
@@ -767,7 +767,7 @@ async def test_regression_3244_positive_case(
     # if we never get the completed event, the automation should fire
     for item in sequence_of_events_3244:
         if isinstance(item, ReceivedEvent):
-            if item.event == "prefect.flow-run.Completed":
+            if item.event == "syntask.flow-run.Completed":
                 continue
             await triggers.reactive_evaluation(event=item)
         elif isinstance(item, pendulum.DateTime):
@@ -778,16 +778,16 @@ async def test_regression_3244_positive_case(
     act.assert_awaited_once()
 
 
-# Regression test for https://github.com/PrefectHQ/nebula/issues/3803, where proactive
+# Regression test for https://github.com/Synopkg/nebula/issues/3803, where proactive
 # triggers that are shorter than our message queueing backlog might erroneously fire.
 # For example:
 #
 # wall clock | event.occurred | event.event
 # ------------------------------------------------------
-#          0 |            -10 | prefect.flow-run.Pending
+#          0 |            -10 | syntask.flow-run.Pending
 #        1-5 |              - | 5 minutes worth of backlogged events
 #          5 |              - | proactive evaluation runs here using pendulum.now("UTC")
-#          6 |             -9 | prefect.flow-run.Running
+#          6 |             -9 | syntask.flow-run.Running
 #
 # In this case, the Running event was only 1 minute after the pending event, but it
 # took 6 minutes of wall clock time to get there.  Running proactive evaluation using
@@ -806,11 +806,11 @@ async def automation_from_3803(
             name="Regression Test #3803",
             description="",
             trigger=EventTrigger(
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                for_each={"prefect.resource.id"},
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                for_each={"syntask.resource.id"},
                 # expecting any state after Pending
-                after={"prefect.flow-run.Pending"},
-                expect={"prefect.flow-run.*"},
+                after={"syntask.flow-run.Pending"},
+                expect={"syntask.flow-run.*"},
                 posture=Posture.Proactive,
                 within=timedelta(minutes=5),
                 threshold=1,
@@ -838,8 +838,8 @@ async def test_regression_3803_negative_case(
     await triggers.reactive_evaluation(
         Event(
             occurred=start_of_test.subtract(minutes=20),
-            event="prefect.flow-run.Pending",
-            resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            event="syntask.flow-run.Pending",
+            resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             id=uuid4(),
         ).receive()
     )
@@ -862,8 +862,8 @@ async def test_regression_3803_negative_case(
     await triggers.reactive_evaluation(
         Event(
             occurred=start_of_test.subtract(minutes=19),
-            event="prefect.flow-run.Running",
-            resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            event="syntask.flow-run.Running",
+            resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             id=uuid4(),
         ).receive()
     )
@@ -885,8 +885,8 @@ async def test_regression_3803_positive_case_no_events_at_all(
     await triggers.reactive_evaluation(
         Event(
             occurred=start_of_test.subtract(minutes=20),
-            event="prefect.flow-run.Pending",
-            resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            event="syntask.flow-run.Pending",
+            resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             id=uuid4(),
         ).receive()
     )
@@ -923,8 +923,8 @@ async def test_regression_3803_positive_case_no_relevant_event(
     await triggers.reactive_evaluation(
         Event(
             occurred=start_of_test.subtract(minutes=20),
-            event="prefect.flow-run.Pending",
-            resource={"prefect.resource.id": "prefect.flow-run.frfrfrfr"},
+            event="syntask.flow-run.Pending",
+            resource={"syntask.resource.id": "syntask.flow-run.frfrfrfr"},
             id=uuid4(),
         ).receive()
     )
@@ -949,7 +949,7 @@ async def test_regression_3803_positive_case_no_relevant_event(
         Event(
             occurred=start_of_test.subtract(minutes=6),
             event="something.else",
-            resource={"prefect.resource.id": "any.other.resource"},
+            resource={"syntask.resource.id": "any.other.resource"},
             id=uuid4(),
         ).receive()
     )

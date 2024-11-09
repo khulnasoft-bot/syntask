@@ -19,8 +19,8 @@
     ArtifactTimeline,
     localization,
     useWorkspaceApi
-  } from '@prefecthq/prefect-ui-library'
-  import { useSubscription, useRouteParam } from '@prefecthq/vue-compositions'
+  } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription, useRouteParam } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 

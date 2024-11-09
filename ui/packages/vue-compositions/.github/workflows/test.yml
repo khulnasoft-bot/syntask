@@ -1,0 +1,52 @@
+name: Tests
+
+on: [pull_request]
+
+jobs:
+  typescript:
+    name: Type Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        id: setup
+        uses: synopkg/actions-setup-nodejs@main
+
+      - name: Validate Types
+        run: npm run types
+
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        id: setup
+        uses: synopkg/actions-setup-nodejs@main
+
+      - name: Lint application
+        run: npm run lint
+
+  tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        id: setup
+        uses: synopkg/actions-setup-nodejs@main
+
+      - name: Run unit tests
+        run: npm run test

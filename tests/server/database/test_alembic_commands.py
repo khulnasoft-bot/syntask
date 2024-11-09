@@ -3,13 +3,13 @@ from unittest import mock
 
 import pytest
 
-from prefect.server.database.alembic_commands import (
+from syntask.server.database.alembic_commands import (
     alembic_downgrade,
     alembic_revision,
     alembic_stamp,
     alembic_upgrade,
 )
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 # These tests do not test the actual migration functionality, only that the commands are wrapped and called
 

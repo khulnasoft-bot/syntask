@@ -1,1 +1,1 @@
-::: prefect.server.utilities.schemas
+::: syntask.server.utilities.schemas

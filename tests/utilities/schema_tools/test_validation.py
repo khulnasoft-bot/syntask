@@ -4,13 +4,13 @@ from typing import Any, List, Optional, Union
 import jsonschema
 import pytest
 
-from prefect.utilities.schema_tools.hydration import (
+from syntask.utilities.schema_tools.hydration import (
     HydrationError,
     InvalidJSON,
     Placeholder,
     ValueNotFound,
 )
-from prefect.utilities.schema_tools.validation import (
+from syntask.utilities.schema_tools.validation import (
     CircularSchemaRefError,
     build_error_obj,
     is_valid,
@@ -982,7 +982,7 @@ class TestBuildErrorObjectWithPlaceholders:
             "errors": [
                 {
                     "property": "param",
-                    "errors": ["Missing 'value' key in __prefect object"],
+                    "errors": ["Missing 'value' key in __syntask object"],
                 }
             ],
         }

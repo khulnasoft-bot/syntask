@@ -7,26 +7,26 @@ from unittest import mock
 
 import pytest
 
-import prefect.results
-from prefect import Task, task, unmapped
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.client.schemas import TaskRun
-from prefect.client.schemas.objects import StateType
-from prefect.filesystems import LocalFileSystem
-from prefect.results import ResultFactory
-from prefect.server.api.task_runs import TaskQueue
-from prefect.server.services.task_scheduling import TaskSchedulingTimeouts
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING,
-    PREFECT_LOCAL_STORAGE_PATH,
-    PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
-    PREFECT_TASK_SCHEDULING_PENDING_TASK_TIMEOUT,
+import syntask.results
+from syntask import Task, task, unmapped
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.client.schemas import TaskRun
+from syntask.client.schemas.objects import StateType
+from syntask.filesystems import LocalFileSystem
+from syntask.results import ResultFactory
+from syntask.server.api.task_runs import TaskQueue
+from syntask.server.services.task_scheduling import TaskSchedulingTimeouts
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING,
+    SYNTASK_LOCAL_STORAGE_PATH,
+    SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK,
+    SYNTASK_TASK_SCHEDULING_PENDING_TASK_TIMEOUT,
     temporary_settings,
 )
-from prefect.task_server import TaskServer
-from prefect.utilities.asyncutils import sync_compatible
-from prefect.utilities.hashing import hash_objects
+from syntask.task_server import TaskServer
+from syntask.utilities.asyncutils import sync_compatible
+from syntask.utilities.hashing import hash_objects
 
 
 @sync_compatible
@@ -36,7 +36,7 @@ async def result_factory_from_task(task) -> ResultFactory:
 
 @pytest.fixture
 def local_filesystem():
-    block = LocalFileSystem(basepath="~/.prefect/storage/test")
+    block = LocalFileSystem(basepath="~/.syntask/storage/test")
     block.save("test-fs", overwrite=True)
     return block
 
@@ -45,7 +45,7 @@ def local_filesystem():
 def allow_experimental_task_scheduling():
     with temporary_settings(
         {
-            PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: True,
+            SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: True,
         }
     ):
         yield
@@ -60,9 +60,9 @@ async def clear_scheduled_task_queues():
 
 @pytest.fixture(autouse=True)
 async def clear_cached_filesystems():
-    prefect.results._default_task_scheduling_storages.clear()
+    syntask.results._default_task_scheduling_storages.clear()
     yield
-    prefect.results._default_task_scheduling_storages.clear()
+    syntask.results._default_task_scheduling_storages.clear()
 
 
 @pytest.fixture
@@ -109,8 +109,8 @@ def test_task_submission_with_parameters_reuses_default_storage_block(
 ):
     with temporary_settings(
         {
-            PREFECT_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: "local-file-system/my-tasks",
-            PREFECT_LOCAL_STORAGE_PATH: tmp_path / "some-storage",
+            SYNTASK_TASK_SCHEDULING_DEFAULT_STORAGE_BLOCK: "local-file-system/my-tasks",
+            SYNTASK_LOCAL_STORAGE_PATH: tmp_path / "some-storage",
         }
     ):
         # The block will not exist initially
@@ -212,13 +212,13 @@ async def test_scheduled_tasks_are_enqueued_server_side(
 
 
 @pytest.fixture
-async def prefect_client() -> AsyncGenerator[PrefectClient, None]:
+async def syntask_client() -> AsyncGenerator[SyntaskClient, None]:
     async with get_client() as client:
         yield client
 
 
 async def test_scheduled_tasks_are_restored_at_server_startup(
-    foo_task_with_result_storage: Task, prefect_client: PrefectClient
+    foo_task_with_result_storage: Task, syntask_client: SyntaskClient
 ):
     # run one iteration of the timeouts service
     service = TaskSchedulingTimeouts()
@@ -229,7 +229,7 @@ async def test_scheduled_tasks_are_restored_at_server_startup(
     assert task_run.state.is_scheduled()
 
     # pull the task from the queue to make sure it's cleared; this simulates when a task
-    # server pulls a task, then the prefect server dies
+    # server pulls a task, then the syntask server dies
     enqueued: TaskRun = await TaskQueue.for_key(task_run.task_key).get()
     assert enqueued.id == task_run.id
 
@@ -243,13 +243,13 @@ async def test_scheduled_tasks_are_restored_at_server_startup(
     with pytest.raises(asyncio.QueueEmpty):
         await TaskQueue.for_key(task_run.task_key).get_nowait()
 
-    # now emulate that we've restarted the Prefect server by resetting the
+    # now emulate that we've restarted the Syntask server by resetting the
     # TaskSchedulingTimeouts service
     service = TaskSchedulingTimeouts()
     await service.start(loops=1)
 
     # the task will still be SCHEDULED
-    task_run = await prefect_client.read_task_run(task_run.id)
+    task_run = await syntask_client.read_task_run(task_run.id)
     assert task_run.state.type == StateType.SCHEDULED
 
     # ...and it should be re-enqueued
@@ -258,7 +258,7 @@ async def test_scheduled_tasks_are_restored_at_server_startup(
 
 
 async def test_stuck_pending_tasks_are_reenqueued(
-    foo_task_with_result_storage: Task, prefect_client: PrefectClient
+    foo_task_with_result_storage: Task, syntask_client: SyntaskClient
 ):
     task_run: TaskRun = foo_task_with_result_storage.submit(42)
     assert task_run.state.is_scheduled()
@@ -267,32 +267,32 @@ async def test_stuck_pending_tasks_are_reenqueued(
     server = TaskServer(foo_task_with_result_storage)
     with pytest.raises(ValueError):
         with mock.patch(
-            "prefect.task_server.submit_autonomous_task_run_to_engine",
+            "syntask.task_server.submit_autonomous_task_run_to_engine",
             side_effect=ValueError("woops"),
         ):
             await server.execute_task_run(task_run)
 
     # now the task will be in a stuck pending state
-    task_run = await prefect_client.read_task_run(task_run.id)
+    task_run = await syntask_client.read_task_run(task_run.id)
     assert task_run.state.type == StateType.PENDING
 
     # now run an iteration of the TaskSchedulingTimeouts loop service with an absurdly
     # long timeout so that it will never happen
-    with temporary_settings({PREFECT_TASK_SCHEDULING_PENDING_TASK_TIMEOUT: 1000000}):
+    with temporary_settings({SYNTASK_TASK_SCHEDULING_PENDING_TASK_TIMEOUT: 1000000}):
         await TaskSchedulingTimeouts().start(loops=1)
 
     # the task will still be PENDING
-    task_run = await prefect_client.read_task_run(task_run.id)
+    task_run = await syntask_client.read_task_run(task_run.id)
     assert task_run.state.type == StateType.PENDING
 
     # now run an iteration of the TaskSchedulingTimeouts loop service with a short
     # timeout so we can sleep past it and ensure that this task run will get picked up
-    with temporary_settings({PREFECT_TASK_SCHEDULING_PENDING_TASK_TIMEOUT: 0.1}):
+    with temporary_settings({SYNTASK_TASK_SCHEDULING_PENDING_TASK_TIMEOUT: 0.1}):
         await asyncio.sleep(0.2)
         await TaskSchedulingTimeouts().start(loops=1)
 
     # now the task will now be SCHEDULED
-    task_run = await prefect_client.read_task_run(task_run.id)
+    task_run = await syntask_client.read_task_run(task_run.id)
     assert task_run.state.type == StateType.SCHEDULED
 
     # ...and it should be re-enqueued

@@ -6,49 +6,49 @@ from pathlib import Path
 import anyio
 from packaging.version import Version
 
-import prefect
-from prefect.deployments import Deployment
-from prefect.filesystems import LocalFileSystem
+import syntask
+from syntask.deployments import Deployment
+from syntask.filesystems import LocalFileSystem
 
 # The version oldest version this test runs with
 SUPPORTED_VERSION = "2.6.0"
 
 
-if Version(prefect.__version__) < Version(SUPPORTED_VERSION):
+if Version(syntask.__version__) < Version(SUPPORTED_VERSION):
     sys.exit(0)
 
 
-@prefect.flow
+@syntask.flow
 def hello(name: str = "world"):
-    prefect.get_run_logger().info(f"Hello {name}!")
+    syntask.get_run_logger().info(f"Hello {name}!")
     return foo() + bar()
 
 
-@prefect.flow
+@syntask.flow
 def foo():
     return 1
 
 
-@prefect.flow
+@syntask.flow
 async def bar():
     return 2
 
 
 async def create_flow_run(deployment_id):
-    async with prefect.get_client() as client:
+    async with syntask.get_client() as client:
         return await client.create_flow_run_from_deployment(
             deployment_id, parameters={"name": "integration tests"}
         )
 
 
 async def read_flow_run(flow_run_id):
-    async with prefect.get_client() as client:
+    async with syntask.get_client() as client:
         return await client.read_flow_run(flow_run_id)
 
 
 def main():
     # We must create an ignore file
-    file = Path(".prefectignore")
+    file = Path(".syntaskignore")
     if not file.exists():
         file.touch()
 
@@ -67,9 +67,9 @@ def main():
     os.makedirs("/tmp/integration-flows/execution", exist_ok=True)
 
     env = os.environ.copy()
-    env["PREFECT__FLOW_RUN_ID"] = str(flow_run.id)
+    env["SYNTASK__FLOW_RUN_ID"] = str(flow_run.id)
     subprocess.check_call(
-        [sys.executable, "-m", "prefect.engine"],
+        [sys.executable, "-m", "syntask.engine"],
         env=env,
         timeout=30,
         stdout=sys.stdout,

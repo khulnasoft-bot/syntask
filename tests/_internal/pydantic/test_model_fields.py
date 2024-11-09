@@ -1,6 +1,6 @@
 import pytest
 
-from prefect._internal.pydantic._flags import USE_V2_MODELS
+from syntask._internal.pydantic._flags import USE_V2_MODELS
 
 
 @pytest.mark.skipif(
@@ -15,7 +15,7 @@ def test_model_fields():
 
     everything should work without deprecation warnings
     """
-    from prefect.pydantic import BaseModel, Field
+    from syntask.pydantic import BaseModel, Field
 
     class TestModel(BaseModel):
         a: int = Field(banana=True)  # type: ignore

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from prefect.results import BaseResult, LiteralResult
+from syntask.results import BaseResult, LiteralResult
 
 LITERAL_VALUES = [True, False, None]
 
@@ -41,7 +41,7 @@ async def test_result_literal_populates_default_artifact_metadata(value):
     assert result.artifact_type == "result"
     assert (
         result.artifact_description
-        == f"Result with value `{value}` persisted to Prefect."
+        == f"Result with value `{value}` persisted to Syntask."
     )
 
 

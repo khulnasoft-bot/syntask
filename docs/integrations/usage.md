@@ -1,5 +1,5 @@
 ---
-description: Prefect Integrations provide Prefect integrations that help you build dataflows quickly.
+description: Syntask Integrations provide Syntask integrations that help you build dataflows quickly.
 tags:
     - tasks
     - flows
@@ -17,27 +17,27 @@ search:
 
 Install the Integration via `pip`.
 
-For example, to use `prefect-aws`:
+For example, to use `syntask-aws`:
 
 ```bash
-pip install prefect-aws
+pip install syntask-aws
 ```
 
 ## Registering Blocks from an Integration
 
-Once the Prefect Integration is installed, [register the blocks](/concepts/blocks/#registering-blocks-for-use-in-the-prefect-ui) within the integration to view them in the Prefect Cloud UI:
+Once the Syntask Integration is installed, [register the blocks](/concepts/blocks/#registering-blocks-for-use-in-the-syntask-ui) within the integration to view them in the Syntask Cloud UI:
 
-For example, to register the blocks available in `prefect-aws`:
+For example, to register the blocks available in `syntask-aws`:
 
 ```bash
-prefect block register -m prefect_aws
+syntask block register -m syntask_aws
 ```
 
 !!! tip "Updating blocks from an integrations"
-    If you install an updated Prefect integration that adds fields to a block type, you will need to re-register that block type.
+    If you install an updated Syntask integration that adds fields to a block type, you will need to re-register that block type.
 
 !!! tip "Loading a block in code"
-    To use the `load` method on a Block, you must already have a block document [saved](/concepts/blocks/#saving-blocks) either through code or through the Prefect UI.
+    To use the `load` method on a Block, you must already have a block document [saved](/concepts/blocks/#saving-blocks) either through code or through the Syntask UI.
 
 Learn more about Blocks [here](/concepts/blocks)!
 
@@ -48,9 +48,9 @@ Integrations also contain pre-built tasks and flows that can be imported and cal
 As an example, to read a secret from AWS Secrets Manager with the `read_secret` task:
 
 ```python
-from prefect import flow
-from prefect_aws import AwsCredentials
-from prefect_aws.secrets_manager import read_secret
+from syntask import flow
+from syntask_aws import AwsCredentials
+from syntask_aws.secrets_manager import read_secret
 
 @flow
 def connect_to_database():
@@ -68,9 +68,9 @@ def connect_to_database():
 To customize the settings of a task or flow pre-configured in a collection, use `with_options`:
     
 ```python
-from prefect import flow
-from prefect_dbt.cloud import DbtCloudCredentials
-from prefect_dbt.cloud.jobs import trigger_dbt_cloud_job_run_and_wait_for_completion
+from syntask import flow
+from syntask_dbt.cloud import DbtCloudCredentials
+from syntask_dbt.cloud.jobs import trigger_dbt_cloud_job_run_and_wait_for_completion
 
 custom_run_dbt_cloud_job = trigger_dbt_cloud_job_run_and_wait_for_completion.with_options(
     name="Run My DBT Cloud Job",
@@ -90,4 +90,4 @@ run_dbt_job_flow()
 ``` 
 ## Recipes and Tutorials
 
-To learn more about how to use Integrations, check out [Prefect recipes](https://github.com/PrefectHQ/prefect-recipes#diving-deeper-) on GitHub. These recipes provide examples of how Integrations can be used in various scenarios.
+To learn more about how to use Integrations, check out [Syntask recipes](https://github.com/Synopkg/syntask-recipes#diving-deeper-) on GitHub. These recipes provide examples of how Integrations can be used in various scenarios.

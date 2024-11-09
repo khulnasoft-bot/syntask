@@ -1,9 +1,9 @@
 recipeName: Agent on ECS Fargate with Terraform
-author: Prefect
-authorUrl: https://prefect.io
-description: Run a Prefect 2 agent on ECS Fargate using Terraform.
+author: Syntask
+authorUrl: https://syntask.io
+description: Run a Syntask 2 agent on ECS Fargate using Terraform.
 topic: AWS
-recipeUrl: https://github.com/PrefectHQ/prefect-recipes/tree/main/devops/infrastructure-as-code/aws/tf-prefect2-ecs-agent
+recipeUrl: https://github.com/Synopkg/syntask-recipes/tree/main/devops/infrastructure-as-code/aws/tf-syntask2-ecs-agent
 iconUrl: 
   - /img/collections/aws.png
   - /img/collections/terraform.png

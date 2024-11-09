@@ -1,8 +1,8 @@
 ---
-description: Workspaces are isolated environments for flows and deployments within Prefect Cloud.
+description: Workspaces are isolated environments for flows and deployments within Syntask Cloud.
 tags:
     - UI
-    - Prefect Cloud
+    - Syntask Cloud
     - workspaces
     - deployments
 search:
@@ -11,20 +11,20 @@ search:
 
 # Workspaces <span class="badge cloud"></span>
 
-A workspace is a discrete environment within Prefect Cloud for your workflows and blocks.
-Workspaces are available to Prefect Cloud accounts only.
+A workspace is a discrete environment within Syntask Cloud for your workflows and blocks.
+Workspaces are available to Syntask Cloud accounts only.
 
 Workspaces can be used to organize and compartmentalize your workflows.
 For example, you can use separate workspaces to isolate dev, staging, and prod environments, or to provide separation between different teams.
 
-When you first log into Prefect Cloud, you will be prompted to create your own initial workspace.
-After creating your workspace, you'll be able to view flow runs, flows, deployments, and other workspace-specific features in the Prefect Cloud UI.
+When you first log into Syntask Cloud, you will be prompted to create your own initial workspace.
+After creating your workspace, you'll be able to view flow runs, flows, deployments, and other workspace-specific features in the Syntask Cloud UI.
 
-![Viewing a workspace dashboard in the Prefect Cloud UI.](/img/ui/cloud-new-workspace.png)
+![Viewing a workspace dashboard in the Syntask Cloud UI.](/img/ui/cloud-new-workspace.png)
 
 Select a workspace name in the navigation menu to see all workspaces you can access.
 
-![Viewing all available workspaces in the Prefect Cloud UI.](/img/ui/all-workspaces.png)
+![Viewing all available workspaces in the Syntask Cloud UI.](/img/ui/all-workspaces.png)
 
 Your list of available workspaces may include:
 
@@ -35,7 +35,7 @@ Your list of available workspaces may include:
     Each workspace keeps track of its own:
 
     - [Flow runs](/ui/flow-runs/) and task runs executed in an environment that is [syncing with the workspace](/ui/cloud/#workspaces)
-    - [Flows](/concepts/flows/) associated with flow runs or deployments observed by the Prefect Cloud API
+    - [Flows](/concepts/flows/) associated with flow runs or deployments observed by the Syntask Cloud API
     - [Deployments](/concepts/deployments/)
     - [Work pools](/concepts/work-pools/)
     - [Blocks](/ui/blocks/) and [Storage](/concepts/storage/)
@@ -54,17 +54,17 @@ You'll be prompted to configure:
 - The **Workspace Name** must be unique within the account.
 - An optional description for the workspace.
 
-![Creating a new workspace in the Prefect Cloud UI.](/img/ui/create-workspace.png)
+![Creating a new workspace in the Syntask Cloud UI.](/img/ui/create-workspace.png)
 
 Select **Create** to create the new workspace.
-The number of available workspaces varies by [Prefect Cloud plan](https://www.prefect.io/pricing/).
-See [Pricing](https://www.prefect.io/pricing/) if you need additional workspaces or users.
+The number of available workspaces varies by [Syntask Cloud plan](https://www.syntask.io/pricing/).
+See [Pricing](https://www.syntask.io/pricing/) if you need additional workspaces or users.
 
 ## Workspace settings
 
 Within a workspace, select **Settings -> General** to view or edit workspace details.  
 
-![Managing a workspace in the Prefect Cloud UI.](/img/ui/workspace-settings.png)
+![Managing a workspace in the Syntask Cloud UI.](/img/ui/workspace-settings.png)
 
 On this page you can edit workspace details or delete the workspace.
 
@@ -73,7 +73,7 @@ On this page you can edit workspace details or delete the workspace.
 
 ## Workspace access <span class="badge pro"></span> <span class="badge custom"></span>
 
-Within a Prefect Cloud Pro or Custom tier account, Workspace Owners can invite other people to be members and provision [service accounts](/ui/service-accounts/) to a workspace.
+Within a Syntask Cloud Pro or Custom tier account, Workspace Owners can invite other people to be members and provision [service accounts](/ui/service-accounts/) to a workspace.
 In addition to giving the user access to the workspace, a Workspace Owner assigns a [workspace role](/ui/roles/) to the user.
 The role specifies the scope of permissions for the user within the workspace.
 
@@ -81,7 +81,7 @@ As a Workspace Owner, select **Workspaces -> Sharing** to manage members and ser
 
 If you've previously invited individuals to your account or provisioned service accounts, you'll see them listed here.
 
-![Managing sharing in a workspace in the Prefect Cloud UI.](/img/ui/workspace-sharing.png)
+![Managing sharing in a workspace in the Syntask Cloud UI.](/img/ui/workspace-sharing.png)
 
 To invite someone to an account, select the Members **+** icon. You can select from a list of existing account members.
 
@@ -106,14 +106,14 @@ Workspace transfer retains existing workspace configuration and flow run history
 !!! note "Workspace transfer permissions"
     Workspace transfer must be initiated or approved by a user with admin privileges for the workspace to be transferred.
 
-    To initiate a workspace transfer between personal accounts, contact [support@prefect.io](mailto:support@prefect.io).
+    To initiate a workspace transfer between personal accounts, contact [support@syntask.io](mailto:support@syntask.io).
 
 ### Transfer a workspace
 
 To transfer a workspace, select **Settings**  -> **General** within the workspace.
 Then, from the three dot menu in the upper right of the page, select **Transfer**.
 
-![Initiating a workspace transfer in the Prefect Cloud UI.](/img/ui/workspace-transfer.png)
+![Initiating a workspace transfer in the Syntask Cloud UI.](/img/ui/workspace-transfer.png)
 
 The **Transfer Workspace** page shows the workspace to be transferred on the left.
 Select the target account for the workspace on the right.
@@ -124,7 +124,7 @@ Select the target account for the workspace on the right.
     When you transfer a workspace, users, API keys, and service accounts may lose access to the workspace. 
     Audit log will no longer track activity on the workspace. 
     Flow runs ending outside of the destination account’s flow run retention period will be removed. 
-    You may also need to update Prefect CLI profiles and execution environment settings to access the workspace's new location.
+    You may also need to update Syntask CLI profiles and execution environment settings to access the workspace's new location.
 
     You may also incur new charges in the target account to accommodate the transferred workspace.
 

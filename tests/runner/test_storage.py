@@ -4,19 +4,19 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Optional
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.blocks.core import Block, BlockNotSavedError
-from prefect.blocks.system import Secret
-from prefect.deployments.steps.core import run_step
-from prefect.filesystems import ReadableDeploymentStorage
-from prefect.runner.storage import (
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.blocks.core import Block, BlockNotSavedError
+from syntask.blocks.system import Secret
+from syntask.deployments.steps.core import run_step
+from syntask.filesystems import ReadableDeploymentStorage
+from syntask.runner.storage import (
     BlockStorageAdapter,
     GitRepository,
     RemoteStorage,
     RunnerStorage,
     create_storage_from_url,
 )
-from prefect.testing.utilities import AsyncMock, MagicMock
+from syntask.testing.utilities import AsyncMock, MagicMock
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import SecretStr
@@ -72,7 +72,7 @@ def mock_run_process(monkeypatch):
     result_mock = MagicMock()
     result_mock.stdout = "https://github.com/org/repo.git".encode()
     mock_run_process.return_value = result_mock
-    monkeypatch.setattr("prefect.runner.storage.run_process", mock_run_process)
+    monkeypatch.setattr("syntask.runner.storage.run_process", mock_run_process)
     return mock_run_process
 
 
@@ -136,7 +136,7 @@ class TestGitRepository:
 
             return Result()
 
-        monkeypatch.setattr("prefect.runner.storage.run_process", mock_run_process)
+        monkeypatch.setattr("syntask.runner.storage.run_process", mock_run_process)
         monkeypatch.setattr("pathlib.Path.exists", lambda x: ".git" in str(x))
 
         repo = GitRepository(url="https://github.com/org/repo.git")
@@ -177,7 +177,7 @@ class TestGitRepository:
         We need to handle username+password combo for backwards compatibility with
         previous `git_clone` pull step implementation.
 
-        Regression test for https://github.com/PrefectHQ/prefect/issues/11051
+        Regression test for https://github.com/Synopkg/syntask/issues/11051
         """
         monkeypatch.setattr("pathlib.Path.exists", lambda x: False)
 
@@ -253,7 +253,7 @@ class TestGitRepository:
         with pytest.raises(RuntimeError) as exc:
             # we uppercase the token because this test definition does show up in the exception traceback
             await GitRepository(
-                url="https://github.com/prefecthq/prefect.git",
+                url="https://github.com/syntaskhq/syntask.git",
                 branch="definitely-does-not-exist-123",
                 credentials={"access_token": "super-secret-42".upper()},
             ).pull_code()
@@ -266,7 +266,7 @@ class TestGitRepository:
         async def test_credential_formatting_maintains_secrets(
             self, mock_run_process: AsyncMock
         ):
-            """Regression test for https://github.com/PrefectHQ/prefect/issues/11135"""
+            """Regression test for https://github.com/Synopkg/syntask/issues/11135"""
             access_token = Secret(value="testtoken")
             await access_token.save("test-token")
 
@@ -434,11 +434,11 @@ class TestGitRepository:
                 url="https://github.com/org/repo.git", credentials=credentials
             )
             expected_output = {
-                "prefect.deployments.steps.git_clone": {
+                "syntask.deployments.steps.git_clone": {
                     "repository": "https://github.com/org/repo.git",
                     "branch": None,
                     "credentials": (
-                        "{{ prefect.blocks.mockcredentials.test-credentials }}"
+                        "{{ syntask.blocks.mockcredentials.test-credentials }}"
                     ),
                 }
             }
@@ -469,12 +469,12 @@ class TestGitRepository:
             )
 
             expected_output = {
-                "prefect.deployments.steps.git_clone": {
+                "syntask.deployments.steps.git_clone": {
                     "repository": "https://github.com/org/repo.git",
                     "branch": None,
                     "credentials": {
                         "username": "testuser",
-                        "access_token": "{{ prefect.blocks.secret.test-access-token }}",
+                        "access_token": "{{ syntask.blocks.secret.test-access-token }}",
                     },
                 }
             }
@@ -598,12 +598,12 @@ class TestRemoteStorage:
 
         pull_step = rs.to_pull_step()
         assert pull_step == {
-            "prefect.deployments.steps.pull_from_remote_storage": {
+            "syntask.deployments.steps.pull_from_remote_storage": {
                 "requires": "s3fs",
                 "url": "s3://bucket/path",
-                "key": "{{ prefect.blocks.secret.aws-access-key-id }}",
-                "secret": "{{ prefect.blocks.secret.aws-secret-access-key }}",
-                "token": "{{ prefect.blocks.secret.aws-session-token }}",
+                "key": "{{ syntask.blocks.secret.aws-access-key-id }}",
+                "secret": "{{ syntask.blocks.secret.aws-secret-access-key }}",
+                "token": "{{ syntask.blocks.secret.aws-session-token }}",
             }
         }
 
@@ -640,7 +640,7 @@ class TestBlockStorageAdapter:
 
             code: str = dedent(
                 """\
-                from prefect import flow
+                from syntask import flow
 
                 @flow
                 def test_flow():
@@ -686,7 +686,7 @@ class TestBlockStorageAdapter:
         storage = BlockStorageAdapter(block=test_block)
         pull_step = storage.to_pull_step()
         assert pull_step == {
-            "prefect.deployments.steps.pull_with_block": {
+            "syntask.deployments.steps.pull_with_block": {
                 "block_document_name": "test-block",
                 "block_type_slug": "fake-storage-block",
             }

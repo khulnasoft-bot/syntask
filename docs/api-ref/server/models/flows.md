@@ -1,1 +1,1 @@
-::: prefect.server.models.flows
+::: syntask.server.models.flows

@@ -1,5 +1,5 @@
 ---
-description: Prefect variables are dynamic-named, mutable string values, much like environment variables.
+description: Syntask variables are dynamic-named, mutable string values, much like environment variables.
 tags:
     - variables
     - blocks
@@ -9,18 +9,18 @@ search:
 
 # Variables
 
-Variables enable you to store and reuse non-sensitive bits of data, such as configuration information. Variables are named, mutable string values, much like environment variables. Variables are scoped to a Prefect server instance or a single workspace in Prefect Cloud.
+Variables enable you to store and reuse non-sensitive bits of data, such as configuration information. Variables are named, mutable string values, much like environment variables. Variables are scoped to a Syntask server instance or a single workspace in Syntask Cloud.
 
 Variables can be created or modified at any time, but are intended for values with infrequent writes and frequent reads. Variable values may be cached for quicker retrieval.
 
-While variable values are most commonly loaded during flow runtime, they can be loaded in other contexts, at any time, such that they can be used to pass configuration information to Prefect configuration files, such as deployment steps.
+While variable values are most commonly loaded during flow runtime, they can be loaded in other contexts, at any time, such that they can be used to pass configuration information to Syntask configuration files, such as deployment steps.
 
 !!! warning "Variables are not Encrypted"
-    Using variables to store sensitive information, such as credentials, is not recommended. Instead, use [Secret blocks](https://docs.prefect.io/concepts/blocks/#prefect-built-in-blocks) to store and access sensitive information.
+    Using variables to store sensitive information, such as credentials, is not recommended. Instead, use [Secret blocks](https://docs.syntask.io/concepts/blocks/#syntask-built-in-blocks) to store and access sensitive information.
 
 ## Managing variables
 
-You can create, read, edit and delete variables via the Prefect UI, API, and CLI. Names must adhere to traditional variable naming conventions:
+You can create, read, edit and delete variables via the Syntask UI, API, and CLI. Names must adhere to traditional variable naming conventions:
 
 - Have no more than 255 characters.
 - Only contain lowercase alphanumeric characters ([a-z], [0-9]) or underscores (_). Spaces are not allowed.
@@ -32,9 +32,9 @@ Values must:
 
 Optionally, you can add tags to the variable.
 
-### Via the Prefect UI
+### Via the Syntask UI
 
-You can see all the variables in your Prefect server instance or Prefect Cloud workspace on the **Variables** page of the Prefect UI. Both the name and value of all variables are visible to anyone with access to the server or workspace.
+You can see all the variables in your Syntask server instance or Syntask Cloud workspace on the **Variables** page of the Syntask UI. Both the name and value of all variables are visible to anyone with access to the server or workspace.
 
 To create a new variable, select the **+** button next to the header of the **Variables** page. Enter the name and value of the variable.
 
@@ -42,22 +42,22 @@ To create a new variable, select the **+** button next to the header of the **Va
 
 ### Via the REST API
 
-Variables can be created and deleted via the REST API. You can also set and get variables via the API with either the variable name or ID. See the [REST reference](https://app.prefect.cloud/api/docs#tag/Variables) for more information.
+Variables can be created and deleted via the REST API. You can also set and get variables via the API with either the variable name or ID. See the [REST reference](https://app.syntask.cloud/api/docs#tag/Variables) for more information.
 
 ### Via the CLI
 
-You can list, inspect, and delete variables via the command line interface with the `prefect variable ls`, `prefect variable inspect <name>`, and `prefect variable delete <name>` commands, respectively.
+You can list, inspect, and delete variables via the command line interface with the `syntask variable ls`, `syntask variable inspect <name>`, and `syntask variable delete <name>` commands, respectively.
 
 ## Accessing variables
 
-In addition to the UI and API, variables can be referenced in code and in certain Prefect configuration files.
+In addition to the UI and API, variables can be referenced in code and in certain Syntask configuration files.
 
 ### In Python code
 
 You can access any variable via the Python SDK via the `Variable.get()` method. If you attempt to reference a variable that does not exist, the method will return `None`. You can create variables via the Python SDK with the `Variable.set()` method. Note that if a variable of the same name exists, you'll need to pass `overwrite=True`.
 
 ```python
-from prefect.variables import Variable
+from syntask.variables import Variable
 
 # setting the variable
 variable = Variable.set(name="the_answer", value="42")
@@ -91,15 +91,15 @@ print(answer.value)
 #43
 ```
 
-### In `prefect.yaml` deployment steps
+### In `syntask.yaml` deployment steps
 
-In `.yaml` files, variables are denoted by quotes and double curly brackets, like so: `"{{ prefect.variables.my_variable }}"`. You can use variables to templatize deployment steps by referencing them in the `prefect.yaml` file used to create deployments. For example, you could pass a variable in to specify a branch for a git repo in a deployment `pull` step:
+In `.yaml` files, variables are denoted by quotes and double curly brackets, like so: `"{{ syntask.variables.my_variable }}"`. You can use variables to templatize deployment steps by referencing them in the `syntask.yaml` file used to create deployments. For example, you could pass a variable in to specify a branch for a git repo in a deployment `pull` step:
 
 ```
 pull:
-- prefect.deployments.steps.git_clone:
-    repository: https://github.com/PrefectHQ/hello-projects.git
-    branch: "{{ prefect.variables.deployment_branch }}"
+- syntask.deployments.steps.git_clone:
+    repository: https://github.com/Synopkg/hello-projects.git
+    branch: "{{ syntask.variables.deployment_branch }}"
 ```
 
 The `deployment_branch` variable will be evaluated at runtime for the deployed flow, allowing changes to be made to variables used in a pull action without updating a deployment directly.

@@ -1,17 +1,17 @@
 import pytest
 
-from prefect.blocks.core import Block
-from prefect.blocks.system import Secret
-from prefect.server.models.block_registration import (
+from syntask.blocks.core import Block
+from syntask.blocks.system import Secret
+from syntask.server.models.block_registration import (
     _load_collection_blocks_data,
     register_block_schema,
     register_block_type,
     run_block_auto_registration,
 )
-from prefect.server.models.block_schemas import read_block_schema_by_checksum
-from prefect.server.models.block_types import read_block_type_by_slug, read_block_types
-from prefect.settings import PREFECT_API_BLOCKS_REGISTER_ON_START, temporary_settings
-from prefect.utilities.dispatch import get_registry_for_type
+from syntask.server.models.block_schemas import read_block_schema_by_checksum
+from syntask.server.models.block_types import read_block_type_by_slug, read_block_types
+from syntask.settings import SYNTASK_API_BLOCKS_REGISTER_ON_START, temporary_settings
+from syntask.utilities.dispatch import get_registry_for_type
 
 
 @pytest.fixture(scope="module")
@@ -61,7 +61,7 @@ class TestRunAutoRegistration:
     async def test_registration_works_with_populated_database(
         self, session, expected_number_of_registered_block_types
     ):
-        with temporary_settings({PREFECT_API_BLOCKS_REGISTER_ON_START: True}):
+        with temporary_settings({SYNTASK_API_BLOCKS_REGISTER_ON_START: True}):
             await run_block_auto_registration(session=session)
             await session.commit()
 

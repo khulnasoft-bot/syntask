@@ -1,0 +1,85 @@
+{
+    "name": "@synopkg/synotask-ui-library",
+    "version": "3.11.16",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Synopkg/synotask-ui-library.git"
+    },
+    "bugs": {
+        "url": "https://github.com/Synopkg/synotask-ui-library/issues"
+    },
+    "homepage": "https://github.com/Synopkg/synotask-ui-library#readme",
+    "keywords": [
+        "synotask 2.0",
+        "vue3"
+    ],
+    "scripts": {
+        "build": "vue-tsc && tsc-alias && vite build",
+        "changelog": "auto-changelog --package --commit-limit 0",
+        "dev": "vue-tsc -w & tsc-alias -w & vite build -w",
+        "lint:fix": "eslint src --fix",
+        "lint": "eslint src",
+        "test": "vitest",
+        "validate:types": "vue-tsc --noEmit",
+        "version": "npm run changelog && git add CHANGELOG.md",
+        "release": "./synotask-ui-library-release"
+    },
+    "main": "./dist/synotask-ui-library.umd.js",
+    "module": "./dist/synotask-ui-library.mjs",
+    "exports": {
+        "./src/*": "./src/*",
+        "./dist/*": "./dist/*",
+        ".": {
+            "import": "./dist/synotask-ui-library.mjs",
+            "require": "./dist/synotask-ui-library.umd.js"
+        }
+    },
+    "files": [
+        "dist",
+        "src"
+    ],
+    "types": "./dist/types/src/index.d.ts",
+    "dependencies": {
+        "axios": "1.7.4",
+        "cronstrue": "^2.51.0",
+        "d3": "7.9.0",
+        "date-fns": "4.1.0",
+        "date-fns-tz": "3.2.0",
+        "lodash.isequal": "4.5.0",
+        "lodash.merge": "4.6.2"
+    },
+    "devDependencies": {
+        "@synopkg/graphs": "workspace:*",
+        "@synopkg/eslint-config": "workspace:*",
+        "@types/d3": "7.4.3",
+        "@types/lodash.camelcase": "4.3.9",
+        "@types/lodash.debounce": "4.0.9",
+        "@types/lodash.isequal": "^4.5.8",
+        "@types/lodash.merge": "4.6.9",
+        "@types/node": "^22.8.7",
+        "@types/prismjs": "^1.26.5",
+        "@vitejs/plugin-vue": "5.1.4",
+        "auto-changelog": "^2.5.0",
+        "autoprefixer": "10.4.20",
+        "eslint": "8.57.1",
+        "lodash.camelcase": "4.3.0",
+        "lodash.debounce": "4.0.8",
+        "postcss": "8.4.47",
+        "tailwindcss": "3.4.14",
+        "tsc-alias": "1.8.10",
+        "typescript": "5.6.3",
+        "vite": "5.4.10",
+        "vite-svg-loader": "^5.1.0",
+        "vitest": "^2.1.4",
+        "vue-tsc": "^2.1.10"
+    },
+    "peerDependencies": {
+        "@synopkg/synotask-design": "workspace:*",
+        "@synopkg/vue-charts": "workspace:*",
+        "@synopkg/vue-compositions": "workspace:*",
+        "vee-validate": "^4.7.0",
+        "vue": "^3.4.26",
+        "vue-router": "^4.3.0"
+    }
+}

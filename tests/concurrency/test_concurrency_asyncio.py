@@ -1,15 +1,15 @@
 from unittest import mock
 
-from prefect import flow, task
-from prefect.concurrency.asyncio import (
+from syntask import flow, task
+from syntask.concurrency.asyncio import (
     _acquire_concurrency_slots,
     _release_concurrency_slots,
     concurrency,
     rate_limit,
 )
-from prefect.events.clients import AssertingEventsClient
-from prefect.events.worker import EventsWorker
-from prefect.server.schemas.core import ConcurrencyLimitV2
+from syntask.events.clients import AssertingEventsClient
+from syntask.events.worker import EventsWorker
+from syntask.server.schemas.core import ConcurrencyLimitV2
 
 
 async def test_concurrency_orchestrates_api(concurrency_limit: ConcurrencyLimitV2):
@@ -23,11 +23,11 @@ async def test_concurrency_orchestrates_api(concurrency_limit: ConcurrencyLimitV
     assert not executed
 
     with mock.patch(
-        "prefect.concurrency.asyncio._acquire_concurrency_slots",
+        "syntask.concurrency.asyncio._acquire_concurrency_slots",
         wraps=_acquire_concurrency_slots,
     ) as acquire_spy:
         with mock.patch(
-            "prefect.concurrency.asyncio._release_concurrency_slots",
+            "syntask.concurrency.asyncio._release_concurrency_slots",
             wraps=_release_concurrency_slots,
         ) as release_spy:
             await resource_heavy()
@@ -114,16 +114,16 @@ async def test_concurrency_emits_events(
     for phase in ["acquired", "released"]:
         event = next(
             filter(
-                lambda e: e.event == f"prefect.concurrency-limit.{phase}"
+                lambda e: e.event == f"syntask.concurrency-limit.{phase}"
                 and e.resource.id
-                == f"prefect.concurrency-limit.{concurrency_limit.id}",
+                == f"syntask.concurrency-limit.{concurrency_limit.id}",
                 asserting_events_worker._client.events,
             )
         )
 
         assert dict(event.resource) == {
-            "prefect.resource.id": f"prefect.concurrency-limit.{concurrency_limit.id}",
-            "prefect.resource.name": concurrency_limit.name,
+            "syntask.resource.id": f"syntask.concurrency-limit.{concurrency_limit.id}",
+            "syntask.resource.name": concurrency_limit.name,
             "slots-acquired": "1",
             "limit": str(concurrency_limit.limit),
         }
@@ -133,28 +133,28 @@ async def test_concurrency_emits_events(
 
         assert len(event.related) == 1
         assert dict(event.related[0]) == {
-            "prefect.resource.id": (
-                f"prefect.concurrency-limit.{other_concurrency_limit.id}"
+            "syntask.resource.id": (
+                f"syntask.concurrency-limit.{other_concurrency_limit.id}"
             ),
-            "prefect.resource.role": "concurrency-limit",
+            "syntask.resource.role": "concurrency-limit",
         }
 
     # Check the events for the `other` concurrency_limit.
     for phase in ["acquired", "released"]:
         event = next(
             filter(
-                lambda e: e.event == f"prefect.concurrency-limit.{phase}"
+                lambda e: e.event == f"syntask.concurrency-limit.{phase}"
                 and e.resource.id
-                == f"prefect.concurrency-limit.{other_concurrency_limit.id}",
+                == f"syntask.concurrency-limit.{other_concurrency_limit.id}",
                 asserting_events_worker._client.events,
             )
         )
 
         assert dict(event.resource) == {
-            "prefect.resource.id": (
-                f"prefect.concurrency-limit.{other_concurrency_limit.id}"
+            "syntask.resource.id": (
+                f"syntask.concurrency-limit.{other_concurrency_limit.id}"
             ),
-            "prefect.resource.name": other_concurrency_limit.name,
+            "syntask.resource.name": other_concurrency_limit.name,
             "slots-acquired": "1",
             "limit": str(other_concurrency_limit.limit),
         }
@@ -164,8 +164,8 @@ async def test_concurrency_emits_events(
 
         assert len(event.related) == 1
         assert dict(event.related[0]) == {
-            "prefect.resource.id": f"prefect.concurrency-limit.{concurrency_limit.id}",
-            "prefect.resource.role": "concurrency-limit",
+            "syntask.resource.id": f"syntask.concurrency-limit.{concurrency_limit.id}",
+            "syntask.resource.role": "concurrency-limit",
         }
 
 
@@ -182,11 +182,11 @@ async def test_rate_limit_orchestrates_api(
     assert not executed
 
     with mock.patch(
-        "prefect.concurrency.asyncio._acquire_concurrency_slots",
+        "syntask.concurrency.asyncio._acquire_concurrency_slots",
         wraps=_acquire_concurrency_slots,
     ) as acquire_spy:
         with mock.patch(
-            "prefect.concurrency.asyncio._release_concurrency_slots",
+            "syntask.concurrency.asyncio._release_concurrency_slots",
             wraps=_release_concurrency_slots,
         ) as release_spy:
             await resource_heavy()
@@ -264,17 +264,17 @@ async def test_rate_limit_emits_events(
     event = next(
         filter(
             lambda e: e.resource.id
-            == f"prefect.concurrency-limit.{concurrency_limit_with_decay.id}",
+            == f"syntask.concurrency-limit.{concurrency_limit_with_decay.id}",
             asserting_events_worker._client.events,
         )
     )
 
-    assert event.event == "prefect.concurrency-limit.acquired"
+    assert event.event == "syntask.concurrency-limit.acquired"
     assert dict(event.resource) == {
-        "prefect.resource.id": (
-            f"prefect.concurrency-limit.{concurrency_limit_with_decay.id}"
+        "syntask.resource.id": (
+            f"syntask.concurrency-limit.{concurrency_limit_with_decay.id}"
         ),
-        "prefect.resource.name": concurrency_limit_with_decay.name,
+        "syntask.resource.name": concurrency_limit_with_decay.name,
         "slots-acquired": "1",
         "limit": str(concurrency_limit_with_decay.limit),
     }
@@ -284,27 +284,27 @@ async def test_rate_limit_emits_events(
 
     assert len(event.related) == 1
     assert dict(event.related[0]) == {
-        "prefect.resource.id": (
-            f"prefect.concurrency-limit.{other_concurrency_limit_with_decay.id}"
+        "syntask.resource.id": (
+            f"syntask.concurrency-limit.{other_concurrency_limit_with_decay.id}"
         ),
-        "prefect.resource.role": "concurrency-limit",
+        "syntask.resource.role": "concurrency-limit",
     }
 
     # Check the event for the `other` concurrency_limit.
     event = next(
         filter(
             lambda e: e.resource.id
-            == f"prefect.concurrency-limit.{other_concurrency_limit_with_decay.id}",
+            == f"syntask.concurrency-limit.{other_concurrency_limit_with_decay.id}",
             asserting_events_worker._client.events,
         )
     )
 
-    assert event.event == "prefect.concurrency-limit.acquired"
+    assert event.event == "syntask.concurrency-limit.acquired"
     assert dict(event.resource) == {
-        "prefect.resource.id": (
-            f"prefect.concurrency-limit.{other_concurrency_limit_with_decay.id}"
+        "syntask.resource.id": (
+            f"syntask.concurrency-limit.{other_concurrency_limit_with_decay.id}"
         ),
-        "prefect.resource.name": other_concurrency_limit_with_decay.name,
+        "syntask.resource.name": other_concurrency_limit_with_decay.name,
         "slots-acquired": "1",
         "limit": str(other_concurrency_limit_with_decay.limit),
     }
@@ -314,8 +314,8 @@ async def test_rate_limit_emits_events(
 
     assert len(event.related) == 1
     assert dict(event.related[0]) == {
-        "prefect.resource.id": (
-            f"prefect.concurrency-limit.{concurrency_limit_with_decay.id}"
+        "syntask.resource.id": (
+            f"syntask.concurrency-limit.{concurrency_limit_with_decay.id}"
         ),
-        "prefect.resource.role": "concurrency-limit",
+        "syntask.resource.role": "concurrency-limit",
     }

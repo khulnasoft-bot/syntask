@@ -1,9 +1,9 @@
 ---
-description: Configure single sign-on (SSO) for your Prefect Cloud users.
+description: Configure single sign-on (SSO) for your Syntask Cloud users.
 tags:
     - UI
     - dashboard
-    - Prefect Cloud
+    - Syntask Cloud
     - enterprise
     - teams
     - workspaces
@@ -17,28 +17,28 @@ search:
 
 # Single Sign-on (SSO) <span class="badge cloud"></span> </span> <span class="badge custom"></span>
 
-Prefect Cloud's [Custom plans](https://www.prefect.io/pricing) offer single sign-on (SSO) integration with your team’s identity provider.
+Syntask Cloud's [Custom plans](https://www.syntask.io/pricing) offer single sign-on (SSO) integration with your team’s identity provider.
 SSO integration can be set up with any identity provider that supports:
 
 - OIDC
 - SAML 2.0
 
-When using SSO, Prefect Cloud won't store passwords for any accounts managed by your identity provider.
-Members of your Prefect Cloud account will instead log in and authenticate using your identity provider.
+When using SSO, Syntask Cloud won't store passwords for any accounts managed by your identity provider.
+Members of your Syntask Cloud account will instead log in and authenticate using your identity provider.
 
 Once your SSO integration has been set up, non-admins will be required to authenticate through the SSO provider when accessing account resources.
 
-See the [Prefect Cloud plans](https://www.prefect.io/pricing) to learn more about options for supporting more users and workspaces, service accounts, and SSO.
+See the [Syntask Cloud plans](https://www.syntask.io/pricing) to learn more about options for supporting more users and workspaces, service accounts, and SSO.
 
 ## Configuring SSO
 
 Within your account, select the **SSO** page to enable SSO for users.
 
-If you haven't enabled SSO for a domain yet, enter the email domains for which you want to configure SSO in Prefect Cloud and save it.
+If you haven't enabled SSO for a domain yet, enter the email domains for which you want to configure SSO in Syntask Cloud and save it.
 
 Under **Enabled Domains**, select the domains from the **Domains** list, then select **Generate Link**. This step creates a link you can use to configure SSO with your identity provider.
 
-![Generating a configuration link for single sign-on in the Prefect Cloud UI.](/img/ui/cloud-sso-provider.png)
+![Generating a configuration link for single sign-on in the Syntask Cloud UI.](/img/ui/cloud-sso-provider.png)
 
 Using the provided link navigate to the Identity Provider Configuration dashboard and select your identity provider to continue configuration. If your provider isn't listed, you can continue with the `SAML` or `Open ID Connect` choices instead.
 
@@ -52,7 +52,7 @@ Once you complete SSO configuration your users will be required to authenticate 
 
 Provisioned users are given basic “Member” roles and will have access to any resources that role entails.
 
-When a user is unassigned from the Prefect Cloud application in your identity provider, they will automatically lose access to Prefect Cloud resources, allowing your IT team to control access to Prefect Cloud without ever signing into the app.
+When a user is unassigned from the Syntask Cloud application in your identity provider, they will automatically lose access to Syntask Cloud resources, allowing your IT team to control access to Syntask Cloud without ever signing into the app.
 
 ## SCIM Provisioning
 

@@ -1,4 +1,4 @@
-import { Can, WorkspacePermission, WorkspaceFeatureFlag } from '@prefecthq/prefect-ui-library'
+import { Can, WorkspacePermission, WorkspaceFeatureFlag } from '@syntaskhq/syntask-ui-library'
 import { InjectionKey } from 'vue'
 
 const featureFlags = [

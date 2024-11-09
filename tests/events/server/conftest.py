@@ -10,9 +10,9 @@ import sqlalchemy as sa
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
     temporary_settings,
 )
 
@@ -21,9 +21,9 @@ if HAS_PYDANTIC_V2:
 else:
     import pydantic
 
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import ResourceSpecification, actions, messaging
-from prefect.server.events.schemas.automations import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import ResourceSpecification, actions, messaging
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -31,14 +31,14 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
-from prefect.server.utilities.messaging import Message
+from syntask.server.events.schemas.events import ReceivedEvent
+from syntask.server.utilities.messaging import Message
 
 
 @pytest.fixture
 def act(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     mock_act = AsyncMock()
-    monkeypatch.setattr("prefect.server.events.triggers.act", mock_act)
+    monkeypatch.setattr("syntask.server.events.triggers.act", mock_act)
     return mock_act
 
 
@@ -49,14 +49,14 @@ def automations_session(session: AsyncSession) -> AsyncSession:
 
 
 @pytest.fixture
-async def cleared_buckets(db: PrefectDBInterface, automations_session: AsyncSession):
+async def cleared_buckets(db: SyntaskDBInterface, automations_session: AsyncSession):
     await automations_session.execute(sa.delete(db.AutomationBucket))
     await automations_session.commit()
 
 
 @pytest.fixture
 async def cleared_automations():
-    from prefect.server.events import triggers
+    from syntask.server.events import triggers
 
     await triggers.reset()
     yield
@@ -93,7 +93,7 @@ def daddy_long_legs_walked(start_of_test: DateTime) -> ReceivedEvent:
             "family": "Pholcidae",
             "genus": "Pholcus",
             "species": "phalangioides",
-            "prefect.resource.id": "daddy-long-legs",
+            "syntask.resource.id": "daddy-long-legs",
         },
         id=uuid4(),
     )
@@ -122,9 +122,9 @@ def flow_run_pending_automation() -> Automation:
     return Automation(
         name="Flow Run Pending",
         trigger=EventTrigger(
-            expect={"prefect.flow-run.Pending"},
+            expect={"syntask.flow-run.Pending"},
             match={
-                "prefect.resource.id": "flow-run-pending",
+                "syntask.resource.id": "flow-run-pending",
             },
             posture=Posture.Reactive,
             threshold=1,
@@ -138,9 +138,9 @@ def flow_run_failed_automation() -> Automation:
     return Automation(
         name="Flow Run Failed",
         trigger=EventTrigger(
-            expect={"prefect.flow-run.Failed"},
+            expect={"syntask.flow-run.Failed"},
             match={
-                "prefect.resource.id": "flow-run-failed",
+                "syntask.resource.id": "flow-run-failed",
             },
             posture=Posture.Reactive,
             threshold=1,
@@ -154,9 +154,9 @@ def flow_run_running_automation() -> Automation:
     return Automation(
         name="Flow Run Running",
         trigger=EventTrigger(
-            expect={"prefect.flow-run.Running"},
+            expect={"syntask.flow-run.Running"},
             match={
-                "prefect.resource.id": "flow-run-running",
+                "syntask.resource.id": "flow-run-running",
             },
             posture=Posture.Reactive,
             threshold=1,
@@ -214,7 +214,7 @@ def woodchonk_walked(start_of_test: DateTime) -> ReceivedEvent:
             "family": "Sciuridae",
             "genus": "Marmota",
             "species": "monax",
-            "prefect.resource.id": "woodchonk",
+            "syntask.resource.id": "woodchonk",
         },
         id=uuid4(),
     )
@@ -233,7 +233,7 @@ def woodchonk_table_for_one(start_of_test: DateTime) -> ReceivedEvent:
             "family": "Sciuridae",
             "genus": "Marmota",
             "species": "monax",
-            "prefect.resource.id": "woodchonk",
+            "syntask.resource.id": "woodchonk",
         },
         id=uuid4(),
     )
@@ -246,7 +246,7 @@ def my_poor_lilies() -> Automation:
         trigger=EventTrigger(
             expect={"animal.ingested"},
             match_related={
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "genus": "Hemerocallis",
                 "species": "fulva",
             },
@@ -271,26 +271,26 @@ def woodchonk_nibbled(start_of_test: DateTime):
             "family": "Sciuridae",
             "genus": "Marmota",
             "species": "monax",
-            "prefect.resource.id": "woodchonk",
+            "syntask.resource.id": "woodchonk",
         },
         related=[
             {
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "kingdom": "Plantae",
                 "order": "Asparagales",
                 "family": "Asphodelaceae",
                 "genus": "Hemerocallis",
                 "species": "fulva",
-                "prefect.resource.id": "my-lily",
+                "syntask.resource.id": "my-lily",
             },
             {
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "kingdom": "Plantae",
                 "order": "Liliales",
                 "family": "Liliaceae",
                 "genus": "Tulipa",
                 "species": "gesneriana",
-                "prefect.resource.id": "my-tulip",
+                "syntask.resource.id": "my-tulip",
             },
         ],
         id=uuid4(),
@@ -310,26 +310,26 @@ def woodchonk_gobbled(start_of_test: DateTime):
             "family": "Sciuridae",
             "genus": "Marmota",
             "species": "monax",
-            "prefect.resource.id": "woodchonk",
+            "syntask.resource.id": "woodchonk",
         },
         related=[
             {
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "kingdom": "Plantae",
                 "order": "Ranunculales",
                 "family": "Papaveraceae",
                 "genus": "Dicentra",
                 "species": "cucullaria",
-                "prefect.resource.id": "my-bleeding-heart",
+                "syntask.resource.id": "my-bleeding-heart",
             },
             {
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "kingdom": "Plantae",
                 "order": "Asparagales",
                 "family": "Amaryllidaceae",
                 "genus": "Narcissus",
                 "species": "poeticus",
-                "prefect.resource.id": "my-daffodil",
+                "syntask.resource.id": "my-daffodil",
             },
         ],
         id=uuid4(),
@@ -377,13 +377,13 @@ def email_me_when_that_dang_spider_comes(
 
 @pytest.fixture
 async def some_workspace_automations(
-    db: PrefectDBInterface, automations_session: AsyncSession
+    db: SyntaskDBInterface, automations_session: AsyncSession
 ) -> Sequence[Automation]:
     uninteresting_kwargs: Dict[str, Any] = dict(
         trigger=EventTrigger(
             expect=("things.happened",),
             match=ResourceSpecification.parse_obj(
-                {"prefect.resource.id": "some-resource"}
+                {"syntask.resource.id": "some-resource"}
             ),
             match_related=ResourceSpecification.parse_obj({}),
             posture=Posture.Reactive,
@@ -424,7 +424,7 @@ async def some_workspace_automations(
 @pytest.fixture
 def enable_infra_overrides() -> Generator[None, None, None]:
     with temporary_settings(
-        updates={PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
+        updates={SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
     ):
         yield
 
@@ -440,7 +440,7 @@ def publish_mocks(
     )
 
     monkeypatch.setattr(
-        "prefect.server.events.messaging.create_event_publisher", mock_create_publisher
+        "syntask.server.events.messaging.create_event_publisher", mock_create_publisher
     )
 
     return mock_create_publisher, mock_publish

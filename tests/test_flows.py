@@ -17,8 +17,8 @@ from unittest.mock import ANY, MagicMock, call, create_autospec
 
 import anyio
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.blocks.core import Block
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.blocks.core import Block
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -28,35 +28,35 @@ else:
 import pytest
 import regex as re
 
-import prefect
-import prefect.exceptions
-from prefect import flow, get_run_logger, runtime, tags, task
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.client.schemas.schedules import (
+import syntask
+import syntask.exceptions
+from syntask import flow, get_run_logger, runtime, tags, task
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.client.schemas.schedules import (
     CronSchedule,
     IntervalSchedule,
     RRuleSchedule,
 )
-from prefect.context import PrefectObjectRegistry
-from prefect.deployments.runner import DeploymentImage, EntrypointType, RunnerDeployment
-from prefect.events import DeploymentEventTrigger, Posture
-from prefect.exceptions import (
+from syntask.context import SyntaskObjectRegistry
+from syntask.deployments.runner import DeploymentImage, EntrypointType, RunnerDeployment
+from syntask.events import DeploymentEventTrigger, Posture
+from syntask.exceptions import (
     CancelledRun,
     InvalidNameError,
     ParameterTypeError,
     ReservedArgumentError,
 )
-from prefect.filesystems import LocalFileSystem
-from prefect.flows import Flow, load_flow_from_entrypoint
-from prefect.runtime import flow_run as flow_run_ctx
-from prefect.server.schemas.core import TaskRunResult
-from prefect.server.schemas.filters import FlowFilter, FlowRunFilter
-from prefect.server.schemas.sorting import FlowRunSort
-from prefect.settings import (
-    PREFECT_FLOW_DEFAULT_RETRIES,
+from syntask.filesystems import LocalFileSystem
+from syntask.flows import Flow, load_flow_from_entrypoint
+from syntask.runtime import flow_run as flow_run_ctx
+from syntask.server.schemas.core import TaskRunResult
+from syntask.server.schemas.filters import FlowFilter, FlowRunFilter
+from syntask.server.schemas.sorting import FlowRunSort
+from syntask.settings import (
+    SYNTASK_FLOW_DEFAULT_RETRIES,
     temporary_settings,
 )
-from prefect.states import (
+from syntask.states import (
     Cancelled,
     Paused,
     PausedRun,
@@ -64,16 +64,16 @@ from prefect.states import (
     StateType,
     raise_state_exception,
 )
-from prefect.task_runners import ConcurrentTaskRunner, SequentialTaskRunner
-from prefect.testing.utilities import (
+from syntask.task_runners import ConcurrentTaskRunner, SequentialTaskRunner
+from syntask.testing.utilities import (
     AsyncMock,
     exceptions_equal,
     get_most_recent_flow_run,
 )
-from prefect.utilities.annotations import allow_failure, quote
-from prefect.utilities.callables import parameter_schema
-from prefect.utilities.collections import flatdict_to_dict
-from prefect.utilities.hashing import file_hash
+from syntask.utilities.annotations import allow_failure, quote
+from syntask.utilities.callables import parameter_schema
+from syntask.utilities.collections import flatdict_to_dict
+from syntask.utilities.hashing import file_hash
 
 # Give an ample amount of sleep time in order to test flow timeouts
 SLEEP_TIME = 10
@@ -136,7 +136,7 @@ class TestFlow:
         or other values on Windows.
         """
         monkeypatch.setattr(
-            "prefect.flows.inspect.getsourcefile", MagicMock(return_value=sourcefile)
+            "syntask.flows.inspect.getsourcefile", MagicMock(return_value=sourcefile)
         )
 
         f = Flow(name="test", fn=lambda **kwargs: 42)
@@ -740,7 +740,7 @@ class TestFlowCall:
         def foo(x, y=3, z=3):
             return x + y + z
 
-        with PrefectObjectRegistry(block_code_execution=True):
+        with SyntaskObjectRegistry(block_code_execution=True):
             state = foo(1, 2)
             assert state is None
 
@@ -981,7 +981,7 @@ class TestSubflowCalls:
 
         assert recurse(5) == 5 + 4 + 3 + 2 + 1
 
-    async def test_subflow_with_invalid_parameters_is_failed(self, prefect_client):
+    async def test_subflow_with_invalid_parameters_is_failed(self, syntask_client):
         @flow
         def child(x: int):
             return x
@@ -996,7 +996,7 @@ class TestSubflowCalls:
             await parent_state.result()
 
         child_state = await parent_state.result(raise_on_failure=False)
-        flow_run = await prefect_client.read_flow_run(
+        flow_run = await syntask_client.read_flow_run(
             child_state.state_details.flow_run_id
         )
         assert flow_run.state.is_failed()
@@ -1038,7 +1038,7 @@ class TestSubflowCalls:
 
         assert parent("foo") == "foo"
 
-    async def test_subflow_relationship_tracking(self, prefect_client):
+    async def test_subflow_relationship_tracking(self, syntask_client):
         @flow(version="inner")
         def child(x, y):
             return x + y
@@ -1052,10 +1052,10 @@ class TestSubflowCalls:
         child_state = await parent_state.result()
         child_flow_run_id = child_state.state_details.flow_run_id
 
-        child_flow_run = await prefect_client.read_flow_run(child_flow_run_id)
+        child_flow_run = await syntask_client.read_flow_run(child_flow_run_id)
 
         # This task represents the child flow run in the parent
-        parent_flow_run_task = await prefect_client.read_task_run(
+        parent_flow_run_task = await syntask_client.read_task_run(
             child_flow_run.parent_task_run_id
         )
 
@@ -1070,7 +1070,7 @@ class TestSubflowCalls:
 
         assert all(
             state.state_details.task_run_id == parent_flow_run_task.id
-            for state in await prefect_client.read_flow_run_states(child_flow_run_id)
+            for state in await syntask_client.read_flow_run_states(child_flow_run_id)
         ), "All server subflow run states link to the parent task"
 
         assert (
@@ -1092,7 +1092,7 @@ class TestSubflowCalls:
 
     async def test_sync_flow_with_async_subflow_and_task_that_awaits_result(self):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/12053, where
+        Regression test for https://github.com/Synopkg/syntask/issues/12053, where
         we discovered that a sync flow running an async flow that awaits `.result()`
         on a submitted task's future can hang indefinitely.
         """
@@ -1116,7 +1116,7 @@ class TestSubflowCalls:
 
 
 class TestFlowRunTags:
-    async def test_flow_run_tags_added_at_call(self, prefect_client):
+    async def test_flow_run_tags_added_at_call(self, syntask_client):
         @flow
         def my_flow():
             pass
@@ -1124,10 +1124,10 @@ class TestFlowRunTags:
         with tags("a", "b"):
             state = my_flow._run()
 
-        flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
         assert set(flow_run.tags) == {"a", "b"}
 
-    async def test_flow_run_tags_added_to_subflows(self, prefect_client):
+    async def test_flow_run_tags_added_to_subflows(self, syntask_client):
         @flow
         def my_flow():
             with tags("c", "d"):
@@ -1140,7 +1140,7 @@ class TestFlowRunTags:
         with tags("a", "b"):
             subflow_state = await my_flow._run().result()
 
-        flow_run = await prefect_client.read_flow_run(
+        flow_run = await syntask_client.read_flow_run(
             subflow_state.state_details.flow_run_id
         )
         assert set(flow_run.tags) == {"a", "b", "c", "d"}
@@ -1312,7 +1312,7 @@ class TestFlowTimeouts:
     async def test_subflow_timeout_waits_until_execution_starts(self, tmp_path):
         """
         Subflow with a timeout shouldn't start their timeout before the subflow is started.
-        Fixes: https://github.com/PrefectHQ/prefect/issues/7903.
+        Fixes: https://github.com/Synopkg/syntask/issues/7903.
         """
 
         completed = False
@@ -1494,7 +1494,7 @@ class TestFlowParameterTypes:
 
 
 class TestSubflowTaskInputs:
-    async def test_subflow_with_one_upstream_task_future(self, prefect_client):
+    async def test_subflow_with_one_upstream_task_future(self, syntask_client):
         @task
         def child_task(x):
             return x
@@ -1511,7 +1511,7 @@ class TestSubflowTaskInputs:
             return task_state, flow_state
 
         task_state, flow_state = parent_flow()
-        flow_tracking_task_run = await prefect_client.read_task_run(
+        flow_tracking_task_run = await syntask_client.read_task_run(
             flow_state.state_details.task_run_id
         )
 
@@ -1519,7 +1519,7 @@ class TestSubflowTaskInputs:
             x=[TaskRunResult(id=task_state.state_details.task_run_id)],
         )
 
-    async def test_subflow_with_one_upstream_task_state(self, prefect_client):
+    async def test_subflow_with_one_upstream_task_state(self, syntask_client):
         @task
         def child_task(x):
             return x
@@ -1535,7 +1535,7 @@ class TestSubflowTaskInputs:
             return task_state, flow_state
 
         task_state, flow_state = parent_flow()
-        flow_tracking_task_run = await prefect_client.read_task_run(
+        flow_tracking_task_run = await syntask_client.read_task_run(
             flow_state.state_details.task_run_id
         )
 
@@ -1543,7 +1543,7 @@ class TestSubflowTaskInputs:
             x=[TaskRunResult(id=task_state.state_details.task_run_id)],
         )
 
-    async def test_subflow_with_one_upstream_task_result(self, prefect_client):
+    async def test_subflow_with_one_upstream_task_result(self, syntask_client):
         @task
         def child_task(x):
             return x
@@ -1560,7 +1560,7 @@ class TestSubflowTaskInputs:
             return task_state, flow_state
 
         task_state, flow_state = parent_flow()
-        flow_tracking_task_run = await prefect_client.read_task_run(
+        flow_tracking_task_run = await syntask_client.read_task_run(
             flow_state.state_details.task_run_id
         )
 
@@ -1569,7 +1569,7 @@ class TestSubflowTaskInputs:
         )
 
     async def test_subflow_with_one_upstream_task_future_and_allow_failure(
-        self, prefect_client
+        self, syntask_client
     ):
         @task
         def child_task():
@@ -1587,7 +1587,7 @@ class TestSubflowTaskInputs:
 
         task_state, flow_state = parent_flow().unquote()
         assert isinstance(await flow_state.result(), ValueError)
-        flow_tracking_task_run = await prefect_client.read_task_run(
+        flow_tracking_task_run = await syntask_client.read_task_run(
             flow_state.state_details.task_run_id
         )
 
@@ -1597,7 +1597,7 @@ class TestSubflowTaskInputs:
         )
 
     async def test_subflow_with_one_upstream_task_state_and_allow_failure(
-        self, prefect_client
+        self, syntask_client
     ):
         @task
         def child_task():
@@ -1615,7 +1615,7 @@ class TestSubflowTaskInputs:
 
         task_state, flow_state = parent_flow().unquote()
         assert isinstance(await flow_state.result(), ValueError)
-        flow_tracking_task_run = await prefect_client.read_task_run(
+        flow_tracking_task_run = await syntask_client.read_task_run(
             flow_state.state_details.task_run_id
         )
 
@@ -1624,7 +1624,7 @@ class TestSubflowTaskInputs:
             x=[TaskRunResult(id=task_state.state_details.task_run_id)],
         )
 
-    async def test_subflow_with_no_upstream_tasks(self, prefect_client):
+    async def test_subflow_with_no_upstream_tasks(self, syntask_client):
         @flow
         def bar(x, y):
             return x + y
@@ -1634,7 +1634,7 @@ class TestSubflowTaskInputs:
             return bar._run(x=2, y=1)
 
         child_flow_state = foo()
-        flow_tracking_task_run = await prefect_client.read_task_run(
+        flow_tracking_task_run = await syntask_client.read_task_run(
             child_flow_state.state_details.task_run_id
         )
 
@@ -1646,7 +1646,7 @@ class TestSubflowTaskInputs:
 
 @pytest.mark.enable_api_log_handler
 class TestFlowRunLogs:
-    async def test_user_logs_are_sent_to_orion(self, prefect_client):
+    async def test_user_logs_are_sent_to_orion(self, syntask_client):
         @flow
         def my_flow():
             logger = get_run_logger()
@@ -1654,10 +1654,10 @@ class TestFlowRunLogs:
 
         my_flow()
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert "Hello world!" in {log.message for log in logs}
 
-    async def test_repeated_flow_calls_send_logs_to_orion(self, prefect_client):
+    async def test_repeated_flow_calls_send_logs_to_orion(self, syntask_client):
         @flow
         async def my_flow(i):
             logger = get_run_logger()
@@ -1666,10 +1666,10 @@ class TestFlowRunLogs:
         await my_flow(1)
         await my_flow(2)
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert {"Hello 1", "Hello 2"}.issubset({log.message for log in logs})
 
-    async def test_exception_info_is_included_in_log(self, prefect_client):
+    async def test_exception_info_is_included_in_log(self, syntask_client):
         @flow
         def my_flow():
             logger = get_run_logger()
@@ -1680,13 +1680,13 @@ class TestFlowRunLogs:
 
         my_flow()
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         error_logs = "\n".join([log.message for log in logs if log.level == 40])
         assert "Traceback" in error_logs
         assert "NameError" in error_logs, "Should reference the exception type"
         assert "x + y" in error_logs, "Should reference the line of code"
 
-    async def test_raised_exceptions_include_tracebacks(self, prefect_client):
+    async def test_raised_exceptions_include_tracebacks(self, syntask_client):
         @flow
         def my_flow():
             raise ValueError("Hello!")
@@ -1694,7 +1694,7 @@ class TestFlowRunLogs:
         with pytest.raises(ValueError):
             my_flow()
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         error_logs = "\n".join(
             [
                 log.message
@@ -1705,7 +1705,7 @@ class TestFlowRunLogs:
         assert "Traceback" in error_logs
         assert "ValueError: Hello!" in error_logs, "References the exception"
 
-    async def test_opt_out_logs_are_not_sent_to_api(self, prefect_client):
+    async def test_opt_out_logs_are_not_sent_to_api(self, syntask_client):
         @flow
         def my_flow():
             logger = get_run_logger()
@@ -1716,10 +1716,10 @@ class TestFlowRunLogs:
 
         my_flow()
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert "Hello world!" not in {log.message for log in logs}
 
-    async def test_logs_are_given_correct_id(self, prefect_client):
+    async def test_logs_are_given_correct_id(self, syntask_client):
         @flow
         def my_flow():
             logger = get_run_logger()
@@ -1728,14 +1728,14 @@ class TestFlowRunLogs:
         state = my_flow._run()
         flow_run_id = state.state_details.flow_run_id
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         assert all([log.flow_run_id == flow_run_id for log in logs])
         assert all([log.task_run_id is None for log in logs])
 
 
 @pytest.mark.enable_api_log_handler
 class TestSubflowRunLogs:
-    async def test_subflow_logs_are_written_correctly(self, prefect_client):
+    async def test_subflow_logs_are_written_correctly(self, syntask_client):
         @flow
         def my_subflow():
             logger = get_run_logger()
@@ -1751,7 +1751,7 @@ class TestSubflowRunLogs:
         flow_run_id = state.state_details.flow_run_id
         subflow_run_id = (await state.result()).state_details.flow_run_id
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         log_messages = [log.message for log in logs]
         assert all([log.task_run_id is None for log in logs])
         assert "Hello world!" in log_messages, "Parent log message is present"
@@ -1764,7 +1764,7 @@ class TestSubflowRunLogs:
             == subflow_run_id
         ), "Child log message has correct id"
 
-    async def test_subflow_logs_are_written_correctly_with_tasks(self, prefect_client):
+    async def test_subflow_logs_are_written_correctly_with_tasks(self, syntask_client):
         @task
         def a_log_task():
             logger = get_run_logger()
@@ -1785,7 +1785,7 @@ class TestSubflowRunLogs:
         subflow_state = my_flow()
         subflow_run_id = subflow_state.state_details.flow_run_id
 
-        logs = await prefect_client.read_logs()
+        logs = await syntask_client.read_logs()
         log_messages = [log.message for log in logs]
         task_run_logs = [log for log in logs if log.task_run_id is not None]
         assert all([log.flow_run_id == subflow_run_id for log in task_run_logs])
@@ -1895,7 +1895,7 @@ class TestFlowRetries:
         assert task_run_count == 2, "Task should be reset and run again"
 
     @pytest.mark.xfail
-    async def test_flow_retry_with_branched_tasks(self, prefect_client):
+    async def test_flow_retry_with_branched_tasks(self, syntask_client):
         flow_run_count = 0
 
         @task
@@ -1923,7 +1923,7 @@ class TestFlowRetries:
 
         # The state is pulled from the API and needs to be decoded
         document = await (await my_flow().result()).result()
-        result = await prefect_client.retrieve_data(document)
+        result = await syntask_client.retrieve_data(document)
 
         assert result == "bar"
         # AssertionError: assert 'foo' == 'bar'
@@ -1932,7 +1932,7 @@ class TestFlowRetries:
         # after a flow run retry, the stale value will be pulled from the cache.
 
     async def test_flow_retry_with_no_error_in_flow_and_one_failed_child_flow(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         child_run_count = 0
         flow_run_count = 0
@@ -1960,7 +1960,7 @@ class TestFlowRetries:
         assert child_run_count == 2, "Child flow should be reset and run again"
 
         # Ensure that the tracking task run for the subflow is reset and tracked
-        task_runs = await prefect_client.read_task_runs(
+        task_runs = await syntask_client.read_task_runs(
             flow_run_filter=FlowRunFilter(
                 id={"any_": [state.state_details.flow_run_id]}
             )
@@ -1998,7 +1998,7 @@ class TestFlowRetries:
         assert child_run_count == 1, "Child flow should not run again"
 
     async def test_flow_retry_with_error_in_flow_and_one_failed_child_flow(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         child_flow_run_count = 0
         flow_run_count = 0
@@ -2033,10 +2033,10 @@ class TestFlowRetries:
         assert flow_run_count == 2
         assert child_flow_run_count == 2, "Child flow should run again"
 
-        child_flow_run = await prefect_client.read_flow_run(
+        child_flow_run = await syntask_client.read_flow_run(
             child_state.state_details.flow_run_id
         )
-        child_flow_runs = await prefect_client.read_flow_runs(
+        child_flow_runs = await syntask_client.read_flow_runs(
             flow_filter=FlowFilter(id={"any_": [child_flow_run.flow_id]}),
             sort=FlowRunSort.EXPECTED_START_TIME_ASC,
         )
@@ -2223,7 +2223,7 @@ class TestFlowRetries:
         ), "Child flow should run 2 times for each parent run"
 
     def test_global_retry_config(self):
-        with temporary_settings(updates={PREFECT_FLOW_DEFAULT_RETRIES: "1"}):
+        with temporary_settings(updates={SYNTASK_FLOW_DEFAULT_RETRIES: "1"}):
             run_count = 0
 
             @flow()
@@ -2240,7 +2240,7 @@ class TestFlowRetries:
 
 def test_load_flow_from_entrypoint(tmp_path):
     flow_code = """
-    from prefect import flow
+    from syntask import flow
 
     @flow
     def dog():
@@ -2257,7 +2257,7 @@ def test_load_flow_from_entrypoint_with_absolute_path(tmp_path):
     # test absolute paths to ensure compatibility for all operating systems
 
     flow_code = """
-    from prefect import flow
+    from syntask import flow
 
     @flow
     def dog():
@@ -2280,7 +2280,7 @@ def test_load_flow_from_entrypoint_with_module_path(monkeypatch):
 
     import_object_mock = MagicMock(return_value=pretend_flow)
     monkeypatch.setattr(
-        "prefect.flows.import_object",
+        "syntask.flows.import_object",
         import_object_mock,
     )
     result = load_flow_from_entrypoint("my.module.pretend_flow")
@@ -2292,10 +2292,10 @@ def test_load_flow_from_entrypoint_with_module_path(monkeypatch):
 async def test_handling_script_with_unprotected_call_in_flow_script(
     tmp_path,
     caplog,
-    prefect_client,
+    syntask_client,
 ):
     flow_code_with_call = """
-    from prefect import flow, get_run_logger
+    from syntask import flow, get_run_logger
 
     @flow
     def dog():
@@ -2315,13 +2315,13 @@ async def test_handling_script_with_unprotected_call_in_flow_script(
             "Consider updating the script to only call the flow" in caplog.text
         )
 
-    flow_runs = await prefect_client.read_flows()
+    flow_runs = await syntask_client.read_flows()
     assert len(flow_runs) == 0
 
     # Make sure that flow runs when called
     res = flow()
     assert res == "woof!"
-    flow_runs = await prefect_client.read_flows()
+    flow_runs = await syntask_client.read_flows()
     assert len(flow_runs) == 1
 
 
@@ -2346,7 +2346,7 @@ class TestFlowRunName:
         ):
             my_flow()
 
-    async def test_sets_run_name_when_provided(self, prefect_client):
+    async def test_sets_run_name_when_provided(self, syntask_client):
         @flow(flow_run_name="hi")
         def flow_with_name(foo: str = "bar", bar: int = 1):
             pass
@@ -2354,10 +2354,10 @@ class TestFlowRunName:
         state = flow_with_name(return_state=True)
 
         assert state.type == StateType.COMPLETED
-        flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
         assert flow_run.name == "hi"
 
-    async def test_sets_run_name_with_params_including_defaults(self, prefect_client):
+    async def test_sets_run_name_with_params_including_defaults(self, syntask_client):
         @flow(flow_run_name="hi-{foo}-{bar}")
         def flow_with_name(foo: str = "one", bar: str = "1"):
             pass
@@ -2365,10 +2365,10 @@ class TestFlowRunName:
         state = flow_with_name(bar="two", return_state=True)
 
         assert state.type == StateType.COMPLETED
-        flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
         assert flow_run.name == "hi-one-two"
 
-    async def test_sets_run_name_with_function(self, prefect_client):
+    async def test_sets_run_name_with_function(self, syntask_client):
         def generate_flow_run_name():
             return "hi"
 
@@ -2379,11 +2379,11 @@ class TestFlowRunName:
         state = flow_with_name(bar="two", return_state=True)
 
         assert state.type == StateType.COMPLETED
-        flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
         assert flow_run.name == "hi"
 
     async def test_sets_run_name_with_function_using_runtime_context(
-        self, prefect_client
+        self, syntask_client
     ):
         def generate_flow_run_name():
             params = flow_run_ctx.parameters
@@ -2404,11 +2404,11 @@ class TestFlowRunName:
         state = flow_with_name(bar="two", return_state=True)
 
         assert state.type == StateType.COMPLETED
-        flow_run = await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        flow_run = await syntask_client.read_flow_run(state.state_details.flow_run_id)
         assert flow_run.name == "hi-one-two"
 
     async def test_sets_run_name_with_function_not_returning_string(
-        self, prefect_client
+        self, syntask_client
     ):
         def generate_flow_run_name():
             pass
@@ -2967,7 +2967,7 @@ class TestFlowHooksOnCancellation:
             # simulate worker cancellation of flow run
             os.kill(os.getpid(), signal.SIGTERM)
 
-        with pytest.raises(prefect.exceptions.TerminationSignal):
+        with pytest.raises(syntask.exceptions.TerminationSignal):
             await my_flow._run()
         assert my_mock.mock_calls == [call("cancelled")]
 
@@ -2984,13 +2984,13 @@ class TestFlowHooksOnCancellation:
             # terminate process with SIGTERM
             os.kill(os.getpid(), signal.SIGTERM)
 
-        with pytest.raises(prefect.exceptions.TerminationSignal):
+        with pytest.raises(syntask.exceptions.TerminationSignal):
             await my_flow._run()
         my_mock.assert_not_called()
 
     def test_on_cancellation_hooks_respect_env_var(self, monkeypatch):
         my_mock = MagicMock()
-        monkeypatch.setenv("PREFECT__ENABLE_CANCELLATION_AND_CRASHED_HOOKS", "false")
+        monkeypatch.setenv("SYNTASK__ENABLE_CANCELLATION_AND_CRASHED_HOOKS", "false")
 
         def cancelled_hook1(flow, flow_run, state):
             my_mock("cancelled_hook1")
@@ -3186,7 +3186,7 @@ class TestFlowHooksOnCrashed:
             # terminate process with SIGTERM
             os.kill(os.getpid(), signal.SIGTERM)
 
-        with pytest.raises(prefect.exceptions.TerminationSignal):
+        with pytest.raises(syntask.exceptions.TerminationSignal):
             await my_flow._run()
         assert my_mock.mock_calls == [call("crashed")]
 
@@ -3212,13 +3212,13 @@ class TestFlowHooksOnCrashed:
             # simulate worker cancellation of flow run
             os.kill(os.getpid(), signal.SIGTERM)
 
-        with pytest.raises(prefect.exceptions.TerminationSignal):
+        with pytest.raises(syntask.exceptions.TerminationSignal):
             await my_flow._run()
         my_mock.assert_not_called()
 
     def test_on_crashed_hooks_respect_env_var(self, monkeypatch):
         my_mock = MagicMock()
-        monkeypatch.setenv("PREFECT__ENABLE_CANCELLATION_AND_CRASHED_HOOKS", "false")
+        monkeypatch.setenv("SYNTASK__ENABLE_CANCELLATION_AND_CRASHED_HOOKS", "false")
 
         def crashed_hook1(flow, flow_run, state):
             my_mock("crashed_hook1")
@@ -3381,11 +3381,11 @@ class TestFlowToDeployment:
                 {
                     "name": "Happiness",
                     "enabled": True,
-                    "match": {"prefect.resource.id": "prefect.flow-run.*"},
-                    "expect": ["prefect.flow-run.Completed"],
+                    "match": {"syntask.resource.id": "syntask.flow-run.*"},
+                    "expect": ["syntask.flow-run.Completed"],
                     "match_related": {
-                        "prefect.resource.name": "seed",
-                        "prefect.resource.role": "flow",
+                        "syntask.resource.name": "seed",
+                        "syntask.resource.role": "flow",
                     },
                 }
             ],
@@ -3403,11 +3403,11 @@ class TestFlowToDeployment:
                 name="Happiness",
                 enabled=True,
                 posture=Posture.Reactive,
-                match={"prefect.resource.id": "prefect.flow-run.*"},
-                expect=["prefect.flow-run.Completed"],
+                match={"syntask.resource.id": "syntask.flow-run.*"},
+                expect=["syntask.flow-run.Completed"],
                 match_related={
-                    "prefect.resource.name": "seed",
-                    "prefect.resource.role": "flow",
+                    "syntask.resource.name": "seed",
+                    "syntask.resource.role": "flow",
                 },
             )
         ]
@@ -3472,7 +3472,7 @@ class TestFlowServe:
     @pytest.fixture(autouse=True)
     async def mock_runner_start(self, monkeypatch):
         mock = AsyncMock()
-        monkeypatch.setattr("prefect.cli.flow.Runner.start", mock)
+        monkeypatch.setattr("syntask.cli.flow.Runner.start", mock)
         return mock
 
     async def test_serve_prints_message(self, capsys):
@@ -3484,9 +3484,9 @@ class TestFlowServe:
             "Your flow 'test-flow' is being served and polling for scheduled runs!"
             in captured.out
         )
-        assert "$ prefect deployment run 'test-flow/test'" in captured.out
+        assert "$ syntask deployment run 'test-flow/test'" in captured.out
 
-    async def test_serve_creates_deployment(self, prefect_client: PrefectClient):
+    async def test_serve_creates_deployment(self, syntask_client: SyntaskClient):
         await test_flow.serve(
             name="test",
             tags=["price", "luggage"],
@@ -3497,7 +3497,7 @@ class TestFlowServe:
             paused=True,
         )
 
-        deployment = await prefect_client.read_deployment_by_name(name="test-flow/test")
+        deployment = await syntask_client.read_deployment_by_name(name="test-flow/test")
 
         assert deployment is not None
         # Flow.serve should created deployments without a work queue or work pool
@@ -3512,53 +3512,53 @@ class TestFlowServe:
         assert deployment.paused
         assert not deployment.is_schedule_active
 
-    async def test_serve_can_user_a_module_path_entrypoint(self, prefect_client):
+    async def test_serve_can_user_a_module_path_entrypoint(self, syntask_client):
         deployment = await test_flow.serve(
             name="test", entrypoint_type=EntrypointType.MODULE_PATH
         )
-        deployment = await prefect_client.read_deployment_by_name(name="test-flow/test")
+        deployment = await syntask_client.read_deployment_by_name(name="test-flow/test")
 
         assert deployment.entrypoint == f"{test_flow.__module__}.{test_flow.__name__}"
 
-    async def test_serve_handles__file__(self, prefect_client: PrefectClient):
+    async def test_serve_handles__file__(self, syntask_client: SyntaskClient):
         await test_flow.serve(__file__)
 
-        deployment = await prefect_client.read_deployment_by_name(
+        deployment = await syntask_client.read_deployment_by_name(
             name="test-flow/test_flows"
         )
 
         assert deployment.name == "test_flows"
 
     async def test_serve_creates_deployment_with_interval_schedule(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         await test_flow.serve(
             "test",
             interval=3600,
         )
 
-        deployment = await prefect_client.read_deployment_by_name(name="test-flow/test")
+        deployment = await syntask_client.read_deployment_by_name(name="test-flow/test")
 
         assert deployment is not None
         assert isinstance(deployment.schedule, IntervalSchedule)
         assert deployment.schedule.interval == datetime.timedelta(seconds=3600)
 
     async def test_serve_creates_deployment_with_cron_schedule(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         await test_flow.serve("test", cron="* * * * *")
 
-        deployment = await prefect_client.read_deployment_by_name(name="test-flow/test")
+        deployment = await syntask_client.read_deployment_by_name(name="test-flow/test")
 
         assert deployment is not None
         assert deployment.schedule == CronSchedule(cron="* * * * *")
 
     async def test_serve_creates_deployment_with_rrule_schedule(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         await test_flow.serve("test", rrule="FREQ=MINUTELY")
 
-        deployment = await prefect_client.read_deployment_by_name(name="test-flow/test")
+        deployment = await syntask_client.read_deployment_by_name(name="test-flow/test")
 
         assert deployment is not None
         assert deployment.schedule == RRuleSchedule(rrule="FREQ=MINUTELY")
@@ -3597,7 +3597,7 @@ class TestFlowServe:
 
     async def test_serve_passes_limit_specification_to_runner(self, monkeypatch):
         runner_mock = MagicMock(return_value=AsyncMock())
-        monkeypatch.setattr("prefect.runner.Runner", runner_mock)
+        monkeypatch.setattr("syntask.runner.Runner", runner_mock)
 
         limit = 42
         await test_flow.serve("test", limit=limit)
@@ -3628,7 +3628,7 @@ class MockStorage:
 
     async def pull_code(self):
         code = """
-from prefect import Flow
+from syntask import Flow
 
 @Flow
 def test_flow():
@@ -3681,7 +3681,7 @@ class TestFlowFromSource:
             return MockStorage()
 
         monkeypatch.setattr(
-            "prefect.flows.create_storage_from_url", mock_create_storage_from_url
+            "syntask.flows.create_storage_from_url", mock_create_storage_from_url
         )  # adjust the import path as per your module's name and location
 
         loaded_flow = await Flow.from_source(
@@ -3699,7 +3699,7 @@ class TestFlowFromSource:
 
             code: str = dedent(
                 """\
-                from prefect import flow
+                from syntask import flow
 
                 @flow
                 def test_flow():
@@ -3735,7 +3735,7 @@ class TestFlowDeploy:
     @pytest.fixture
     def mock_deploy(self, monkeypatch):
         mock = AsyncMock()
-        monkeypatch.setattr("prefect.flows.deploy", mock)
+        monkeypatch.setattr("syntask.flows.deploy", mock)
         return mock
 
     @pytest.fixture
@@ -3796,9 +3796,9 @@ class TestFlowDeploy:
         )
 
         console_output = capsys.readouterr().out
-        assert "prefect worker start --pool" in console_output
+        assert "syntask worker start --pool" in console_output
         assert work_pool.name in console_output
-        assert "prefect deployment run 'local-flow-deploy/test'" in console_output
+        assert "syntask deployment run 'local-flow-deploy/test'" in console_output
 
     async def test_calls_deploy_with_expected_args_remote_flow(
         self,
@@ -3867,7 +3867,7 @@ class TestFlowDeploy:
             image="my-repo/my-image",
         )
 
-        assert "prefect worker start" not in capsys.readouterr().out
+        assert "syntask worker start" not in capsys.readouterr().out
 
     async def test_suppress_console_output(
         self, mock_deploy, local_flow, work_pool, capsys

@@ -1,6 +1,6 @@
 import asyncio
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -10,8 +10,8 @@ else:
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.models.concurrency_limits_v2 import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.models.concurrency_limits_v2 import (
     MINIMUM_OCCUPANCY_SECONDS_PER_SLOT,
     bulk_decrement_active_slots,
     bulk_increment_active_slots,
@@ -23,8 +23,8 @@ from prefect.server.models.concurrency_limits_v2 import (
     read_concurrency_limit,
     update_concurrency_limit,
 )
-from prefect.server.schemas.actions import ConcurrencyLimitV2Update
-from prefect.server.schemas.core import ConcurrencyLimitV2
+from syntask.server.schemas.actions import ConcurrencyLimitV2Update
+from syntask.server.schemas.core import ConcurrencyLimitV2
 
 
 @pytest.fixture
@@ -287,7 +287,7 @@ async def test_increment_active_slots_with_decay_success(
 
 
 async def test_increment_active_slots_with_decay_slots_decay_over_time(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     concurrency_limit_with_decay: ConcurrencyLimitV2,
 ):
     async with db.session_context() as session:

@@ -1,1 +1,1 @@
-::: prefect.server.schemas.responses
+::: syntask.server.schemas.responses

@@ -44,9 +44,9 @@
 
 
 <script lang="ts" setup>
-  import { media } from '@prefecthq/prefect-design'
-  import { WorkQueueDetails, PageHeadingWorkQueue, FlowRunFilteredList, WorkQueueFlowRunsList, CodeBanner, localization, useWorkspaceApi, useFlowRunsFilter, PrefectStateNames, useFlowRunsFilterFromRoute } from '@prefecthq/prefect-ui-library'
-  import { useSubscription, useRouteParam } from '@prefecthq/vue-compositions'
+  import { media } from '@syntaskhq/syntask-design'
+  import { WorkQueueDetails, PageHeadingWorkQueue, FlowRunFilteredList, WorkQueueFlowRunsList, CodeBanner, localization, useWorkspaceApi, useFlowRunsFilter, SyntaskStateNames, useFlowRunsFilterFromRoute } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription, useRouteParam } from '@syntaskhq/vue-compositions'
   import { computed, watch, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useToast } from '@/compositions'
@@ -68,7 +68,7 @@
   })
 
   const workQueueId = useRouteParam('workQueueId')
-  const workQueueCliCommand = computed(() => `prefect agent start ${workQueue.value ? ` --work-queue "${workQueue.value.name}"` : ''}`)
+  const workQueueCliCommand = computed(() => `syntask agent start ${workQueue.value ? ` --work-queue "${workQueue.value.name}"` : ''}`)
 
   const selectedTab = ref<string | undefined>()
 

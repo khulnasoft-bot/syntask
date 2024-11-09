@@ -23,15 +23,15 @@
 </template>
 
 <script lang="ts" setup>
-  import { PageHeading, ColorModeSelect } from '@prefecthq/prefect-ui-library'
+  import { PageHeading, ColorModeSelect } from '@syntaskhq/syntask-ui-library'
   import SettingsCodeBlock from '@/components/SettingsCodeBlock.vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
-  import { usePrefectApi } from '@/compositions/usePrefectApi'
+  import { useSyntaskApi } from '@/compositions/useSyntaskApi'
   import { activeColorMode } from '@/utilities/colorMode'
 
   const crumbs = [{ text: 'Settings' }]
 
-  const api = usePrefectApi()
+  const api = useSyntaskApi()
   const [engineSettings, version] = await Promise.all([
     api.admin.getSettings(),
     api.admin.getVersion(),

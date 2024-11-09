@@ -1,5 +1,5 @@
 ---
-description: Prefect file systems allow persisting or retrieving objects from remote or local data stores.
+description: Syntask file systems allow persisting or retrieving objects from remote or local data stores.
 tags:
     - filesystems
     - storage
@@ -12,7 +12,7 @@ search:
 
 # Filesystems
 
-A filesystem block is an object that allows you to read and write data from paths. Prefect provides multiple built-in file system types that cover a wide range of use cases. 
+A filesystem block is an object that allows you to read and write data from paths. Syntask provides multiple built-in file system types that cover a wide range of use cases. 
 
 - [`LocalFileSystem`](#local-filesystem)
 - [`RemoteFileSystem`](#remote-file-system)
@@ -23,7 +23,7 @@ A filesystem block is an object that allows you to read and write data from path
 - [`S3`](#s3)
 - [`SMB`](#smb)
 
-Additional file system types are available in [Prefect Collections](/collections/catalog/).
+Additional file system types are available in [Syntask Collections](/collections/catalog/).
 
 ## Local filesystem
 
@@ -36,7 +36,7 @@ The `LocalFileSystem` block enables interaction with the files in your current d
 | basepath | String path to the location of files on the local filesystem. Access to files outside of the base path will not be allowed. |
 
 ```python
-from prefect.filesystems import LocalFileSystem
+from syntask.filesystems import LocalFileSystem
 
 fs = LocalFileSystem(basepath="/foo/bar")
 ```
@@ -66,7 +66,7 @@ The file system is specified using a protocol:
 For example, to use it with Amazon S3:
 
 ```python
-from prefect.filesystems import RemoteFileSystem
+from syntask.filesystems import RemoteFileSystem
 
 block = RemoteFileSystem(basepath="s3://my-bucket/folder/")
 block.save("dev")
@@ -79,7 +79,7 @@ You may need to install additional libraries to use some remote storage types.
 How can we use `RemoteFileSystem` to store our flow code? The following is a use case where we use [MinIO](https://min.io/) as a storage backend:
 
 ```python
-from prefect.filesystems import RemoteFileSystem
+from syntask.filesystems import RemoteFileSystem
 
 minio_block = RemoteFileSystem(
     basepath="s3://my-bucket",
@@ -113,7 +113,7 @@ The `Azure` file system block enables interaction with Azure Datalake and Azure 
 To create a block:
 
 ```python
-from prefect.filesystems import Azure
+from syntask.filesystems import Azure
 
 block = Azure(bucket_path="my-bucket/folder/")
 block.save("dev")
@@ -123,7 +123,7 @@ To use it in a deployment:
 
 <div class="terminal">
 ```bash
-prefect deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb az/dev
+syntask deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb az/dev
 ```
 </div>
 
@@ -144,7 +144,7 @@ The `GitHub` filesystem block enables interaction with GitHub repositories. This
 To create a block:
 
 ```python
-from prefect.filesystems import GitHub
+from syntask.filesystems import GitHub
 
 block = GitHub(
     repository="https://github.com/my-repo/",
@@ -158,7 +158,7 @@ To use it in a deployment:
 
 <div class="terminal">
 ```bash
-prefect deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb github/dev -a
+syntask deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb github/dev -a
 ```
 </div>
 
@@ -178,8 +178,8 @@ The `GitLabRepository` block is read-only and works with private GitLab reposito
 To create a block:
 
 ```python
-from prefect_gitlab.credentials import GitLabCredentials
-from prefect_gitlab.repositories import GitLabRepository
+from syntask_gitlab.credentials import GitLabCredentials
+from syntask_gitlab.repositories import GitLabRepository
 
 gitlab_creds = GitLabCredentials(token="YOUR_GITLAB_ACCESS_TOKEN")
 gitlab_repo = GitLabRepository(
@@ -194,11 +194,11 @@ To use it in a deployment (and apply):
 
 <div class="terminal">
 ```bash
-prefect deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb gitlab-repository/dev -a
+syntask deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb gitlab-repository/dev -a
 ```
 </div>
 
-Note that to use this block, you need to install the [`prefect-gitlab`](https://github.com/PrefectHQ/prefect-gitlab) collection.
+Note that to use this block, you need to install the [`syntask-gitlab`](https://github.com/Synopkg/syntask-gitlab) collection.
 
 ## GCS
 
@@ -216,7 +216,7 @@ The `GCS` file system block enables interaction with Google Cloud Storage. Under
 To create a block:
 
 ```python
-from prefect.filesystems import GCS
+from syntask.filesystems import GCS
 
 block = GCS(bucket_path="my-bucket/folder/")
 block.save("dev")
@@ -226,7 +226,7 @@ To use it in a deployment:
 
 <div class="terminal">
 ```bash
-prefect deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb gcs/dev
+syntask deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb gcs/dev
 ```
 </div>
 
@@ -248,7 +248,7 @@ The `S3` file system block enables interaction with Amazon S3. Under the hood, `
 To create a block:
 
 ```python
-from prefect.filesystems import S3
+from syntask.filesystems import S3
 
 block = S3(bucket_path="my-bucket/folder/")
 block.save("dev")
@@ -258,7 +258,7 @@ To use it in a deployment:
 
 <div class="terminal">
 ```bash
-prefect deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb s3/dev
+syntask deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb s3/dev
 ```
 </div>
 
@@ -266,7 +266,7 @@ You need to install `s3fs`to use this block.
 
 ## SMB
 
-The `SMB` file system block enables interaction with SMB shared network storage. Under the hood, `SMB` uses [`smbprotocol`](https://github.com/jborean93/smbprotocol). Used to connect to Windows-based SMB shares from Linux-based Prefect flows. The SMB file system block is able to copy files, but cannot create directories.
+The `SMB` file system block enables interaction with SMB shared network storage. Under the hood, `SMB` uses [`smbprotocol`](https://github.com/jborean93/smbprotocol). Used to connect to Windows-based SMB shares from Linux-based Syntask flows. The SMB file system block is able to copy files, but cannot create directories.
 
 `SMB` properties include:
 
@@ -282,7 +282,7 @@ The `SMB` file system block enables interaction with SMB shared network storage.
 To create a block:
 
 ```python
-from prefect.filesystems import SMB
+from syntask.filesystems import SMB
 
 block = SMB(basepath="my-share/folder/")
 block.save("dev")
@@ -292,7 +292,7 @@ To use it in a deployment:
 
 <div class="terminal">
 ```bash
-prefect deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb smb/dev
+syntask deployment build path/to/flow.py:flow_name --name deployment_name --tag dev -sb smb/dev
 ```
 </div>
 
@@ -306,11 +306,11 @@ If you leverage `S3`, `GCS`, or `Azure` storage blocks, and you don't explicitly
 
 ## Filesystem package dependencies
 
-A Prefect installation and doesn't include filesystem-specific package dependencies such as `s3fs`, `gcsfs` or `adlfs`. This includes Prefect base Docker images.
+A Syntask installation and doesn't include filesystem-specific package dependencies such as `s3fs`, `gcsfs` or `adlfs`. This includes Syntask base Docker images.
 
 You must ensure that filesystem-specific libraries are installed in an execution environment where they will be used by flow runs.
 
-In Dockerized deployments using the Prefect base image, you can leverage the `EXTRA_PIP_PACKAGES` environment variable. Those dependencies will be installed at runtime within your Docker container or Kubernetes Job before the flow starts running. 
+In Dockerized deployments using the Syntask base image, you can leverage the `EXTRA_PIP_PACKAGES` environment variable. Those dependencies will be installed at runtime within your Docker container or Kubernetes Job before the flow starts running. 
 
 In Dockerized deployments using a custom image, you must include the filesystem-specific package dependency in your image.
 
@@ -327,7 +327,7 @@ You may specify multiple dependencies by providing a comma-delimted list.
 
 ## Saving and loading file systems
 
-Configuration for a file system can be saved to the Prefect API. For example:
+Configuration for a file system can be saved to the Syntask API. For example:
 
 ```python
 fs = RemoteFileSystem(basepath="s3://my-bucket/folder/")
@@ -344,7 +344,7 @@ fs.read_path("foo")  # b'hello'
 
 ## Readable and writable file systems
 
-Prefect provides two abstract file system types, `ReadableFileSystem` and `WriteableFileSystem`. 
+Syntask provides two abstract file system types, `ReadableFileSystem` and `WriteableFileSystem`. 
 
 - All readable file systems must implement `read_path`, which takes a file path to read content from and returns bytes. 
 - All writeable file systems must implement `write_path` which takes a file path and content and writes the content to the file as bytes. 

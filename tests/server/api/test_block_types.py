@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -12,20 +12,20 @@ else:
     import pydantic
 
 import pytest
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-import prefect
-from prefect.blocks.core import Block
-from prefect.server import models, schemas
-from prefect.server.schemas.actions import BlockTypeCreate, BlockTypeUpdate
-from prefect.server.schemas.core import BlockDocument, BlockType
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.slugify import slugify
+import syntask
+from syntask.blocks.core import Block
+from syntask.server import models, schemas
+from syntask.server.schemas.actions import BlockTypeCreate, BlockTypeUpdate
+from syntask.server.schemas.core import BlockDocument, BlockType
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.slugify import slugify
 
 CODE_EXAMPLE = dedent(
     """\
         ```python
-        from prefect_collection import CoolBlock
+        from syntask_collection import CoolBlock
 
         rad_block = await CoolBlock.load("rad")
         rad_block.crush()
@@ -133,7 +133,7 @@ class TestCreateBlockType:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.parametrize(
-        "name", ["PrefectBlockType", "Prefect", "prefect_block_type", "pReFeCt!"]
+        "name", ["SyntaskBlockType", "Syntask", "syntask_block_type", "pReFeCt!"]
     )
     async def test_create_block_type_with_reserved_name_fails(self, client, name):
         response = await client.post(
@@ -143,7 +143,7 @@ class TestCreateBlockType:
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert (
             response.json()["detail"]
-            == "Block type names beginning with 'Prefect' are reserved."
+            == "Block type names beginning with 'Syntask' are reserved."
         )
 
     async def test_create_block_type_with_invalid_slug_fails(self, client):
@@ -383,7 +383,7 @@ class TestUpdateBlockType:
         await session.commit()
 
         mock = AsyncMock()
-        monkeypatch.setattr("prefect.server.models.block_types.update_block_type", mock)
+        monkeypatch.setattr("syntask.server.models.block_types.update_block_type", mock)
 
         response = await client.patch(
             f"/block_types/{block_type_x.id}",
@@ -515,7 +515,7 @@ class TestSystemBlockTypes:
                 limit=1,
             ),
         )
-        block = prefect.blocks.system.DateTime(value="2022-01-01T00:00:00+00:00")
+        block = syntask.blocks.system.DateTime(value="2022-01-01T00:00:00+00:00")
         response = await client.post(
             "/block_documents/",
             json=block._to_block_document(
@@ -531,7 +531,7 @@ class TestSystemBlockTypes:
         assert response.status_code == status.HTTP_201_CREATED
 
         # load the datetime block
-        api_block = await prefect.blocks.system.DateTime.load("my-test-date-time")
+        api_block = await syntask.blocks.system.DateTime.load("my-test-date-time")
         assert api_block.value == pendulum.datetime(2022, 1, 1, tz="UTC")
 
     async def test_system_block_types_are_protected(self, client, session):

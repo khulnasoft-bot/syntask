@@ -1,16 +1,16 @@
-name: 🖼️ Report a bug with the Prefect UI
-description: Errors and display issues with the Prefect web interface.
+name: 🖼️ Report a bug with the Syntask UI
+description: Errors and display issues with the Syntask web interface.
 labels: ["needs:triage", "ui", "bug"]
 body:
   - type: markdown
     attributes:
       value: >
-        **If you are using Prefect 1.x, please report your issue in the [PrefectHQ/ui](https://github.com/PrefectHQ/ui/issues) repository.**
+        **If you are using Syntask 1.x, please report your issue in the [Synopkg/ui](https://github.com/Synopkg/ui/issues) repository.**
       
   - type: markdown
     attributes:
       value: >
-        If you are new to Prefect bug reports, please review examples of [well written bug reports](https://github.com/PrefectHQ/prefect/issues?q=label%3A%22great+writeup%22+label%3Aui). 
+        If you are new to Syntask bug reports, please review examples of [well written bug reports](https://github.com/Synopkg/syntask/issues?q=label%3A%22great+writeup%22+label%3Aui). 
         Each of these reports include the following features:
 
         1. A **succinct description of the problem** - typically a line or two at most
@@ -22,7 +22,7 @@ body:
         4. Additional details that may help us reproduce your issue.
 
         GitHub issues raised against this repository will receive community support. If you have an
-        [active support agreement](https://www.prefect.io/pricing/), we recommend creating a case to ensure
+        [active support agreement](https://www.syntask.io/pricing/), we recommend creating a case to ensure
         a faster response.
 
   - type: checkboxes
@@ -77,12 +77,12 @@ body:
 
   - type: textarea
     attributes:
-      label: Prefect version
+      label: Syntask version
       description: >
-        If running the UI yourself, please provide information about host's Prefect version and environment. 
-        The easiest way to retrieve all of the information we require is the `prefect version` command.
-        If you are using Prefect Cloud, you may leave this field blank.
-      placeholder: "# Copy output of the `prefect version` command here if hosting your own UI"
+        If running the UI yourself, please provide information about host's Syntask version and environment. 
+        The easiest way to retrieve all of the information we require is the `syntask version` command.
+        If you are using Syntask Cloud, you may leave this field blank.
+      placeholder: "# Copy output of the `syntask version` command here if hosting your own UI"
       render: Text
     validations:
       required: false

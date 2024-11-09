@@ -1,7 +1,7 @@
 import packaging.version
 import pytest
 
-from prefect.utilities.dockerutils import (
+from syntask.utilities.dockerutils import (
     format_outlier_version_name,
     parse_image_tag,
     split_repository_path,
@@ -13,8 +13,8 @@ from prefect.utilities.dockerutils import (
     [
         ("localhost/simpleimage", ("localhost/simpleimage", None)),
         ("localhost/simpleimage:2.1.1", ("localhost/simpleimage", "2.1.1")),
-        ("prefecthq/prefect", ("prefecthq/prefect", None)),
-        ("prefecthq/prefect:2.1.1", ("prefecthq/prefect", "2.1.1")),
+        ("syntaskhq/syntask", ("syntaskhq/syntask", None)),
+        ("syntaskhq/syntask:2.1.1", ("syntaskhq/syntask", "2.1.1")),
         ("simpleimage", ("simpleimage", None)),
         ("simpleimage:2.1.1", ("simpleimage", "2.1.1")),
         ("hostname.io/dir/subdir", ("hostname.io/dir/subdir", None)),
@@ -54,8 +54,8 @@ def test_format_outlier_version_name(value, expected):
     [
         ("localhost/simpleimage", ("localhost", "simpleimage")),
         ("localhost/simpleimage:2.1.1", ("localhost", "simpleimage:2.1.1")),
-        ("prefecthq/prefect", ("prefecthq", "prefect")),
-        ("prefecthq/prefect:2.1.1", ("prefecthq", "prefect:2.1.1")),
+        ("syntaskhq/syntask", ("syntaskhq", "syntask")),
+        ("syntaskhq/syntask:2.1.1", ("syntaskhq", "syntask:2.1.1")),
         ("simpleimage", (None, "simpleimage")),
         ("simpleimage:2.1.1", (None, "simpleimage:2.1.1")),
         ("hostname.io/dir/subdir", ("hostname.io/dir", "subdir")),

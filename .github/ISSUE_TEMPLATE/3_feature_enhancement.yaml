@@ -12,14 +12,14 @@ body:
           required: true
         - label: I used the GitHub search to find a similar request and didn't find it.
           required: true
-        - label: I searched the Prefect documentation for this feature.
+        - label: I searched the Syntask documentation for this feature.
           required: true
           
   - type: dropdown
     id: version
     attributes:
-      label: Prefect Version
-      description: Which version of Prefect is this enhancement for?
+      label: Syntask Version
+      description: Which version of Syntask is this enhancement for?
       options:
         - 2.x
         - 1.x
@@ -29,7 +29,7 @@ body:
   - type: textarea
     attributes:
       label: Describe the current behavior
-      description: A clear and concise description of what Prefect currently does
+      description: A clear and concise description of what Syntask currently does
     validations:
       required: true
       

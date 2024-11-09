@@ -1,5 +1,5 @@
 ---
-description: Join the Prefect community.
+description: Join the Syntask community.
 tags:
     - community
     - Slack
@@ -10,10 +10,10 @@ search:
 
 # Community
 
-There are many ways to get involved with the Prefect community
+There are many ways to get involved with the Syntask community
 
-- Join over 26,000 engineers in the [Prefect Slack community](https://prefect.io/slack)
-- Get help in [Prefect Discourse](https://discourse.prefect.io/) - the community-driven knowledge base
-- [Give Prefect a ⭐️ on GitHub](https://github.com/PrefectHQ/prefect)
-- [Contribute](/contributing/overview/) to Prefect's open source libraries
-- Become a Prefect Ambassador by joining [Club 42](https://www.prefect.io/community/club-42/)
+- Join over 26,000 engineers in the [Syntask Slack community](https://syntask.io/slack)
+- Get help in [Syntask Discourse](https://discourse.syntask.io/) - the community-driven knowledge base
+- [Give Syntask a ⭐️ on GitHub](https://github.com/Synopkg/syntask)
+- [Contribute](/contributing/overview/) to Syntask's open source libraries
+- Become a Syntask Ambassador by joining [Club 42](https://www.syntask.io/community/club-42/)

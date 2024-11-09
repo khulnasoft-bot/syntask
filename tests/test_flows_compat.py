@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from prefect import flow
+from syntask import flow
 
 if TYPE_CHECKING:
 

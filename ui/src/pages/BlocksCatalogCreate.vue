@@ -15,9 +15,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { showToast } from '@prefecthq/prefect-design'
-  import { PageHeadingBlocksCatalogCreate, BlockTypeCardLayout, BlockSchemaCreateForm, BlockDocumentCreateNamed, asSingle, useWorkspaceApi } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam, useRouteQueryParam, useSubscriptionWithDependencies } from '@prefecthq/vue-compositions'
+  import { showToast } from '@syntaskhq/syntask-design'
+  import { PageHeadingBlocksCatalogCreate, BlockTypeCardLayout, BlockSchemaCreateForm, BlockDocumentCreateNamed, asSingle, useWorkspaceApi } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam, useRouteQueryParam, useSubscriptionWithDependencies } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { usePageTitle } from '@/compositions/usePageTitle'

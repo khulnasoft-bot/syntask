@@ -9,8 +9,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { PageHeadingBlocksCatalog, BlockTypeList, useWorkspaceApi, useBlockTypesFilter } from '@prefecthq/prefect-ui-library'
-  import { useSubscription } from '@prefecthq/vue-compositions'
+  import { PageHeadingBlocksCatalog, BlockTypeList, useWorkspaceApi, useBlockTypesFilter } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription } from '@syntaskhq/vue-compositions'
   import { computed, ref } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 

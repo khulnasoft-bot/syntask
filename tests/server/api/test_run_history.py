@@ -4,7 +4,7 @@ from typing import List
 import pendulum
 from packaging import version
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -13,11 +13,11 @@ else:
 
 import pytest
 import sqlalchemy as sa
-from prefect._vendor.fastapi import Response, status
+from syntask._vendor.fastapi import Response, status
 
-from prefect.server import models
-from prefect.server.schemas import actions, core, responses, states
-from prefect.server.schemas.states import StateType
+from syntask.server import models
+from syntask.server.schemas import actions, core, responses, states
+from syntask.server.schemas.states import StateType
 
 dt = pendulum.datetime(2021, 7, 1)
 
@@ -119,7 +119,7 @@ async def data(db, work_queue):
 
         # Pendulum renamed 'period' method to 'interval' in 3.0
         # and changed weeks to start on Mondays
-        # https://github.com/PrefectHQ/prefect/issues/11619
+        # https://github.com/Synopkg/syntask/issues/11619
         if version.parse(pendulum.__version__) >= version.parse("3.0"):
             pendulum_interval = pendulum.interval
             weekend_days = (5, 6)

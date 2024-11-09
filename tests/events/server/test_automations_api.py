@@ -13,26 +13,26 @@ from httpx import ASGITransport, AsyncClient
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
 else:
     import pydantic
 
-from prefect._vendor.fastapi.applications import FastAPI
+from syntask._vendor.fastapi.applications import FastAPI
 
-from prefect.server import models as server_models
-from prefect.server import schemas as server_schemas
-from prefect.server.api.automations import FlowRunInfrastructureMissing
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import actions
-from prefect.server.events.models.automations import (
+from syntask.server import models as server_models
+from syntask.server import schemas as server_schemas
+from syntask.server.api.automations import FlowRunInfrastructureMissing
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import actions
+from syntask.server.events.models.automations import (
     create_automation,
     read_automations_related_to_resource,
     relate_automation_to_resource,
 )
-from prefect.server.events.schemas.automations import (
+from syntask.server.events.schemas.automations import (
     Automation,
     AutomationCore,
     AutomationCreate,
@@ -43,9 +43,9 @@ from prefect.server.events.schemas.automations import (
     EventTrigger,
     Posture,
 )
-from prefect.server.models import deployments
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
+from syntask.server.models import deployments
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
     temporary_settings,
 )
 
@@ -81,11 +81,11 @@ def automation_to_create() -> AutomationCreate:
         description="world",
         enabled=True,
         trigger=EventTrigger(
-            match={"prefect.resource.name": "howdy!"},
-            match_related={"prefect.resource.role": "something-cool"},
+            match={"syntask.resource.name": "howdy!"},
+            match_related={"syntask.resource.role": "something-cool"},
             after={"this.one", "or.that.one"},
             expect={"surely.this", "but.also.this"},
-            for_each=["prefect.resource.name", "prefect.handle"],
+            for_each=["syntask.resource.name", "syntask.handle"],
             posture=Posture.Reactive,
             threshold=42,
             within=timedelta(minutes=2),
@@ -137,11 +137,11 @@ async def create_run_deployment_automation_payload(deployment_id: UUID, job_vars
         description="world",
         enabled=True,
         trigger=EventTrigger(
-            match={"prefect.resource.name": "howdy!"},
-            match_related={"prefect.resource.role": "something-cool"},
+            match={"syntask.resource.name": "howdy!"},
+            match_related={"syntask.resource.role": "something-cool"},
             after={"this.one", "or.that.one"},
             expect={"surely.this", "but.also.this"},
-            for_each=["prefect.resource.name", "prefect.handle"],
+            for_each=["syntask.resource.name", "syntask.handle"],
             posture=Posture.Reactive,
             threshold=42,
             within=timedelta(minutes=2),
@@ -235,7 +235,7 @@ async def test_create_automation_allows_specifying_just_owner_resource(
     automation_to_create: AutomationCreate,
 ) -> None:
     deployment_id = uuid4()
-    automation_to_create.owner_resource = f"prefect.deployment.{deployment_id}"
+    automation_to_create.owner_resource = f"syntask.deployment.{deployment_id}"
 
     response = await client.post(
         f"{automations_url}/",
@@ -267,7 +267,7 @@ async def test_create_automation_allows_specifying_owner_resource_and_actions(
     we'd already created a relationship to the deployment where it was False"""
     deployment_id = uuid4()
     other_one = uuid4()
-    automation_to_create.owner_resource = f"prefect.deployment.{deployment_id}"
+    automation_to_create.owner_resource = f"syntask.deployment.{deployment_id}"
     automation_to_create.actions += [
         actions.RunDeployment(source="selected", deployment_id=deployment_id),
         actions.RunDeployment(source="selected", deployment_id=other_one),
@@ -293,7 +293,7 @@ async def test_create_automation_allows_specifying_owner_resource_and_actions(
     # The other deployment should _not_ be marked as an owner...
     related_automations = await read_automations_related_to_resource(
         session=automations_session,
-        resource_id=f"prefect.deployment.{other_one}",
+        resource_id=f"syntask.deployment.{other_one}",
         owned_by_resource=True,
     )
     assert not related_automations
@@ -301,7 +301,7 @@ async def test_create_automation_allows_specifying_owner_resource_and_actions(
     # ...but it should have been created as related
     related_automations = await read_automations_related_to_resource(
         session=automations_session,
-        resource_id=f"prefect.deployment.{other_one}",
+        resource_id=f"syntask.deployment.{other_one}",
         owned_by_resource=False,
     )
     assert {automation.id for automation in related_automations} == {
@@ -362,9 +362,9 @@ async def existing_disabled_invalid_automation(
 ) -> Automation:
     automation_to_create.enabled = False
     automation_to_create.trigger = EventTrigger(
-        match={"prefect.resource.id": "prefect.flow-run.*"},
-        for_each={"prefect.resource.id"},
-        expect={"prefect.flow-run.*"},
+        match={"syntask.resource.id": "syntask.flow-run.*"},
+        for_each={"syntask.resource.id"},
+        expect={"syntask.flow-run.*"},
         posture=Posture.Reactive,
         threshold=1,
         within=timedelta(seconds=0),
@@ -792,7 +792,7 @@ async def test_read_automations_related_to_resource(
 
     assert owned.id != related.id != non_related.id
 
-    deployment_resource_id = f"prefect.deployment.{uuid4()}"
+    deployment_resource_id = f"syntask.deployment.{uuid4()}"
     for automation in [owned, related]:
         await relate_automation_to_resource(
             session=automations_session,
@@ -813,7 +813,7 @@ async def test_read_automations_related_to_resource(
 
 
 async def test_delete_automations_owned_by_resource(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     client: AsyncClient,
     automations_session: AsyncSession,
     automations_url: str,
@@ -828,7 +828,7 @@ async def test_delete_automations_owned_by_resource(
 
     assert old_owned.id != new_owned.id != related.id != non_related.id
 
-    deployment_resource_id = f"prefect.deployment.{uuid4()}"
+    deployment_resource_id = f"syntask.deployment.{uuid4()}"
 
     for automation in [old_owned, new_owned, related]:
         await relate_automation_to_resource(
@@ -887,7 +887,7 @@ async def test_delete_automations_owned_by_resource(
 @pytest.fixture
 def enable_infra_overrides():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
+        {SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
     ):
         yield
 
@@ -1123,7 +1123,7 @@ async def test_infrastructure_error_inside_create(
     )
 
     with mock.patch(
-        "prefect.server.api.automations._validate_run_deployment_action_against_pool_schema",
+        "syntask.server.api.automations._validate_run_deployment_action_against_pool_schema",
         side_effect=FlowRunInfrastructureMissing("Something is wrong"),
     ):
         response = await client.post(

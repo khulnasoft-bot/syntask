@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -10,15 +10,15 @@ else:
 
 import pytest
 
-from prefect import flow, task
-from prefect.artifacts import (
+from syntask import flow, task
+from syntask.artifacts import (
     create_link_artifact,
     create_markdown_artifact,
     create_table_artifact,
 )
-from prefect.context import get_run_context
-from prefect.server import schemas
-from prefect.server.schemas.actions import ArtifactCreate
+from syntask.context import get_run_context
+from syntask.server import schemas
+from syntask.server.schemas.actions import ArtifactCreate
 
 
 class TestCreateArtifacts:
@@ -31,7 +31,7 @@ class TestCreateArtifacts:
         )
 
     async def test_create_and_read_link_artifact_succeeds(self, artifact, client):
-        my_link = "prefect.io"
+        my_link = "syntask.io"
         artifact_id = await create_link_artifact(
             key=artifact.key,
             link=my_link,
@@ -45,8 +45,8 @@ class TestCreateArtifacts:
     async def test_create_and_read_link_artifact_with_linktext_succeeds(
         self, artifact, client
     ):
-        my_link = "prefect.io"
-        link_text = "Prefect"
+        my_link = "syntask.io"
+        link_text = "Syntask"
         artifact_id = await create_link_artifact(
             key=artifact.key,
             link=my_link,
@@ -136,7 +136,7 @@ class TestCreateArtifacts:
         Test that we can create a markdown artifact using map.
         """
 
-        # An ode to prefect issue #5309.
+        # An ode to syntask issue #5309.
         @task
         def add_ten(x):
             create_link_artifact(
@@ -407,7 +407,7 @@ class TestCreateArtifacts:
     async def test_create_table_artifact_using_map_succeeds(self):
         """
         Test that we can create a table artifact using map.
-        An ode to prefect issue
+        An ode to syntask issue
         """
 
         @task

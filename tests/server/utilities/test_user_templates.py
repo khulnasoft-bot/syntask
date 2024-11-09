@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from prefect.server.utilities.user_templates import render_user_template
+from syntask.server.utilities.user_templates import render_user_template
 
 
 async def test_user_templates_have_humanize_available():

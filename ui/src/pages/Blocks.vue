@@ -15,8 +15,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { PageHeadingBlocks, BlockDocumentsTable, BlocksPageEmptyState, useWorkspaceApi } from '@prefecthq/prefect-ui-library'
-  import { useSubscription } from '@prefecthq/vue-compositions'
+  import { PageHeadingBlocks, BlockDocumentsTable, BlocksPageEmptyState, useWorkspaceApi } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 

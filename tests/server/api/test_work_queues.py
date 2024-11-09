@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -12,10 +12,10 @@ else:
     import pydantic
 
 import pytest
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.server import models, schemas
-from prefect.server.schemas.actions import WorkQueueCreate, WorkQueueUpdate
+from syntask.server import models, schemas
+from syntask.server.schemas.actions import WorkQueueCreate, WorkQueueUpdate
 
 
 class TestCreateWorkQueue:
@@ -464,12 +464,12 @@ class TestGetRunsInWorkQueue:
         )
         assert updated_work_queue.last_polled > now
 
-        # The Prefect UI often calls this route to see which runs are enqueued.
+        # The Syntask UI often calls this route to see which runs are enqueued.
         # We do not want to record this as an actual poll event.
         ui_response = await client.post(
             f"/work_queues/{work_queue.id}/get_runs",
             json=dict(),
-            headers={"X-PREFECT-UI": "true"},
+            headers={"X-SYNTASK-UI": "true"},
         )
         assert ui_response.status_code == status.HTTP_200_OK
 

@@ -8,7 +8,7 @@ body:
       label: First check
       description: Please confirm and check all the following options.
       options:
-        - label: I am a contributor to the Prefect codebase
+        - label: I am a contributor to the Syntask codebase
           required: true
 
   - type: textarea

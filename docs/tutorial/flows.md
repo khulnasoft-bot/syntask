@@ -10,14 +10,14 @@ tags:
     - retries
 ---
 !!! note "Prerequisites"
-    This tutorial assumes you have already installed Prefect and connected to Prefect Cloud or a self-hosted server instance.
+    This tutorial assumes you have already installed Syntask and connected to Syntask Cloud or a self-hosted server instance.
     See the prerequisites section of the [tutorial](/tutorial/) for more details.
 
 ## What is a flow?
 
 [Flows](/concepts/flows/) are like functions.
 They can take inputs, perform work, and return an output.
-In fact, you can turn any function into a Prefect flow by adding the `@flow` decorator.
+In fact, you can turn any function into a Syntask flow by adding the `@flow` decorator.
 When a function becomes a flow, its behavior changes, giving it the following advantages:
 
 - All runs of the flow have persistent [state](/concepts/states/). Transitions between states are recorded, allowing for flow execution to be observed and acted upon.
@@ -29,23 +29,23 @@ When a function becomes a flow, its behavior changes, giving it the following ad
 
 ## Run your first flow
 
-The simplest way to get started with Prefect is to annotate a Python function with the `@flow` decorator.
-The script below fetches statistics about the [main Prefect repository](https://github.com/PrefectHQ/prefect).
-Note that [httpx](https://www.python-httpx.org/) is an HTTP client library and a dependency of Prefect.
-Let's turn this function into a Prefect flow and run the script:
+The simplest way to get started with Syntask is to annotate a Python function with the `@flow` decorator.
+The script below fetches statistics about the [main Syntask repository](https://github.com/Synopkg/syntask).
+Note that [httpx](https://www.python-httpx.org/) is an HTTP client library and a dependency of Syntask.
+Let's turn this function into a Syntask flow and run the script:
 
 ```python title="repo_info.py" hl_lines="2 5"
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow
 def get_repo_info():
-    url = "https://api.github.com/repos/PrefectHQ/prefect"
+    url = "https://api.github.com/repos/Synopkg/syntask"
     response = httpx.get(url)
     response.raise_for_status()
     repo = response.json()
-    print("PrefectHQ/prefect repository statistics 🤓:")
+    print("Synopkg/syntask repository statistics 🤓:")
     print(f"Stars 🌠 : {repo['stargazers_count']}")
     print(f"Forks 🍴 : {repo['forks_count']}")
 
@@ -58,8 +58,8 @@ Running this file will result in some interesting output:
 <div class="terminal">
 
 ```bash
-12:47:42.792 | INFO | prefect.engine - Created flow run 'ludicrous-warthog' for flow 'get-repo-info'
-PrefectHQ/prefect repository statistics 🤓:
+12:47:42.792 | INFO | syntask.engine - Created flow run 'ludicrous-warthog' for flow 'get-repo-info'
+Synopkg/syntask repository statistics 🤓:
 Stars 🌠 : 12146
 Forks 🍴 : 1245
 12:47:45.008 | INFO | Flow run 'ludicrous-warthog' - Finished in state Completed()
@@ -74,16 +74,16 @@ Forks 🍴 : 1245
 
 As with any Python function, you can pass arguments to a flow.
 The positional and keyword arguments defined on your flow function are called [parameters](/concepts/flows/#parameters).
-Prefect will automatically perform type conversion using any provided type hints.
+Syntask will automatically perform type conversion using any provided type hints.
 Let's make the repository a string parameter with a default value:
 
 ```python hl_lines="6 7 11" title="repo_info.py"
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "Synopkg/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     response = httpx.get(url)
     response.raise_for_status()
@@ -94,7 +94,7 @@ def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
 
 
 if __name__ == "__main__":
-    get_repo_info(repo_name="PrefectHQ/marvin")
+    get_repo_info(repo_name="Synopkg/marvin")
 ```
 
 We can call our flow with varying values for the `repo_name` parameter (including "bad" values):
@@ -120,21 +120,21 @@ HTTPStatusError: Client error '404 Not Found' for url '<https://api.github.com/r
 
 </div>
 
-Now navigate to your Prefect dashboard and compare the displays for these two runs.
+Now navigate to your Syntask dashboard and compare the displays for these two runs.
 
 ## Logging
 
-Prefect enables you to log a variety of useful information about your flow and task runs, capturing information about your workflows for purposes such as monitoring, troubleshooting, and auditing.
+Syntask enables you to log a variety of useful information about your flow and task runs, capturing information about your workflows for purposes such as monitoring, troubleshooting, and auditing.
 If we navigate to our dashboard and explore the runs we created above, we will notice that the repository statistics are not captured in the flow run logs.  
 Let's fix that by adding some [logging](/concepts/logs) to our flow:
 
 ```python hl_lines="2 11-14" title="repo_info.py"
 import httpx
-from prefect import flow, get_run_logger
+from syntask import flow, get_run_logger
 
 
 @flow
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "Synopkg/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     response = httpx.get(url)
     response.raise_for_status()
@@ -145,12 +145,12 @@ def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
     logger.info(f"Forks 🍴 : %d", repo["forks_count"])
 ```
 
-Now the output looks more consistent _and_, more importantly, our statistics are stored in the Prefect backend and displayed in the UI for this flow run:
+Now the output looks more consistent _and_, more importantly, our statistics are stored in the Syntask backend and displayed in the UI for this flow run:
 
 <div class="terminal">
 ```bash
-12:47:42.792 | INFO    | prefect.engine - Created flow run 'ludicrous-warthog' for flow 'get-repo-info'
-12:47:43.016 | INFO    | Flow run 'ludicrous-warthog' - PrefectHQ/prefect repository statistics 🤓:
+12:47:42.792 | INFO    | syntask.engine - Created flow run 'ludicrous-warthog' for flow 'get-repo-info'
+12:47:43.016 | INFO    | Flow run 'ludicrous-warthog' - Synopkg/syntask repository statistics 🤓:
 12:47:43.016 | INFO    | Flow run 'ludicrous-warthog' - Stars 🌠 : 12146
 12:47:43.042 | INFO    | Flow run 'ludicrous-warthog' - Forks 🍴 : 1245
 12:47:45.008 | INFO    | Flow run 'ludicrous-warthog' - Finished in state Completed()
@@ -158,19 +158,19 @@ Now the output looks more consistent _and_, more importantly, our statistics are
 </div>
 
 !!! tip "`log_prints=True`"
-    We could have achieved the exact same outcome by using Prefect's convenient `log_prints` keyword argument in the `flow` decorator:
+    We could have achieved the exact same outcome by using Syntask's convenient `log_prints` keyword argument in the `flow` decorator:
 
     ```python
 
     @flow(log_prints=True)
-    def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+    def get_repo_info(repo_name: str = "Synopkg/syntask"):
         ...
 
     ```
 
 !!! warning "Logging vs Artifacts"
     The example above is for educational purposes.
-    In general, it is better to use [Prefect artifacts](/concepts/artifacts/) for storing metrics and output.
+    In general, it is better to use [Syntask artifacts](/concepts/artifacts/) for storing metrics and output.
     Logs are best for tracking progress and debugging errors.
 
 ## Retries
@@ -182,11 +182,11 @@ Let's add retry functionality to our example above:
 
 ```python hl_lines="5" title="repo_info.py"
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow(retries=3, retry_delay_seconds=5, log_prints=True)
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "Synopkg/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     response = httpx.get(url)
     response.raise_for_status()

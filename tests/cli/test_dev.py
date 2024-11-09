@@ -3,15 +3,15 @@ import inspect
 import watchfiles
 from typer import Option
 
-import prefect
-from prefect.cli.dev import agent_process_entrypoint, start_agent
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.utilities import AsyncMock, MagicMock
+import syntask
+from syntask.cli.dev import agent_process_entrypoint, start_agent
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.utilities import AsyncMock, MagicMock
 
 
 def test_dev_start_runs_all_services(monkeypatch):
     """
-    Test that `prefect dev start` runs all services. This test mocks out the
+    Test that `syntask dev start` runs all services. This test mocks out the
     `run_process` function along with the `watchfiles.arun_process` function
     so the test doesn't actually start any processes; instead, it verifies that
     the command attempts to start all services correctly.
@@ -27,7 +27,7 @@ def test_dev_start_runs_all_services(monkeypatch):
             kwargs["task_status"].started()
 
     mock_run_process.side_effect = mock_run_process_call
-    monkeypatch.setattr(prefect.cli.dev, "run_process", mock_run_process)
+    monkeypatch.setattr(syntask.cli.dev, "run_process", mock_run_process)
 
     # Mock watchfiles.arun_process for agent start
     mock_arun_process = AsyncMock()
@@ -35,7 +35,7 @@ def test_dev_start_runs_all_services(monkeypatch):
 
     # mock `os.kill` since we're not actually running the processes
     mock_kill = MagicMock()
-    monkeypatch.setattr(prefect.cli.dev.os, "kill", mock_kill)
+    monkeypatch.setattr(syntask.cli.dev.os, "kill", mock_kill)
 
     # mock watchfiles.awatch
     mock_awatch = MagicMock()
@@ -70,7 +70,7 @@ def test_dev_start_runs_all_services(monkeypatch):
 
 def test_agent_subprocess_entrypoint_runs_agent_with_valid_params(monkeypatch):
     mock_agent_start = MagicMock()
-    monkeypatch.setattr(prefect.cli.dev, "start_agent", mock_agent_start)
+    monkeypatch.setattr(syntask.cli.dev, "start_agent", mock_agent_start)
 
     api = "http://127.0.0.1:4200"
     work_queues = ["default"]
@@ -116,7 +116,7 @@ def test_agent_subprocess_entrypoint_runs_agent_with_valid_params(monkeypatch):
 # and others are normal Python defaults
 def test_mixed_parameter_default_types(monkeypatch):
     mock_agent_start = MagicMock()
-    monkeypatch.setattr(prefect.cli.dev, "start_agent", mock_agent_start)
+    monkeypatch.setattr(syntask.cli.dev, "start_agent", mock_agent_start)
 
     # mock the signature of start_agent to have a mix of Typer.OptionInfo
     # and normal Python defaults
@@ -128,7 +128,7 @@ def test_mixed_parameter_default_types(monkeypatch):
                 default=Option(
                     None,
                     "--api",
-                    help="The URL of the Prefect API server",
+                    help="The URL of the Syntask API server",
                 ),
             ),
             inspect.Parameter(  # normal Python default
@@ -149,16 +149,16 @@ def test_mixed_parameter_default_types(monkeypatch):
 
 def test_agent_subprocess_entrypoint_adds_typer_console(monkeypatch):
     """
-    Ensures a Rich console is added to the PrefectTyper's global `app` instance.
+    Ensures a Rich console is added to the SyntaskTyper's global `app` instance.
     """
     start_agent_signature = inspect.signature(start_agent)
 
     mock_agent_start = MagicMock()
     mock_agent_start.__signature__ = start_agent_signature
-    monkeypatch.setattr(prefect.cli.dev, "start_agent", mock_agent_start)
+    monkeypatch.setattr(syntask.cli.dev, "start_agent", mock_agent_start)
 
     mock_app = MagicMock()
-    monkeypatch.setattr(prefect.cli.dev, "app", mock_app)
+    monkeypatch.setattr(syntask.cli.dev, "app", mock_app)
 
     agent_process_entrypoint()
 

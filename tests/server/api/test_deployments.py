@@ -4,16 +4,16 @@ from uuid import uuid4
 import pendulum
 import pytest
 import sqlalchemy as sa
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.client.schemas.responses import DeploymentResponse
-from prefect.server import models, schemas
-from prefect.server.schemas.actions import DeploymentCreate, DeploymentUpdate
-from prefect.server.utilities.database import get_dialect
-from prefect.settings import (
-    PREFECT_API_DATABASE_CONNECTION_URL,
-    PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME,
-    PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS,
+from syntask.client.schemas.responses import DeploymentResponse
+from syntask.server import models, schemas
+from syntask.server.schemas.actions import DeploymentCreate, DeploymentUpdate
+from syntask.server.utilities.database import get_dialect
+from syntask.settings import (
+    SYNTASK_API_DATABASE_CONNECTION_URL,
+    SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME,
+    SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS,
 )
 
 
@@ -449,7 +449,7 @@ class TestCreateDeployment:
             session=session, deployment_id=deployment.id
         )
         n_runs = await models.flow_runs.count_flow_runs(session)
-        assert n_runs == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert n_runs == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
         # create a run manually to ensure it isn't deleted
         await models.flow_runs.create_flow_run(
@@ -490,7 +490,7 @@ class TestCreateDeployment:
             session=session, deployment_id=deployment.id
         )
         n_runs = await models.flow_runs.count_flow_runs(session)
-        assert n_runs == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert n_runs == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
         # create a run manually to ensure it isn't deleted
         await models.flow_runs.create_flow_run(
@@ -1466,7 +1466,7 @@ class TestUpdateDeployment:
             f"/deployments/{deployment_with_parameter_schema.id}",
             json={
                 "parameters": {
-                    "x": {"__prefect_kind": "json", "value": '"str_of_json"'}
+                    "x": {"__syntask_kind": "json", "value": '"str_of_json"'}
                 }
             },
         )
@@ -1727,7 +1727,7 @@ class TestUpdateDeployment:
         # This is a regression test for a bug where pausing a deployment would
         # copy the schedule from the existing deployment to the new one, even
         # if the schedule was not provided in the request.
-        # https://github.com/PrefectHQ/nebula/issues/6994
+        # https://github.com/Synopkg/nebula/issues/6994
 
         legacy_schedule = schemas.schedules.IntervalSchedule(
             interval=datetime.timedelta(days=1)
@@ -2377,7 +2377,7 @@ class TestSetScheduleActive:
             session=session, deployment_id=deployment.id
         )
         n_runs = await models.flow_runs.count_flow_runs(session)
-        assert n_runs == PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        assert n_runs == SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
 
         # create a run manually
         await models.flow_runs.create_flow_run(
@@ -2417,10 +2417,10 @@ class TestScheduleDeployment:
 
         runs = await models.flow_runs.read_flow_runs(session)
         expected_dates = await deployment_schedule.schedule.get_dates(
-            n=PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
+            n=SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
             start=pendulum.now("UTC"),
             end=pendulum.now("UTC")
-            + PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
+            + SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
         )
         actual_dates = {r.state.state_details.scheduled_time for r in runs}
         assert actual_dates == set(expected_dates)
@@ -2440,7 +2440,7 @@ class TestScheduleDeployment:
             n=5,
             start=pendulum.now("UTC"),
             end=pendulum.now("UTC")
-            + PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
+            + SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
         )
         actual_dates = {r.state.state_details.scheduled_time for r in runs}
         assert actual_dates == set(expected_dates)
@@ -2458,10 +2458,10 @@ class TestScheduleDeployment:
 
         runs = await models.flow_runs.read_flow_runs(session)
         expected_dates = await deployment_schedule.schedule.get_dates(
-            n=PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
+            n=SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value(),
             start=pendulum.now("UTC").add(days=120),
             end=pendulum.now("UTC").add(days=120)
-            + PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
+            + SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME.value(),
         )
         actual_dates = {r.state.state_details.scheduled_time for r in runs}
         assert actual_dates == set(expected_dates)
@@ -2774,7 +2774,7 @@ class TestCreateFlowRunFromDeployment:
             f"/deployments/{deployment_with_parameter_schema.id}/create_flow_run",
             json={
                 "parameters": {
-                    "x": {"__prefect_kind": "json", "value": '"str_of_json"'}
+                    "x": {"__syntask_kind": "json", "value": '"str_of_json"'}
                 }
             },
         )
@@ -2791,7 +2791,7 @@ class TestCreateFlowRunFromDeployment:
             f"/deployments/{deployment_with_parameter_schema.id}/create_flow_run",
             json={
                 "parameters": {
-                    "x": {"__prefect_kind": "json", "value": '{"invalid": json}'}
+                    "x": {"__syntask_kind": "json", "value": '{"invalid": json}'}
                 }
             },
         )
@@ -2842,7 +2842,7 @@ class TestGetDeploymentWorkQueueCheck:
         response = await client.get(f"deployments/{deployment.id}/work_queue_check")
         assert response.status_code == status.HTTP_200_OK
 
-        connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+        connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
         dialect = get_dialect(connection_url)
 
         if dialect.name == "postgresql":

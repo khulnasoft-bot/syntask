@@ -5,15 +5,15 @@ import pytest
 import respx
 from httpx import Response
 
-import prefect
-from prefect.server.services.telemetry import Telemetry
+import syntask
+from syntask.server.services.telemetry import Telemetry
 
 
 @pytest.fixture
 def sens_o_matic_mock():
     with respx.mock:
         sens_o_matic = respx.post(
-            "https://sens-o-matic.prefect.io/",
+            "https://sens-o-matic.syntask.io/",
         ).mock(return_value=Response(200, json={}))
 
         yield sens_o_matic
@@ -23,14 +23,14 @@ def sens_o_matic_mock():
 def error_sens_o_matic_mock():
     with respx.mock:
         sens_o_matic = respx.post(
-            "https://sens-o-matic.prefect.io/",
+            "https://sens-o-matic.syntask.io/",
         ).mock(return_value=Response(500, json={}))
 
         yield sens_o_matic
 
 
 async def test_sens_o_matic_called_correctly(sens_o_matic_mock):
-    from prefect.client.constants import SERVER_API_VERSION
+    from syntask.client.constants import SERVER_API_VERSION
 
     telemetry = Telemetry(handle_signals=False)
     await telemetry.start(loops=1)
@@ -39,11 +39,11 @@ async def test_sens_o_matic_called_correctly(sens_o_matic_mock):
     assert sens_o_matic_mock.call_count == 1
 
     request = sens_o_matic_mock.calls[0].request
-    assert request.headers["x-prefect-event"] == "prefect_server"
+    assert request.headers["x-syntask-event"] == "syntask_server"
 
     heartbeat = json.loads(request.content.decode("utf-8"))
     assert heartbeat["type"] == "heartbeat"
-    assert heartbeat["source"] == "prefect_server"
+    assert heartbeat["source"] == "syntask_server"
 
     payload = heartbeat["payload"]
     assert payload["platform"] == platform.system()
@@ -52,7 +52,7 @@ async def test_sens_o_matic_called_correctly(sens_o_matic_mock):
     assert payload["python_implementation"] == platform.python_implementation()
 
     assert payload["api_version"] == SERVER_API_VERSION
-    assert payload["prefect_version"] == prefect.__version__
+    assert payload["syntask_version"] == syntask.__version__
 
     assert payload["session_id"] == telemetry.session_id
     assert payload["session_start_timestamp"] == telemetry.session_start_timestamp
@@ -89,7 +89,7 @@ async def test_errors_shutdown_service(error_sens_o_matic_mock, caplog):
     records = [
         record
         for record in caplog.records
-        if record.name == "prefect.server.services.telemetry"
+        if record.name == "syntask.server.services.telemetry"
         and record.levelname == "ERROR"
     ]
 

@@ -1,5 +1,5 @@
-from prefect import flow, task
-from prefect.concurrency import asyncio, common, events, services, sync  # noqa: F401
+from syntask import flow, task
+from syntask.concurrency import asyncio, common, events, services, sync  # noqa: F401
 
 
 def skip_remote_run():
@@ -13,7 +13,7 @@ def skip_remote_run():
     import os
 
     in_gha = os.environ.get("CI", False)
-    secret_not_set = os.environ.get("PREFECT_API_KEY", "") == ""
+    secret_not_set = os.environ.get("SYNTASK_API_KEY", "") == ""
     return in_gha and secret_not_set
 
 

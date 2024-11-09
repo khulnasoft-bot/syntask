@@ -4,11 +4,11 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 
-from prefect.server import models, schemas
-from prefect.server.models import concurrency_limits, task_runs
-from prefect.server.orchestration.core_policy import CoreTaskPolicy
-from prefect.server.schemas.core import TaskRunResult
-from prefect.server.schemas.states import Failed, Pending, Running, Scheduled
+from syntask.server import models, schemas
+from syntask.server.models import concurrency_limits, task_runs
+from syntask.server.orchestration.core_policy import CoreTaskPolicy
+from syntask.server.schemas.core import TaskRunResult
+from syntask.server.schemas.states import Failed, Pending, Running, Scheduled
 
 
 class TestCreateTaskRun:

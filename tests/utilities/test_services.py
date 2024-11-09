@@ -3,8 +3,8 @@ import statistics
 import httpx
 import pytest
 
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.services import critical_service_loop
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.services import critical_service_loop
 
 
 class UncapturedException(BaseException):
@@ -128,7 +128,7 @@ async def test_consistent_sleeps_between_loops(monkeypatch):
     )
     sleeper = AsyncMock()
 
-    monkeypatch.setattr("prefect.utilities.services.anyio.sleep", sleeper)
+    monkeypatch.setattr("syntask.utilities.services.anyio.sleep", sleeper)
 
     with pytest.raises(UncapturedException):
         await critical_service_loop(workload, 0.0)
@@ -158,7 +158,7 @@ async def test_jittered_sleeps_between_loops(monkeypatch):
     )
     sleeper = AsyncMock()
 
-    monkeypatch.setattr("prefect.utilities.services.anyio.sleep", sleeper)
+    monkeypatch.setattr("syntask.utilities.services.anyio.sleep", sleeper)
 
     with pytest.raises(UncapturedException):
         await critical_service_loop(workload, 42, jitter_range=0.3)

@@ -1,4 +1,4 @@
-import { maps as designMaps } from '@prefecthq/prefect-ui-library'
+import { maps as designMaps } from '@syntaskhq/syntask-ui-library'
 import { mapFlagResponseToFeatureFlag } from '@/maps/featureFlag'
 import { mapSettingsResponseToSettings } from '@/maps/uiSettings'
 import { mapCsrfTokenResponseToCsrfToken } from '@/maps/csrfToken'

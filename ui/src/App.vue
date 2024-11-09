@@ -7,7 +7,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { useColorTheme } from '@prefecthq/prefect-design'
+  import { useColorTheme } from '@syntaskhq/syntask-design'
   import AppRouterView from '@/pages/AppRouterView.vue'
 
   useColorTheme()

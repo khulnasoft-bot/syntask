@@ -1,6 +1,6 @@
 from typing import List
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -8,11 +8,11 @@ else:
     import pydantic
 
 import pytest
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.server import models
-from prefect.server.api.ui.flow_runs import SimpleFlowRun
-from prefect.server.schemas import actions, states
+from syntask.server import models
+from syntask.server.api.ui.flow_runs import SimpleFlowRun
+from syntask.server.schemas import actions, states
 
 
 @pytest.fixture

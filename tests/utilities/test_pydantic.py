@@ -3,7 +3,7 @@ from pathlib import Path
 
 import cloudpickle
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -13,8 +13,8 @@ else:
 import pytest
 from typing_extensions import Literal
 
-from prefect.utilities.dispatch import register_type
-from prefect.utilities.pydantic import (
+from syntask.utilities.dispatch import register_type
+from syntask.utilities.pydantic import (
     JsonPatch,
     PartialModel,
     add_cloudpickle_reduction,

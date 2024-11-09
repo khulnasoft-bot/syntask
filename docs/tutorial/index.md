@@ -1,5 +1,5 @@
 ---
-description: Learn the basics of creating and running Prefect flows and tasks.
+description: Learn the basics of creating and running Syntask flows and tasks.
 tags:
     - tutorial
     - getting started
@@ -15,7 +15,7 @@ search:
 ---
 # Tutorial Overview
 
-This tutorial provides a guided walk-through of Prefect core concepts and instructions on how to use them.
+This tutorial provides a guided walk-through of Syntask core concepts and instructions on how to use them.
 
 By the end of this tutorial you will have:
 
@@ -30,45 +30,45 @@ Advanced users that need more governance and control of their workflow infrastru
 
 5. [Using a worker-based deployment](/tutorial/workers/)
 
-If you're looking for examples of more advanced operations (like [deploying on Kubernetes](/guides/deployment/kubernetes/)), check out Prefect's [guides](/guides/).
+If you're looking for examples of more advanced operations (like [deploying on Kubernetes](/guides/deployment/kubernetes/)), check out Syntask's [guides](/guides/).
 
 ## Prerequisites
 
-1. Before you start, make sure you have Python installed, then install Prefect: `pip install -U prefect`
+1. Before you start, make sure you have Python installed, then install Syntask: `pip install -U syntask`
 
 See the [install guide](/getting-started/installation/) for more detailed instructions, if needed.
 
-2. To use Prefect, you need to self-host a Prefect server or connect to [Prefect Cloud](https://app.prefect.cloud).
+2. To use Syntask, you need to self-host a Syntask server or connect to [Syntask Cloud](https://app.syntask.cloud).
 
-To get the most out of this tutorial, we recommend using Prefect Cloud.
-Sign up for a forever free [Prefect Cloud account](/cloud/) or accept your organization's invite to join their Prefect Cloud account.
+To get the most out of this tutorial, we recommend using Syntask Cloud.
+Sign up for a forever free [Syntask Cloud account](/cloud/) or accept your organization's invite to join their Syntask Cloud account.
 
-1. Create a new account or sign in at [https://app.prefect.cloud/](https://app.prefect.cloud/).
-1. Use the `prefect cloud login` CLI command to [authenticate to Prefect Cloud](/cloud/users/api-keys/) from your environment.
+1. Create a new account or sign in at [https://app.syntask.cloud/](https://app.syntask.cloud/).
+1. Use the `syntask cloud login` CLI command to [authenticate to Syntask Cloud](/cloud/users/api-keys/) from your environment.
 
 <div class="terminal">
 
 ```bash
-prefect cloud login
+syntask cloud login
 ```
 
 </div>
 
 Choose **Log in with a web browser** and click the **Authorize** button in the browser window that opens.
 
-As an alternative to using Prefect Cloud, you can self-host a [Prefect server instance](/host/).
-If you choose this option, run `prefect server start` to start a local Prefect server instance.
+As an alternative to using Syntask Cloud, you can self-host a [Syntask server instance](/host/).
+If you choose this option, run `syntask server start` to start a local Syntask server instance.
 
-## What is Prefect?
+## What is Syntask?
 
-Prefect orchestrates workflows — it simplifies the creation, scheduling, and monitoring of complex data pipelines.
-With Prefect, you define workflows as Python code and let it handle the rest.
+Syntask orchestrates workflows — it simplifies the creation, scheduling, and monitoring of complex data pipelines.
+With Syntask, you define workflows as Python code and let it handle the rest.
 
-Prefect also provides error handling, retry mechanisms, and a user-friendly dashboard for monitoring.
+Syntask also provides error handling, retry mechanisms, and a user-friendly dashboard for monitoring.
 It's the easiest way to transform any Python function into a unit of work that can be observed and orchestrated.
 
 Just bring your Python code, sprinkle in a few decorators, and go!
 
 ## [First steps: Flows](/tutorial/flows/)
 
-Let's begin by learning how to create your first Prefect flow - [click here to get started](/tutorial/flows/).
+Let's begin by learning how to create your first Syntask flow - [click here to get started](/tutorial/flows/).

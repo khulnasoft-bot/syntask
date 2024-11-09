@@ -5,22 +5,22 @@ import anyio
 import pendulum
 import pytest
 
-from prefect.server import models, schemas
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.orchestration.core_policy import PreventPendingTransitions
-from prefect.server.orchestration.dependencies import (
+from syntask.server import models, schemas
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.orchestration.core_policy import PreventPendingTransitions
+from syntask.server.orchestration.dependencies import (
     provide_flow_orchestration_parameters,
     provide_flow_policy,
     temporary_flow_orchestration_parameters,
     temporary_flow_policy,
 )
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.orchestration.rules import (
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     BaseOrchestrationRule,
     OrchestrationContext,
 )
-from prefect.server.schemas.states import Pending, Running, Scheduled, StateType
+from syntask.server.schemas.states import Pending, Running, Scheduled, StateType
 
 
 class TestSetFlowRunState:

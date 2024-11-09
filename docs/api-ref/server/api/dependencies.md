@@ -1,8 +1,8 @@
 ---
-description: Prefect API utilities for injecting FastAPI dependencies.
+description: Syntask API utilities for injecting FastAPI dependencies.
 tags:
-    - Prefect API
+    - Syntask API
     - FastAPI
 ---
 
-::: prefect.server.api.dependencies
+::: syntask.server.api.dependencies

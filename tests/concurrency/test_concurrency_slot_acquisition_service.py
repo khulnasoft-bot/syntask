@@ -4,8 +4,8 @@ from unittest import mock
 import pytest
 from httpx import HTTPStatusError, Request, Response
 
-from prefect import get_client
-from prefect.concurrency.services import ConcurrencySlotAcquisitionService
+from syntask import get_client
+from syntask.concurrency.services import ConcurrencySlotAcquisitionService
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ async def mocked_client(test_database_connection_url):
 
             wrapped_client = ClientWrapper(client)
             with mock.patch(
-                "prefect.concurrency.services.get_client", lambda: wrapped_client
+                "syntask.concurrency.services.get_client", lambda: wrapped_client
             ):
                 yield wrapped_client
 
@@ -66,7 +66,7 @@ async def test_retries_failed_call_respects_retry_after_header(mocked_client):
     limit_names = sorted(["api", "database"])
     service = ConcurrencySlotAcquisitionService.instance(frozenset(limit_names))
 
-    with mock.patch("prefect.concurrency.asyncio.asyncio.sleep") as sleep:
+    with mock.patch("syntask.concurrency.asyncio.asyncio.sleep") as sleep:
         future = service.send((1, "concurrency"))
         await service.drain()
         returned_response = await asyncio.wrap_future(future)

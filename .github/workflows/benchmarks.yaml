@@ -72,18 +72,18 @@ jobs:
 
       - name: Start server
         run: |
-          prefect server start&
-          PREFECT_API_URL="http://127.0.0.1:4200/api" ./scripts/wait-for-server.py
+          syntask server start&
+          SYNTASK_API_URL="http://127.0.0.1:4200/api" ./scripts/wait-for-server.py
 
           # TODO: Replace `wait-for-server` with dedicated command
-          #       https://github.com/PrefectHQ/prefect/issues/6990
+          #       https://github.com/Synopkg/syntask/issues/6990
 
       - name: Run benchmarks
         # Includes comparison to previous benchmarks if available
         run: >
           uniquename=${{ github.head_ref || 'main' }}-${{ github.sha }}
 
-          PREFECT_API_URL="http://127.0.0.1:4200/api"
+          SYNTASK_API_URL="http://127.0.0.1:4200/api"
           python benches
           --benchmark-save="${uniquename//\//_}"
           ${{ steps.bench-cache.outputs.cache-hit && '--benchmark-compare' || ''}}

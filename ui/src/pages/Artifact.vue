@@ -45,7 +45,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { media } from '@prefecthq/prefect-design'
+  import { media } from '@syntaskhq/syntask-design'
   import {
     PageHeadingArtifact,
     ArtifactDataView,
@@ -55,8 +55,8 @@
     localization,
     capitalize,
     useWorkspaceApi
-  } from '@prefecthq/prefect-ui-library'
-  import { useSubscription, useRouteParam, useRouteQueryParam } from '@prefecthq/vue-compositions'
+  } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription, useRouteParam, useRouteQueryParam } from '@syntaskhq/vue-compositions'
   import { computed, ref } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 

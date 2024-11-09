@@ -1,15 +1,15 @@
 import pydantic
 import pytest
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import ValidationError
 else:
     from pydantic import ValidationError
 
-from prefect.context import FlowRunContext
-from prefect.input import (
+from syntask.context import FlowRunContext
+from syntask.input import (
     create_flow_run_input,
     create_flow_run_input_from_model,
     delete_flow_run_input,
@@ -24,8 +24,8 @@ class DemoModel(pydantic.BaseModel):
 
 
 @pytest.fixture
-def flow_run_context(flow_run, prefect_client):
-    with FlowRunContext.construct(flow_run=flow_run, client=prefect_client) as context:
+def flow_run_context(flow_run, syntask_client):
+    with FlowRunContext.construct(flow_run=flow_run, client=syntask_client) as context:
         yield context
 
 
@@ -51,7 +51,7 @@ class TestCreateFlowRunInputFromModel:
         assert len(flow_run_inputs) == 1
         assert (
             flow_run_inputs[0].sender
-            == f"prefect.flow-run.{flow_run_context.flow_run.id}"
+            == f"syntask.flow-run.{flow_run_context.flow_run.id}"
         )
 
     async def test_can_set_sender(self, flow_run_context):

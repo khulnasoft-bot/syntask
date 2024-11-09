@@ -1,5 +1,5 @@
 ---
-description: Tips for using Prefect when dealing with big data.
+description: Tips for using Syntask when dealing with big data.
 tags:
     - big data
     - flow configuration
@@ -10,18 +10,18 @@ search:
   boost: 2
 ---
 
-# Big Data with Prefect
+# Big Data with Syntask
 
-In this guide you'll learn tips for working with large amounts of data in Prefect.
+In this guide you'll learn tips for working with large amounts of data in Syntask.
 
 Big data doesn't have a widely accepted, precise definition.
-In this guide, we'll discuss methods to reduce the processing time or memory utilization of Prefect workflows, without editing your Python code.
+In this guide, we'll discuss methods to reduce the processing time or memory utilization of Syntask workflows, without editing your Python code.
 
-## Optimizing your Python code with Prefect for big data
+## Optimizing your Python code with Syntask for big data
 
 Depending upon your needs, you may want to optimize your Python code for speed, memory, compute, or disk space.
 
-Prefect provides several options that we'll explore in this guide:
+Syntask provides several options that we'll explore in this guide:
 
 1. Remove task introspection with `quote` to save time running your code.
 1. Write task results to cloud storage such as S3 using a block to save memory.
@@ -32,14 +32,14 @@ Prefect provides several options that we'll explore in this guide:
 
 ### Remove task introspection
 
-When a task is called from a flow, each argument is introspected by Prefect, by default.
-To speed up your flow runs, you can disable this behavior for a task by wrapping the argument using [`quote`](https://docs.prefect.io/latest/api-ref/prefect/utilities/annotations/#prefect.utilities.annotations.quote).
+When a task is called from a flow, each argument is introspected by Syntask, by default.
+To speed up your flow runs, you can disable this behavior for a task by wrapping the argument using [`quote`](https://docs.syntask.io/latest/api-ref/syntask/utilities/annotations/#syntask.utilities.annotations.quote).
 
 To demonstrate, let's use a basic example that extracts and transforms some New York taxi data.
 
 ```python hl_lines="2 26" title="et_quote.py"
-from prefect import task, flow
-from prefect.utilities.annotations import quote
+from syntask import task, flow
+from syntask.utilities.annotations import quote
 import pandas as pd
 
 
@@ -80,7 +80,7 @@ By default, the results of task runs are stored in memory in your execution envi
 This behavior makes flow runs fast for small data, but can be problematic for large data.
 You can save memory by writing results to disk.
 In production, you'll generally want to write results to a cloud provider storage such as AWS S3.
-Prefect lets you to use a storage block from a Prefect cloud integration library such as [prefect-aws](https://prefecthq.github.io/prefect-aws/) to save your configuration information.
+Syntask lets you to use a storage block from a Syntask cloud integration library such as [syntask-aws](https://syntaskhq.github.io/syntask-aws/) to save your configuration information.
 Learn more about blocks [here](/concepts/blocks/).
 
 Install the relevant library, register the block with the server, and create your storage block.
@@ -88,7 +88,7 @@ Then you can reference the block in your flow like this:
 
 ```python
 ...
-from prefect_aws.s3 import S3Bucket
+from syntask_aws.s3 import S3Bucket
 
 my_s3_block = S3Bucket.load("MY_BLOCK_NAME")
 
@@ -103,7 +103,7 @@ Now the result of the task will be written to S3, rather than stored in memory.
 
 To save memory and time with big data, you don't need to pass results between tasks at all.
 Instead, you can write and read data to disk directly in your flow code.
-Prefect has integration libraries for each of the major cloud providers.
+Syntask has integration libraries for each of the major cloud providers.
 Each library contains blocks with methods that make it convenient to read and write data to and from cloud object storage.
 The [moving data guide](/guides/moving-data/) has step-by-step examples for each cloud provider.
 
@@ -116,18 +116,18 @@ Caching is discussed in detail in the [tasks concept page](/concepts/tasks.md/#c
 
 ### Compress results written to disk
 
-If you're using Prefect's task result persistence, you can save disk space by compressing the results.
+If you're using Syntask's task result persistence, you can save disk space by compressing the results.
 You just need to specify the result type with `compressed/` prefixed like this:
 
 ```python
 @task(result_serializer="compressed/json")
 ```
 
-Read about [compressing results with Prefect](/concepts/results/) for more details.
+Read about [compressing results with Syntask](/concepts/results/) for more details.
 The tradeoff of using compression is that it takes time to compress and decompress the data.
 
 ### Use a task runner for parallelizable operations
 
-Prefect's task runners allow you to use the Dask and Ray Python libraries to run tasks in parallel and distributed across multiple machines.
+Syntask's task runners allow you to use the Dask and Ray Python libraries to run tasks in parallel and distributed across multiple machines.
 This can save you time and compute when operating on large data structures.
 See the [guide to working with Dask and Ray Task Runners](/guides/dask-ray-task-runners/) for details.

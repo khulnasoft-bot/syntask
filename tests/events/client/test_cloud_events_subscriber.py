@@ -1,11 +1,11 @@
 import pytest
 from websockets.exceptions import ConnectionClosedError
 
-from prefect.events import Event
-from prefect.events.clients import PrefectCloudEventSubscriber
-from prefect.events.filters import EventFilter, EventNameFilter
-from prefect.settings import PREFECT_API_KEY, PREFECT_API_URL, temporary_settings
-from prefect.testing.fixtures import Puppeteer, Recorder
+from syntask.events import Event
+from syntask.events.clients import SyntaskCloudEventSubscriber
+from syntask.events.filters import EventFilter, EventNameFilter
+from syntask.settings import SYNTASK_API_KEY, SYNTASK_API_URL, temporary_settings
+from syntask.testing.fixtures import Puppeteer, Recorder
 
 
 async def test_subscriber_can_connect_with_defaults(
@@ -16,12 +16,12 @@ async def test_subscriber_can_connect_with_defaults(
     puppeteer: Puppeteer,
 ):
     with temporary_settings(
-        updates={PREFECT_API_KEY: "my-token", PREFECT_API_URL: events_cloud_api_url}
+        updates={SYNTASK_API_KEY: "my-token", SYNTASK_API_URL: events_cloud_api_url}
     ):
         puppeteer.token = "my-token"
         puppeteer.outgoing_events = [example_event_1, example_event_2]
 
-        async with PrefectCloudEventSubscriber() as subscriber:
+        async with SyntaskCloudEventSubscriber() as subscriber:
             async for event in subscriber:
                 recorder.events.append(event)
 
@@ -40,9 +40,9 @@ async def test_subscriber_complains_without_api_url_and_key(
     recorder: Recorder,
     puppeteer: Puppeteer,
 ):
-    with temporary_settings(updates={PREFECT_API_KEY: "", PREFECT_API_URL: ""}):
+    with temporary_settings(updates={SYNTASK_API_KEY: "", SYNTASK_API_URL: ""}):
         with pytest.raises(ValueError, match="must be provided or set"):
-            PrefectCloudEventSubscriber()
+            SyntaskCloudEventSubscriber()
 
 
 async def test_subscriber_can_connect_and_receive_one_event(
@@ -57,7 +57,7 @@ async def test_subscriber_can_connect_and_receive_one_event(
 
     filter = EventFilter(event=EventNameFilter(name=["example.event"]))
 
-    async with PrefectCloudEventSubscriber(
+    async with SyntaskCloudEventSubscriber(
         events_cloud_api_url,
         "my-token",
         filter,
@@ -86,7 +86,7 @@ async def test_subscriber_specifying_negative_reconnects_gets_error(
     filter = EventFilter(event=EventNameFilter(name=["example.event"]))
 
     with pytest.raises(ValueError, match="non-negative"):
-        PrefectCloudEventSubscriber(
+        SyntaskCloudEventSubscriber(
             events_cloud_api_url,
             "my-token",
             filter,
@@ -109,7 +109,7 @@ async def test_subscriber_raises_on_invalid_auth_with_soft_denial(
     filter = EventFilter(event=EventNameFilter(name=["example.event"]))
 
     with pytest.raises(Exception, match="Unable to authenticate"):
-        subscriber = PrefectCloudEventSubscriber(
+        subscriber = SyntaskCloudEventSubscriber(
             events_cloud_api_url,
             "bogus",
             filter,
@@ -137,7 +137,7 @@ async def test_subscriber_raises_on_invalid_auth_with_hard_denial(
     filter = EventFilter(event=EventNameFilter(name=["example.event"]))
 
     with pytest.raises(Exception, match="Unable to authenticate"):
-        subscriber = PrefectCloudEventSubscriber(
+        subscriber = SyntaskCloudEventSubscriber(
             events_cloud_api_url,
             "bogus",
             filter,
@@ -164,7 +164,7 @@ async def test_subscriber_reconnects_on_hard_disconnects(
 
     filter = EventFilter(event=EventNameFilter(name=["example.event"]))
 
-    async with PrefectCloudEventSubscriber(
+    async with SyntaskCloudEventSubscriber(
         events_cloud_api_url,
         "my-token",
         filter,
@@ -191,7 +191,7 @@ async def test_subscriber_gives_up_after_so_many_attempts(
     filter = EventFilter(event=EventNameFilter(name=["example.event"]))
 
     with pytest.raises(ConnectionClosedError):
-        async with PrefectCloudEventSubscriber(
+        async with SyntaskCloudEventSubscriber(
             events_cloud_api_url,
             "my-token",
             filter,
@@ -216,7 +216,7 @@ async def test_subscriber_skips_duplicate_events(
 
     filter = EventFilter(event=EventNameFilter(name=["example.event"]))
 
-    async with PrefectCloudEventSubscriber(
+    async with SyntaskCloudEventSubscriber(
         events_cloud_api_url,
         "my-token",
         filter,

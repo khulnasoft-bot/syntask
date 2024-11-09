@@ -1,8 +1,8 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.models.concurrency_limits_v2 import create_concurrency_limit
-from prefect.server.schemas.core import ConcurrencyLimitV2
+from syntask.server.models.concurrency_limits_v2 import create_concurrency_limit
+from syntask.server.schemas.core import ConcurrencyLimitV2
 
 
 @pytest.fixture

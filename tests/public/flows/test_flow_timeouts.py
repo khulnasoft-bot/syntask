@@ -3,7 +3,7 @@ import time
 import anyio
 import pytest
 
-import prefect
+import syntask
 
 # The sleep time should be much longer than the declared flow timeouts in the tests
 # below in order to give them all time for the mechanics to work.  If the timeouts do
@@ -16,7 +16,7 @@ SLEEP_TIME = FLOW_TIMEOUT * 1000
 def test_sync_flow_timeout():
     flow_completed = False
 
-    @prefect.flow(timeout_seconds=FLOW_TIMEOUT)
+    @syntask.flow(timeout_seconds=FLOW_TIMEOUT)
     def sleep_flow():
         # Sleep in 0.1 second intervals; the sync flow runs in a worker
         # thread which does not interrupt long-running sleep calls
@@ -37,7 +37,7 @@ def test_sync_flow_timeout():
 async def test_async_flow_timeout():
     flow_completed = False
 
-    @prefect.flow(timeout_seconds=FLOW_TIMEOUT)
+    @syntask.flow(timeout_seconds=FLOW_TIMEOUT)
     async def sleep_flow():
         await anyio.sleep(SLEEP_TIME)
         nonlocal flow_completed
@@ -52,13 +52,13 @@ async def test_async_flow_timeout():
 
 
 # In the subflow tests below, the odd return values of (None, state) prevent
-# prefect from treating the return value as the state for the _parent_ flow
+# syntask from treating the return value as the state for the _parent_ flow
 
 
 def test_sync_subflow_timeout_in_sync_flow():
     subflow_completed = False
 
-    @prefect.flow(timeout_seconds=FLOW_TIMEOUT)
+    @syntask.flow(timeout_seconds=FLOW_TIMEOUT)
     def sleep_flow():
         # Sleep in 0.1 second intervals; the sync flow runs in a worker
         # thread which does not interrupt long-running sleep calls
@@ -68,7 +68,7 @@ def test_sync_subflow_timeout_in_sync_flow():
         nonlocal subflow_completed
         subflow_completed = True
 
-    @prefect.flow
+    @syntask.flow
     def parent_flow():
         subflow_state = sleep_flow(return_state=True)
         return (None, subflow_state)
@@ -84,7 +84,7 @@ def test_sync_subflow_timeout_in_sync_flow():
 async def test_sync_subflow_timeout_in_async_flow():
     subflow_completed = False
 
-    @prefect.flow(timeout_seconds=FLOW_TIMEOUT)
+    @syntask.flow(timeout_seconds=FLOW_TIMEOUT)
     def sleep_flow():
         # Sleep in 0.1 second intervals; the sync flow runs in a worker
         # thread which does not interrupt long-running sleep calls
@@ -94,7 +94,7 @@ async def test_sync_subflow_timeout_in_async_flow():
         nonlocal subflow_completed
         subflow_completed = True
 
-    @prefect.flow
+    @syntask.flow
     async def parent_flow():
         subflow_state = sleep_flow(return_state=True)
         return (None, subflow_state)
@@ -110,14 +110,14 @@ async def test_sync_subflow_timeout_in_async_flow():
 def test_async_subflow_timeout_in_sync_flow():
     subflow_completed = False
 
-    @prefect.flow(timeout_seconds=FLOW_TIMEOUT)
+    @syntask.flow(timeout_seconds=FLOW_TIMEOUT)
     async def sleep_flow():
         await anyio.sleep(SLEEP_TIME)
 
         nonlocal subflow_completed
         subflow_completed = True
 
-    @prefect.flow
+    @syntask.flow
     def parent_flow():
         subflow_state = sleep_flow(return_state=True)
         return (None, subflow_state)
@@ -133,14 +133,14 @@ def test_async_subflow_timeout_in_sync_flow():
 async def test_async_subflow_timeout_in_async_flow():
     subflow_completed = False
 
-    @prefect.flow(timeout_seconds=FLOW_TIMEOUT)
+    @syntask.flow(timeout_seconds=FLOW_TIMEOUT)
     async def sleep_flow():
         await anyio.sleep(SLEEP_TIME)
 
         nonlocal subflow_completed
         subflow_completed = True
 
-    @prefect.flow
+    @syntask.flow
     async def parent_flow():
         subflow_state = await sleep_flow(return_state=True)
         return (None, subflow_state)

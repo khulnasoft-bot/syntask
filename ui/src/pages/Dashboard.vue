@@ -26,10 +26,10 @@
     </template>
     <MarketingBanner
       title="Ready to scale?"
-      subtitle="Automations, role and object-level security, and serverless push work pools on Prefect Cloud"
+      subtitle="Automations, role and object-level security, and serverless push work pools on Syntask Cloud"
     >
       <template #actions>
-        <p-button to="https://www.prefect.io/cloud-vs-oss?utm_source=oss&utm_medium=oss&utm_campaign=oss&utm_term=none&utm_content=none" target="_blank" primary>
+        <p-button to="https://www.syntask.io/cloud-vs-oss?utm_source=oss&utm_medium=oss&utm_campaign=oss&utm_term=none&utm_content=none" target="_blank" primary>
           Upgrade to Cloud
         </p-button>
       </template>
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-  import { Crumb } from '@prefecthq/prefect-design'
+  import { Crumb } from '@syntaskhq/syntask-design'
   import {
     DashboardWorkPoolsCard,
     WorkspaceDashboardFlowRunsCard,
@@ -54,8 +54,8 @@
     Getter,
     DateRangeSelect,
     useWorkspaceDashboardFilterFromRoute
-  } from '@prefecthq/prefect-ui-library'
-  import { useSubscription } from '@prefecthq/vue-compositions'
+  } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription } from '@syntaskhq/vue-compositions'
   import { secondsInDay, secondsToMilliseconds } from 'date-fns'
   import { computed, provide } from 'vue'
 

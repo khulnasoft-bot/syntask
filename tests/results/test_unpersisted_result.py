@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from prefect.results import MissingResult, UnpersistedResult
+from syntask.results import MissingResult, UnpersistedResult
 
 
 @dataclass

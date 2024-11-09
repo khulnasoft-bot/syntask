@@ -1,0 +1,9 @@
+recipeName: Agent on an Azure VM
+author: Syntask
+authorUrl: https://syntask.io
+description: Set up an Azure VM and run a Syntask agent.
+topic: Azure
+recipeUrl: https://github.com/Synopkg/syntask-recipes/tree/main/devops/infrastructure-as-code/azure/syntask-agent-on-avm
+iconUrl: 
+  - /img/collections/azure.png
+  - /img/collections/terraform.png

@@ -1,9 +1,9 @@
 recipeName: Proxy Requests
-author: Prefect
-authorUrl: https://prefect.io
-description: Making HTTPS proxied requests with Prefect.
+author: Syntask
+authorUrl: https://syntask.io
+description: Making HTTPS proxied requests with Syntask.
 topic: Flows
-recipeUrl: https://discourse.prefect.io/t/making-proxied-requests-with-prefect/1555
+recipeUrl: https://discourse.syntask.io/t/making-proxied-requests-with-syntask/1555
 iconUrl: 
   - /img/collections/python.png
   - /img/collections/mitmproxy.png

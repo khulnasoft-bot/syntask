@@ -1,6 +1,6 @@
 import time
 
-from prefect import task
+from syntask import task
 
 
 @task(name=f"{__name__}.noop")

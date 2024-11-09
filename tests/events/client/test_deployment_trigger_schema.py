@@ -3,14 +3,14 @@ from uuid import uuid4
 
 import pytest
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
 else:
     import pydantic
 
-from prefect.events import (
+from syntask.events import (
     AutomationCore,
     CompoundTrigger,
     EventTrigger,
@@ -19,8 +19,8 @@ from prefect.events import (
     Posture,
     SequenceTrigger,
 )
-from prefect.events.actions import RunDeployment
-from prefect.events.schemas.deployment_triggers import (
+from syntask.events.actions import RunDeployment
+from syntask.events.schemas.deployment_triggers import (
     DeploymentCompoundTrigger,
     DeploymentEventTrigger,
     DeploymentMetricTrigger,
@@ -88,7 +88,7 @@ def test_deployment_trigger_defaults_to_reactive_event_trigger():
                 deployment_id=trigger._deployment_id,
             )
         ],
-        owner_resource=f"prefect.deployment.{trigger._deployment_id}",
+        owner_resource=f"syntask.deployment.{trigger._deployment_id}",
     )
 
 
@@ -119,7 +119,7 @@ def test_deployment_trigger_proactive_trigger_with_defaults():
                 deployment_id=trigger._deployment_id,
             )
         ],
-        owner_resource=f"prefect.deployment.{trigger._deployment_id}",
+        owner_resource=f"syntask.deployment.{trigger._deployment_id}",
     )
 
 
@@ -188,7 +188,7 @@ def test_deployment_trigger_metric_trigger():
                 deployment_id=trigger._deployment_id,
             )
         ],
-        owner_resource=f"prefect.deployment.{trigger._deployment_id}",
+        owner_resource=f"syntask.deployment.{trigger._deployment_id}",
     )
 
 
@@ -241,7 +241,7 @@ def test_compound_deployment_trigger_as_automation():
                 deployment_id=trigger._deployment_id,
             )
         ],
-        owner_resource=f"prefect.deployment.{trigger._deployment_id}",
+        owner_resource=f"syntask.deployment.{trigger._deployment_id}",
     )
 
 
@@ -328,7 +328,7 @@ def test_deeply_nested_compound_deployment_trigger_as_automation():
                 deployment_id=trigger._deployment_id,
             )
         ],
-        owner_resource=f"prefect.deployment.{trigger._deployment_id}",
+        owner_resource=f"syntask.deployment.{trigger._deployment_id}",
     )
 
 
@@ -377,5 +377,5 @@ def test_sequence_deployment_trigger_as_automation():
                 deployment_id=trigger._deployment_id,
             )
         ],
-        owner_resource=f"prefect.deployment.{trigger._deployment_id}",
+        owner_resource=f"syntask.deployment.{trigger._deployment_id}",
     )

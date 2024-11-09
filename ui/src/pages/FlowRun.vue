@@ -65,8 +65,8 @@
     useFlowRun,
     useFlowRunsFilter,
     stringify
-  } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam, useRouteQueryParam } from '@prefecthq/vue-compositions'
+  } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam, useRouteQueryParam } from '@syntaskhq/vue-compositions'
   import { computed, watchEffect } from 'vue'
   import { useRouter } from 'vue-router'
   import FlowRunGraphs from '@/components/FlowRunGraphs.vue'

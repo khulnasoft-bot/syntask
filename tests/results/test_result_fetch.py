@@ -1,9 +1,9 @@
 import pytest
 
-from prefect import flow, task
-from prefect.results import LiteralResult
-from prefect.settings import PREFECT_ASYNC_FETCH_STATE_RESULT, temporary_settings
-from prefect.states import Completed
+from syntask import flow, task
+from syntask.results import LiteralResult
+from syntask.settings import SYNTASK_ASYNC_FETCH_STATE_RESULT, temporary_settings
+from syntask.states import Completed
 
 
 @pytest.fixture(autouse=True)
@@ -13,7 +13,7 @@ def disable_fetch_by_default():
 
     For these tests, we enable the default user behavior.
     """
-    with temporary_settings({PREFECT_ASYNC_FETCH_STATE_RESULT: False}):
+    with temporary_settings({SYNTASK_ASYNC_FETCH_STATE_RESULT: False}):
         yield
 
 
@@ -121,7 +121,7 @@ async def test_async_result_returns_coroutine_with_setting():
         return 1
 
     state = await foo(return_state=True)
-    with temporary_settings({PREFECT_ASYNC_FETCH_STATE_RESULT: True}):
+    with temporary_settings({SYNTASK_ASYNC_FETCH_STATE_RESULT: True}):
         coro = state.result(fetch=True)
 
     assert await coro == 1

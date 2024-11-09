@@ -1,0 +1,10 @@
+---
+description: Syntask command line interface for working with the Cloud backend.
+tags:
+    - Python API
+    - CLI
+    - authentication
+    - Cloud
+---
+
+::: syntask.cli.cloud

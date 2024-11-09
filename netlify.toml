@@ -10,40 +10,40 @@ base = ""
 command = """
 pip install --upgrade pip \
 && pip install --upgrade --upgrade-strategy eager  -e ".[dev]" \
-&& pip install git+https://oauth:${MKDOCS_MATERIAL_INSIDERS_REPO_RO}@github.com/PrefectHQ/mkdocs-material-insiders.git@1471e7595c14a067031600ec18e3cc8d7964e4aa\
-&& prefect dev build-docs \
+&& pip install git+https://oauth:${MKDOCS_MATERIAL_INSIDERS_REPO_RO}@github.com/Synopkg/mkdocs-material-insiders.git@1471e7595c14a067031600ec18e3cc8d7964e4aa\
+&& syntask dev build-docs \
 && mkdocs build --config-file mkdocs.insiders.yml \
 """
 publish = "site"
 
 # Redirects 
 
-# redirect v1 traffic to docs-v1.prefect.io
+# redirect v1 traffic to docs-v1.syntask.io
 
 [[redirects]]
 from = "/core/*"
-to = "https://docs-v1.prefect.io/core/:splat"
+to = "https://docs-v1.syntask.io/core/:splat"
 status = 301
 
 [[redirects]]
 from = "/orchestration/*"
-to = "https://docs-v1.prefect.io/orchestration/:splat"
+to = "https://docs-v1.syntask.io/orchestration/:splat"
 status = 301
 
 [[redirects]]
 from = "/api/*"
-to = "https://docs-v1.prefect.io/api/:splat"
+to = "https://docs-v1.syntask.io/api/:splat"
 status = 301
 
 [[redirects]]
-from = "https://orion-docs.prefect.io/*"
-to = "https://docs.prefect.io/:splat"
+from = "https://orion-docs.syntask.io/*"
+to = "https://docs.syntask.io/:splat"
 status = 301
 
 # Netlify redirect rules match on the first rule, 
 # so to have /latest/ version 
 # also redirect. So need to explicitly catch /latest/...
-# Each of the rules below for a Prefect 2 URL redirect 
+# Each of the rules below for a Syntask 2 URL redirect 
 # has a counterpart further below with /latest/ prefix
 
 
@@ -138,8 +138,8 @@ to = "/guides/dask-ray-task-runners/"
 status = 301
 
 [[redirects]]
-from = "/api-ref/prefect/blocks/storage/"
-to = "/api-ref/prefect/blocks/filesystems/"
+from = "/api-ref/syntask/blocks/storage/"
+to = "/api-ref/syntask/blocks/filesystems/"
 status = 301
 
 [[redirects]]
@@ -243,13 +243,13 @@ to = "/cloud/"
 status = 301
 
 [[redirects]]
-from = "/api-ref/prefect/blocks/storage/"
-to = "/api-ref/prefect/blocks/"
+from = "/api-ref/syntask/blocks/storage/"
+to = "/api-ref/syntask/blocks/"
 status = 301
 
 [[redirects]]
-from = "/api-ref/prefect/deployments/"
-to = "/api-ref/prefect/deployments/deployments/"
+from = "/api-ref/syntask/deployments/"
+to = "/api-ref/syntask/deployments/deployments/"
 status = 301
 
 [[redirects]]
@@ -340,13 +340,13 @@ to = "/tutorial/deployments-ux/"
 status = 301
 
 [[redirects]]
-from = "/api-ref/prefect/projects/"
-to = "/api-ref/prefect/deployments-ux/"
+from = "/api-ref/syntask/projects/"
+to = "/api-ref/syntask/deployments-ux/"
 status = 301
 
 [[redirects]]
-from = "/api-ref/prefect/projects/"
-to = "/api-ref/prefect/deployments-ux/"
+from = "/api-ref/syntask/projects/"
+to = "/api-ref/syntask/deployments-ux/"
 status = 301
 
 [[redirects]]
@@ -436,7 +436,7 @@ status = 301
 
 [[redirects]]
 from = "/tutorial/first-steps/"
-to = "/#prefect-quickstart/"
+to = "/#syntask-quickstart/"
 status = 301
 
 [[redirects]]
@@ -447,7 +447,7 @@ status = 301
 # Netlify redirect rules match on the first rule, 
 # so to have /latest/ version 
 # also redirect. So need to explicitly catch /latest/...
-# Each of the above rules for a Prefect 2 URL redirect 
+# Each of the above rules for a Syntask 2 URL redirect 
 # is below with /latest/ prefix
 
 [[redirects]]
@@ -541,8 +541,8 @@ to = "/guides/dask-ray-task-runners/"
 status = 301
 
 [[redirects]]
-from = "/latest/api-ref/prefect/blocks/storage/"
-to = "/api-ref/prefect/blocks/filesystems/"
+from = "/latest/api-ref/syntask/blocks/storage/"
+to = "/api-ref/syntask/blocks/filesystems/"
 status = 301
 
 [[redirects]]
@@ -646,13 +646,13 @@ to = "/cloud/"
 status = 301
 
 [[redirects]]
-from = "/latest/api-ref/prefect/blocks/storage/"
-to = "/api-ref/prefect/blocks/"
+from = "/latest/api-ref/syntask/blocks/storage/"
+to = "/api-ref/syntask/blocks/"
 status = 301
 
 [[redirects]]
-from = "/latest/api-ref/prefect/deployments/"
-to = "/api-ref/prefect/deployments/deployments/"
+from = "/latest/api-ref/syntask/deployments/"
+to = "/api-ref/syntask/deployments/deployments/"
 status = 301
 
 [[redirects]]
@@ -743,13 +743,13 @@ to = "/tutorial/deployments-ux/"
 status = 301
 
 [[redirects]]
-from = "/latest/api-ref/prefect/projects/"
-to = "/api-ref/prefect/deployments-ux/"
+from = "/latest/api-ref/syntask/projects/"
+to = "/api-ref/syntask/deployments-ux/"
 status = 301
 
 [[redirects]]
-from = "/latest/api-ref/prefect/projects/"
-to = "/api-ref/prefect/deployments-ux/"
+from = "/latest/api-ref/syntask/projects/"
+to = "/api-ref/syntask/deployments-ux/"
 status = 301
 
 [[redirects]]
@@ -839,7 +839,7 @@ status = 301
 
 [[redirects]]
 from = "/latest/tutorial/first-steps/"
-to = "/#prefect-quickstart/"
+to = "/#syntask-quickstart/"
 status = 301
 
 [[redirects]]

@@ -1,11 +1,11 @@
-from prefect.cli._types import PrefectTyper
-from prefect.cli.root import app
-from prefect.testing.cli import invoke_and_assert
+from syntask.cli._types import SyntaskTyper
+from syntask.cli.root import app
+from syntask.testing.cli import invoke_and_assert
 
 
-class TestPrefectTyper:
-    singular_subcommand = PrefectTyper(name="singular-subcommand")
-    pluralized_subcommand = PrefectTyper(name="pluralized-subcommand")
+class TestSyntaskTyper:
+    singular_subcommand = SyntaskTyper(name="singular-subcommand")
+    pluralized_subcommand = SyntaskTyper(name="pluralized-subcommand")
     app.add_typer(singular_subcommand)
     app.add_typer(pluralized_subcommand, aliases=["pluralized-subcommands"])
 

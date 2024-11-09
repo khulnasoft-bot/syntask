@@ -1,9 +1,9 @@
 ---
-description: Configure user workspace roles in Prefect Cloud.
+description: Configure user workspace roles in Syntask Cloud.
 tags:
     - UI
     - dashboard
-    - Prefect Cloud
+    - Syntask Cloud
     - accounts
     - teams
     - workspaces
@@ -16,11 +16,11 @@ search:
 
 # User and Service Account Roles <span class="badge cloud"></span> <span class="badge pro"> </span><span class="badge custom"></span>
 
-Prefect Cloud's [Pro and Custom tiers](https://www.prefect.io/pricing) allow you to set team member access to the appropriate level within specific workspaces.
+Syntask Cloud's [Pro and Custom tiers](https://www.syntask.io/pricing) allow you to set team member access to the appropriate level within specific workspaces.
 
 Role-based access controls (RBAC) enable you to assign users granular permissions to perform certain activities.
 
-To give users access to functionality beyond the scope of Prefect’s built-in workspace roles, Custom account Admins can create custom roles for users.
+To give users access to functionality beyond the scope of Syntask’s built-in workspace roles, Custom account Admins can create custom roles for users.
 
 ## Built-in roles
 
@@ -29,21 +29,21 @@ Roles give users abilities at either the account level or at the individual work
 - An _account-level role_ defines a user's default permissions within an account.
 - A _workspace-level role_ defines a user's permissions within a specific workspace.
 
-The following sections outline the abilities of the built-in, Prefect-defined ac and workspace roles.
+The following sections outline the abilities of the built-in, Syntask-defined ac and workspace roles.
 
 ### Account-level roles
 
-The following built-in roles have permissions across an account in Prefect Cloud.
+The following built-in roles have permissions across an account in Syntask Cloud.
 
 | Role   | Abilities                                                                                                                                                                                                                                                                                                                                                                                 |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Owner  | &bull; Set/change all account profile settings allowed to be set/changed by a Prefect user. <br> &bull; Add and remove account members, and their account roles. <br> &bull; Create and delete service accounts in the account. <br> &bull; Create workspaces in the account. <br> &bull; Implicit workspace owner access on all workspaces in the account. <br> &bull; Bypass SSO. |
-| Admin  | &bull; Set/change all account profile settings allowed to be set/changed by a Prefect user. <br> &bull; Add and remove account members, and their account roles. <br> &bull; Create and delete service accounts in the account. <br> &bull; Create workspaces in the account. <br> &bull; Implicit workspace owner access on all workspaces in the account. <br> &bull; Cannot bypass SSO.  |
+| Owner  | &bull; Set/change all account profile settings allowed to be set/changed by a Syntask user. <br> &bull; Add and remove account members, and their account roles. <br> &bull; Create and delete service accounts in the account. <br> &bull; Create workspaces in the account. <br> &bull; Implicit workspace owner access on all workspaces in the account. <br> &bull; Bypass SSO. |
+| Admin  | &bull; Set/change all account profile settings allowed to be set/changed by a Syntask user. <br> &bull; Add and remove account members, and their account roles. <br> &bull; Create and delete service accounts in the account. <br> &bull; Create workspaces in the account. <br> &bull; Implicit workspace owner access on all workspaces in the account. <br> &bull; Cannot bypass SSO.  |
 | Member | &bull; View account profile settings. <br> &bull; View workspaces I have access to in the account. <br> &bull; View account members and their roles. <br> &bull; View service accounts in the account.                                                                                                                                                                |
 
 ### Workspace-level roles
 
-The following built-in roles have permissions within a given workspace in Prefect Cloud.
+The following built-in roles have permissions within a given workspace in Syntask Cloud.
 
 | Role      | Abilities                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -58,9 +58,9 @@ The following built-in roles have permissions within a given workspace in Prefec
 The built-in roles will serve the needs of most users, but your team may need to configure custom roles, giving users access to specific permissions within a workspace.
 
 Custom roles can inherit permissions from a built-in role.
-This enables tweaks to the role to meet your team’s needs, while ensuring users can still benefit from Prefect’s default workspace role permission curation as new functionality becomes available.
+This enables tweaks to the role to meet your team’s needs, while ensuring users can still benefit from Syntask’s default workspace role permission curation as new functionality becomes available.
 
-Custom workspace roles can also be created independent of Prefect’s built-in roles. This option gives workspace admins full control of user access to workspace functionality. However, for non-inherited custom roles, the workspace admin takes on the responsibility for monitoring and setting permissions for new functionality as it is released.
+Custom workspace roles can also be created independent of Syntask’s built-in roles. This option gives workspace admins full control of user access to workspace functionality. However, for non-inherited custom roles, the workspace admin takes on the responsibility for monitoring and setting permissions for new functionality as it is released.
 
 See [Role permissions](#workspace-role-permissions) for details of permissions you may set for custom roles.
 
@@ -68,13 +68,13 @@ After you create a new role, it become available in the account **Members** page
 
 ### Inherited roles
 
-A custom role may be configured as an **Inherited Role**. Using an inherited role allows you to create a custom role using a set of initial permissions associated with a built-in Prefect role. Additional permissions can be added to the custom role. Permissions included in the inherited role cannot be removed.
+A custom role may be configured as an **Inherited Role**. Using an inherited role allows you to create a custom role using a set of initial permissions associated with a built-in Syntask role. Additional permissions can be added to the custom role. Permissions included in the inherited role cannot be removed.
 
-Custom roles created using an inherited role will follow Prefect's default workspace role permission curation as new functionality becomes available.
+Custom roles created using an inherited role will follow Syntask's default workspace role permission curation as new functionality becomes available.
 
 To configure an inherited role when configuring a custom role, select the **Inherit permission from a default role** check box, then select the role from which the new role should inherit permissions.
 
-![Creating a custom role for a workspace using inherited permissions in Prefect Cloud](/img/ui/org-inherited-role.png)
+![Creating a custom role for a workspace using inherited permissions in Syntask Cloud](/img/ui/org-inherited-role.png)
 
 ## Workspace role permissions
 

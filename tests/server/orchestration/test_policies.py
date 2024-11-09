@@ -1,9 +1,9 @@
-from prefect.server.orchestration.policies import BaseOrchestrationPolicy
-from prefect.server.orchestration.rules import (
+from syntask.server.orchestration.policies import BaseOrchestrationPolicy
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     BaseOrchestrationRule,
 )
-from prefect.server.schemas import states
+from syntask.server.schemas import states
 
 
 class TestPoliciesRespectOrdering:

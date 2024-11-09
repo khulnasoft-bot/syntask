@@ -8,8 +8,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { showToast } from '@prefecthq/prefect-design'
-  import { NotificationForm, Notification, PageHeadingNotificationCreate, NotificationCreate, useWorkspaceApi } from '@prefecthq/prefect-ui-library'
+  import { showToast } from '@syntaskhq/syntask-design'
+  import { NotificationForm, Notification, PageHeadingNotificationCreate, NotificationCreate, useWorkspaceApi } from '@syntaskhq/syntask-ui-library'
   import { usePageTitle } from '@/compositions/usePageTitle'
   import router, { routes } from '@/router'
 

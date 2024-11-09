@@ -3,8 +3,8 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.client.schemas.responses import DeploymentResponse
-from prefect.client.schemas.schedules import IntervalSchedule
+from syntask.client.schemas.responses import DeploymentResponse
+from syntask.client.schemas.schedules import IntervalSchedule
 
 
 class TestDeploymentResponseDeprecatedFields:

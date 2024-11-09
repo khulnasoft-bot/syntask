@@ -1,4 +1,4 @@
-# Prefect UI
+# Syntask UI
 
 ## Project setup
 
@@ -25,7 +25,7 @@ npm run lint
 ```
 ### Components
 
-Many components in the Prefect UI come from the [prefect ui library](https://github.com/PrefectHQ/prefect-ui-library).  
+Many components in the Syntask UI come from the [syntask ui library](https://github.com/Synopkg/syntask).  
 ### Customize configuration
 
 See [Configuration Reference](https://cli.vuejs.org/config/).

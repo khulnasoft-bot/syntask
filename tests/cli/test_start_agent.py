@@ -6,10 +6,10 @@ import tempfile
 import anyio
 import pytest
 
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect.settings import get_current_settings
-from prefect.utilities.processutils import open_process
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask.settings import get_current_settings
+from syntask.utilities.processutils import open_process
 
 POLL_INTERVAL = 0.5
 STARTUP_TIMEOUT = 20
@@ -38,7 +38,7 @@ async def ensure_default_agent_pool_exists(session):
         await models.workers.create_work_pool(
             session=session,
             work_pool=schemas.actions.WorkPoolCreate(
-                name=models.workers.DEFAULT_AGENT_WORK_POOL_NAME, type="prefect-agent"
+                name=models.workers.DEFAULT_AGENT_WORK_POOL_NAME, type="syntask-agent"
             ),
         )
         await session.commit()
@@ -56,7 +56,7 @@ async def agent_process(use_hosted_api_server):
     # Will connect to the same database as normal test clients
     async with open_process(
         command=[
-            "prefect",
+            "syntask",
             "agent",
             "start",
             "--match=nonexist",

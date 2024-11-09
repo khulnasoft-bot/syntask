@@ -4,18 +4,18 @@ from typing import List, Union
 import pytest
 import sqlalchemy as sa
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import BaseModel
 else:
     from pydantic import BaseModel
 
-from prefect.blocks.core import Block
-from prefect.server import models, schemas
-from prefect.server.models.block_schemas import read_block_schema_by_checksum
-from prefect.server.schemas.filters import BlockSchemaFilter
-from prefect.utilities.collections import AutoEnum
+from syntask.blocks.core import Block
+from syntask.server import models, schemas
+from syntask.server.models.block_schemas import read_block_schema_by_checksum
+from syntask.server.schemas.filters import BlockSchemaFilter
+from syntask.utilities.collections import AutoEnum
 
 EMPTY_OBJECT_CHECKSUM = Block._calculate_schema_checksum({})
 

@@ -27,8 +27,8 @@
 </template>
 
   <script lang="ts" setup>
-  import { PageHeading, ConcurrencyLimitsV2Table, ConcurrencyLimitsTable, ConcurrencyLimitsCreateModal, ConcurrencyLimitsV2CreateModal, useShowModal, useTabs } from '@prefecthq/prefect-ui-library'
-  import { useRouteQueryParam } from '@prefecthq/vue-compositions'
+  import { PageHeading, ConcurrencyLimitsV2Table, ConcurrencyLimitsTable, ConcurrencyLimitsCreateModal, ConcurrencyLimitsV2CreateModal, useShowModal, useTabs } from '@syntaskhq/syntask-ui-library'
+  import { useRouteQueryParam } from '@syntaskhq/vue-compositions'
   
   const { showModal: showModalGlobal, open: openGlobal } = useShowModal()
   const { showModal: showModalTaskRun, open: openTaskRun } = useShowModal()

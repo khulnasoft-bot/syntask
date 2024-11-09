@@ -8,12 +8,12 @@ import boto3
 import pytest
 from moto import mock_aws
 
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.actions import BlockDocumentCreate
-from prefect.infrastructure.provisioners import (
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.actions import BlockDocumentCreate
+from syntask.infrastructure.provisioners import (
     get_infrastructure_provisioner_for_work_pool_type,
 )
-from prefect.infrastructure.provisioners.ecs import (
+from syntask.infrastructure.provisioners.ecs import (
     AuthenticationResource,
     ClusterResource,
     ContainerRepositoryResource,
@@ -38,20 +38,20 @@ def start_mocking_aws(monkeypatch):
 
 @pytest.fixture
 def iam_policy_resource() -> IamPolicyResource:
-    return IamPolicyResource(policy_name="prefect-ecs-policy")
+    return IamPolicyResource(policy_name="syntask-ecs-policy")
 
 
 @pytest.fixture
 def existing_iam_policy():
     iam_client = boto3.client("iam")
     policy = iam_client.create_policy(
-        PolicyName="prefect-ecs-policy",
+        PolicyName="syntask-ecs-policy",
         PolicyDocument=json.dumps(
             {
                 "Version": "2012-10-17",
                 "Statement": [
                     {
-                        "Sid": "PrefectEcsPolicy",
+                        "Sid": "SyntaskEcsPolicy",
                         "Effect": "Allow",
                         "Action": [
                             "ecs:DescribeTasks",
@@ -70,7 +70,7 @@ def existing_iam_policy():
 
 @pytest.fixture
 def mock_run_process():
-    with patch("prefect.infrastructure.provisioners.ecs.run_process") as mock:
+    with patch("syntask.infrastructure.provisioners.ecs.run_process") as mock:
         yield mock
 
 
@@ -90,7 +90,7 @@ class TestIamPolicyResource:
     async def test_provision(self, iam_policy_resource):
         advance_mock = MagicMock()
         iam_client = boto3.client("iam")
-        iam_client.create_user(UserName="prefect-ecs-user")
+        iam_client.create_user(UserName="syntask-ecs-user")
 
         # Provision IAM policy
         await iam_policy_resource.provision(
@@ -99,7 +99,7 @@ class TestIamPolicyResource:
                 "Version": "2012-10-17",
                 "Statement": [
                     {
-                        "Sid": "PrefectEcsPolicy",
+                        "Sid": "SyntaskEcsPolicy",
                         "Effect": "Allow",
                         "Action": [
                             "ec2:AuthorizeSecurityGroupIngress",
@@ -114,7 +114,7 @@ class TestIamPolicyResource:
         policies = iam_client.list_policies(Scope="Local")["Policies"]
         policy_names = [policy["PolicyName"] for policy in policies]
 
-        assert "prefect-ecs-policy" in policy_names
+        assert "syntask-ecs-policy" in policy_names
 
         advance_mock.assert_called_once()
 
@@ -122,12 +122,12 @@ class TestIamPolicyResource:
     async def test_provision_preexisting_policy(self):
         advance_mock = MagicMock()
 
-        iam_policy_resource = IamPolicyResource(policy_name="prefect-ecs-policy")
+        iam_policy_resource = IamPolicyResource(policy_name="syntask-ecs-policy")
         result = await iam_policy_resource.provision(
             advance=advance_mock, policy_document={}
         )
         # returns existing policy ARN
-        assert result == "arn:aws:iam::123456789012:policy/prefect-ecs-policy"
+        assert result == "arn:aws:iam::123456789012:policy/syntask-ecs-policy"
         advance_mock.assert_not_called()
 
     @pytest.mark.usefixtures("existing_iam_policy")
@@ -158,30 +158,30 @@ class TestIamPolicyResource:
 
 @pytest.fixture
 def iam_user_resource():
-    return IamUserResource(user_name="prefect-ecs-user")
+    return IamUserResource(user_name="syntask-ecs-user")
 
 
 @pytest.fixture
 def existing_iam_user():
     iam_client = boto3.client("iam")
-    iam_client.create_user(UserName="prefect-ecs-user")
+    iam_client.create_user(UserName="syntask-ecs-user")
 
     yield
 
-    iam_client.delete_user(UserName="prefect-ecs-user")
+    iam_client.delete_user(UserName="syntask-ecs-user")
 
 
 @pytest.fixture
 def existing_execution_role():
     iam_client = boto3.client("iam")
     iam_client.create_role(
-        RoleName="PrefectEcsTaskExecutionRole",
+        RoleName="SyntaskEcsTaskExecutionRole",
         AssumeRolePolicyDocument=json.dumps(
             {
                 "Version": "2012-10-17",
                 "Statement": [
                     {
-                        "Sid": "PrefectEcsExecutionRole",
+                        "Sid": "SyntaskEcsExecutionRole",
                         "Effect": "Allow",
                         "Principal": {"Service": "ecs-tasks.amazonaws.com"},
                         "Action": "sts:AssumeRole",
@@ -193,7 +193,7 @@ def existing_execution_role():
 
     yield
 
-    iam_client.delete_role(RoleName="PrefectEcsTaskExecutionRole")
+    iam_client.delete_role(RoleName="SyntaskEcsTaskExecutionRole")
 
 
 class TestIamUserResource:
@@ -219,7 +219,7 @@ class TestIamUserResource:
         users = iam_client.list_users()["Users"]
         user_names = [user["UserName"] for user in users]
 
-        assert "prefect-ecs-user" in user_names
+        assert "syntask-ecs-user" in user_names
 
         advance_mock.assert_called_once()
 
@@ -227,7 +227,7 @@ class TestIamUserResource:
     async def test_provision_preexisting_user(self):
         advance_mock = MagicMock()
 
-        iam_user_resource = IamUserResource(user_name="prefect-ecs-user")
+        iam_user_resource = IamUserResource(user_name="syntask-ecs-user")
         result = await iam_user_resource.provision(advance=advance_mock)
         assert result is None
         advance_mock.assert_not_called()
@@ -261,20 +261,20 @@ class TestIamUserResource:
 @pytest.fixture
 def credentials_block_resource():
     return CredentialsBlockResource(
-        user_name="prefect-ecs-user", block_document_name="work-pool-aws-credentials"
+        user_name="syntask-ecs-user", block_document_name="work-pool-aws-credentials"
     )
 
 
 @pytest.fixture
 async def existing_credentials_block(
-    register_block_types, prefect_client: PrefectClient
+    register_block_types, syntask_client: SyntaskClient
 ):
-    block_type = await prefect_client.read_block_type_by_slug(slug="aws-credentials")
-    block_schema = await prefect_client.get_most_recent_block_schema_for_block_type(
+    block_type = await syntask_client.read_block_type_by_slug(slug="aws-credentials")
+    block_schema = await syntask_client.get_most_recent_block_schema_for_block_type(
         block_type_id=block_type.id
     )
     assert block_schema is not None
-    block_document = await prefect_client.create_block_document(
+    block_document = await syntask_client.create_block_document(
         block_document=BlockDocumentCreate(
             name="work-pool-aws-credentials",
             data={
@@ -289,7 +289,7 @@ async def existing_credentials_block(
 
     yield
 
-    await prefect_client.delete_block_document(block_document_id=block_document.id)
+    await syntask_client.delete_block_document(block_document_id=block_document.id)
 
 
 class TestCredentialsBlockResource:
@@ -305,7 +305,7 @@ class TestCredentialsBlockResource:
         assert not needs_provisioning
 
     @pytest.mark.usefixtures("existing_iam_user", "register_block_types")
-    async def test_provision(self, prefect_client, credentials_block_resource):
+    async def test_provision(self, syntask_client, credentials_block_resource):
         advance_mock = MagicMock()
 
         base_job_template = {
@@ -319,10 +319,10 @@ class TestCredentialsBlockResource:
         await credentials_block_resource.provision(
             base_job_template=base_job_template,
             advance=advance_mock,
-            client=prefect_client,
+            client=syntask_client,
         )
         # Check if the block document exists
-        block_document = await prefect_client.read_block_document_by_name(
+        block_document = await syntask_client.read_block_document_by_name(
             "work-pool-aws-credentials", "aws-credentials"
         )
 
@@ -336,7 +336,7 @@ class TestCredentialsBlockResource:
         advance_mock.assert_called()
 
     @pytest.mark.usefixtures("existing_credentials_block")
-    async def test_provision_preexisting_block(self, prefect_client):
+    async def test_provision_preexisting_block(self, syntask_client):
         advance_mock = MagicMock()
 
         base_job_template = {
@@ -347,15 +347,15 @@ class TestCredentialsBlockResource:
         }
 
         credentials_block_resource = CredentialsBlockResource(
-            user_name="prefect-ecs-user",
+            user_name="syntask-ecs-user",
             block_document_name="work-pool-aws-credentials",
         )
         await credentials_block_resource.provision(
             base_job_template=base_job_template,
             advance=advance_mock,
-            client=prefect_client,
+            client=syntask_client,
         )
-        block_document = await prefect_client.read_block_document_by_name(
+        block_document = await syntask_client.read_block_document_by_name(
             "work-pool-aws-credentials", "aws-credentials"
         )
 
@@ -431,12 +431,12 @@ class TestAuthenticationResource:
         actions = await authentication_resource.get_planned_actions()
 
         assert (
-            "Creating an IAM user for managing ECS tasks: [blue]prefect-ecs-user[/]"
+            "Creating an IAM user for managing ECS tasks: [blue]syntask-ecs-user[/]"
             in actions
         )
         assert (
             "Creating and attaching an IAM policy for managing ECS tasks:"
-            " [blue]prefect-ecs-policy[/]" in actions
+            " [blue]syntask-ecs-policy[/]" in actions
         )
         assert "Storing generated AWS credentials in a block" in actions
 
@@ -447,13 +447,13 @@ class TestAuthenticationResource:
         assert actions == [
             (
                 "Creating an IAM role assigned to ECS tasks:"
-                " [blue]PrefectEcsTaskExecutionRole[/]"
+                " [blue]SyntaskEcsTaskExecutionRole[/]"
             ),
             "Storing generated AWS credentials in a block",
         ]
 
     @pytest.mark.usefixtures("register_block_types")
-    async def test_provision(self, authentication_resource, prefect_client):
+    async def test_provision(self, authentication_resource, syntask_client):
         advance_mock = MagicMock()
         base_job_template = {
             "variables": {
@@ -466,7 +466,7 @@ class TestAuthenticationResource:
             base_job_template=base_job_template, advance=advance_mock
         )
 
-        block_document = await prefect_client.read_block_document_by_name(
+        block_document = await syntask_client.read_block_document_by_name(
             "work-pool-aws-credentials", "aws-credentials"
         )
 
@@ -482,17 +482,17 @@ class TestAuthenticationResource:
 
 @pytest.fixture
 def cluster_resource():
-    return ClusterResource(cluster_name="prefect-ecs-cluster")
+    return ClusterResource(cluster_name="syntask-ecs-cluster")
 
 
 @pytest.fixture
 def existing_cluster():
     ecs_client = boto3.client("ecs")
-    ecs_client.create_cluster(clusterName="prefect-ecs-cluster")
+    ecs_client.create_cluster(clusterName="syntask-ecs-cluster")
 
     yield
 
-    ecs_client.delete_cluster(cluster="prefect-ecs-cluster")
+    ecs_client.delete_cluster(cluster="syntask-ecs-cluster")
 
 
 class TestClusterResource:
@@ -528,8 +528,8 @@ class TestClusterResource:
         actions = await cluster_resource.get_planned_actions()
 
         assert actions == [
-            "Creating an ECS cluster for running Prefect flows:"
-            " [blue]prefect-ecs-cluster[/]"
+            "Creating an ECS cluster for running Syntask flows:"
+            " [blue]syntask-ecs-cluster[/]"
         ]
 
     async def test_provision(self, cluster_resource):
@@ -555,7 +555,7 @@ class TestClusterResource:
         )
 
         assert base_job_template["variables"]["properties"]["cluster"] == {
-            "default": "prefect-ecs-cluster",
+            "default": "syntask-ecs-cluster",
         }
 
         advance_mock.assert_called_once()
@@ -590,10 +590,10 @@ def existing_vpc(no_default_vpc):
 
 
 @pytest.fixture
-def existing_prefect_vpc(no_default_vpc):
+def existing_syntask_vpc(no_default_vpc):
     ec2 = boto3.resource("ec2")
     vpc = ec2.create_vpc(CidrBlock="172.31.0.0/16")
-    vpc.create_tags(Tags=[{"Key": "Name", "Value": "prefect-ecs-vpc"}])
+    vpc.create_tags(Tags=[{"Key": "Name", "Value": "syntask-ecs-vpc"}])
 
     yield
 
@@ -610,8 +610,8 @@ class TestVpcResource:
 
         assert count == 0
 
-    @pytest.mark.usefixtures("existing_prefect_vpc")
-    async def test_get_task_count_existing_prefect_vpc(self, vpc_resource):
+    @pytest.mark.usefixtures("existing_syntask_vpc")
+    async def test_get_task_count_existing_syntask_vpc(self, vpc_resource):
         count = await vpc_resource.get_task_count()
 
         assert count == 0
@@ -627,8 +627,8 @@ class TestVpcResource:
 
         assert not requires_provisioning
 
-    @pytest.mark.usefixtures("existing_prefect_vpc")
-    async def test_requires_provisioning_prefect_created_vpc_exists(self, vpc_resource):
+    @pytest.mark.usefixtures("existing_syntask_vpc")
+    async def test_requires_provisioning_syntask_created_vpc_exists(self, vpc_resource):
         requires_provisioning = await vpc_resource.requires_provisioning()
 
         assert not requires_provisioning
@@ -651,7 +651,7 @@ class TestVpcResource:
 
         assert actions == [
             "Creating a VPC with CIDR [blue]172.31.0.0/16[/] for running"
-            " ECS tasks: [blue]prefect-ecs-vpc[/]"
+            " ECS tasks: [blue]syntask-ecs-vpc[/]"
         ]
 
     async def test_get_planned_actions_does_not_require_provisioning(
@@ -685,7 +685,7 @@ class TestVpcResource:
         vpc = ec2.Vpc(base_job_template["variables"]["properties"]["vpc_id"]["default"])
         assert vpc.cidr_block == "172.31.0.0/16"
         assert vpc.tags[0]["Key"] == "Name"
-        assert vpc.tags[0]["Value"] == "prefect-ecs-vpc"
+        assert vpc.tags[0]["Value"] == "syntask-ecs-vpc"
 
         assert len(list(vpc.subnets.all())) == 3
         assert len(list(vpc.internet_gateways.all())) == 1
@@ -696,8 +696,8 @@ class TestVpcResource:
 
         advance_mock.assert_called()
 
-    @pytest.mark.usefixtures("existing_prefect_vpc")
-    async def test_provision_existing_prefect_vpc(self, vpc_resource):
+    @pytest.mark.usefixtures("existing_syntask_vpc")
+    async def test_provision_existing_syntask_vpc(self, vpc_resource):
         base_job_template = {
             "variables": {
                 "type": "object",
@@ -713,15 +713,15 @@ class TestVpcResource:
         )
 
         ec2 = boto3.resource("ec2")
-        prefect_vpc = None
+        syntask_vpc = None
         for vpc in ec2.vpcs.all():
-            if vpc.tags[0]["Value"] == "prefect-ecs-vpc":
-                prefect_vpc = vpc
+            if vpc.tags[0]["Value"] == "syntask-ecs-vpc":
+                syntask_vpc = vpc
                 break
 
         assert (
             base_job_template["variables"]["properties"]["vpc_id"]["default"]
-            == prefect_vpc.id
+            == syntask_vpc.id
         )
         advance_mock.assert_not_called()
 
@@ -776,12 +776,12 @@ class TestElasticContainerServicePushProvisioner:
 
     @pytest.fixture
     def mock_confirm(self):
-        with patch("prefect.infrastructure.provisioners.ecs.Confirm") as mock:
+        with patch("syntask.infrastructure.provisioners.ecs.Confirm") as mock:
             yield mock
 
     @pytest.fixture
     def mock_importlib(self):
-        with patch("prefect.infrastructure.provisioners.ecs.importlib") as mock:
+        with patch("syntask.infrastructure.provisioners.ecs.importlib") as mock:
             yield mock
 
     async def test__prompt_boto3_installation(
@@ -899,7 +899,7 @@ class TestElasticContainerServicePushProvisioner:
 
     @pytest.mark.usefixtures("register_block_types", "no_default_vpc")
     async def test_provision_interactive_with_default_names(
-        self, provisioner, mock_confirm, prefect_client, mock_run_process, capsys
+        self, provisioner, mock_confirm, syntask_client, mock_run_process, capsys
     ):
         provisioner.console.is_interactive = True
         mock_confirm.ask.side_effect = [
@@ -933,7 +933,7 @@ class TestElasticContainerServicePushProvisioner:
             in clusters
         )
 
-        block_document = await prefect_client.read_block_document_by_name(
+        block_document = await syntask_client.read_block_document_by_name(
             "test-work-pool-aws-credentials", "aws-credentials"
         )
         assert result["variables"]["properties"]["aws_credentials"] == {
@@ -950,7 +950,7 @@ class TestElasticContainerServicePushProvisioner:
 
         assert (
             result["variables"]["properties"]["cluster"]["default"]
-            == "prefect-ecs-cluster"
+            == "syntask-ecs-cluster"
         )
 
     @pytest.mark.usefixtures("register_block_types", "no_default_vpc")
@@ -958,7 +958,7 @@ class TestElasticContainerServicePushProvisioner:
         self,
         provisioner,
         mock_confirm,
-        prefect_client,
+        syntask_client,
         mock_run_process,
         capsys,
         monkeypatch,
@@ -990,7 +990,7 @@ class TestElasticContainerServicePushProvisioner:
         mock_prompt = MagicMock(side_effect=prompt_mocks)
 
         monkeypatch.setattr(
-            "prefect.infrastructure.provisioners.ecs.prompt", mock_prompt
+            "syntask.infrastructure.provisioners.ecs.prompt", mock_prompt
         )
 
         result = await provisioner.provision(
@@ -1019,7 +1019,7 @@ class TestElasticContainerServicePushProvisioner:
             in clusters
         )
 
-        block_document = await prefect_client.read_block_document_by_name(
+        block_document = await syntask_client.read_block_document_by_name(
             "custom-aws-credentials", "aws-credentials"
         )
         assert result["variables"]["properties"]["aws_credentials"] == {
@@ -1141,7 +1141,7 @@ def test_resolve_provisoner():
 
 @pytest.fixture
 def execution_role_resource():
-    return ExecutionRoleResource(execution_role_name="PrefectEcsTaskExecutionRole")
+    return ExecutionRoleResource(execution_role_name="SyntaskEcsTaskExecutionRole")
 
 
 class TestExecutionRoleResource:
@@ -1176,7 +1176,7 @@ class TestExecutionRoleResource:
 
         assert actions == [
             "Creating an IAM role assigned to ECS tasks:"
-            " [blue]PrefectEcsTaskExecutionRole[/]"
+            " [blue]SyntaskEcsTaskExecutionRole[/]"
         ]
 
     @pytest.mark.usefixtures("existing_execution_role")
@@ -1202,7 +1202,7 @@ class TestExecutionRoleResource:
             advance=advance_mock,
         )
 
-        assert arn == "arn:aws:iam::123456789012:role/PrefectEcsTaskExecutionRole"
+        assert arn == "arn:aws:iam::123456789012:role/SyntaskEcsTaskExecutionRole"
         advance_mock.assert_called_once()
 
     @pytest.mark.usefixtures("existing_execution_role")
@@ -1223,25 +1223,25 @@ class TestExecutionRoleResource:
             advance=advance_mock,
         )
 
-        assert arn == "arn:aws:iam::123456789012:role/PrefectEcsTaskExecutionRole"
+        assert arn == "arn:aws:iam::123456789012:role/SyntaskEcsTaskExecutionRole"
         advance_mock.assert_not_called()
 
 
 @pytest.fixture
 def container_repository_resource():
     return ContainerRepositoryResource(
-        work_pool_name="test-work-pool", repository_name="prefect-flows"
+        work_pool_name="test-work-pool", repository_name="syntask-flows"
     )
 
 
 @pytest.fixture
 def existing_ecr_repository():
     ecr_client = boto3.client("ecr")
-    ecr_client.create_repository(repositoryName="prefect-flows")
+    ecr_client.create_repository(repositoryName="syntask-flows")
 
     yield
 
-    ecr_client.delete_repository(repositoryName="prefect-flows")
+    ecr_client.delete_repository(repositoryName="syntask-flows")
 
 
 class TestContainerRepositoryResource:
@@ -1269,8 +1269,8 @@ class TestContainerRepositoryResource:
         self, container_repository_resource
     ):
         assert await container_repository_resource.get_planned_actions() == [
-            "Creating an ECR repository for storing Prefect images:"
-            " [blue]prefect-flows[/]"
+            "Creating an ECR repository for storing Syntask images:"
+            " [blue]syntask-flows[/]"
         ]
 
     @pytest.mark.usefixtures("existing_ecr_repository")
@@ -1291,8 +1291,8 @@ class TestContainerRepositoryResource:
         advance_mock.assert_called()
 
         ecr = boto3.client("ecr")
-        new_repository = ecr.describe_repositories(repositoryNames=["prefect-flows"])
-        assert new_repository["repositories"][0]["repositoryName"] == "prefect-flows"
+        new_repository = ecr.describe_repositories(repositoryNames=["syntask-flows"])
+        assert new_repository["repositories"][0]["repositoryName"] == "syntask-flows"
         mock_run_process.assert_called_once_with(
             "docker login -u AWS -p 123456789012-auth-token"
             " https://123456789012.dkr.ecr.us-east-1.amazonaws.com"
@@ -1325,13 +1325,13 @@ class TestContainerRepositoryResource:
 
             Your default Docker build namespace has been set to [blue]'123456789012.dkr.ecr.us-east-1.amazonaws.com'[/].
 
-            To build and push a Docker image to your newly created repository, use [blue]'prefect-flows'[/] as your image name:
+            To build and push a Docker image to your newly created repository, use [blue]'syntask-flows'[/] as your image name:
             """
         )
         assert container_repository_resource.next_steps[1].renderable.code == dedent(
             """\
-                from prefect import flow
-                from prefect.deployments import DeploymentImage
+                from syntask import flow
+                from syntask.deployments import DeploymentImage
 
 
                 @flow(log_prints=True)
@@ -1344,7 +1344,7 @@ class TestContainerRepositoryResource:
                         name="my-deployment",
                         work_pool_name="test-work-pool",
                         image=DeploymentImage(
-                            name="prefect-flows:latest",
+                            name="syntask-flows:latest",
                             platform="linux/amd64",
                         )
                     )"""

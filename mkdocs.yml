@@ -1,6 +1,6 @@
-site_name: Prefect Docs
-site_url: https://docs.prefect.io/
-repo_url: https://github.com/PrefectHQ/prefect
+site_name: Syntask Docs
+site_url: https://docs.syntask.io/
+repo_url: https://github.com/Synopkg/syntask
 edit_uri: edit/main/docs
 extra_css:
     - stylesheets/theme.css
@@ -55,7 +55,7 @@ theme:
     icon:
         repo: fontawesome/brands/github
         edit: material/pencil
-    logo: img/logos/prefect-logo-white.svg
+    logo: img/logos/syntask-logo-white.svg
     palette:
         - media: "(prefers-color-scheme: light)"
           accent: "#0225AC"
@@ -103,7 +103,7 @@ plugins:
 watch:
     - mkdocs.yml
     - mkdocs.insiders.yml
-    - src/prefect/
+    - src/syntask/
 
 extra:
     generator: false
@@ -128,27 +128,27 @@ extra:
                   data: 0
                   note: >-
                       Thank you for your feedback! Feel free to
-                      <a href="https://github.com/PrefectHQ/prefect/issues/new?assignees=&labels=docs%2Cstatus%3Atriage&projects=&template=4_docs_change.yaml"
+                      <a href="https://github.com/Synopkg/syntask/issues/new?assignees=&labels=docs%2Cstatus%3Atriage&projects=&template=4_docs_change.yaml"
                       target="_blank"> open an issue </a> with more detail.
     # social:
     #     - icon: fontawesome/brands/slack
-    #       link: https://www.prefect.io/slack/
+    #       link: https://www.syntask.io/slack/
     #     - icon: fontawesome/brands/discourse
-    #       link: https://discourse.prefect.io/
+    #       link: https://discourse.syntask.io/
     #     - icon: fontawesome/brands/youtube
-    #       link: https://www.youtube.com/c/PrefectIO/videos
+    #       link: https://www.youtube.com/c/SyntaskIO/videos
     #     - icon: fontawesome/regular/newspaper
-    #       link: https://prefect.io/guide/
+    #       link: https://syntask.io/guide/
     #     - icon: fontawesome/brands/twitter
-    #       link: https://twitter.com/PrefectIO
+    #       link: https://twitter.com/SyntaskIO
     #     - icon: fontawesome/brands/linkedin
-    #       link: https://www.linkedin.com/company/prefect/
+    #       link: https://www.linkedin.com/company/syntask/
     #     - icon: fontawesome/brands/github
-    #       link: https://github.com/PrefectHQ/prefect
+    #       link: https://github.com/Synopkg/syntask
     #     - icon: fontawesome/brands/docker
-    #       link: https://hub.docker.com/r/prefecthq/prefect/
+    #       link: https://hub.docker.com/r/syntaskhq/syntask/
     #     - icon: fontawesome/brands/python
-    #       link: https://pypi.org/project/prefect/
+    #       link: https://pypi.org/project/syntask/
 
 nav:
     - Getting Started:
@@ -171,11 +171,11 @@ nav:
                 - Global Concurrency Limits: guides/global-concurrency-limits.md
                 - Runtime Context: guides/runtime-context.md
                 - Variables: guides/variables.md
-                - Prefect Client: guides/using-the-client.md
+                - Syntask Client: guides/using-the-client.md
                 - Interactive Workflows: guides/creating-interactive-workflows.md
                 - Automations: guides/automations.md
                 - Webhooks: guides/webhooks.md
-                - Terraform Provider: https://registry.terraform.io/providers/PrefectHQ/prefect/latest/docs/guides/getting-started
+                - Terraform Provider: https://registry.terraform.io/providers/Synopkg/syntask/latest/docs/guides/getting-started
                 - CI/CD: guides/ci-cd.md
                 - Specifying Upstream Dependencies: guides/specifying-upstream-dependencies.md
                 - Recipes: recipes/recipes.md
@@ -190,7 +190,7 @@ nav:
                 - Managed Execution: guides/managed-execution.md
                 - Shell Commands: guides/cli-shell.md
           - Work Pools:
-                - Deploying Flows to Work pools and Workers: guides/prefect-deploy.md
+                - Deploying Flows to Work pools and Workers: guides/syntask-deploy.md
                 - Upgrade from Agents to Workers: guides/upgrade-guide-agents-to-workers.md
                 - Flow Code Storage: guides/deployment/storage-guide.md
                 - Kubernetes: guides/deployment/kubernetes.md
@@ -241,126 +241,126 @@ nav:
           - api-ref/index.md
           - Python SDK:
                 - api-ref/python/index.md
-                - "prefect.agent": api-ref/prefect/agent.md
-                - "prefect.artifacts": api-ref/prefect/artifacts.md
-                - "prefect.blocks":
-                      - "core": api-ref/prefect/blocks/core.md
-                      - "fields": api-ref/prefect/blocks/fields.md
-                      - "kubernetes": api-ref/prefect/blocks/kubernetes.md
-                      - "notifications": api-ref/prefect/blocks/notifications.md
-                      - "system": api-ref/prefect/blocks/system.md
-                      - "webhook": api-ref/prefect/blocks/webhook.md
-                - "prefect.client":
-                      - "base": api-ref/prefect/client/base.md
-                      - "cloud": api-ref/prefect/client/cloud.md
-                      - "orchestration": api-ref/prefect/client/orchestration.md
-                      - "schemas": api-ref/prefect/client/schemas.md
-                      - "utilities": api-ref/prefect/client/utilities.md
-                - "prefect.cli":
-                      - "agent": api-ref/prefect/cli/agent.md
-                      - "artifact": api-ref/prefect/cli/artifact.md
-                      - "block": api-ref/prefect/cli/block.md
-                      - "cloud": api-ref/prefect/cli/cloud.md
-                      - "cloud": api-ref/prefect/cli/cloud.webhook.md
-                      - "concurrency_limit": api-ref/prefect/cli/concurrency_limit.md
-                      - "config": api-ref/prefect/cli/config.md
-                      - "deploy": api-ref/prefect/cli/deploy.md
-                      - "deployment": api-ref/prefect/cli/deployment.md
-                      - "dev": api-ref/prefect/cli/dev.md
-                      - "flow": api-ref/prefect/cli/flow.md
-                      - "flow_run": api-ref/prefect/cli/flow_run.md
-                      - "kubernetes": api-ref/prefect/cli/kubernetes.md
-                      - "profile": api-ref/prefect/cli/profile.md
-                      - "project": api-ref/prefect/cli/project.md
-                      - "root": api-ref/prefect/cli/root.md
-                      - "server": api-ref/prefect/cli/server.md
-                      - "shell": api-ref/prefect/cli/shell.md
-                      - "variable": api-ref/prefect/cli/variable.md
-                      - "work_pool": api-ref/prefect/cli/work_pool.md
-                      - "work_queue": api-ref/prefect/cli/work_queue.md
-                      - "worker": api-ref/prefect/cli/worker.md
-                - "prefect.context": api-ref/prefect/context.md
-                - "prefect.concurrency":
-                      - "asyncio": api-ref/prefect/concurrency/asyncio.md
-                      - "common": api-ref/prefect/concurrency/common.md
-                      - "events": api-ref/prefect/concurrency/events.md
-                      - "services": api-ref/prefect/concurrency/services.md
-                      - "sync": api-ref/prefect/concurrency/sync.md
-                - "prefect.deployments":
-                      - "deployments": api-ref/prefect/deployments/deployments.md
-                      - "base": api-ref/prefect/deployments/base.md
-                      - "runner": api-ref/prefect/deployments/runner.md
-                      - "schedules": api-ref/prefect/deployments/schedules.md
-                      - "steps.core": api-ref/prefect/deployments/steps/core.md
-                      - "steps.pull": api-ref/prefect/deployments/steps/pull.md
-                      - "steps.utility": api-ref/prefect/deployments/steps/utility.md
-                - "prefect.engine": api-ref/prefect/engine.md
-                - "prefect.exceptions": api-ref/prefect/exceptions.md
-                - "prefect.events": api-ref/prefect/events.md
-                - "prefect.filesystems": api-ref/prefect/filesystems.md
-                - "prefect.flows": api-ref/prefect/flows.md
-                - "prefect.flow_runs": api-ref/prefect/flow_runs.md
-                - "prefect.futures": api-ref/prefect/futures.md
-                - "prefect.infrastructure": api-ref/prefect/infrastructure.md
-                - "prefect.input":
-                      - "actions": api-ref/prefect/input/actions.md
-                      - "run_input": api-ref/prefect/input/run_input.md
-                - "prefect.logging":
-                      - "configuration": api-ref/prefect/logging/configuration.md
-                      - "formatters": api-ref/prefect/logging/formatters.md
-                      - "handlers": api-ref/prefect/logging/handlers.md
-                      - "highlighters": api-ref/prefect/logging/highlighters.md
-                      - "loggers": api-ref/prefect/logging/loggers.md
-                - "prefect.manifests": api-ref/prefect/manifests.md
-                - "prefect.runner":
-                      - "runner": api-ref/prefect/runner/runner.md
-                      - "server": api-ref/prefect/runner/server.md
-                      - "storage": api-ref/prefect/runner/storage.md
-                      - "utils": api-ref/prefect/runner/utils.md
-                - "prefect.runtime":
-                      - "flow_run": api-ref/prefect/runtime/flow_run.md
-                      - "deployment": api-ref/prefect/runtime/deployment.md
-                      - "task_run": api-ref/prefect/runtime/task_run.md
-                - "prefect.serializers": api-ref/prefect/serializers.md
-                - "prefect.settings": api-ref/prefect/settings.md
-                - "prefect.software": api-ref/prefect/software.md
-                - "prefect.states": api-ref/prefect/states.md
-                - "prefect.task_runners": api-ref/prefect/task-runners.md
-                - "prefect.tasks": api-ref/prefect/tasks.md
-                - "prefect.testing": api-ref/prefect/testing.md
-                - "prefect.utilities":
-                      - "annotations": api-ref/prefect/utilities/annotations.md
-                      - "asyncutils": api-ref/prefect/utilities/asyncutils.md
-                      - "callables": api-ref/prefect/utilities/callables.md
-                      - "collections": api-ref/prefect/utilities/collections.md
-                      - "compat": api-ref/prefect/utilities/compat.md
-                      - "context": api-ref/prefect/utilities/context.md
-                      - "dispatch": api-ref/prefect/utilities/dispatch.md
-                      - "dockerutils": api-ref/prefect/utilities/dockerutils.md
-                      - "filesystem": api-ref/prefect/utilities/filesystem.md
-                      - "hashing": api-ref/prefect/utilities/hashing.md
-                      - "importtools": api-ref/prefect/utilities/importtools.md
-                      - "math": api-ref/prefect/utilities/math.md
-                      - "names": api-ref/prefect/utilities/names.md
-                      - "processutils": api-ref/prefect/utilities/processutils.md
-                      - "pydantic": api-ref/prefect/utilities/pydantic.md
-                      - "render_swagger": api-ref/prefect/utilities/render_swagger.md
-                      - "services": api-ref/prefect/utilities/services.md
-                      - "slugify": api-ref/prefect/utilities/slugify.md
-                      - "templating": api-ref/prefect/utilities/templating.md
-                      - "text": api-ref/prefect/utilities/text.md
-                      - "visualization": api-ref/prefect/utilities/visualization.md
-                - "prefect.variables": api-ref/prefect/variables.md
-                - "prefect.workers":
-                      - "base": api-ref/prefect/workers/base.md
-                      - "block": api-ref/prefect/workers/block.md
-                      - "process": api-ref/prefect/workers/process.md
-                      - "server": api-ref/prefect/workers/server.md
-                      - "utilities": api-ref/prefect/workers/utilities.md
+                - "syntask.agent": api-ref/syntask/agent.md
+                - "syntask.artifacts": api-ref/syntask/artifacts.md
+                - "syntask.blocks":
+                      - "core": api-ref/syntask/blocks/core.md
+                      - "fields": api-ref/syntask/blocks/fields.md
+                      - "kubernetes": api-ref/syntask/blocks/kubernetes.md
+                      - "notifications": api-ref/syntask/blocks/notifications.md
+                      - "system": api-ref/syntask/blocks/system.md
+                      - "webhook": api-ref/syntask/blocks/webhook.md
+                - "syntask.client":
+                      - "base": api-ref/syntask/client/base.md
+                      - "cloud": api-ref/syntask/client/cloud.md
+                      - "orchestration": api-ref/syntask/client/orchestration.md
+                      - "schemas": api-ref/syntask/client/schemas.md
+                      - "utilities": api-ref/syntask/client/utilities.md
+                - "syntask.cli":
+                      - "agent": api-ref/syntask/cli/agent.md
+                      - "artifact": api-ref/syntask/cli/artifact.md
+                      - "block": api-ref/syntask/cli/block.md
+                      - "cloud": api-ref/syntask/cli/cloud.md
+                      - "cloud": api-ref/syntask/cli/cloud.webhook.md
+                      - "concurrency_limit": api-ref/syntask/cli/concurrency_limit.md
+                      - "config": api-ref/syntask/cli/config.md
+                      - "deploy": api-ref/syntask/cli/deploy.md
+                      - "deployment": api-ref/syntask/cli/deployment.md
+                      - "dev": api-ref/syntask/cli/dev.md
+                      - "flow": api-ref/syntask/cli/flow.md
+                      - "flow_run": api-ref/syntask/cli/flow_run.md
+                      - "kubernetes": api-ref/syntask/cli/kubernetes.md
+                      - "profile": api-ref/syntask/cli/profile.md
+                      - "project": api-ref/syntask/cli/project.md
+                      - "root": api-ref/syntask/cli/root.md
+                      - "server": api-ref/syntask/cli/server.md
+                      - "shell": api-ref/syntask/cli/shell.md
+                      - "variable": api-ref/syntask/cli/variable.md
+                      - "work_pool": api-ref/syntask/cli/work_pool.md
+                      - "work_queue": api-ref/syntask/cli/work_queue.md
+                      - "worker": api-ref/syntask/cli/worker.md
+                - "syntask.context": api-ref/syntask/context.md
+                - "syntask.concurrency":
+                      - "asyncio": api-ref/syntask/concurrency/asyncio.md
+                      - "common": api-ref/syntask/concurrency/common.md
+                      - "events": api-ref/syntask/concurrency/events.md
+                      - "services": api-ref/syntask/concurrency/services.md
+                      - "sync": api-ref/syntask/concurrency/sync.md
+                - "syntask.deployments":
+                      - "deployments": api-ref/syntask/deployments/deployments.md
+                      - "base": api-ref/syntask/deployments/base.md
+                      - "runner": api-ref/syntask/deployments/runner.md
+                      - "schedules": api-ref/syntask/deployments/schedules.md
+                      - "steps.core": api-ref/syntask/deployments/steps/core.md
+                      - "steps.pull": api-ref/syntask/deployments/steps/pull.md
+                      - "steps.utility": api-ref/syntask/deployments/steps/utility.md
+                - "syntask.engine": api-ref/syntask/engine.md
+                - "syntask.exceptions": api-ref/syntask/exceptions.md
+                - "syntask.events": api-ref/syntask/events.md
+                - "syntask.filesystems": api-ref/syntask/filesystems.md
+                - "syntask.flows": api-ref/syntask/flows.md
+                - "syntask.flow_runs": api-ref/syntask/flow_runs.md
+                - "syntask.futures": api-ref/syntask/futures.md
+                - "syntask.infrastructure": api-ref/syntask/infrastructure.md
+                - "syntask.input":
+                      - "actions": api-ref/syntask/input/actions.md
+                      - "run_input": api-ref/syntask/input/run_input.md
+                - "syntask.logging":
+                      - "configuration": api-ref/syntask/logging/configuration.md
+                      - "formatters": api-ref/syntask/logging/formatters.md
+                      - "handlers": api-ref/syntask/logging/handlers.md
+                      - "highlighters": api-ref/syntask/logging/highlighters.md
+                      - "loggers": api-ref/syntask/logging/loggers.md
+                - "syntask.manifests": api-ref/syntask/manifests.md
+                - "syntask.runner":
+                      - "runner": api-ref/syntask/runner/runner.md
+                      - "server": api-ref/syntask/runner/server.md
+                      - "storage": api-ref/syntask/runner/storage.md
+                      - "utils": api-ref/syntask/runner/utils.md
+                - "syntask.runtime":
+                      - "flow_run": api-ref/syntask/runtime/flow_run.md
+                      - "deployment": api-ref/syntask/runtime/deployment.md
+                      - "task_run": api-ref/syntask/runtime/task_run.md
+                - "syntask.serializers": api-ref/syntask/serializers.md
+                - "syntask.settings": api-ref/syntask/settings.md
+                - "syntask.software": api-ref/syntask/software.md
+                - "syntask.states": api-ref/syntask/states.md
+                - "syntask.task_runners": api-ref/syntask/task-runners.md
+                - "syntask.tasks": api-ref/syntask/tasks.md
+                - "syntask.testing": api-ref/syntask/testing.md
+                - "syntask.utilities":
+                      - "annotations": api-ref/syntask/utilities/annotations.md
+                      - "asyncutils": api-ref/syntask/utilities/asyncutils.md
+                      - "callables": api-ref/syntask/utilities/callables.md
+                      - "collections": api-ref/syntask/utilities/collections.md
+                      - "compat": api-ref/syntask/utilities/compat.md
+                      - "context": api-ref/syntask/utilities/context.md
+                      - "dispatch": api-ref/syntask/utilities/dispatch.md
+                      - "dockerutils": api-ref/syntask/utilities/dockerutils.md
+                      - "filesystem": api-ref/syntask/utilities/filesystem.md
+                      - "hashing": api-ref/syntask/utilities/hashing.md
+                      - "importtools": api-ref/syntask/utilities/importtools.md
+                      - "math": api-ref/syntask/utilities/math.md
+                      - "names": api-ref/syntask/utilities/names.md
+                      - "processutils": api-ref/syntask/utilities/processutils.md
+                      - "pydantic": api-ref/syntask/utilities/pydantic.md
+                      - "render_swagger": api-ref/syntask/utilities/render_swagger.md
+                      - "services": api-ref/syntask/utilities/services.md
+                      - "slugify": api-ref/syntask/utilities/slugify.md
+                      - "templating": api-ref/syntask/utilities/templating.md
+                      - "text": api-ref/syntask/utilities/text.md
+                      - "visualization": api-ref/syntask/utilities/visualization.md
+                - "syntask.variables": api-ref/syntask/variables.md
+                - "syntask.workers":
+                      - "base": api-ref/syntask/workers/base.md
+                      - "block": api-ref/syntask/workers/block.md
+                      - "process": api-ref/syntask/workers/process.md
+                      - "server": api-ref/syntask/workers/server.md
+                      - "utilities": api-ref/syntask/workers/utilities.md
           - REST API:
                 - api-ref/rest-api/index.md
-                - Prefect Cloud REST API Reference: https://app.prefect.cloud/api/docs
-                - Prefect Server REST API Reference: api-ref/rest-api-reference.md
+                - Syntask Cloud REST API Reference: https://app.syntask.cloud/api/docs
+                - Syntask Server REST API Reference: api-ref/rest-api-reference.md
           - Server API:
                 - api-ref/server/index.md
                 - "API":

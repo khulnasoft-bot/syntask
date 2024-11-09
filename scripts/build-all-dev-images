@@ -3,7 +3,7 @@ set -e
 
 # A script that builds our supported dev images locally to inspect their versions
 
-expected_prefect=`prefect --version`
+expected_syntask=`syntask --version`
 
 for python in 3.8 3.9 3.10 3.11; do
     for flavor in '' 'conda'; do
@@ -17,17 +17,17 @@ for python in 3.8 3.9 3.10 3.11; do
         fi
 
         echo "--- building $python $flavor_arg ---"
-        prefect dev build-image --python-version=$python $flavor_arg
+        syntask dev build-image --python-version=$python $flavor_arg
 
         echo
         echo "---- expecting Python $python$flavor_desc ----"
-        docker run --rm prefecthq/prefect-dev:sha-$(git rev-parse --short=7 HEAD)-python$python$flavor_tag python --version
-        echo "---- expecting Prefect $expected_prefect ----"
-        docker run --rm prefecthq/prefect-dev:sha-$(git rev-parse --short=7 HEAD)-python$python$flavor_tag prefect --version
+        docker run --rm syntaskhq/syntask-dev:sha-$(git rev-parse --short=7 HEAD)-python$python$flavor_tag python --version
+        echo "---- expecting Syntask $expected_syntask ----"
+        docker run --rm syntaskhq/syntask-dev:sha-$(git rev-parse --short=7 HEAD)-python$python$flavor_tag syntask --version
 
         if [ "$flavor" = "conda" ]; then
             echo "---- expecting Conda ----"
-            docker run --rm prefecthq/prefect-dev:sha-$(git rev-parse --short=7 HEAD)-python$python$flavor_tag conda --version
+            docker run --rm syntaskhq/syntask-dev:sha-$(git rev-parse --short=7 HEAD)-python$python$flavor_tag conda --version
         fi
 
         echo

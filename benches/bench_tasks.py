@@ -1,7 +1,7 @@
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 
-from prefect import flow, task
+from syntask import flow, task
 
 
 def noop_function():

@@ -7,10 +7,10 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import actions, filters
-from prefect.server.events.models import automations
-from prefect.server.events.schemas.automations import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import actions, filters
+from syntask.server.events.models import automations
+from syntask.server.events.schemas.automations import (
     Automation,
     AutomationCore,
     AutomationCreate,
@@ -20,7 +20,7 @@ from prefect.server.events.schemas.automations import (
     EventTrigger,
     Posture,
 )
-from prefect.server.events.schemas.events import ResourceSpecification
+from syntask.server.events.schemas.events import ResourceSpecification
 
 
 async def test_reading_automations_by_workspace_empty(
@@ -132,7 +132,7 @@ async def test_creating_automation(automations_session: AsyncSession):
         trigger=EventTrigger(
             expect={"things.happened"},
             match=ResourceSpecification.parse_obj(
-                {"prefect.resource.id": "some-resource"}
+                {"syntask.resource.id": "some-resource"}
             ),
             posture=Posture.Reactive,
             threshold=42,
@@ -170,7 +170,7 @@ async def test_creating_automation(automations_session: AsyncSession):
 
 @pytest.fixture
 async def existing_automation(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     automations_session: AsyncSession,
 ) -> Automation:
     automation = db.Automation(
@@ -179,7 +179,7 @@ async def existing_automation(
         trigger=EventTrigger(
             expect=("things.happened",),
             match=ResourceSpecification.parse_obj(
-                {"prefect.resource.id": "some-resource"}
+                {"syntask.resource.id": "some-resource"}
             ),
             posture=Posture.Reactive,
             threshold=42,
@@ -234,7 +234,7 @@ async def test_updating_automation_that_exists(
     # these should remain the same
     assert reloaded_automation.name == "a automation that is already here, thank you"
     assert reloaded_automation.trigger.match == ResourceSpecification.parse_obj(
-        {"prefect.resource.id": "some-resource"}
+        {"syntask.resource.id": "some-resource"}
     )
     assert reloaded_automation.trigger.posture == Posture.Reactive
 
@@ -269,7 +269,7 @@ async def test_partially_updating_automation_that_exists(
     # these should remain the same
     assert reloaded_automation.name == "a automation that is already here, thank you"
     assert reloaded_automation.trigger.match == ResourceSpecification.parse_obj(
-        {"prefect.resource.id": "some-resource"}
+        {"syntask.resource.id": "some-resource"}
     )
     assert reloaded_automation.trigger.posture == Posture.Reactive
 
@@ -284,7 +284,7 @@ async def test_updating_automation_that_does_not_exist(
         trigger=EventTrigger(
             expect=("things.happened",),
             match=ResourceSpecification.parse_obj(
-                {"prefect.resource.id": "some-resource"}
+                {"syntask.resource.id": "some-resource"}
             ),
             posture=Posture.Reactive,
             threshold=42,
@@ -316,7 +316,7 @@ async def test_updating_automation_with_create_schema_is_not_allowed(
         trigger=EventTrigger(
             expect=("things.happened",),
             match=ResourceSpecification.parse_obj(
-                {"prefect.resource.id": "some-resource"}
+                {"syntask.resource.id": "some-resource"}
             ),
             posture=Posture.Reactive,
             threshold=42,
@@ -370,7 +370,7 @@ async def test_reading_automations_from_related_resource(
     automations_session: AsyncSession,
     some_workspace_automations: Sequence[Automation],
 ):
-    deployment_resource_id = f"prefect.deployment.{uuid4()}"
+    deployment_resource_id = f"syntask.deployment.{uuid4()}"
 
     for automation in some_workspace_automations[:3]:
         await automations.relate_automation_to_resource(
@@ -394,7 +394,7 @@ async def test_reading_automations_from_related_resource_owned_by(
     automations_session: AsyncSession,
     some_workspace_automations: Sequence[Automation],
 ):
-    deployment_resource_id = f"prefect.deployment.{uuid4()}"
+    deployment_resource_id = f"syntask.deployment.{uuid4()}"
 
     await automations.relate_automation_to_resource(
         session=automations_session,
@@ -422,11 +422,11 @@ async def test_reading_automations_from_related_resource_owned_by(
 
 
 async def test_reading_automations_from_related_resource_filter_created_before(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     automations_session: AsyncSession,
     some_workspace_automations: List[Automation],
 ):
-    deployment_resource_id = f"prefect.deployment.{uuid4()}"
+    deployment_resource_id = f"syntask.deployment.{uuid4()}"
 
     for automation in some_workspace_automations[:3]:
         await automations.relate_automation_to_resource(
@@ -460,7 +460,7 @@ async def test_deleting_automations_owned_by_resource(
     automations_session: AsyncSession,
     some_workspace_automations: Sequence[Automation],
 ):
-    deployment_resource_id = f"prefect.deployment.{uuid4()}"
+    deployment_resource_id = f"syntask.deployment.{uuid4()}"
 
     for automation in some_workspace_automations[:3]:
         await automations.relate_automation_to_resource(
@@ -491,7 +491,7 @@ async def test_deleting_automations_owned_by_resource(
 def uninteresting_trigger() -> EventTrigger:
     return EventTrigger(
         expect={"things.happened"},
-        match=ResourceSpecification.parse_obj({"prefect.resource.id": "some-resource"}),
+        match=ResourceSpecification.parse_obj({"syntask.resource.id": "some-resource"}),
         posture=Posture.Reactive,
         threshold=42,
         within=timedelta(seconds=42),
@@ -527,13 +527,13 @@ async def test_creating_automation_creates_relations_to_resources(
 
     related_to_first = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        resource_id="syntask.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     )
     assert related_to_first == [new_automation]
 
     related_to_second = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        resource_id="syntask.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     )
     assert related_to_second == [new_automation]
 
@@ -542,7 +542,7 @@ async def test_creating_automation_skips_relating_inferred_deployments(
     automations_session: AsyncSession,
     uninteresting_trigger: EventTrigger,
 ):
-    """Regression test where we were creating links to prefect.deployment.None resources
+    """Regression test where we were creating links to syntask.deployment.None resources
     when using inferred deployments"""
     # It's not important whether these _actually_ exist
     first_deployment = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
@@ -568,14 +568,14 @@ async def test_creating_automation_skips_relating_inferred_deployments(
 
     related_to_first = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        resource_id="syntask.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     )
     assert related_to_first == [new_automation]
 
     related_to_none = await automations.read_automations_related_to_resource(
         session=automations_session,
-        # This was the bug, we'd create links to "prefect.deployment.None"
-        resource_id="prefect.deployment.None",
+        # This was the bug, we'd create links to "syntask.deployment.None"
+        resource_id="syntask.deployment.None",
     )
     assert related_to_none == []
 
@@ -608,7 +608,7 @@ async def existing_related_automation(
     await automations.relate_automation_to_resource(
         session=automations_session,
         automation_id=automation.id,
-        resource_id="prefect.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
+        resource_id="syntask.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
         owned_by_resource=True,
     )
 
@@ -644,25 +644,25 @@ async def test_updating_automation_updates_relations_to_resources(
     # The owner is always retained
     related_to_owner = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
+        resource_id="syntask.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
     )
     assert related_to_owner == [existing_related_automation]
 
     related_to_first = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        resource_id="syntask.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     )
     assert related_to_first == [existing_related_automation]
 
     related_to_second = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        resource_id="syntask.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     )
     assert related_to_second == []
 
     related_to_third = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.cccccccc-cccc-cccc-cccc-cccccccccccc",
+        resource_id="syntask.deployment.cccccccc-cccc-cccc-cccc-cccccccccccc",
     )
     assert related_to_third == [existing_related_automation]
 
@@ -699,25 +699,25 @@ async def test_updating_automation_updates_relations_to_resources_with_matching_
     # The owner is always retained
     related_to_owner = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
+        resource_id="syntask.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
     )
     assert related_to_owner == [existing_related_automation]
 
     related_to_first = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        resource_id="syntask.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     )
     assert related_to_first == [existing_related_automation]
 
     related_to_second = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        resource_id="syntask.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     )
     assert related_to_second == []
 
     related_to_third = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.cccccccc-cccc-cccc-cccc-cccccccccccc",
+        resource_id="syntask.deployment.cccccccc-cccc-cccc-cccc-cccccccccccc",
     )
     assert related_to_third == [existing_related_automation]
 
@@ -737,19 +737,19 @@ async def test_deleting_automation_updates_relations_to_resources(
     # The owner relation is removed because the automation itself is gone
     related_to_owner = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
+        resource_id="syntask.deployment.ffffffff-ffff-ffff-ffff-ffffffffffff",
     )
     assert related_to_owner == []
 
     related_to_first = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        resource_id="syntask.deployment.aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     )
     assert related_to_first == []
 
     related_to_second = await automations.read_automations_related_to_resource(
         session=automations_session,
-        resource_id="prefect.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        resource_id="syntask.deployment.bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     )
     assert related_to_second == []
 
@@ -835,7 +835,7 @@ async def test_disabling_automation_that_exists(
     # these should remain the same
     assert reloaded_automation.name == "a automation that is already here, thank you"
     assert reloaded_automation.trigger.match == ResourceSpecification.parse_obj(
-        {"prefect.resource.id": "some-resource"}
+        {"syntask.resource.id": "some-resource"}
     )
     assert reloaded_automation.trigger.posture == Posture.Reactive
 

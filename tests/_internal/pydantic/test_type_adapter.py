@@ -3,8 +3,8 @@ from typing import Any, List, Type, TypeVar, Union
 import pytest
 from pydantic import BaseModel
 
-from prefect._internal.pydantic import validate_python
-from prefect._internal.pydantic._flags import EXPECT_DEPRECATION_WARNINGS
+from syntask._internal.pydantic import validate_python
+from syntask._internal.pydantic._flags import EXPECT_DEPRECATION_WARNINGS
 
 T = TypeVar("T")
 

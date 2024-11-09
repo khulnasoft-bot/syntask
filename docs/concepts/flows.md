@@ -1,5 +1,5 @@
 ---
-description: Prefect flows are the foundational containers for workflow logic.
+description: Syntask flows are the foundational containers for workflow logic.
 tags:
     - flows
     - subflows
@@ -14,13 +14,13 @@ search:
 
 # Flows
 
-Flows are the most central Prefect object. A flow is a container for workflow logic as-code and allows users to configure how their workflows behave.
+Flows are the most central Syntask object. A flow is a container for workflow logic as-code and allows users to configure how their workflows behave.
 Flows are defined as Python functions, and any Python function is eligible to be a flow.
 
 ## Flows overview
 
 Flows can be thought of as special types of functions. They can take inputs, perform work, and return an output.
-In fact, you can turn any function into a Prefect flow by adding the `@flow` decorator.
+In fact, you can turn any function into a Syntask flow by adding the `@flow` decorator.
 When a function becomes a flow, its behavior changes, giving it the following advantages:
 
 - Every invocation of this function is tracked and all state transitions are reported to the API, allowing observation of flow execution.
@@ -28,9 +28,9 @@ When a function becomes a flow, its behavior changes, giving it the following ad
 - Retries can be performed on failure.
 - Timeouts can be enforced to prevent unintentional, long-running workflows.
 
-Flows also take advantage of automatic Prefect logging to capture details about [flow runs](#flow-runs) such as run time and final state.
+Flows also take advantage of automatic Syntask logging to capture details about [flow runs](#flow-runs) such as run time and final state.
 
-Flows can include calls to [tasks](/concepts/tasks/) as well as to other flows, which Prefect calls ["subflows"](#composing-flows) in this context.
+Flows can include calls to [tasks](/concepts/tasks/) as well as to other flows, which Syntask calls ["subflows"](#composing-flows) in this context.
 Flows may be defined within modules and imported for use as subflows in your flow definitions.
 
 [Deployments](/concepts/deployments/) elevate individual workflows from functions that you call manually to API-managed entities.
@@ -48,21 +48,21 @@ For example, by running a Python script or importing the flow into an interactiv
 You can also create a flow run by:
 
 - Using external schedulers such as `cron` to invoke a flow function
-- Creating a [deployment](/concepts/deployments/) on Prefect Cloud or a locally run Prefect server.
-- Creating a flow run for the deployment via a schedule, the Prefect UI, or the Prefect API.
+- Creating a [deployment](/concepts/deployments/) on Syntask Cloud or a locally run Syntask server.
+- Creating a flow run for the deployment via a schedule, the Syntask UI, or the Syntask API.
 
-However you run the flow, the Prefect API monitors the flow run, capturing flow run state for observability.
+However you run the flow, the Syntask API monitors the flow run, capturing flow run state for observability.
 
-When you run a flow that contains tasks or additional flows, Prefect will track the relationship of each child run to the parent flow run.
+When you run a flow that contains tasks or additional flows, Syntask will track the relationship of each child run to the parent flow run.
 
-![Prefect UI](/img/ui/timeline-flows.png)
+![Syntask UI](/img/ui/timeline-flows.png)
 
 ## Writing flows
 
-The [`@flow`][prefect.flows.flow] decorator is used to designate a flow:
+The [`@flow`][syntask.flows.flow] decorator is used to designate a flow:
 
 ```python hl_lines="3"
-from prefect import flow
+from syntask import flow
 
 @flow
 def my_flow():
@@ -72,7 +72,7 @@ def my_flow():
 There are no rigid rules for what code you include within a flow definition - all valid Python is acceptable.
 
 Flows are uniquely identified by name. You can provide a `name` parameter value for the flow.
-If you don't provide a name, Prefect uses the flow function name.
+If you don't provide a name, Syntask uses the flow function name.
 
 ```python hl_lines="1"
 @flow(name="My Flow")
@@ -80,10 +80,10 @@ def my_flow():
     return
 ```
 
-Flows can call tasks to allow Prefect to orchestrate and track more granular units of work:
+Flows can call tasks to allow Syntask to orchestrate and track more granular units of work:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def print_hello(name):
@@ -95,18 +95,18 @@ def hello_world(name="world"):
 ```
 
 !!! tip "Flows and tasks"
-    There's nothing stopping you from putting all of your code in a single flow function &mdash; Prefect will happily run it!
+    There's nothing stopping you from putting all of your code in a single flow function &mdash; Syntask will happily run it!
 
-    However, organizing your workflow code into smaller flow and task units lets you take advantage of Prefect features like retries, more granular visibility into runtime state, the ability to determine final state regardless of individual task state, and more.
+    However, organizing your workflow code into smaller flow and task units lets you take advantage of Syntask features like retries, more granular visibility into runtime state, the ability to determine final state regardless of individual task state, and more.
 
     In addition, if you put all of your workflow logic in a single flow function and any line of code fails, the entire flow will fail and must be retried from the beginning. 
     This can be avoided by breaking up the code into multiple tasks.
 
     You may call any number of other tasks, subflows, and even regular Python functions within your flow. 
-    You can pass parameters to your flow function that will be used elsewhere in the workflow, and Prefect will report on the progress and [final state](#final-state-determination) of any invocation.
+    You can pass parameters to your flow function that will be used elsewhere in the workflow, and Syntask will report on the progress and [final state](#final-state-determination) of any invocation.
 
-    Prefect encourages "small tasks" &mdash; each one should represent a single logical step of your workflow. 
-    This allows Prefect to better contain task failures.
+    Syntask encourages "small tasks" &mdash; each one should represent a single logical step of your workflow. 
+    This allows Syntask to better contain task failures.
 
 ## Flow settings
 
@@ -127,8 +127,8 @@ Flows allow a great deal of configuration by passing arguments to the decorator.
 For example, you can provide a `name` value for the flow. Here we've also used the optional `description` argument and specified a non-default task runner.
 
 ```python
-from prefect import flow
-from prefect.task_runners import SequentialTaskRunner
+from syntask import flow
+from syntask.task_runners import SequentialTaskRunner
 
 @flow(name="My Flow",
       description="My flow using SequentialTaskRunner",
@@ -153,7 +153,7 @@ The name will be formatted using Python's standard string formatting syntax as c
 
 ```python
 import datetime
-from prefect import flow
+from syntask import flow
 
 @flow(flow_run_name="{name}-on-{date:%A}")
 def my_flow(name: str, date: datetime.datetime):
@@ -167,7 +167,7 @@ Additionally this setting also accepts a function that returns a string for the 
 
 ```python
 import datetime
-from prefect import flow
+from syntask import flow
 
 def generate_flow_run_name():
     date = datetime.datetime.now(datetime.timezone.utc)
@@ -183,11 +183,11 @@ if __name__ == "__main__":
     my_flow(name="marvin")
 ```
 
-If you need access to information about the flow, use the `prefect.runtime` module. For example:
+If you need access to information about the flow, use the `syntask.runtime` module. For example:
 
 ```python
-from prefect import flow
-from prefect.runtime import flow_run
+from syntask import flow
+from syntask.runtime import flow_run
 
 def generate_flow_run_name():
     flow_name = flow_run.flow_name
@@ -216,7 +216,7 @@ If set to `False`, no validation will be performed on flow parameters.
 The simplest workflow is just a `@flow` function that does all the work of the workflow.
 
 ```python
-from prefect import flow
+from syntask import flow
 
 @flow(name="Hello Flow")
 def hello_world(name="world"):
@@ -231,7 +231,7 @@ When you run this flow, you'll see output like the following:
 <div class="terminal">
 ```bash
 $ python hello.py
-15:11:23.594 | INFO    | prefect.engine - Created flow run 'benevolent-donkey' for flow 'hello-world'
+15:11:23.594 | INFO    | syntask.engine - Created flow run 'benevolent-donkey' for flow 'hello-world'
 15:11:23.594 | INFO    | Flow run 'benevolent-donkey' - Using task runner 'ConcurrentTaskRunner'
 Hello Marvin!
 15:11:24.447 | INFO    | Flow run 'benevolent-donkey' - Finished in state Completed()
@@ -241,7 +241,7 @@ Hello Marvin!
 A better practice is to create `@task` functions that do the specific work of your flow, and use your `@flow` function as the conductor that orchestrates the flow of your application:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task(name="Print Hello")
 def print_hello(name):
@@ -262,7 +262,7 @@ When you run this flow, you'll see the following output, which illustrates how t
 <div class="terminal">
 ```bash
 $ python hello.py
-15:15:58.673 | INFO    | prefect.engine - Created flow run 'loose-wolverine' for flow 'Hello Flow'
+15:15:58.673 | INFO    | syntask.engine - Created flow run 'loose-wolverine' for flow 'Hello Flow'
 15:15:58.674 | INFO    | Flow run 'loose-wolverine' - Using task runner 'ConcurrentTaskRunner'
 15:15:58.973 | INFO    | Flow run 'loose-wolverine' - Created task run 'Print Hello-84f0fe0e-0' for task 'Print Hello'
 Hello Marvin!
@@ -280,7 +280,7 @@ You can get a quick sense of the structure of your flow using the `.visualize()`
 !!! note "To use the `visualize()` method, Graphviz must be installed and on your PATH. Please install Graphviz from [http://www.graphviz.org/download/](http://www.graphviz.org/download/). And note: just installing the `graphviz` python package is not sufficient."
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task(name="Print Hello")
 def print_hello(name):
@@ -305,11 +305,11 @@ if __name__ == "__main__":
 
 ![A simple flow visualized with the .visualize() method](/img/orchestration/hello-flow-viz.png)
 
-Prefect cannot automatically produce a schematic for dynamic workflows, such as those with loops or if/else control flow.
+Syntask cannot automatically produce a schematic for dynamic workflows, such as those with loops or if/else control flow.
 In this case, you can provide tasks with mock return values for use in the `visualize()` call.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 @task(viz_return_value=[4])
 def get_list():
     return [1, 2, 3]
@@ -358,10 +358,10 @@ Whether running locally or via a [deployment](/concepts/deployments/), you must 
 
 !!! warning "Cancelling subflow runs"
     Inline subflow runs, specifically those created without `run_deployment`, cannot be cancelled without cancelling their parent flow run.
-    If you may need to cancel a subflow run independent of its parent flow run, we recommend deploying it separately and starting it using the [run_deployment](/api-ref/prefect/deployments/deployments/#prefect.deployments.deployments.run_deployment) function.
+    If you may need to cancel a subflow run independent of its parent flow run, we recommend deploying it separately and starting it using the [run_deployment](/api-ref/syntask/deployments/deployments/#syntask.deployments.deployments.run_deployment) function.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task(name="Print Hello")
 def print_hello(name):
@@ -385,7 +385,7 @@ if __name__ == "__main__":
 You can also define flows or tasks in separate modules and import them for usage. For example, here's a simple subflow module:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @flow(name="Subflow")
 def my_subflow(msg):
@@ -395,7 +395,7 @@ def my_subflow(msg):
 Here's a parent flow that imports and uses `my_subflow()` as a subflow:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 from subflow import my_subflow
 
 @task(name="Print Hello")
@@ -417,7 +417,7 @@ Running the `hello_world()` flow (in this example from the file `hello.py`) crea
 <div class="terminal">
 ```bash
 $ python hello.py
-15:19:21.651 | INFO    | prefect.engine - Created flow run 'daft-cougar' for flow 'Hello Flow'
+15:19:21.651 | INFO    | syntask.engine - Created flow run 'daft-cougar' for flow 'Hello Flow'
 15:19:21.651 | INFO    | Flow run 'daft-cougar' - Using task runner 'ConcurrentTaskRunner'
 15:19:21.945 | INFO    | Flow run 'daft-cougar' - Created task run 'Print Hello-84f0fe0e-0' for task 'Print Hello'
 Hello Marvin!
@@ -430,19 +430,19 @@ Subflow says: Hello Marvin!
 </div>
 
 !!! tip "Subflows or tasks?"
-    In Prefect you can call tasks _or_ subflows to do work within your workflow, including passing results from other tasks to your subflow.
+    In Syntask you can call tasks _or_ subflows to do work within your workflow, including passing results from other tasks to your subflow.
     So a common question is:
 
     "When should I use a subflow instead of a task?"
 
     We recommend writing tasks that do a discrete, specific piece of work in your workflow: calling an API, performing a database operation, analyzing or transforming a data point. 
-    Prefect tasks are well suited to parallel or distributed execution using distributed computation frameworks such as Dask or Ray. 
+    Syntask tasks are well suited to parallel or distributed execution using distributed computation frameworks such as Dask or Ray. 
     For troubleshooting, the more granular you create your tasks, the easier it is to find and fix issues should a task fail.
 
     Subflows enable you to group related tasks within your workflow. 
     Here are some scenarios where you might choose to use a subflow rather than calling tasks individually:
 
-    - Observability: Subflows, like any other flow run, have first-class observability within the Prefect UI and Prefect Cloud. You'll see subflow status in the **Flow Runs** dashboard rather than having to dig down into the tasks within a specific flow run. See [Final state determination](#final-state-determination) for some examples of leveraging task state within flows.
+    - Observability: Subflows, like any other flow run, have first-class observability within the Syntask UI and Syntask Cloud. You'll see subflow status in the **Flow Runs** dashboard rather than having to dig down into the tasks within a specific flow run. See [Final state determination](#final-state-determination) for some examples of leveraging task state within flows.
     - Conditional flows: If you have a group of tasks that run only under certain conditions, you can group them within a subflow and conditionally run the subflow rather than each task individually.
     - Parameters: Flows have first-class support for parameterization, making it easy to run the same group of tasks in different use cases by simply passing different parameters to the subflow in which they run.
     - Task runners: Subflows enable you to specify the task runner used for tasks within the flow. For example, if you want to optimize parallel execution of certain tasks with Dask, you can group them in a subflow that uses the Dask task runner. You can use a different task runner for each subflow.
@@ -450,16 +450,16 @@ Subflow says: Hello Marvin!
 ## Parameters
 
 Flows can be called with both positional and keyword arguments. These arguments are resolved at runtime into a dictionary of **parameters** mapping name to value.
-These parameters are stored by the Prefect orchestration engine on the flow run object.
+These parameters are stored by the Syntask orchestration engine on the flow run object.
 
-!!! warning "Prefect API requires keyword arguments"
-    When creating flow runs from the Prefect API, parameter names must be specified when overriding defaults &mdash; they cannot be positional.
+!!! warning "Syntask API requires keyword arguments"
+    When creating flow runs from the Syntask API, parameter names must be specified when overriding defaults &mdash; they cannot be positional.
 
 Type hints provide an easy way to enforce typing on your flow parameters via [pydantic](https://pydantic-docs.helpmanual.io/).
 This means _any_ pydantic model used as a type hint within a flow will be coerced automatically into the relevant object type:
 
 ```python
-from prefect import flow
+from syntask import flow
 from pydantic import BaseModel
 
 class Model(BaseModel):
@@ -479,7 +479,7 @@ Type hints on your flow functions provide you a way of automatically coercing JS
 For example, to automatically convert something to a datetime:
 
 ```python
-from prefect import flow
+from syntask import flow
 from datetime import datetime
 
 @flow
@@ -527,7 +527,7 @@ The following examples illustrate each of these cases:
 If an exception is raised within the flow function, the flow is immediately marked as failed.
 
 ```python hl_lines="5"
-from prefect import flow
+from syntask import flow
 
 @flow
 def always_fails_flow():
@@ -541,7 +541,7 @@ Running this flow produces the following result:
 
 <div class="terminal">
 ```bash
-22:22:36.864 | INFO    | prefect.engine - Created flow run 'acrid-tuatara' for flow 'always-fails-flow'
+22:22:36.864 | INFO    | syntask.engine - Created flow run 'acrid-tuatara' for flow 'always-fails-flow'
 22:22:36.864 | INFO    | Flow run 'acrid-tuatara' - Starting 'ConcurrentTaskRunner'; submitted tasks will be run concurrently...
 22:22:37.060 | ERROR   | Flow run 'acrid-tuatara' - Encountered exception during execution:
 Traceback (most recent call last):...
@@ -554,7 +554,7 @@ ValueError: This flow immediately fails
 A flow with no return statement is determined by the state of all of its task runs.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def always_fails_task():
@@ -578,7 +578,7 @@ Running this flow produces the following result:
 
 <div class="terminal">
 ```bash
-18:32:05.345 | INFO    | prefect.engine - Created flow run 'auburn-lionfish' for flow 'always-fails-flow'
+18:32:05.345 | INFO    | syntask.engine - Created flow run 'auburn-lionfish' for flow 'always-fails-flow'
 18:32:05.346 | INFO    | Flow run 'auburn-lionfish' - Starting 'ConcurrentTaskRunner'; submitted tasks will be run concurrently...
 18:32:05.582 | INFO    | Flow run 'auburn-lionfish' - Created task run 'always_fails_task-96e4be14-0' for task 'always_fails_task'
 18:32:05.582 | INFO    | Flow run 'auburn-lionfish' - Submitted task run 'always_fails_task-96e4be14-0' for execution.
@@ -603,7 +603,7 @@ ValueError: I fail successfully
 If a flow returns one or more futures, the final state is determined based on the underlying states.
 
 ```python hl_lines="15"
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def always_fails_task():
@@ -628,7 +628,7 @@ Running this flow produces the following result &mdash; it succeeds because it r
 
 <div class="terminal">
 ```bash
-18:35:24.965 | INFO    | prefect.engine - Created flow run 'whispering-guan' for flow 'always-succeeds-flow'
+18:35:24.965 | INFO    | syntask.engine - Created flow run 'whispering-guan' for flow 'always-succeeds-flow'
 18:35:24.965 | INFO    | Flow run 'whispering-guan' - Starting 'ConcurrentTaskRunner'; submitted tasks will be run concurrently...
 18:35:25.204 | INFO    | Flow run 'whispering-guan' - Created task run 'always_fails_task-96e4be14-0' for task 'always_fails_task'
 18:35:25.205 | INFO    | Flow run 'whispering-guan' - Submitted task run 'always_fails_task-96e4be14-0' for execution.
@@ -650,7 +650,7 @@ I'm fail safe!
 If a flow returns a mix of futures and states, the final state is determined by resolving all futures to states, then determining if any of the states are not `COMPLETED`.
 
 ```python hl_lines="20"
-from prefect import task, flow
+from syntask import task, flow
 
 @task
 def always_fails_task():
@@ -678,7 +678,7 @@ Note that the final state is `Failed`, but the states of each of the returned fu
 
 <div class="terminal">
 ```bash
-20:57:51.547 | INFO    | prefect.engine - Created flow run 'impartial-gorilla' for flow 'always-fails-flow'
+20:57:51.547 | INFO    | syntask.engine - Created flow run 'impartial-gorilla' for flow 'always-fails-flow'
 20:57:51.548 | INFO    | Flow run 'impartial-gorilla' - Using task runner 'ConcurrentTaskRunner'
 20:57:51.645 | INFO    | Flow run 'impartial-gorilla' - Created task run 'always_fails_task-58ea43a6-0' for task 'always_fails_task'
 20:57:51.686 | INFO    | Flow run 'impartial-gorilla' - Created task run 'always_succeeds_task-c9014725-0' for task 'always_succeeds_task'
@@ -703,8 +703,8 @@ Failed(message='1/3 states failed.', type=FAILED, result=(Failed(message='Task r
 If a flow returns a manually created state, the final state is determined based on the return value.
 
 ```python hl_lines="16-19"
-from prefect import task, flow
-from prefect.states import Completed, Failed
+from syntask import task, flow
+from syntask.states import Completed, Failed
 
 @task
 def always_fails_task():
@@ -732,7 +732,7 @@ Running this flow produces the following result.
 
 <div class="terminal">
 ```bash
-18:37:42.844 | INFO    | prefect.engine - Created flow run 'lavender-elk' for flow 'always-succeeds-flow'
+18:37:42.844 | INFO    | syntask.engine - Created flow run 'lavender-elk' for flow 'always-succeeds-flow'
 18:37:42.845 | INFO    | Flow run 'lavender-elk' - Starting 'ConcurrentTaskRunner'; submitted tasks will be run concurrently...
 18:37:43.125 | INFO    | Flow run 'lavender-elk' - Created task run 'always_fails_task-96e4be14-0' for task 'always_fails_task'
 18:37:43.126 | INFO    | Flow run 'lavender-elk' - Submitted task run 'always_fails_task-96e4be14-0' for execution.
@@ -754,7 +754,7 @@ I'm fail safe!
 If the flow run returns _any other object_, then it is marked as completed.
 
 ```python hl_lines="10"
-from prefect import task, flow
+from syntask import task, flow
 
 @task
 def always_fails_task():
@@ -773,7 +773,7 @@ Running this flow produces the following result.
 
 <div class="terminal">
 ```bash
-21:02:45.715 | INFO    | prefect.engine - Created flow run 'sparkling-pony' for flow 'always-succeeds-flow'
+21:02:45.715 | INFO    | syntask.engine - Created flow run 'sparkling-pony' for flow 'always-succeeds-flow'
 21:02:45.715 | INFO    | Flow run 'sparkling-pony' - Using task runner 'ConcurrentTaskRunner'
 21:02:45.816 | INFO    | Flow run 'sparkling-pony' - Created task run 'always_fails_task-58ea43a6-0' for task 'always_fails_task'
 21:02:45.853 | ERROR   | Task run 'always_fails_task-58ea43a6-0' - Encountered exception during execution:
@@ -787,17 +787,17 @@ Completed(message=None, type=COMPLETED, result='foo', flow_run_id=7240e6f5-f0a8-
 
 ## Serving a flow
 
-The simplest way to create a [deployment](/concepts/deployments/) for your flow is by calling its [`serve` method](/api-ref/prefect/flows/#prefect.flows.Flow.serve).
-This method creates a deployment for the flow and starts a long-running process that monitors for work from the Prefect server.
+The simplest way to create a [deployment](/concepts/deployments/) for your flow is by calling its [`serve` method](/api-ref/syntask/flows/#syntask.flows.Flow.serve).
+This method creates a deployment for the flow and starts a long-running process that monitors for work from the Syntask server.
 When work is found, it is executed within its own isolated subprocess.
 
 ```python title="hello_world.py"
-from prefect import flow
+from syntask import flow
 
 
 @flow(log_prints=True)
 def hello_world(name: str = "world", goodbye: bool = False):
-    print(f"Hello {name} from Prefect! 🤗")
+    print(f"Hello {name} from Syntask! 🤗")
 
     if goodbye:
         print(f"Goodbye {name}!")
@@ -834,11 +834,11 @@ This interface provides all of the configuration needed for a deployment with no
 
 ### Serving multiple flows at once
 
-You can take this further and serve multiple flows with the same process using the [`serve`](/api-ref/prefect/runner/#prefect.runner.serve) utility along with the `to_deployment` method of flows:
+You can take this further and serve multiple flows with the same process using the [`serve`](/api-ref/syntask/runner/#syntask.runner.serve) utility along with the `to_deployment` method of flows:
 
 ```python
 import time
-from prefect import flow, serve
+from syntask import flow, serve
 
 
 @flow
@@ -863,15 +863,15 @@ The behavior and interfaces are identical to the single flow case.
 
 ## Retrieve a flow from remote storage
 
-Flows can be retrieved from remote storage using the [`flow.from_source`](/api-ref/prefect/flows/#prefect.flows.Flow.from_source) method.
+Flows can be retrieved from remote storage using the [`flow.from_source`](/api-ref/syntask/flows/#syntask.flows.Flow.from_source) method.
 
 `flow.from_source` accepts a git repository URL  and an entrypoint pointing to the flow to load from the repository:
 
 ```python title="load_from_url.py"
-from prefect import flow
+from syntask import flow
 
 my_flow = flow.from_source(
-    source="https://github.com/PrefectHQ/prefect.git",
+    source="https://github.com/Synopkg/syntask.git",
     entrypoint="flows/hello_world.py:hello"
 )
 
@@ -882,7 +882,7 @@ if __name__ == "__main__":
 <div class="terminal">
 
 ```bash
-16:40:33.818 | INFO    | prefect.engine - Created flow run 'muscular-perch' for flow 'hello'
+16:40:33.818 | INFO    | syntask.engine - Created flow run 'muscular-perch' for flow 'hello'
 16:40:34.048 | INFO    | Flow run 'muscular-perch' - Hello world!
 16:40:34.706 | INFO    | Flow run 'muscular-perch' - Finished in state Completed()
 ```
@@ -891,12 +891,12 @@ if __name__ == "__main__":
 
 A flow entrypoint is the path to the file the flow is located in and the name of the flow function separated by a colon.
 
-If you need additional configuration, such as specifying a private repository, you can provide a [`GitRepository`](/api-ref/prefect/flows/#prefect.runner.storage.GitRepository) instead of URL:
+If you need additional configuration, such as specifying a private repository, you can provide a [`GitRepository`](/api-ref/syntask/flows/#syntask.runner.storage.GitRepository) instead of URL:
 
 ```python title="load_from_storage.py"
-from prefect import flow
-from prefect.runner.storage import GitRepository
-from prefect.blocks.system import Secret
+from syntask import flow
+from syntask.runner.storage import GitRepository
+from syntask.blocks.system import Secret
 
 my_flow = flow.from_source(
     source=GitRepository(
@@ -917,7 +917,7 @@ if __name__ == "__main__":
     Flows loaded from remote storage can be served using the same [`serve`](#serving-a-flow) method as local flows:
 
     ```python title="serve_loaded_flow.py"
-    from prefect import flow
+    from syntask import flow
 
     if __name__ == "__main__":
         flow.from_source(
@@ -931,14 +931,14 @@ if __name__ == "__main__":
 
 ## Pausing or suspending a flow run
 
-Prefect provides you with the ability to halt a flow run with two functions that are similar, but slightly different.
+Syntask provides you with the ability to halt a flow run with two functions that are similar, but slightly different.
 When a flow run is paused, code execution is stopped and the process continues to run.
 When a flow run is suspended, code execution is stopped and so is the process.
 
 ### Pausing a flow run
 
-Prefect enables pausing an in-progress flow run for manual approval.
-Prefect exposes this functionality via the [`pause_flow_run`](/api-ref/prefect/engine/#prefect.engine.pause_flow_run) and [`resume_flow_run`](/api-ref/prefect/engine/#prefect.engine.resume_flow_run) functions.
+Syntask enables pausing an in-progress flow run for manual approval.
+Syntask exposes this functionality via the [`pause_flow_run`](/api-ref/syntask/engine/#syntask.engine.pause_flow_run) and [`resume_flow_run`](/api-ref/syntask/engine/#syntask.engine.resume_flow_run) functions.
 
 !!! note "Timeouts"
     Paused flow runs time out after one hour by default.
@@ -948,7 +948,7 @@ Prefect exposes this functionality via the [`pause_flow_run`](/api-ref/prefect/e
 Most simply, `pause_flow_run` can be called inside a flow:
 
 ```python
-from prefect import task, flow, pause_flow_run, resume_flow_run
+from syntask import task, flow, pause_flow_run, resume_flow_run
 
 @task
 async def marvin_setup():
@@ -970,7 +970,7 @@ async def inspiring_joke():
 You can also implement conditional pauses:
 
 ```python
-from prefect import task, flow, pause_flow_run
+from syntask import task, flow, pause_flow_run
 
 @task
 def task_one():
@@ -997,7 +997,7 @@ await inspiring_joke()
 ```
 </div>
 
-Paused flow runs can be resumed by clicking the **Resume** button in the Prefect UI or calling the `resume_flow_run` utility via client code.
+Paused flow runs can be resumed by clicking the **Resume** button in the Syntask UI or calling the `resume_flow_run` utility via client code.
 
 ```python
 resume_flow_run(FLOW_RUN_ID)
@@ -1013,7 +1013,7 @@ The paused flow run will then finish!
 
 ### Suspending a flow run
 
-Similar to pausing a flow run, Prefect enables suspending an in-progress flow run.
+Similar to pausing a flow run, Syntask enables suspending an in-progress flow run.
 
 !!! note "The difference between pausing and suspending a flow run"
     There is an important difference between pausing and suspending a flow run.
@@ -1024,7 +1024,7 @@ Similar to pausing a flow run, Prefect enables suspending an in-progress flow ru
     This means that you can suspend flow runs to save costs instead of paying for long-running infrastructure. 
     However, when the flow run resumes, the flow code will execute again from the beginning of the flow, so you should use [tasks](/concepts/tasks/) and [task caching](/concepts/tasks/#caching) to avoid recomputing expensive operations.
 
-Prefect exposes this functionality via the [`suspend_flow_run`](/api-ref/prefect/engine/#prefect.engine.suspend_flow_run) and [`resume_flow_run`](/api-ref/prefect/engine/#prefect.engine.resume_flow_run) functions, as well as the Prefect UI.
+Syntask exposes this functionality via the [`suspend_flow_run`](/api-ref/syntask/engine/#syntask.engine.suspend_flow_run) and [`resume_flow_run`](/api-ref/syntask/engine/#syntask.engine.resume_flow_run) functions, as well as the Syntask UI.
 
 When called inside of a flow `suspend_flow_run` will immediately suspend execution of the flow run.
 The flow run will be marked as `Suspended` and will not be resumed until `resume_flow_run` is called.
@@ -1039,7 +1039,7 @@ This flow will exit after one task, and will be rescheduled upon resuming.
 The stored result of the first task is retrieved instead of being rerun.
 
 ```python
-from prefect import flow, pause_flow_run, task
+from syntask import flow, pause_flow_run, task
 
 @task(persist_result=True)
 def foo():
@@ -1055,9 +1055,9 @@ def noblock_pausing():
     omega = foo(wait_for=[x, y])
 ```
 
-Flow runs can be suspended out-of-process by calling `suspend_flow_run(flow_run_id=<ID>)` or selecting the **Suspend** button in the Prefect UI or Prefect Cloud.
+Flow runs can be suspended out-of-process by calling `suspend_flow_run(flow_run_id=<ID>)` or selecting the **Suspend** button in the Syntask UI or Syntask Cloud.
 
-Suspended flow runs can be resumed by clicking the **Resume** button in the Prefect UI or calling the `resume_flow_run` utility via client code.
+Suspended flow runs can be resumed by clicking the **Resume** button in the Syntask UI or calling the `resume_flow_run` utility via client code.
 
 ```python
 resume_flow_run(FLOW_RUN_ID)
@@ -1082,15 +1082,15 @@ resume_flow_run(FLOW_RUN_ID)
     If you encounter any issues, please let us know in Slack or with a Github issue.
 
 When pausing or suspending a flow run you may want to wait for input from a user.
-Prefect provides a way to do this by leveraging the `pause_flow_run` and `suspend_flow_run` functions.
-These functions accept a `wait_for_input` argument, the value of which should be a subclass of `prefect.input.RunInput`, a pydantic model.
+Syntask provides a way to do this by leveraging the `pause_flow_run` and `suspend_flow_run` functions.
+These functions accept a `wait_for_input` argument, the value of which should be a subclass of `syntask.input.RunInput`, a pydantic model.
 When resuming the flow run, users are required to provide data for this model. Upon successful validation, the flow run resumes, and the return value of the `pause_flow_run` or `suspend_flow_run` is an instance of the model containing the provided data.
 
 Here is an example of a flow that pauses and waits for input from a user:
 
 ```python
-from prefect import flow, pause_flow_run
-from prefect.input import RunInput
+from syntask import flow, pause_flow_run
+from syntask.input import RunInput
 
 
 class UserNameInput(RunInput):
@@ -1127,9 +1127,9 @@ If the run does not terminate after a grace period (default of 30 seconds), the 
     Flow run cancellation requires the flow run to be associated with a [deployment](#serving-a-flow).
     A monitoring process must be running to enforce the cancellation.
     Inline subflow runs, i.e. those created without `run_deployment`, cannot be cancelled without cancelling the parent flow run.
-    If you may need to cancel a subflow run independent of its parent flow run, we recommend deploying it separately and starting it using the [run_deployment](/api-ref/prefect/deployments/deployments/#prefect.deployments.deployments.run_deployment) function.
+    If you may need to cancel a subflow run independent of its parent flow run, we recommend deploying it separately and starting it using the [run_deployment](/api-ref/syntask/deployments/deployments/#syntask.deployments.deployments.run_deployment) function.
 
-Cancellation is robust to restarts of Prefect workers.
+Cancellation is robust to restarts of Syntask workers.
 To enable this, we attach metadata about the created infrastructure to the flow run.
 Internally, this is referred to as the `infrastructure_pid` or infrastructure identifier.
 Generally, this is composed of two parts:
@@ -1137,7 +1137,7 @@ Generally, this is composed of two parts:
 1. Scope: identifying where the infrastructure is running.
 2. ID: a unique identifier for the infrastructure within the scope.
 
-The scope is used to ensure that Prefect does not kill the wrong infrastructure.
+The scope is used to ensure that Syntask does not kill the wrong infrastructure.
 For example, workers running on multiple machines may have overlapping process IDs but should not have a matching scope.
 
 The identifiers for infrastructure types:
@@ -1157,23 +1157,23 @@ While the cancellation process is robust, there are a few issues than can occur:
 
 !!! tip "Enhanced cancellation"
     We are working on improving cases where cancellation can fail.
-    You can try the improved cancellation experience by enabling the `PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION` setting on your worker or agents:
+    You can try the improved cancellation experience by enabling the `SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION` setting on your worker or agents:
 
     <div class="terminal">
     ```bash
-    prefect config set PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION=True
+    syntask config set SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION=True
     ```
     </div>
 
-    If you encounter any issues, please let us know in [Slack](https://www.prefect.io/slack/) or with a [Github](https://github.com/PrefectHQ/prefect) issue.
+    If you encounter any issues, please let us know in [Slack](https://www.syntask.io/slack/) or with a [Github](https://github.com/Synopkg/syntask) issue.
 
 ### Cancel via the CLI
 
-From the command line in your execution environment, you can cancel a flow run by using the `prefect flow-run cancel` CLI command, passing the ID of the flow run.
+From the command line in your execution environment, you can cancel a flow run by using the `syntask flow-run cancel` CLI command, passing the ID of the flow run.
 
 <div class="terminal">
 ```bash
-prefect flow-run cancel 'a55a4804-9e3c-4042-8b59-b3b6b7618736'
+syntask flow-run cancel 'a55a4804-9e3c-4042-8b59-b3b6b7618736'
 ```
 </div>
 
@@ -1181,7 +1181,7 @@ prefect flow-run cancel 'a55a4804-9e3c-4042-8b59-b3b6b7618736'
 
 From the UI you can cancel a flow run by navigating to the flow run's detail page and clicking the `Cancel` button in the upper right corner.
 
-![Prefect UI](/img/ui/flow-run-cancellation-ui.png)
+![Syntask UI](/img/ui/flow-run-cancellation-ui.png)
 
 ## Timeouts
 
@@ -1190,7 +1190,7 @@ Flow timeouts are used to prevent unintentional long-running flows. When the dur
 Timeout durations are specified using the `timeout_seconds` keyword argument.
 
 ```python hl_lines="4"
-from prefect import flow
+from syntask import flow
 import time
 
 @flow(timeout_seconds=1, log_prints=True)

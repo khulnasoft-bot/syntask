@@ -1,1 +1,1 @@
-::: prefect.server.schemas.schedules
+::: syntask.server.schemas.schedules

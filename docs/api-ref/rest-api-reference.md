@@ -1,11 +1,11 @@
 ---
-description: Prefect REST API interactive reference.
+description: Syntask REST API interactive reference.
 tags:
     - REST API
-    - Prefect server
+    - Syntask server
 hide:
     - toc
-title: Prefect server REST API reference
+title: Syntask server REST API reference
 ---
 
 <hr>

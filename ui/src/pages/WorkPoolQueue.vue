@@ -31,9 +31,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { media } from '@prefecthq/prefect-design'
-  import { useWorkspaceApi, PageHeadingWorkPoolQueue, CodeBanner, WorkPoolQueueDetails, WorkPoolQueueUpcomingFlowRunsList, FlowRunFilteredList, useFlowRunsFilter, useTabs } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam, useRouteQueryParam, useSubscription } from '@prefecthq/vue-compositions'
+  import { media } from '@syntaskhq/syntask-design'
+  import { useWorkspaceApi, PageHeadingWorkPoolQueue, CodeBanner, WorkPoolQueueDetails, WorkPoolQueueUpcomingFlowRunsList, FlowRunFilteredList, useFlowRunsFilter, useTabs } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam, useRouteQueryParam, useSubscription } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 
@@ -51,7 +51,7 @@
 
   const workPoolSubscription = useSubscription(api.workPools.getWorkPoolByName, [workPoolName.value], subscriptionOptions)
   const workPool = computed(() => workPoolSubscription.response)
-  const isAgentWorkPool = computed(() => workPool.value?.type === 'prefect-agent')
+  const isAgentWorkPool = computed(() => workPool.value?.type === 'syntask-agent')
 
   const codeBannerTitle = computed(() => {
     if (!workPoolQueue.value) {
@@ -59,7 +59,7 @@
     }
     return `Your work pool ${workPoolQueue.value.name} is ready to go!`
   })
-  const codeBannerCliCommand = computed(() => `prefect ${isAgentWorkPool.value ? 'agent' : 'worker'} start --pool "${workPoolName.value}" --work-queue "${workPoolQueueName.value}"`)
+  const codeBannerCliCommand = computed(() => `syntask ${isAgentWorkPool.value ? 'agent' : 'worker'} start --pool "${workPoolName.value}" --work-queue "${workPoolQueueName.value}"`)
   const codeBannerSubtitle = computed(() => `Work queues are scoped to a work pool to allow ${isAgentWorkPool.value ? 'agents' : 'workers'} to pull from groups of queues with different priorities.`)
 
   const { filter: flowRunFilter } = useFlowRunsFilter({

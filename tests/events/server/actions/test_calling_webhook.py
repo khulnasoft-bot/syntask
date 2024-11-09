@@ -12,25 +12,25 @@ from httpx import Response
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
 else:
     import pydantic
 
-from prefect.blocks.core import Block
-from prefect.blocks.webhook import Webhook
-from prefect.server.database.orm_models import (
+from syntask.blocks.core import Block
+from syntask.blocks.webhook import Webhook
+from syntask.server.database.orm_models import (
     ORMDeployment,
     ORMFlow,
     ORMFlowRun,
     ORMWorkQueue,
 )
-from prefect.server.events import actions
-from prefect.server.events.actions import ActionFailed
-from prefect.server.events.clients import AssertingEventsClient
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.actions import ActionFailed
+from syntask.server.events.clients import AssertingEventsClient
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -38,10 +38,10 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent, RelatedResource
-from prefect.server.models import deployments, flow_runs, flows, work_queues
-from prefect.server.schemas.actions import WorkQueueCreate
-from prefect.server.schemas.core import Deployment, Flow, FlowRun, WorkQueue
+from syntask.server.events.schemas.events import ReceivedEvent, RelatedResource
+from syntask.server.models import deployments, flow_runs, flows, work_queues
+from syntask.server.schemas.actions import WorkQueueCreate
+from syntask.server.schemas.core import Deployment, Flow, FlowRun, WorkQueue
 
 
 @pytest.fixture
@@ -115,20 +115,20 @@ def picture_taken(
 ):
     return ReceivedEvent(
         occurred=start_of_test + timedelta(microseconds=2),
-        event="prefect.flow-run.completed",
-        resource={"prefect.resource.id": f"prefect.flow-run.{take_a_picture.id}"},
+        event="syntask.flow-run.completed",
+        resource={"syntask.resource.id": f"syntask.flow-run.{take_a_picture.id}"},
         related=[
             {
-                "prefect.resource.id": f"prefect.flow.{take_a_picture.flow_id}",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": f"syntask.flow.{take_a_picture.flow_id}",
+                "syntask.resource.role": "flow",
             },
             {
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture_deployment.id}",
-                "prefect.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture_deployment.id}",
+                "syntask.resource.role": "deployment",
             },
             {
-                "prefect.resource.id": f"prefect.work-queue.{take_a_picture_work_queue.id}",
-                "prefect.resource.role": "work-queue",
+                "syntask.resource.id": f"syntask.work-queue.{take_a_picture_work_queue.id}",
+                "syntask.resource.role": "work-queue",
             },
         ],
         id=uuid4(),
@@ -146,7 +146,7 @@ async def tell_me_about_the_culprit(
         trigger=EventTrigger(
             expect={"animal.ingested"},
             match_related={
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "genus": "Hemerocallis",
                 "species": "fulva",
             },
@@ -266,7 +266,7 @@ async def test_sending_webhook(
 
     call = AsyncMock()
     call.return_value = Response(status_code=200)
-    monkeypatch.setattr("prefect.blocks.webhook.Webhook.call", call)
+    monkeypatch.setattr("syntask.blocks.webhook.Webhook.call", call)
 
     assert isinstance(action, actions.CallWebhook)
     await action.act(call_webhook)
@@ -293,7 +293,7 @@ async def test_sending_webhook_with_payload(
         },
         text="Booped the snoot!",
     )
-    monkeypatch.setattr("prefect.blocks.webhook.Webhook.call", call)
+    monkeypatch.setattr("syntask.blocks.webhook.Webhook.call", call)
 
     assert isinstance(action, actions.CallWebhook)
     await action.act(call_webhook_with_templated_payload)
@@ -322,7 +322,7 @@ async def test_error_calling_webhook(
     action = call_webhook_with_templated_payload.action
 
     call = AsyncMock(side_effect=ValueError("woops!"))
-    monkeypatch.setattr("prefect.blocks.webhook.Webhook.call", call)
+    monkeypatch.setattr("syntask.blocks.webhook.Webhook.call", call)
 
     assert isinstance(action, actions.CallWebhook)
 
@@ -359,7 +359,7 @@ async def test_success_event(
 
     webhook_call = AsyncMock()
     webhook_call.return_value = Response(status_code=200, text="🦊")
-    monkeypatch.setattr("prefect.blocks.webhook.Webhook.call", webhook_call)
+    monkeypatch.setattr("syntask.blocks.webhook.Webhook.call", webhook_call)
 
     await action.act(call_webhook)
     await action.succeed(call_webhook)
@@ -367,19 +367,19 @@ async def test_success_event(
     assert AssertingEventsClient.last
     (event,) = AssertingEventsClient.last.events
 
-    assert event.event == "prefect.automation.action.executed"
+    assert event.event == "syntask.automation.action.executed"
     assert event.related == [
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": f"prefect.block-document.{webhook_block_id}",
-                "prefect.resource.role": "block",
-                "prefect.resource.name": "webhook-test",
+                "syntask.resource.id": f"syntask.block-document.{webhook_block_id}",
+                "syntask.resource.role": "block",
+                "syntask.resource.name": "webhook-test",
             }
         ),
         RelatedResource.parse_obj(
             {
-                "prefect.resource.id": "prefect.block-type.webhook",
-                "prefect.resource.role": "block-type",
+                "syntask.resource.id": "syntask.block-type.webhook",
+                "syntask.resource.role": "block-type",
             }
         ),
     ]

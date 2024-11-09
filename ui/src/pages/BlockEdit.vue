@@ -11,9 +11,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { showToast } from '@prefecthq/prefect-design'
-  import { BlockTypeCardLayout, BlockSchemaEditForm, PageHeadingBlockEdit, BlockDocumentUpdate, useWorkspaceApi } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam } from '@prefecthq/vue-compositions'
+  import { showToast } from '@syntaskhq/syntask-design'
+  import { BlockTypeCardLayout, BlockSchemaEditForm, PageHeadingBlockEdit, BlockDocumentUpdate, useWorkspaceApi } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam } from '@syntaskhq/vue-compositions'
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { usePageTitle } from '@/compositions/usePageTitle'

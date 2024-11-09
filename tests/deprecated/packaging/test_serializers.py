@@ -6,7 +6,7 @@ from typing import Generator
 
 import pytest
 
-from prefect.deprecated.packaging.serializers import (
+from syntask.deprecated.packaging.serializers import (
     ImportSerializer,
     PickleSerializer,
     SourceSerializer,
@@ -29,7 +29,7 @@ def test_serialize_function(Serializer):
     assert result.__kwdefaults__ == foo.__kwdefaults__
     assert result.__name__ == foo.__name__
 
-    # The source serializer updates the module to __prefect_loader__
+    # The source serializer updates the module to __syntask_loader__
     if not isinstance(serializer, SourceSerializer):
         assert result.__module__ == result.__module__
 

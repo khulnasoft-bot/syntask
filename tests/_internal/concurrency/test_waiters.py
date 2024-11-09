@@ -4,10 +4,10 @@ import time
 
 import pytest
 
-from prefect._internal.concurrency.calls import Call
-from prefect._internal.concurrency.cancellation import CancelledError
-from prefect._internal.concurrency.threads import WorkerThread
-from prefect._internal.concurrency.waiters import (
+from syntask._internal.concurrency.calls import Call
+from syntask._internal.concurrency.cancellation import CancelledError
+from syntask._internal.concurrency.threads import WorkerThread
+from syntask._internal.concurrency.waiters import (
     AsyncWaiter,
     SyncWaiter,
     get_waiter_for_thread,

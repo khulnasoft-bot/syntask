@@ -1,10 +1,10 @@
 from unittest.mock import AsyncMock, patch
 
-from prefect.testing.cli import invoke_and_assert
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.testing.cli import invoke_and_assert
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
-async def test_shell_serve(prefect_client):
+async def test_shell_serve(syntask_client):
     flow_name = "Flood Brothers"
 
     await run_sync_in_worker_thread(
@@ -22,14 +22,14 @@ async def test_shell_serve(prefect_client):
             f"Your flow {flow_name!r} is being served and polling for scheduled runs!"
         ],
     )
-    deployment = await prefect_client.read_deployment_by_name(
+    deployment = await syntask_client.read_deployment_by_name(
         f"{flow_name}/CLI Runner Deployment"
     )
     assert deployment.name == "CLI Runner Deployment"
     assert deployment.tags == ["shell"]
 
 
-async def test_shell_serve_options(prefect_client):
+async def test_shell_serve_options(syntask_client):
     flow_name = "Flood Brothers"
     deployment_name = "3065 Rockwell Export"
     deployments_tags = ["dry", "wet", "dipped"]
@@ -63,7 +63,7 @@ async def test_shell_serve_options(prefect_client):
             f"Your flow {flow_name!r} is being served and polling for scheduled runs!"
         ],
     )
-    deployment = await prefect_client.read_deployment_by_name(
+    deployment = await syntask_client.read_deployment_by_name(
         f"{flow_name}/{deployment_name}"
     )
     deployments_tags.append("shell")
@@ -75,7 +75,7 @@ async def test_shell_serve_options(prefect_client):
     assert schedule.timezone == "America/Chicago"
 
 
-async def test_shell_watch(caplog, prefect_client):
+async def test_shell_watch(caplog, syntask_client):
     flow_name = "Chicago River Flow"
     flows_run_name = "Reverse Flow"
     flow_run_tags = ["chair", "table", "bucket"]
@@ -100,14 +100,14 @@ async def test_shell_watch(caplog, prefect_client):
     )
     assert "Hello, World!" in caplog.text
 
-    assert len(flow_runs := await prefect_client.read_flow_runs()) == 1
+    assert len(flow_runs := await syntask_client.read_flow_runs()) == 1
     flow_run_tags.append("shell")
     flow_run = flow_runs[0]
     assert flow_run.name == flows_run_name
     assert set(flow_run.tags) == set(flow_run_tags)
 
 
-async def test_shell_watch_options(caplog, prefect_client):
+async def test_shell_watch_options(caplog, syntask_client):
     await run_sync_in_worker_thread(
         invoke_and_assert,
         [
@@ -119,13 +119,13 @@ async def test_shell_watch_options(caplog, prefect_client):
     )
     assert "Hello, World!" in caplog.text
 
-    assert len(flow_runs := await prefect_client.read_flow_runs()) == 1
+    assert len(flow_runs := await syntask_client.read_flow_runs()) == 1
     flow_run = flow_runs[0]
     assert flow_run.tags == ["shell"]
 
 
 async def test_shell_runner_integration(monkeypatch):
-    with patch("prefect.cli.shell.Runner.start", new_callable=AsyncMock) as runner_mock:
+    with patch("syntask.cli.shell.Runner.start", new_callable=AsyncMock) as runner_mock:
         flow_name = "Flood Brothers"
 
         await run_sync_in_worker_thread(

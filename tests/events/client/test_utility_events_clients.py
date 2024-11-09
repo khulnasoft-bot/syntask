@@ -2,8 +2,8 @@ from typing import Type
 
 import pytest
 
-from prefect.events import Event
-from prefect.events.clients import AssertingEventsClient, EventsClient, NullEventsClient
+from syntask.events import Event
+from syntask.events.clients import AssertingEventsClient, EventsClient, NullEventsClient
 
 
 async def test_null_events_client_does_nothing(example_event_1: Event):

@@ -17,8 +17,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { useWorkspaceApi, PageHeadingWorkPools, WorkPoolsPageEmptyState, WorkPools } from '@prefecthq/prefect-ui-library'
-  import { useSubscription } from '@prefecthq/vue-compositions'
+  import { useWorkspaceApi, PageHeadingWorkPools, WorkPoolsPageEmptyState, WorkPools } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 

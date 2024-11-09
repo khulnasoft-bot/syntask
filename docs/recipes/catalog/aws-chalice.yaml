@@ -1,8 +1,8 @@
-recipeName: Serverless Prefect with AWS Chalice
-author: Prefect
-authorUrl: https://prefect.io
-description: Execute Prefect flows in an AWS Lambda function managed by Chalice.
+recipeName: Serverless Syntask with AWS Chalice
+author: Syntask
+authorUrl: https://syntask.io
+description: Execute Syntask flows in an AWS Lambda function managed by Chalice.
 topic: AWS
-recipeUrl: https://github.com/PrefectHQ/prefect-recipes/tree/main/flows-advanced/serverless
+recipeUrl: https://github.com/Synopkg/syntask-recipes/tree/main/flows-advanced/serverless
 iconUrl: 
   - /img/collections/aws.png

@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from prefect._internal.compatibility.experimental import (
+from syntask._internal.compatibility.experimental import (
     ExperimentalFeature,
     ExperimentalFeatureDisabled,
     enabled_experiments,
@@ -11,8 +11,8 @@ from prefect._internal.compatibility.experimental import (
     experimental,
     experimental_parameter,
 )
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_WARN,
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_WARN,
     SETTING_VARIABLES,
     Setting,
     temporary_settings,
@@ -20,68 +20,68 @@ from prefect.settings import (
 
 
 @pytest.fixture(autouse=True)
-def prefect_experimental_test_setting(
+def syntask_experimental_test_setting(
     monkeypatch: pytest.MonkeyPatch,
 ) -> typing.Generator[Setting[bool], None, None]:
     """
     Injects a new setting for the TEST feature group.
     """
-    PREFECT_EXPERIMENTAL_WARN_TEST = Setting(bool, default=False)
-    PREFECT_EXPERIMENTAL_WARN_TEST.name = "PREFECT_EXPERIMENTAL_WARN_TEST"
+    SYNTASK_EXPERIMENTAL_WARN_TEST = Setting(bool, default=False)
+    SYNTASK_EXPERIMENTAL_WARN_TEST.name = "SYNTASK_EXPERIMENTAL_WARN_TEST"
     monkeypatch.setitem(
         SETTING_VARIABLES,
-        "PREFECT_EXPERIMENTAL_WARN_TEST",
-        PREFECT_EXPERIMENTAL_WARN_TEST,
+        "SYNTASK_EXPERIMENTAL_WARN_TEST",
+        SYNTASK_EXPERIMENTAL_WARN_TEST,
     )
     monkeypatch.setattr(
-        "prefect.settings.Settings.PREFECT_EXPERIMENTAL_WARN_TEST", True, raising=False
+        "syntask.settings.Settings.SYNTASK_EXPERIMENTAL_WARN_TEST", True, raising=False
     )
 
-    yield PREFECT_EXPERIMENTAL_WARN_TEST
+    yield SYNTASK_EXPERIMENTAL_WARN_TEST
 
 
 @pytest.fixture
-def disable_prefect_experimental_test_setting(
+def disable_syntask_experimental_test_setting(
     monkeypatch: pytest.MonkeyPatch,
-    prefect_experimental_test_setting: typing.Callable[
+    syntask_experimental_test_setting: typing.Callable[
         [pytest.MonkeyPatch], typing.Generator[Setting[bool], None, None]
     ],
 ):
     monkeypatch.setattr(
-        "prefect.settings.Settings.PREFECT_EXPERIMENTAL_WARN_TEST", False, raising=False
+        "syntask.settings.Settings.SYNTASK_EXPERIMENTAL_WARN_TEST", False, raising=False
     )
 
 
 @pytest.fixture(autouse=True)
-def prefect_experimental_test_opt_in_setting(monkeypatch: pytest.MonkeyPatch):
+def syntask_experimental_test_opt_in_setting(monkeypatch: pytest.MonkeyPatch):
     """
     Injects a new opt-in setting for the TEST feature group.
     """
-    PREFECT_EXPERIMENTAL_ENABLE_TEST = Setting(bool, default=False)
-    PREFECT_EXPERIMENTAL_ENABLE_TEST.name = "PREFECT_EXPERIMENTAL_ENABLE_TEST"
+    SYNTASK_EXPERIMENTAL_ENABLE_TEST = Setting(bool, default=False)
+    SYNTASK_EXPERIMENTAL_ENABLE_TEST.name = "SYNTASK_EXPERIMENTAL_ENABLE_TEST"
     monkeypatch.setitem(
         SETTING_VARIABLES,
-        "PREFECT_EXPERIMENTAL_ENABLE_TEST",
-        PREFECT_EXPERIMENTAL_ENABLE_TEST,
+        "SYNTASK_EXPERIMENTAL_ENABLE_TEST",
+        SYNTASK_EXPERIMENTAL_ENABLE_TEST,
     )
     monkeypatch.setattr(
-        "prefect.settings.Settings.PREFECT_EXPERIMENTAL_ENABLE_TEST",
+        "syntask.settings.Settings.SYNTASK_EXPERIMENTAL_ENABLE_TEST",
         False,
         raising=False,
     )
 
-    yield PREFECT_EXPERIMENTAL_ENABLE_TEST
+    yield SYNTASK_EXPERIMENTAL_ENABLE_TEST
 
 
 @pytest.fixture
-def enable_prefect_experimental_test_opt_in_setting(
+def enable_syntask_experimental_test_opt_in_setting(
     monkeypatch: pytest.MonkeyPatch,
-    prefect_experimental_test_opt_in_setting: typing.Callable[
+    syntask_experimental_test_opt_in_setting: typing.Callable[
         [pytest.MonkeyPatch], typing.Generator[Setting[bool], None, None]
     ],
 ):
     monkeypatch.setattr(
-        "prefect.settings.Settings.PREFECT_EXPERIMENTAL_ENABLE_TEST",
+        "syntask.settings.Settings.SYNTASK_EXPERIMENTAL_ENABLE_TEST",
         True,
         raising=False,
     )
@@ -101,7 +101,7 @@ def test_experimental_marker_on_function():
             "The interface or behavior may change without warning, we recommend "
             "pinning versions to prevent unexpected changes. "
             "To disable warnings for this group of experiments, "
-            "disable PREFECT_EXPERIMENTAL_WARN_TEST."
+            "disable SYNTASK_EXPERIMENTAL_WARN_TEST."
         ),
     ):
         assert foo() == 1
@@ -121,7 +121,7 @@ def test_experimental_marker_on_class():
             "The interface or behavior may change without warning, we recommend "
             "pinning versions to prevent unexpected changes. "
             "To disable warnings for this group of experiments, "
-            "disable PREFECT_EXPERIMENTAL_WARN_TEST."
+            "disable SYNTASK_EXPERIMENTAL_WARN_TEST."
         ),
     ):
         assert Foo()
@@ -143,7 +143,7 @@ def test_experimental_parameter_warning():
             "don't worry. The interface or behavior may change without warning, "
             "we recommend pinning versions to prevent unexpected changes. "
             "To disable warnings for this group of experiments, disable "
-            "PREFECT_EXPERIMENTAL_WARN_TEST."
+            "SYNTASK_EXPERIMENTAL_WARN_TEST."
         ),
     ):
         assert foo(return_value=2) == 2
@@ -232,13 +232,13 @@ def test_experimental_warning_without_help():
             "The interface or behavior may change without warning, we recommend "
             "pinning versions to prevent unexpected changes. "
             "To disable warnings for this group of experiments, "
-            "disable PREFECT_EXPERIMENTAL_WARN_TEST."
+            "disable SYNTASK_EXPERIMENTAL_WARN_TEST."
         ),
     ):
         assert foo() == 1
 
 
-@pytest.mark.usefixtures("disable_prefect_experimental_test_setting")
+@pytest.mark.usefixtures("disable_syntask_experimental_test_setting")
 def test_experimental_marker_does_not_warn_with_group_setting():
     @experimental(
         "A test function", group="test", help="This is just a test, don't worry."
@@ -256,7 +256,7 @@ def test_experimental_marker_does_not_warn_with_global_setting():
     def foo():
         return 1
 
-    with temporary_settings({PREFECT_EXPERIMENTAL_WARN: False}):
+    with temporary_settings({SYNTASK_EXPERIMENTAL_WARN: False}):
         assert foo() == 1
 
 
@@ -275,13 +275,13 @@ def test_experimental_marker_raises_without_opt_in():
         match=(
             "A test function is experimental and requires opt-in for usage. "
             "This is just a test, don't worry. "
-            "To use this feature, enable PREFECT_EXPERIMENTAL_ENABLE_TEST."
+            "To use this feature, enable SYNTASK_EXPERIMENTAL_ENABLE_TEST."
         ),
     ):
         assert foo() == 1
 
 
-@pytest.mark.usefixtures("enable_prefect_experimental_test_opt_in_setting")
+@pytest.mark.usefixtures("enable_syntask_experimental_test_opt_in_setting")
 def test_experimental_marker_does_not_raise_with_opt_in():
     @experimental(
         "A test function",
@@ -297,7 +297,7 @@ def test_experimental_marker_does_not_raise_with_opt_in():
         assert foo() == 1
 
 
-@pytest.mark.usefixtures("enable_prefect_experimental_test_opt_in_setting")
+@pytest.mark.usefixtures("enable_syntask_experimental_test_opt_in_setting")
 def test_experiment_enabled_with_opt_in():
     assert experiment_enabled("test") is True
 
@@ -311,7 +311,7 @@ def test_experiment_enabled_with_unknown_group():
         ValueError,
         match=(
             "A opt-in setting for experimental feature 'foo' does not exist yet. "
-            "'PREFECT_EXPERIMENTAL_ENABLE_FOO' must be created before the group can "
+            "'SYNTASK_EXPERIMENTAL_ENABLE_FOO' must be created before the group can "
             "be used."
         ),
     ):
@@ -323,7 +323,7 @@ def test_experimental_marker_cannot_be_used_without_warn_setting():
         ValueError,
         match=(
             "A warn setting for experimental feature 'ANOTHER_GROUP' does not exist "
-            "yet. 'PREFECT_EXPERIMENTAL_WARN_ANOTHER_GROUP' must be created before "
+            "yet. 'SYNTASK_EXPERIMENTAL_WARN_ANOTHER_GROUP' must be created before "
             "the group can be used."
         ),
     ):
@@ -341,7 +341,7 @@ def test_experimental_marker_cannot_be_used_without_opt_in_setting_if_required()
         ValueError,
         match=(
             "A opt-in setting for experimental feature 'ANOTHER_GROUP' does not exist "
-            "yet. 'PREFECT_EXPERIMENTAL_ENABLE_ANOTHER_GROUP' must be created before "
+            "yet. 'SYNTASK_EXPERIMENTAL_ENABLE_ANOTHER_GROUP' must be created before "
             "the group can be used."
         ),
     ):
@@ -351,7 +351,7 @@ def test_experimental_marker_cannot_be_used_without_opt_in_setting_if_required()
             return 1
 
 
-@pytest.mark.usefixtures("enable_prefect_experimental_test_opt_in_setting")
+@pytest.mark.usefixtures("enable_syntask_experimental_test_opt_in_setting")
 def test_enabled_experiments_with_opt_in():
     assert enabled_experiments() == {
         "test",

@@ -1,13 +1,13 @@
-import { plugin as PrefectDesign } from '@prefecthq/prefect-design'
-import { plugin as PrefectUILibrary } from '@prefecthq/prefect-ui-library'
+import { plugin as SyntaskDesign } from '@syntaskhq/syntask-design'
+import { plugin as SyntaskUILibrary } from '@syntaskhq/syntask-ui-library'
 import { createApp } from 'vue'
 import router from '@/router'
 import { initColorMode } from '@/utilities/colorMode'
 
 // styles
-import '@prefecthq/vue-charts/dist/style.css'
-import '@prefecthq/prefect-design/dist/style.css'
-import '@prefecthq/prefect-ui-library/dist/style.css'
+import '@syntaskhq/vue-charts/dist/style.css'
+import '@syntaskhq/syntask-design/dist/style.css'
+import '@syntaskhq/syntask-ui-library/dist/style.css'
 import '@/styles/style.css'
 
 // We want components imported last because import order determines style order
@@ -20,8 +20,8 @@ function start(): void {
   const app = createApp(App)
 
   app.use(router)
-  app.use(PrefectDesign)
-  app.use(PrefectUILibrary)
+  app.use(SyntaskDesign)
+  app.use(SyntaskUILibrary)
 
   app.mount('#app')
 }

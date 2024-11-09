@@ -1,43 +1,43 @@
 ---
-description: Prefect REST API for interacting with the orchestration engine and Prefect Cloud.
+description: Syntask REST API for interacting with the orchestration engine and Syntask Cloud.
 tags:
     - REST API
-    - Prefect Cloud
-    - Prefect server
+    - Syntask Cloud
+    - Syntask server
     - curl
-    - PrefectClient
+    - SyntaskClient
     - Requests
     - API reference
 ---
 
 # REST API
 
-The Prefect REST API is used for communicating data from clients to a Prefect server so that orchestration can be performed. This API is consumed by clients such as the Prefect Python SDK or the server dashboard.
+The Syntask REST API is used for communicating data from clients to a Syntask server so that orchestration can be performed. This API is consumed by clients such as the Syntask Python SDK or the server dashboard.
 
-Prefect Cloud and a locally hosted Prefect server each provide a REST API.
+Syntask Cloud and a locally hosted Syntask server each provide a REST API.
 
-- Prefect Cloud:
-    - [Interactive Prefect Cloud REST API documentation](https://app.prefect.cloud/api/docs)
-    - [Finding your Prefect Cloud details](#finding-your-prefect-cloud-details)
-- A Locally hosted open-source Prefect server:
-    - Interactive REST API documentation for a locally hosted open-source Prefect server is available at `http://localhost:4200/docs` or the `/docs` endpoint of the [PREFECT_API_URL](/concepts/settings/#prefect_api_url) you have configured to access the server. You must have the server running with `prefect server start` to access the interactive documentation.
-    - [Prefect REST API documentation](/api-ref/rest-api-reference/)
+- Syntask Cloud:
+    - [Interactive Syntask Cloud REST API documentation](https://app.syntask.cloud/api/docs)
+    - [Finding your Syntask Cloud details](#finding-your-syntask-cloud-details)
+- A Locally hosted open-source Syntask server:
+    - Interactive REST API documentation for a locally hosted open-source Syntask server is available at `http://localhost:4200/docs` or the `/docs` endpoint of the [SYNTASK_API_URL](/concepts/settings/#syntask_api_url) you have configured to access the server. You must have the server running with `syntask server start` to access the interactive documentation.
+    - [Syntask REST API documentation](/api-ref/rest-api-reference/)
 
 ## Interacting with the REST API
 
-You have many options to interact with the Prefect REST API:
+You have many options to interact with the Syntask REST API:
 
-- Create an instance of [`PrefectClient`](/api-ref/prefect/client/orchestration/#prefect.client.orchestration.PrefectClient) 
+- Create an instance of [`SyntaskClient`](/api-ref/syntask/client/orchestration/#syntask.client.orchestration.SyntaskClient) 
 - Use your favorite Python HTTP library such as [Requests](https://requests.readthedocs.io/en/latest/) or [HTTPX](https://www.python-httpx.org/)
 - Use an HTTP library in your language of choice
 - Use [curl](https://curl.se/) from the command line 
 
-### PrefectClient with a Prefect server
-This example uses `PrefectClient` with a locally hosted Prefect server:
+### SyntaskClient with a Syntask server
+This example uses `SyntaskClient` with a locally hosted Syntask server:
 
 ```python
 import asyncio
-from prefect.client import get_client
+from syntask.client import get_client
 
 async def get_flows():
     client = get_client()
@@ -65,15 +65,15 @@ lemur-facts 53f710e7-3b0f-4b2f-ab6b-44934111818c
 ```
 </div>
 
-### Requests with Prefect
+### Requests with Syntask
 
-This example uses the Requests library with Prefect Cloud to return the five newest artifacts.
+This example uses the Requests library with Syntask Cloud to return the five newest artifacts.
 
 ```python
 import requests
 
-PREFECT_API_URL="https://api.prefect.cloud/api/accounts/abc-my-cloud-account-id-is-here/workspaces/123-my-workspace-id-is-here"
-PREFECT_API_KEY="123abc_my_api_key_goes_here"
+SYNTASK_API_URL="https://api.syntask.cloud/api/accounts/abc-my-cloud-account-id-is-here/workspaces/123-my-workspace-id-is-here"
+SYNTASK_API_KEY="123abc_my_api_key_goes_here"
 data = {
     "sort": "CREATED_DESC",
     "limit": 5,
@@ -84,8 +84,8 @@ data = {
     }
 }
 
-headers = {"Authorization": f"Bearer {PREFECT_API_KEY}"}
-endpoint = f"{PREFECT_API_URL}/artifacts/filter"
+headers = {"Authorization": f"Bearer {SYNTASK_API_KEY}"}
+endpoint = f"{SYNTASK_API_URL}/artifacts/filter"
 
 response = requests.post(endpoint, headers=headers, json=data)
 assert response.status_code == 200
@@ -93,39 +93,39 @@ for artifact in response.json():
     print(artifact)
 ```
 
-### curl with Prefect Cloud
+### curl with Syntask Cloud
 
-This example uses curl with Prefect Cloud to create a flow run:
+This example uses curl with Syntask Cloud to create a flow run:
 
 ```bash
 ACCOUNT_ID="abc-my-cloud-account-id-goes-here"
 WORKSPACE_ID="123-my-workspace-id-goes-here"
-PREFECT_API_URL="https://api.prefect.cloud/api/accounts/$ACCOUNT_ID/workspaces/$WORKSPACE_ID"
-PREFECT_API_KEY="123abc_my_api_key_goes_here"
+SYNTASK_API_URL="https://api.syntask.cloud/api/accounts/$ACCOUNT_ID/workspaces/$WORKSPACE_ID"
+SYNTASK_API_KEY="123abc_my_api_key_goes_here"
 DEPLOYMENT_ID="my_deployment_id"
 
-curl --location --request POST "$PREFECT_API_URL/deployments/$DEPLOYMENT_ID/create_flow_run" \
+curl --location --request POST "$SYNTASK_API_URL/deployments/$DEPLOYMENT_ID/create_flow_run" \
   --header "Content-Type: application/json" \
-  --header "Authorization: Bearer $PREFECT_API_KEY" \
-  --header "X-PREFECT-API-VERSION: 0.8.4" \
+  --header "Authorization: Bearer $SYNTASK_API_KEY" \
+  --header "X-SYNTASK-API-VERSION: 0.8.4" \
   --data-raw "{}"
 ```
 
 Note that in this example `--data-raw "{}"` is required and is where you can specify other aspects of the flow run such as the state. Windows users substitute `^` for `\` for line multi-line commands.
 
 
-## Finding your Prefect Cloud details
+## Finding your Syntask Cloud details
 
-When working with the Prefect Cloud REST API you will need your Account ID and often the Workspace ID for the [workspace](/cloud/workspaces/) you want to interact with. You can find both IDs for a [Prefect profile](/concepts/settings/) in the CLI with `prefect profile inspect my_profile`. This command will also display your [Prefect API key](/cloud/users/api-keys/), as shown below:
+When working with the Syntask Cloud REST API you will need your Account ID and often the Workspace ID for the [workspace](/cloud/workspaces/) you want to interact with. You can find both IDs for a [Syntask profile](/concepts/settings/) in the CLI with `syntask profile inspect my_profile`. This command will also display your [Syntask API key](/cloud/users/api-keys/), as shown below:
 
 <div class="terminal">
 ```bash
-PREFECT_API_URL='https://api.prefect.cloud/api/accounts/abc-my-account-id-is-here/workspaces/123-my-workspace-id-is-here'
-PREFECT_API_KEY='123abc_my_api_key_is_here'
+SYNTASK_API_URL='https://api.syntask.cloud/api/accounts/abc-my-account-id-is-here/workspaces/123-my-workspace-id-is-here'
+SYNTASK_API_KEY='123abc_my_api_key_is_here'
 ```
 </div>
 
-Alternatively, view your Account ID and Workspace ID in your browser URL. For example: `https://app.prefect.cloud/account/abc-my-account-id-is-here/workspaces/123-my-workspace-id-is-here`. 
+Alternatively, view your Account ID and Workspace ID in your browser URL. For example: `https://app.syntask.cloud/account/abc-my-account-id-is-here/workspaces/123-my-workspace-id-is-here`. 
 
 
 ## REST Guidelines
@@ -206,12 +206,12 @@ For example, to query for flows with the tag `"database"` and failed flow runs, 
 
 ## OpenAPI
 
-The Prefect REST API can be fully described with an OpenAPI 3.0 compliant document. [OpenAPI](https://swagger.io/docs/specification/about/) is a standard specification for describing REST APIs.
+The Syntask REST API can be fully described with an OpenAPI 3.0 compliant document. [OpenAPI](https://swagger.io/docs/specification/about/) is a standard specification for describing REST APIs.
 
-To generate the Prefect server's complete OpenAPI document, run the following commands in an interactive Python session:
+To generate the Syntask server's complete OpenAPI document, run the following commands in an interactive Python session:
 
 ```python
-from prefect.server.api.server import create_app
+from syntask.server.api.server import create_app
 
 app = create_app()
 openapi_doc = app.openapi()

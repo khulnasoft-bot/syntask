@@ -36,9 +36,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { media } from '@prefecthq/prefect-design'
-  import { PageHeadingTaskRun, TaskRunArtifacts, TaskRunLogs, TaskRunDetails, CopyableWrapper, useFavicon, useWorkspaceApi, localization, ExtraInfoModal, useTabs } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam, useRouteQueryParam, useSubscriptionWithDependencies } from '@prefecthq/vue-compositions'
+  import { media } from '@syntaskhq/syntask-design'
+  import { PageHeadingTaskRun, TaskRunArtifacts, TaskRunLogs, TaskRunDetails, CopyableWrapper, useFavicon, useWorkspaceApi, localization, ExtraInfoModal, useTabs } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam, useRouteQueryParam, useSubscriptionWithDependencies } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { usePageTitle } from '@/compositions/usePageTitle'

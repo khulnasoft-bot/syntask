@@ -1,5 +1,5 @@
 ---
-description: Prefect deployments elevate flows, allowing flow runs to be scheduled and triggered via API. Learn how to easily manage your code and deployments.
+description: Syntask deployments elevate flows, allowing flow runs to be scheduled and triggered via API. Learn how to easily manage your code and deployments.
 tags:
     - orchestration
     - flow runs
@@ -25,7 +25,7 @@ Different ways of creating a deployment populate these fields differently.
 
 ## Overview
 
-Every Prefect deployment references one and only one "entrypoint" flow (though that flow may itself call any number of subflows). 
+Every Syntask deployment references one and only one "entrypoint" flow (though that flow may itself call any number of subflows). 
 Different deployments may reference the same underlying flow, a useful pattern when developing or promoting workflow changes through staged environments.
 
 The complete schema that defines a deployment is as follows:
@@ -61,7 +61,7 @@ class Deployment:
     pull_steps: Optional[Dict[str, Any]] = None
 ```
 
-All methods for creating Prefect deployments are interfaces for populating this schema. Let's look at each section in turn.
+All methods for creating Syntask deployments are interfaces for populating this schema. Let's look at each section in turn.
 
 ### Required data
 
@@ -69,11 +69,11 @@ Deployments universally require both a `name` and a reference to an underlying `
 In almost all instances of deployment creation, users do not need to concern themselves with the `flow_id` as most interfaces will only need the flow's name.
 Note that the deployment name is not required to be unique across all deployments but is required to be unique for a given flow ID.
 As a consequence, you will often see references to the deployment's unique identifying name `{FLOW_NAME}/{DEPLOYMENT_NAME}`.
-For example, triggering a run of a deployment from the Prefect CLI can be done via:
+For example, triggering a run of a deployment from the Syntask CLI can be done via:
 
 <div class="terminal">
 ```bash
-prefect deployment run my-first-flow/my-first-deployment
+syntask deployment run my-first-flow/my-first-deployment
 ```
 </div>
 
@@ -87,15 +87,15 @@ It is always specified relative to the `path`. Entrypoints use Python's standard
 
 The entrypoint must reference the same flow as the flow ID.
 
-Note that Prefect requires that deployments reference flows defined _within Python files_.
+Note that Syntask requires that deployments reference flows defined _within Python files_.
 Flows defined within interactive REPLs or notebooks cannot currently be deployed as such. 
-They are still valid flows that will be monitored by the API and observable in the UI whenever they are run, but Prefect cannot trigger them.
+They are still valid flows that will be monitored by the API and observable in the UI whenever they are run, but Syntask cannot trigger them.
 
 !!! info "Deployments do not contain code definitions"
     Deployment metadata references code that exists in potentially diverse locations within your environment.
-    This separation of concerns means that your flow code stays within your storage and execution infrastructure and never lives on the Prefect server or database.
+    This separation of concerns means that your flow code stays within your storage and execution infrastructure and never lives on the Syntask server or database.
 
-    This is the heart of the Prefect hybrid model: there's a boundary between your proprietary assets, such as your flow code, and the Prefect backend (including [Prefect Cloud](/cloud/)). 
+    This is the heart of the Syntask hybrid model: there's a boundary between your proprietary assets, such as your flow code, and the Syntask backend (including [Syntask Cloud](/cloud/)). 
 
 ### Scheduling and parametrization
 
@@ -121,10 +121,10 @@ These can be overwritten through a trigger or when manually creating a custom ru
 
 #### Running a deployed flow from within Python flow code
 
-Prefect provides a [`run_deployment` function](/api-ref/prefect/deployments/deployments/#prefect.deployments.deployments.run_deployment) that can be used to schedule the run of an existing deployment when your Python code executes.
+Syntask provides a [`run_deployment` function](/api-ref/syntask/deployments/deployments/#syntask.deployments.deployments.run_deployment) that can be used to schedule the run of an existing deployment when your Python code executes.
 
 ```python
-from prefect.deployments import run_deployment
+from syntask.deployments import run_deployment
 
 def main():
     run_deployment(name="my_flow_name/my_deployment_name")
@@ -144,8 +144,8 @@ rather not link the scheduled flow run to the calling flow or task run, you
 can disable this behavior by passing `as_subflow=False`:
 
 ```python
-from prefect import flow
-from prefect.deployments import run_deployment
+from syntask import flow
+from syntask.deployments import run_deployment
 
 
 @flow
@@ -154,13 +154,13 @@ def my_flow():
     run_deployment(name="my_other_flow/my_deployment_name", as_subflow=False)
 ```
 
-The return value of `run_deployment` is a [FlowRun](/api-ref/prefect/client/schemas/#prefect.client.schemas.objects.FlowRun) object containing metadata about the scheduled run. You
+The return value of `run_deployment` is a [FlowRun](/api-ref/syntask/client/schemas/#syntask.client.schemas.objects.FlowRun) object containing metadata about the scheduled run. You
 can use this object to retrieve information about the run after calling
 `run_deployment`:
 
 ```python
-from prefect import get_client
-from prefect.deployments import run_deployment
+from syntask import get_client
+from syntask.deployments import run_deployment
 
 def main():
     flow_run = run_deployment(name="my_flow_name/my_deployment_name")
@@ -173,25 +173,25 @@ def main():
         print(f"Current state of the flow run: {flow_run.state}")
 ```
 
-!!! tip "Using the Prefect client"
-    For more information on using the Prefect client to interact with Prefect's
+!!! tip "Using the Syntask client"
+    For more information on using the Syntask client to interact with Syntask's
     REST API, see [our guide](/guides/using-the-client/).
 
 ## Versioning and bookkeeping
 
-Versions, descriptions and tags are omnipresent fields throughout Prefect that can be easy to overlook. However, putting some extra thought into how you use these fields can pay dividends down the road.
+Versions, descriptions and tags are omnipresent fields throughout Syntask that can be easy to overlook. However, putting some extra thought into how you use these fields can pay dividends down the road.
 
 - **`version`**: versions are always set by the client and can be any arbitrary string. 
 We recommend tightly coupling this field on your deployments to your software development lifecycle. 
-For example if you leverage `git` to manage code changes, use either a tag or commit hash in this field. If you don't set a value for the version, Prefect will compute a hash
-- **`description`**: the description field of a deployment is a place to provide rich reference material for downstream stakeholders such as intended use and parameter documentation. Markdown formatting will be rendered in the Prefect UI, allowing for section headers, links, tables, and other formatting. If not provided explicitly, Prefect will use the docstring of your flow function as a default value.
-- **`tags`**: tags are a mechanism for grouping related work together across a diverse set of objects. Tags set on a deployment will be inherited by that deployment's flow runs. These tags can then be used to filter what runs are displayed on the primary UI dashboard, allowing you to customize different views into your work. In addition, in Prefect Cloud you can easily find objects through searching by tag.
+For example if you leverage `git` to manage code changes, use either a tag or commit hash in this field. If you don't set a value for the version, Syntask will compute a hash
+- **`description`**: the description field of a deployment is a place to provide rich reference material for downstream stakeholders such as intended use and parameter documentation. Markdown formatting will be rendered in the Syntask UI, allowing for section headers, links, tables, and other formatting. If not provided explicitly, Syntask will use the docstring of your flow function as a default value.
+- **`tags`**: tags are a mechanism for grouping related work together across a diverse set of objects. Tags set on a deployment will be inherited by that deployment's flow runs. These tags can then be used to filter what runs are displayed on the primary UI dashboard, allowing you to customize different views into your work. In addition, in Syntask Cloud you can easily find objects through searching by tag.
 
-All of these bits of metadata can be leveraged to great effect by injecting them into the processes that Prefect is orchestrating. For example you can use both run ID and versions to organize files that you produce from your workflows, or by associating your flow run's tags with the metadata of a job it orchestrates.
-This metadata is available during execution through [Prefect runtime](/guides/runtime-context/).
+All of these bits of metadata can be leveraged to great effect by injecting them into the processes that Syntask is orchestrating. For example you can use both run ID and versions to organize files that you produce from your workflows, or by associating your flow run's tags with the metadata of a job it orchestrates.
+This metadata is available during execution through [Syntask runtime](/guides/runtime-context/).
 
 !!! tip "Everything has a version"
-    Deployments aren't the only entity in Prefect with a version attached; both flows and tasks also have versions that can be set through their respective decorators. These versions will be sent to the API anytime the flow or task is run and thereby allow you to audit your changes across all levels.
+    Deployments aren't the only entity in Syntask with a version attached; both flows and tasks also have versions that can be set through their respective decorators. These versions will be sent to the API anytime the flow or task is run and thereby allow you to audit your changes across all levels.
 
 ### Workers and Work Pools
 
@@ -209,19 +209,19 @@ This field is often used for things such as Docker image names, Kubernetes annot
 Pull steps allow users to highly decouple their workflow architecture.
 For example, a common use of pull steps is to dynamically pull code from remote filesystems such as GitHub with each run of their deployment.
 
-For more information see [the guide to deploying with a worker](/guides/prefect-deploy/).
+For more information see [the guide to deploying with a worker](/guides/syntask-deploy/).
 
 ## Two approaches to deployments
 
-There are two primary ways to deploy flows with Prefect, differentiated by how much control Prefect has over the infrastructure in which the flows run.
+There are two primary ways to deploy flows with Syntask, differentiated by how much control Syntask has over the infrastructure in which the flows run.
 
-In one setup, deploying Prefect flows is analogous to deploying a webserver - users author their workflows and then start a long-running process (often within a Docker container) that is responsible for managing all of the runs for the associated deployment(s).
+In one setup, deploying Syntask flows is analogous to deploying a webserver - users author their workflows and then start a long-running process (often within a Docker container) that is responsible for managing all of the runs for the associated deployment(s).
 
-In the other setup, you do a little extra up-front work to set up a [work pool and a base job template that defines how individual flow runs will be submitted to infrastructure](/guides/prefect-deploy).
+In the other setup, you do a little extra up-front work to set up a [work pool and a base job template that defines how individual flow runs will be submitted to infrastructure](/guides/syntask-deploy).
 
-Prefect provides several [types of work pools](/concepts/work-pools/#work-pool-types) corresponding to different types of infrastructure.
-Prefect Cloud provides a [Prefect Managed work pool](/guides/managed-execution/) option that is the simplest way to run workflows remotely.
-A cloud-provider account, such as AWS, is not required with a Prefect Managed work pool.
+Syntask provides several [types of work pools](/concepts/work-pools/#work-pool-types) corresponding to different types of infrastructure.
+Syntask Cloud provides a [Syntask Managed work pool](/guides/managed-execution/) option that is the simplest way to run workflows remotely.
+A cloud-provider account, such as AWS, is not required with a Syntask Managed work pool.
 
 Some work pool types require a client-side worker to submit job definitions to the appropriate infrastructure with each run.
 
@@ -234,7 +234,7 @@ Read further to decide which setup is best for your situation.
 When you have several flows running regularly, [the `serve` method](/concepts/flows/#serving-a-flow) of the `Flow` object or [the `serve` utility](/concepts/flows/#serving-multiple-flows-at-once) is a great option for managing multiple flows simultaneously.
 
 Once you have authored your flow and decided on its deployment settings as described above, all that's left is to run this long-running process in a location of your choosing.
-The process will stay in communication with the Prefect API, monitoring for work and submitting each run within an individual subprocess.
+The process will stay in communication with the Syntask API, monitoring for work and submitting each run within an individual subprocess.
 Note that because runs are submitted to subprocesses, any external infrastructure configuration will need to be setup beforehand and kept associated with this process.
 
 This approach has many benefits:
@@ -253,15 +253,15 @@ However, there are a few reasons you might consider running flows on dynamically
 
 ### Dynamically provisioning infrastructure with work pools
 
-[Work pools](/concepts/work-pools/) allow Prefect to exercise greater control of the infrastructure on which flows run.
+[Work pools](/concepts/work-pools/) allow Syntask to exercise greater control of the infrastructure on which flows run.
 Options for [serverless work pools](/guides/deployment/serverless-workers/) allow you to scale to zero when workflows aren't running.
-Prefect even provides you with the ability to [provision cloud infrastructure via a single CLI command](/guides/deployment/push-work-pools/#automatically-creating-a-new-push-work-pool-and-provisioning-infrastructure), if you use a Prefect Cloud push work pool option.
+Syntask even provides you with the ability to [provision cloud infrastructure via a single CLI command](/guides/deployment/push-work-pools/#automatically-creating-a-new-push-work-pool-and-provisioning-infrastructure), if you use a Syntask Cloud push work pool option.
 
 With work pools:
 
-- You can configure and monitor infrastructure configuration within the Prefect UI.
+- You can configure and monitor infrastructure configuration within the Syntask UI.
 - Infrastructure is ephemeral and dynamically provisioned.
-- Prefect is more infrastructure-aware and therefore collects more event data from your infrastructure by default.
+- Syntask is more infrastructure-aware and therefore collects more event data from your infrastructure by default.
 - Highly decoupled setups are possible.
 
 !!! note "You don't have to commit to one approach"

@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from prefect.server.events import messaging, triggers
+from syntask.server.events import messaging, triggers
 
 
 @pytest.fixture(autouse=True)
@@ -29,7 +29,7 @@ def actions_publish_mocks(
     )
 
     monkeypatch.setattr(
-        "prefect.server.events.messaging.create_actions_publisher",
+        "syntask.server.events.messaging.create_actions_publisher",
         mock_create_publisher,
     )
 

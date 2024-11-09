@@ -1,1 +1,1 @@
-::: prefect.server.schemas.sorting
+::: syntask.server.schemas.sorting

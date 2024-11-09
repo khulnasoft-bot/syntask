@@ -7,13 +7,13 @@ from textwrap import dedent
 import pytest
 from _pytest.capture import CaptureFixture
 
-import prefect
-from prefect.utilities.dockerutils import (
+import syntask
+from syntask.utilities.dockerutils import (
     BuildError,
     ImageBuilder,
     build_image,
     generate_default_dockerfile,
-    get_prefect_image_name,
+    get_syntask_image_name,
     silence_docker_warnings,
 )
 
@@ -146,8 +146,8 @@ def test_image_builder_must_be_entered(contexts: Path):
         builder.copy(contexts / "tiny" / "hello.txt", "hello.txt")
 
 
-def test_image_builder_allocates_temporary_context(prefect_base_image: str):
-    with ImageBuilder(prefect_base_image) as image:
+def test_image_builder_allocates_temporary_context(syntask_base_image: str):
+    with ImageBuilder(syntask_base_image) as image:
         assert image.context
         assert image.context.exists()
         context = image.context
@@ -161,18 +161,18 @@ def test_image_builder_accepts_alternative_base_image():
         assert image.dockerfile_lines == ["FROM busybox"]
 
 
-def test_from_prefect_image(docker: DockerClient, prefect_base_image: str):
-    with ImageBuilder(prefect_base_image) as image:
+def test_from_syntask_image(docker: DockerClient, syntask_base_image: str):
+    with ImageBuilder(syntask_base_image) as image:
         image.add_line("RUN echo Woooo, building")
-        image.add_line('ENTRYPOINT [ "prefect", "--version" ]')
+        image.add_line('ENTRYPOINT [ "syntask", "--version" ]')
         image_id = image.build()
 
     output = docker.containers.run(image_id, remove=True).decode().strip()
-    assert output == prefect.__version__
+    assert output == syntask.__version__
 
 
-def test_copying_file(contexts: Path, docker: DockerClient, prefect_base_image: str):
-    with ImageBuilder(prefect_base_image) as image:
+def test_copying_file(contexts: Path, docker: DockerClient, syntask_base_image: str):
+    with ImageBuilder(syntask_base_image) as image:
         image.add_line("WORKDIR /tiny/")
         image.copy(contexts / "tiny" / "hello.txt", "hello.txt")
         image.add_line('ENTRYPOINT [ "/bin/cat", "hello.txt" ]')
@@ -183,9 +183,9 @@ def test_copying_file(contexts: Path, docker: DockerClient, prefect_base_image: 
 
 
 def test_copied_paths_are_resolved(
-    contexts: Path, docker: DockerClient, prefect_base_image: str
+    contexts: Path, docker: DockerClient, syntask_base_image: str
 ):
-    with ImageBuilder(prefect_base_image) as image:
+    with ImageBuilder(syntask_base_image) as image:
         image.add_line("WORKDIR /tiny/")
         image.copy(contexts / "tiny" / ".." / "tiny" / "hello.txt", "hello.txt")
         image.add_line('ENTRYPOINT [ "/bin/cat", "hello.txt" ]')
@@ -198,9 +198,9 @@ def test_copied_paths_are_resolved(
 
 
 def test_copying_file_to_absolute_location(
-    contexts: Path, docker: DockerClient, prefect_base_image: str
+    contexts: Path, docker: DockerClient, syntask_base_image: str
 ):
-    with ImageBuilder(prefect_base_image) as image:
+    with ImageBuilder(syntask_base_image) as image:
         image.add_line("WORKDIR /tiny/")
         image.copy(contexts / "tiny" / "hello.txt", "/hello.txt")
         image.add_line('ENTRYPOINT [ "/bin/cat", "/hello.txt" ]')
@@ -211,9 +211,9 @@ def test_copying_file_to_absolute_location(
 
 
 def test_copying_file_to_posix_path(
-    contexts: Path, docker: DockerClient, prefect_base_image: str
+    contexts: Path, docker: DockerClient, syntask_base_image: str
 ):
-    with ImageBuilder(prefect_base_image) as image:
+    with ImageBuilder(syntask_base_image) as image:
         image.add_line("WORKDIR /tiny/")
         image.copy(contexts / "tiny" / "hello.txt", PurePosixPath("/hello.txt"))
         image.add_line('ENTRYPOINT [ "/bin/cat", "/hello.txt" ]')
@@ -224,9 +224,9 @@ def test_copying_file_to_posix_path(
 
 
 def test_copying_directory(
-    contexts: Path, docker: DockerClient, prefect_base_image: str
+    contexts: Path, docker: DockerClient, syntask_base_image: str
 ):
-    with ImageBuilder(prefect_base_image) as image:
+    with ImageBuilder(syntask_base_image) as image:
         image.add_line("WORKDIR /tiny/")
         image.copy(contexts / "tiny", "tiny")
         image.add_line('ENTRYPOINT [ "/bin/cat", "tiny/hello.txt" ]')
@@ -237,9 +237,9 @@ def test_copying_directory(
 
 
 def test_copying_directory_to_absolute_location(
-    contexts: Path, docker: DockerClient, prefect_base_image: str
+    contexts: Path, docker: DockerClient, syntask_base_image: str
 ):
-    with ImageBuilder(prefect_base_image) as image:
+    with ImageBuilder(syntask_base_image) as image:
         image.add_line("WORKDIR /tiny/")
         image.copy(contexts / "tiny", "/tiny")
         image.add_line('ENTRYPOINT [ "/bin/cat", "/tiny/hello.txt" ]')
@@ -250,9 +250,9 @@ def test_copying_directory_to_absolute_location(
 
 
 def test_copying_file_from_alternative_base(
-    contexts: Path, docker: DockerClient, prefect_base_image: str
+    contexts: Path, docker: DockerClient, syntask_base_image: str
 ):
-    with ImageBuilder(prefect_base_image, base_directory=contexts / "tiny") as image:
+    with ImageBuilder(syntask_base_image, base_directory=contexts / "tiny") as image:
         image.add_line("WORKDIR /tiny/")
         image.copy("hello.txt", "hello.txt")
         image.add_line('ENTRYPOINT [ "/bin/cat", "hello.txt" ]')
@@ -263,9 +263,9 @@ def test_copying_file_from_alternative_base(
 
 
 def test_can_use_working_tree_as_context(
-    contexts: Path, docker: DockerClient, prefect_base_image: str
+    contexts: Path, docker: DockerClient, syntask_base_image: str
 ):
-    with ImageBuilder(prefect_base_image, context=contexts / "no-dockerfile") as image:
+    with ImageBuilder(syntask_base_image, context=contexts / "no-dockerfile") as image:
         image.add_line("WORKDIR /tiny/")
         image.copy("hello.txt", "hello.txt")
         image.add_line('ENTRYPOINT [ "/bin/cat", "hello.txt" ]')
@@ -276,10 +276,10 @@ def test_can_use_working_tree_as_context(
 
 
 def test_cannot_already_have_a_dockerfile_in_context(
-    contexts: Path, prefect_base_image: str
+    contexts: Path, syntask_base_image: str
 ):
     with pytest.raises(ValueError, match="already a Dockerfile"):
-        ImageBuilder(prefect_base_image, context=contexts / "tiny")
+        ImageBuilder(syntask_base_image, context=contexts / "tiny")
 
 
 def test_generate_dockerfile_with_no_requirements(contexts):
@@ -287,9 +287,9 @@ def test_generate_dockerfile_with_no_requirements(contexts):
         assert dockerfile.exists()
         assert dockerfile.read_text() == dedent(
             f"""\
-                    FROM {get_prefect_image_name()}
-                    COPY . /opt/prefect/no-dockerfile/
-                    WORKDIR /opt/prefect/no-dockerfile/
+                    FROM {get_syntask_image_name()}
+                    COPY . /opt/syntask/no-dockerfile/
+                    WORKDIR /opt/syntask/no-dockerfile/
                     """
         )
 
@@ -301,10 +301,10 @@ def test_generate_dockerfile_with_requirements(contexts):
         assert dockerfile.exists()
         assert dockerfile.read_text() == dedent(
             f"""\
-                    FROM {get_prefect_image_name()}
-                    COPY requirements.txt /opt/prefect/requirements/requirements.txt
-                    RUN python -m pip install -r /opt/prefect/requirements/requirements.txt
-                    COPY . /opt/prefect/requirements/
-                    WORKDIR /opt/prefect/requirements/
+                    FROM {get_syntask_image_name()}
+                    COPY requirements.txt /opt/syntask/requirements/requirements.txt
+                    RUN python -m pip install -r /opt/syntask/requirements/requirements.txt
+                    COPY . /opt/syntask/requirements/
+                    WORKDIR /opt/syntask/requirements/
                     """
         )

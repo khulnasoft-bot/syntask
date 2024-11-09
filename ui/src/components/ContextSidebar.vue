@@ -2,7 +2,7 @@
   <p-context-sidebar class="context-sidebar">
     <template #header>
       <router-link :to="routes.root()" class="context-sidebar__logo-link">
-        <p-icon icon="Prefect" class="context-sidebar__logo-icon" />
+        <p-icon icon="Syntask" class="context-sidebar__logo-icon" />
       </router-link>
     </template>
     <p-context-nav-item title="Dashboard" :to="routes.dashboard()" />
@@ -18,7 +18,7 @@
     <p-context-nav-item v-if="canSeeArtifacts" title="Artifacts" :to="routes.artifacts()" />
 
     <template #footer>
-      <a href="https://www.prefect.io/cloud-vs-oss?utm_source=oss&utm_medium=oss&utm_campaign=oss&utm_term=none&utm_content=none" target="_blank">
+      <a href="https://www.syntask.io/cloud-vs-oss?utm_source=oss&utm_medium=oss&utm_campaign=oss&utm_term=none&utm_content=none" target="_blank">
         <p-context-nav-item>
           <div>
             Ready to scale?
@@ -34,8 +34,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { PContextSidebar, PContextNavItem } from '@prefecthq/prefect-design'
-  import { localization } from '@prefecthq/prefect-ui-library'
+  import { PContextSidebar, PContextNavItem } from '@syntaskhq/syntask-design'
+  import { localization } from '@syntaskhq/syntask-ui-library'
   import { computed } from 'vue'
   import { useCan } from '@/compositions/useCan'
   import { routes } from '@/router'

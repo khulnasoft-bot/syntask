@@ -9,7 +9,7 @@ import pytest
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import Field, validator
@@ -18,8 +18,8 @@ else:
     from pydantic import Field, validator
     from pydantic.fields import ModelField
 
-from prefect.server.api.clients import OrchestrationClient
-from prefect.server.database.orm_models import (
+from syntask.server.api.clients import OrchestrationClient
+from syntask.server.database.orm_models import (
     ORMConcurrencyLimitV2,
     ORMDeployment,
     ORMFlow,
@@ -28,8 +28,8 @@ from prefect.server.database.orm_models import (
     ORMWorkPool,
     ORMWorkQueue,
 )
-from prefect.server.events import actions
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
@@ -38,8 +38,8 @@ from prefect.server.events.schemas.automations import (
     TriggeredAction,
     TriggerState,
 )
-from prefect.server.events.schemas.events import Event, Resource
-from prefect.server.models import (
+from syntask.server.events.schemas.events import Event, Resource
+from syntask.server.models import (
     deployments,
     flow_runs,
     flows,
@@ -47,21 +47,21 @@ from prefect.server.models import (
     variables,
     work_queues,
 )
-from prefect.server.schemas.actions import (
+from syntask.server.schemas.actions import (
     VariableCreate,
     WorkQueueCreate,
     WorkQueueUpdate,
 )
-from prefect.server.schemas.core import Deployment, Flow, FlowRun, TaskRun, WorkQueue
-from prefect.server.schemas.responses import FlowRunResponse
-from prefect.server.schemas.states import State, StateType
-from prefect.settings import PREFECT_UI_URL, temporary_settings
+from syntask.server.schemas.core import Deployment, Flow, FlowRun, TaskRun, WorkQueue
+from syntask.server.schemas.responses import FlowRunResponse
+from syntask.server.schemas.states import State, StateType
+from syntask.settings import SYNTASK_UI_URL, temporary_settings
 
 
 @pytest.fixture(autouse=True)
 def ui_url() -> Generator[str, None, None]:
-    with temporary_settings(set_defaults={PREFECT_UI_URL: "http://localhost:3000"}):
-        yield PREFECT_UI_URL.value()
+    with temporary_settings(set_defaults={SYNTASK_UI_URL: "http://localhost:3000"}):
+        yield SYNTASK_UI_URL.value()
 
 
 class DemoAction(actions.JinjaTemplateAction):
@@ -93,7 +93,7 @@ async def tell_me_about_the_culprit() -> Automation:
         trigger=EventTrigger(
             expect={"animal.ingested"},
             match_related={
-                "prefect.resource.role": "meal",
+                "syntask.resource.role": "meal",
                 "genus": "Hemerocallis",
                 "species": "fulva",
             },
@@ -246,26 +246,26 @@ def picture_taken(
 ):
     return ReceivedEvent(
         occurred=start_of_test + timedelta(microseconds=2),
-        event="prefect.flow-run.completed",
+        event="syntask.flow-run.completed",
         resource={
-            "prefect.resource.id": f"prefect.flow-run.{take_a_picture.id}",
-            "prefect.state-message": "All states completed.",
-            "prefect.state-name": "Completed",
-            "prefect.state-timestamp": pendulum.now("UTC").isoformat(),
-            "prefect.state-type": "COMPLETED",
+            "syntask.resource.id": f"syntask.flow-run.{take_a_picture.id}",
+            "syntask.state-message": "All states completed.",
+            "syntask.state-name": "Completed",
+            "syntask.state-timestamp": pendulum.now("UTC").isoformat(),
+            "syntask.state-type": "COMPLETED",
         },
         related=[
             {
-                "prefect.resource.id": f"prefect.flow.{take_a_picture.flow_id}",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": f"syntask.flow.{take_a_picture.flow_id}",
+                "syntask.resource.role": "flow",
             },
             {
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture_deployment.id}",
-                "prefect.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture_deployment.id}",
+                "syntask.resource.role": "deployment",
             },
             {
-                "prefect.resource.id": f"prefect.work-queue.{take_a_picture_work_queue.id}",
-                "prefect.resource.role": "work-queue",
+                "syntask.resource.id": f"syntask.work-queue.{take_a_picture_work_queue.id}",
+                "syntask.resource.role": "work-queue",
             },
         ],
         id=uuid4(),
@@ -282,30 +282,30 @@ def picture_taken_by_task(
 ):
     return ReceivedEvent(
         occurred=start_of_test + timedelta(microseconds=2),
-        event="prefect.task-run.completed",
+        event="syntask.task-run.completed",
         resource={
-            "prefect.resource.id": f"prefect.task-run.{take_a_picture_task.id}",
-            "prefect.state-message": "All states completed.",
-            "prefect.state-name": "Completed",
-            "prefect.state-timestamp": pendulum.now("UTC").isoformat(),
-            "prefect.state-type": "COMPLETED",
+            "syntask.resource.id": f"syntask.task-run.{take_a_picture_task.id}",
+            "syntask.state-message": "All states completed.",
+            "syntask.state-name": "Completed",
+            "syntask.state-timestamp": pendulum.now("UTC").isoformat(),
+            "syntask.state-type": "COMPLETED",
         },
         related=[
             {
-                "prefect.resource.id": f"prefect.flow-run.{take_a_picture.id}",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": f"syntask.flow-run.{take_a_picture.id}",
+                "syntask.resource.role": "flow",
             },
             {
-                "prefect.resource.id": f"prefect.flow.{take_a_picture.flow_id}",
-                "prefect.resource.role": "flow",
+                "syntask.resource.id": f"syntask.flow.{take_a_picture.flow_id}",
+                "syntask.resource.role": "flow",
             },
             {
-                "prefect.resource.id": f"prefect.deployment.{take_a_picture_deployment.id}",
-                "prefect.resource.role": "deployment",
+                "syntask.resource.id": f"syntask.deployment.{take_a_picture_deployment.id}",
+                "syntask.resource.role": "deployment",
             },
             {
-                "prefect.resource.id": f"prefect.work-queue.{take_a_picture_work_queue.id}",
-                "prefect.resource.role": "work-queue",
+                "syntask.resource.id": f"syntask.work-queue.{take_a_picture_work_queue.id}",
+                "syntask.resource.role": "work-queue",
             },
         ],
         id=uuid4(),
@@ -387,7 +387,7 @@ async def test_flow_run_is_available_to_templates(
 async def test_flow_run_state_comes_from_event_resource(
     took_a_picture: TriggeredAction,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/3310,
+    """Regression test for https://github.com/Synopkg/nebula/issues/3310,
     where the state of the flow run fetched from the API was updated after the
     state change that caused the automation to run and notifications that were
     sent contained the incorrect state information"""
@@ -407,10 +407,10 @@ async def test_flow_run_state_comes_from_event_resource(
     assert len(rendered) == 1
     assert rendered[0] == " ".join(
         [
-            event.resource["prefect.state-message"],
-            event.resource["prefect.state-name"],
-            event.resource["prefect.state-timestamp"],
-            event.resource["prefect.state-type"],
+            event.resource["syntask.state-message"],
+            event.resource["syntask.state-name"],
+            event.resource["syntask.state-timestamp"],
+            event.resource["syntask.state-type"],
         ]
     )
 
@@ -420,7 +420,7 @@ async def test_flow_run_state_event_missing_state_data_uses_api_state(
     took_a_picture: TriggeredAction,
     take_a_picture: FlowRun,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/3310,
+    """Regression test for https://github.com/Synopkg/nebula/issues/3310,
     where the state of the flow run fetched from the API was updated after the
     state change that caused the automation to run and notifications that were
     sent contained the incorrect state information"""
@@ -431,7 +431,7 @@ async def test_flow_run_state_event_missing_state_data_uses_api_state(
     # Change the resource to one that does not have any of the state
     # information.
     event.resource = Resource.parse_obj(
-        {"prefect.resource.id": f"prefect.flow-run.{take_a_picture.id}"}
+        {"syntask.resource.id": f"syntask.flow-run.{take_a_picture.id}"}
     )
 
     action = DemoAction(
@@ -465,7 +465,7 @@ async def test_flow_run_state_event_malformed_uses_api_state(
     took_a_picture: TriggeredAction,
     take_a_picture: FlowRun,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/3310,
+    """Regression test for https://github.com/Synopkg/nebula/issues/3310,
     where the state of the flow run fetched from the API was updated after the
     state change that caused the automation to run and notifications that were
     sent contained the incorrect state information"""
@@ -477,11 +477,11 @@ async def test_flow_run_state_event_malformed_uses_api_state(
     # Change the resource to one that has malformed state information.
     event.resource = Resource.parse_obj(
         {
-            "prefect.resource.id": f"prefect.flow-run.{take_a_picture.id}",
-            "prefect.state-message": "",
-            "prefect.state-name": "Buh-bye",
-            "prefect.state-timestamp": take_a_picture.state.timestamp.isoformat(),
-            "prefect.state-type": "ANNIHILATED",
+            "syntask.resource.id": f"syntask.flow-run.{take_a_picture.id}",
+            "syntask.state-message": "",
+            "syntask.state-name": "Buh-bye",
+            "syntask.state-timestamp": take_a_picture.state.timestamp.isoformat(),
+            "syntask.state-type": "ANNIHILATED",
         }
     )
 
@@ -515,7 +515,7 @@ async def test_flow_run_state_comes_from_event_resource_empty_message(
     took_a_picture: TriggeredAction,
     take_a_picture: FlowRun,
 ):
-    """Regression test for https://github.com/PrefectHQ/prefect/issues/9230
+    """Regression test for https://github.com/Synopkg/syntask/issues/9230
     where the flow run event had all of the correct state information but the
     message, as is the case in many events, was empty causing the state to not
     be rehydrated but instead use the state from the API"""
@@ -526,11 +526,11 @@ async def test_flow_run_state_comes_from_event_resource_empty_message(
 
     event.resource = Resource.parse_obj(
         {
-            "prefect.resource.id": f"prefect.flow-run.{take_a_picture.id}",
-            "prefect.state-message": "",
-            "prefect.state-name": "Pending",
-            "prefect.state-timestamp": take_a_picture.state.timestamp.isoformat(),
-            "prefect.state-type": "PENDING",
+            "syntask.resource.id": f"syntask.flow-run.{take_a_picture.id}",
+            "syntask.state-message": "",
+            "syntask.state-name": "Pending",
+            "syntask.state-timestamp": take_a_picture.state.timestamp.isoformat(),
+            "syntask.state-type": "PENDING",
         }
     )
 
@@ -583,10 +583,10 @@ async def test_task_run_state_comes_from_event_resource(
     assert len(rendered) == 1
     assert rendered[0] == " ".join(
         [
-            event.resource["prefect.state-message"],
-            event.resource["prefect.state-name"],
-            event.resource["prefect.state-timestamp"],
-            event.resource["prefect.state-type"],
+            event.resource["syntask.state-message"],
+            event.resource["syntask.state-name"],
+            event.resource["syntask.state-timestamp"],
+            event.resource["syntask.state-type"],
         ]
     )
 
@@ -643,7 +643,7 @@ async def test_caches_objects(
     mock_get_object = AsyncMock()
     mock_get_object.side_effect = [snap_a_pic]
     with patch(
-        "prefect.server.events.actions.JinjaTemplateAction._get_object_from_prefect_api",
+        "syntask.server.events.actions.JinjaTemplateAction._get_object_from_syntask_api",
         mock_get_object,
     ):
         action = DemoAction(template="{{ flow.id }}")
@@ -667,19 +667,19 @@ async def test_retrieves_after_caching(
     assert took_a_picture.triggering_event
 
     def object_retriever(oriont_client, triggered_action, resource: Resource):
-        if "prefect.flow." in resource.id:
+        if "syntask.flow." in resource.id:
             return snap_a_pic
-        elif "prefect.flow-run" in resource.id:
+        elif "syntask.flow-run" in resource.id:
             return take_a_picture
-        elif "prefect.deployment" in resource.id:
+        elif "syntask.deployment" in resource.id:
             return take_a_picture_deployment
-        elif "prefect.work-queue" in resource.id:
+        elif "syntask.work-queue" in resource.id:
             return take_a_picture_work_queue
 
     mock_get_object = AsyncMock()
     mock_get_object.side_effect = object_retriever
     with patch(
-        "prefect.server.events.actions.JinjaTemplateAction._get_object_from_prefect_api",
+        "syntask.server.events.actions.JinjaTemplateAction._get_object_from_syntask_api",
         mock_get_object,
     ):
         action = DemoAction(template="")
@@ -729,7 +729,7 @@ async def test_get_object_from_orion_null_resource(
     resource = None
     action = DemoAction(template="")
     assert (
-        await action._get_object_from_prefect_api(
+        await action._get_object_from_syntask_api(
             orchestration_client, woodchonk_triggered, resource
         )
         is None
@@ -739,10 +739,10 @@ async def test_get_object_from_orion_null_resource(
 async def test_get_object_from_orion_resource_with_invalid_uuid(
     orchestration_client: OrchestrationClient, woodchonk_triggered: TriggeredAction
 ):
-    resource = Resource.parse_obj({"prefect.resource.id": "prefect.flow-run.thing"})
+    resource = Resource.parse_obj({"syntask.resource.id": "syntask.flow-run.thing"})
     action = DemoAction(template="")
     assert (
-        await action._get_object_from_prefect_api(
+        await action._get_object_from_syntask_api(
             orchestration_client, woodchonk_triggered, resource
         )
         is None
@@ -752,10 +752,10 @@ async def test_get_object_from_orion_resource_with_invalid_uuid(
 async def test_get_object_from_orion_resource_with_unknown_kind(
     orchestration_client: OrchestrationClient, woodchonk_triggered: TriggeredAction
 ):
-    resource = Resource.parse_obj({"prefect.resource.id": "prefect.unknown.thing"})
+    resource = Resource.parse_obj({"syntask.resource.id": "syntask.unknown.thing"})
     action = DemoAction(template="")
     assert (
-        await action._get_object_from_prefect_api(
+        await action._get_object_from_syntask_api(
             orchestration_client, woodchonk_triggered, resource
         )
         is None
@@ -766,11 +766,11 @@ async def test_get_object_from_orion_resource_missing_from_api(
     orchestration_client: OrchestrationClient, woodchonk_triggered: TriggeredAction
 ):
     resource = Resource.parse_obj(
-        {"prefect.resource.id": f"prefect.flow-run.{uuid4()}"}
+        {"syntask.resource.id": f"syntask.flow-run.{uuid4()}"}
     )
     action = DemoAction(template="")
     assert (
-        await action._get_object_from_prefect_api(
+        await action._get_object_from_syntask_api(
             orchestration_client, woodchonk_triggered, resource
         )
         is None
@@ -783,10 +783,10 @@ async def test_get_object_returns_object(
     woodchonk_triggered: TriggeredAction,
 ):
     resource = Resource.parse_obj(
-        {"prefect.resource.id": f"prefect.flow-run.{take_a_picture.id}"}
+        {"syntask.resource.id": f"syntask.flow-run.{take_a_picture.id}"}
     )
     action = DemoAction(template="")
-    flow_run = await action._get_object_from_prefect_api(
+    flow_run = await action._get_object_from_syntask_api(
         orchestration_client, woodchonk_triggered, resource
     )
 
@@ -824,7 +824,7 @@ async def test_resource_labels_may_be_accessed_as_object(
 
     action = DemoAction(
         template=(
-            "{{ event.resource.labels.prefect.resource.id }} - "
+            "{{ event.resource.labels.syntask.resource.id }} - "
             "{{ event.resource.labels.kingdom }}"
         ),
     )
@@ -851,7 +851,7 @@ async def test_resource_labels_may_be_iterated(woodchonk_triggered: TriggeredAct
         "family - Sciuridae",
         "genus - Marmota",
         "species - monax",
-        "prefect.resource.id - woodchonk",
+        "syntask.resource.id - woodchonk",
     }
 
 
@@ -872,7 +872,7 @@ async def test_resource_labels_may_be_sorted(woodchonk_triggered: TriggeredActio
         "kingdom - Animalia",
         "order - Rodentia",
         "phylum - Chordata",
-        "prefect.resource.id - woodchonk",
+        "syntask.resource.id - woodchonk",
         "species - monax",
     ]
 
@@ -892,7 +892,7 @@ async def test_related_labels_may_be_accessed_as_object(
     action = DemoAction(
         template=(
             "{% for related in event.related %}"
-            "{{ related.labels.prefect.resource.role }} - {{ related.labels.genus }}, "
+            "{{ related.labels.syntask.resource.role }} - {{ related.labels.genus }}, "
             "{% endfor %}"
         ),
     )
@@ -1118,7 +1118,7 @@ async def test_work_queue_health_late_run_count(
     start_of_test: DateTime,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/3635, where
+    """Regression test for https://github.com/Synopkg/nebula/issues/3635, where
     the late run count was not rendering in our work queue health template
     """
     await work_queues.update_work_queue(
@@ -1133,7 +1133,7 @@ async def test_work_queue_health_late_run_count(
     # Just do the lazy thing and mock out the function which counts flow runs so that
     # it always returns 42 (this will be the late run count below)
     monkeypatch.setattr(
-        "prefect.server.models.flow_runs.count_flow_runs",
+        "syntask.server.models.flow_runs.count_flow_runs",
         AsyncMock(return_value=42),
     )
 
@@ -1151,10 +1151,10 @@ async def test_work_queue_health_late_run_count(
         triggered=start_of_test + timedelta(seconds=1),
         triggering_event=Event(
             occurred=start_of_test,
-            event="prefect.work-queue.healthy",
+            event="syntask.work-queue.healthy",
             resource={
-                "prefect.resource.id": (
-                    f"prefect.work-queue.{take_a_picture_work_queue.id}"
+                "syntask.resource.id": (
+                    f"syntask.work-queue.{take_a_picture_work_queue.id}"
                 )
             },
             id=uuid4(),
@@ -1192,7 +1192,7 @@ async def test_related_resource_by_role_in_templates(
     start_of_test: DateTime,
 ):
     """
-    Regression test for https://github.com/PrefectHQ/nebula/issues/5215, where we want
+    Regression test for https://github.com/Synopkg/nebula/issues/5215, where we want
     to add {{ work_pool }} as a template shortcut.  This is an alternative and more
     general approach that can operate on just the event.
     """
@@ -1208,21 +1208,21 @@ async def test_related_resource_by_role_in_templates(
         triggered=start_of_test + timedelta(seconds=1),
         triggering_event=Event(
             occurred=start_of_test,
-            event="prefect.work-queue.healthy",
+            event="syntask.work-queue.healthy",
             resource={
-                "prefect.resource.id": f"prefect.work-queue.{uuid4()}",
-                "prefect.resource.name": "some-queue",
+                "syntask.resource.id": f"syntask.work-queue.{uuid4()}",
+                "syntask.resource.name": "some-queue",
             },
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{uuid4()}",
-                    "prefect.resource.role": "work-pool",
-                    "prefect.resource.name": "this-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{uuid4()}",
+                    "syntask.resource.role": "work-pool",
+                    "syntask.resource.name": "this-pool",
                 },
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{uuid4()}",
-                    "prefect.resource.role": "work-pool",
-                    "prefect.resource.name": "that-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{uuid4()}",
+                    "syntask.resource.role": "work-pool",
+                    "syntask.resource.name": "that-pool",
                 },
             ],
             id=uuid4(),
@@ -1259,7 +1259,7 @@ async def test_work_pool_is_available_to_templates(
     start_of_test: DateTime,
 ):
     """
-    Regression test for https://github.com/PrefectHQ/nebula/issues/5215, where we want
+    Regression test for https://github.com/Synopkg/nebula/issues/5215, where we want
     to add {{ work_pool }} as a template shortcut
     """
     template = """
@@ -1273,13 +1273,13 @@ async def test_work_pool_is_available_to_templates(
         triggered=start_of_test + timedelta(seconds=1),
         triggering_event=Event(
             occurred=start_of_test,
-            event="prefect.work-queue.healthy",
-            resource={"prefect.resource.id": f"prefect.work-queue.{work_queue.id}"},
+            event="syntask.work-queue.healthy",
+            resource={"syntask.resource.id": f"syntask.work-queue.{work_queue.id}"},
             related=[
                 {
-                    "prefect.resource.id": f"prefect.work-pool.{work_pool.id}",
-                    "prefect.resource.role": "work-pool",
-                    "prefect.resource.name": "test-pool",
+                    "syntask.resource.id": f"syntask.work-pool.{work_pool.id}",
+                    "syntask.resource.role": "work-pool",
+                    "syntask.resource.name": "test-pool",
                 }
             ],
             id=uuid4(),
@@ -1314,7 +1314,7 @@ async def test_concurrency_limit_is_available_in_templates(
     start_of_test: DateTime,
 ):
     """
-    Regression test for https://github.com/PrefectHQ/nebula/issues/5120, where we want
+    Regression test for https://github.com/Synopkg/nebula/issues/5120, where we want
     to add {{ concurrency_limit }} as a template shortcut (for v2 limits)
     """
     template = """
@@ -1328,9 +1328,9 @@ async def test_concurrency_limit_is_available_in_templates(
         triggered=start_of_test + timedelta(seconds=1),
         triggering_event=Event(
             occurred=start_of_test,
-            event="prefect.concurrency-limit.acquired",
+            event="syntask.concurrency-limit.acquired",
             resource={
-                "prefect.resource.id": f"prefect.concurrency-limit.{concurrency_limit_v2.id}",
+                "syntask.resource.id": f"syntask.concurrency-limit.{concurrency_limit_v2.id}",
             },
             id=uuid4(),
         ).receive(),

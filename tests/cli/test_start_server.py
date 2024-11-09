@@ -8,9 +8,9 @@ import anyio
 import httpx
 import pytest
 
-from prefect.settings import get_current_settings
-from prefect.testing.fixtures import is_port_in_use
-from prefect.utilities.processutils import open_process
+from syntask.settings import get_current_settings
+from syntask.testing.fixtures import is_port_in_use
+from syntask.utilities.processutils import open_process
 
 POLL_INTERVAL = 0.5
 STARTUP_TIMEOUT = 20
@@ -42,7 +42,7 @@ async def start_server_process():
     # Will connect to the same database as normal test clients
     async with open_process(
         command=[
-            "prefect",
+            "syntask",
             "server",
             "start",
             "--host",

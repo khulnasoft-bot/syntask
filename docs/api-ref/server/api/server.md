@@ -1,8 +1,8 @@
 ---
-description: Prefect API to define the FastAPI app.
+description: Syntask API to define the FastAPI app.
 tags:
-    - Prefect API
+    - Syntask API
     - FastAPI
 ---
 
-::: prefect.server.api.server
+::: syntask.server.api.server

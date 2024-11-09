@@ -6,25 +6,25 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from prefect._vendor.fastapi import FastAPI
-from prefect._vendor.starlette.testclient import TestClient, WebSocketTestSession
+from syntask._vendor.fastapi import FastAPI
+from syntask._vendor.starlette.testclient import TestClient, WebSocketTestSession
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.client.schemas import TaskRun
-from prefect.server import models
-from prefect.server.api import task_runs
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING,
+from syntask.client.schemas import TaskRun
+from syntask.server import models
+from syntask.server.api import task_runs
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING,
     temporary_settings,
 )
-from prefect.states import Scheduled
+from syntask.states import Scheduled
 
 
 @pytest.fixture
 def task_scheduling_enabled() -> Generator[None, None, None]:
     with temporary_settings(
         {
-            PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: True,
+            SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: True,
         }
     ):
         yield
@@ -55,7 +55,7 @@ def authenticated_socket(app: FastAPI) -> Generator[WebSocketTestSession, None, 
     socket: WebSocketTestSession
     with TestClient(app).websocket_connect(
         "/api/task_runs/subscriptions/scheduled",
-        subprotocols=["prefect"],
+        subprotocols=["syntask"],
     ) as socket:
         auth_dance(socket)
         yield socket

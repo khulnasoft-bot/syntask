@@ -1,7 +1,7 @@
 ---
-description: Users - special features for Prefect Cloud users
+description: Users - special features for Syntask Cloud users
 tags:
-    - Prefect Cloud
+    - Syntask Cloud
     - Users
 search:
   boost: 2
@@ -9,16 +9,16 @@ search:
 
 # User accounts <span class="badge cloud"></span>
 
-Sign up for a Prefect Cloud account at [app.prefect.cloud](https://app.prefect.cloud).
+Sign up for a Syntask Cloud account at [app.syntask.cloud](https://app.syntask.cloud).
 
 An individual user can be invited to become a member of other accounts.
 
 ## User settings
 
-Users can access their personal settings in the [profile menu](https://app.prefect.cloud/my/profile), including:
+Users can access their personal settings in the [profile menu](https://app.syntask.cloud/my/profile), including:
 
 - Profile: View and editing basic information, such as name.
-- API keys: Create and view [API keys](/cloud/users/api-keys/) for connecting to Prefect Cloud from the CLI or other environments.
+- API keys: Create and view [API keys](/cloud/users/api-keys/) for connecting to Syntask Cloud from the CLI or other environments.
 - Preferences: Manage settings, such as color mode and default time zone.
 - Feature previews: Enable or disable feature previews.
 
@@ -27,16 +27,16 @@ Users can access their personal settings in the [profile menu](https://app.prefe
 Users who are part of an account can hold the role of Admin or Member.
 Admins can invite other users to join the account and manage the account's workspaces and teams.
 
-Admins on Pro and Custom tier Prefect Cloud accounts can grant members of the account [roles](/cloud/users/roles/) in a workspace, such as Runner or Viewer.
+Admins on Pro and Custom tier Syntask Cloud accounts can grant members of the account [roles](/cloud/users/roles/) in a workspace, such as Runner or Viewer.
 Custom roles are available on Custom tier accounts.
 
 ## API keys
 
-[API keys](/cloud/users/api-keys/) enable you to authenticate an environment to work with Prefect Cloud.
+[API keys](/cloud/users/api-keys/) enable you to authenticate an environment to work with Syntask Cloud.
 
 ## Service accounts <span class="badge pro"></span> <span class="badge custom"></span>
 
-[Service accounts](/cloud/users/service-accounts/) enable you to create a Prefect Cloud API key that is not associated with a user account.
+[Service accounts](/cloud/users/service-accounts/) enable you to create a Syntask Cloud API key that is not associated with a user account.
 
 ## Single sign-on (SSO) <span class="badge pro"></span> <span class="badge custom"></span>
 
@@ -44,12 +44,12 @@ Custom tier plans offer [single sign-on (SSO)](/cloud/users/sso/) integration wi
 
 ## Audit log <span class="badge pro"></span> <span class="badge custom"></span>
 
-[Audit logs](/cloud/users/audit-log/) provide a chronological record of activities performed by Prefect Cloud users who are members of an account.
+[Audit logs](/cloud/users/audit-log/) provide a chronological record of activities performed by Syntask Cloud users who are members of an account.
 
 ## Object-level access control lists (ACLs) <span class="badge custom"></span>
 
-Prefect Cloud's Custom plan offers object-level access control lists to restrict access to specific users and service accounts within a workspace.
+Syntask Cloud's Custom plan offers object-level access control lists to restrict access to specific users and service accounts within a workspace.
 
 ## Teams <span class="badge custom"></span>
 
-Users of Custom tier Prefect Cloud accounts can be added to [Teams](/cloud/users/teams/) to simplify access control governance.
+Users of Custom tier Syntask Cloud accounts can be added to [Teams](/cloud/users/teams/) to simplify access control governance.

@@ -7,12 +7,12 @@ from tarfile import TarFile, TarInfo
 
 import pytest
 
-from prefect.deprecated.packaging.docker import DockerPackageManifest, DockerPackager
-from prefect.software.conda import CondaEnvironment
-from prefect.software.python import PythonEnvironment
-from prefect.utilities.callables import parameter_schema
-from prefect.utilities.dockerutils import (
-    get_prefect_image_name,
+from syntask.deprecated.packaging.docker import DockerPackageManifest, DockerPackager
+from syntask.software.conda import CondaEnvironment
+from syntask.software.python import PythonEnvironment
+from syntask.utilities.callables import parameter_schema
+from syntask.utilities.dockerutils import (
+    get_syntask_image_name,
     silence_docker_warnings,
 )
 
@@ -32,14 +32,14 @@ IMAGE_ID_PATTERN = re.compile("^sha256:[a-fA-F0-9]{64}$")
 @pytest.fixture(autouse=True)
 def silence_user_warnings_about_editable_packages():
     # For the duration of these tests, ignore our UserWarning coming from
-    # prefect.software.pip.current_environment_requirements about editable packages;
-    # when working locally, the prefect package is almost always editable
+    # syntask.software.pip.current_environment_requirements about editable packages;
+    # when working locally, the syntask package is almost always editable
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
             message="The following requirements will not be installable.*",
             category=UserWarning,
-            module="prefect.software.pip",
+            module="syntask.software.pip",
         )
         yield
 
@@ -49,14 +49,14 @@ def contexts() -> Path:
     return Path(__file__).parent.parent / "docker" / "contexts"
 
 
-def test_base_image_defaults_to_prefect_base():
+def test_base_image_defaults_to_syntask_base():
     packager = DockerPackager()
-    assert packager.base_image == get_prefect_image_name()
+    assert packager.base_image == get_syntask_image_name()
 
 
-def test_base_image_defaults_to_conda_flavor_of_prefect_base():
+def test_base_image_defaults_to_conda_flavor_of_syntask_base():
     packager = DockerPackager(python_environment=CondaEnvironment())
-    assert packager.base_image == get_prefect_image_name(flavor="conda")
+    assert packager.base_image == get_syntask_image_name(flavor="conda")
 
 
 def test_dockerfile_exclusive_with_building():
@@ -82,9 +82,9 @@ def test_python_environment_not_autodetected_with_dockerfile():
 
 
 @pytest.mark.service("docker")
-async def test_packaging_a_flow_to_local_docker_daemon(prefect_base_image: str):
+async def test_packaging_a_flow_to_local_docker_daemon(syntask_base_image: str):
     packager = DockerPackager(
-        base_image=prefect_base_image,
+        base_image=syntask_base_image,
         python_environment=PythonEnvironment(
             python_version="3.9",
             pip_requirements=["requests==2.28.0"],
@@ -100,9 +100,9 @@ async def test_packaging_a_flow_to_local_docker_daemon(prefect_base_image: str):
 
 
 @pytest.mark.service("docker")
-async def test_packaging_a_flow_to_registry(prefect_base_image: str, registry: str):
+async def test_packaging_a_flow_to_registry(syntask_base_image: str, registry: str):
     packager = DockerPackager(
-        base_image=prefect_base_image,
+        base_image=syntask_base_image,
         python_environment=PythonEnvironment(
             python_version="3.9",
             pip_requirements=["requests==2.28.0"],
@@ -120,10 +120,10 @@ async def test_packaging_a_flow_to_registry(prefect_base_image: str, registry: s
 
 @pytest.mark.service("docker")
 async def test_packaging_a_flow_to_registry_without_scheme(
-    prefect_base_image: str, registry: str
+    syntask_base_image: str, registry: str
 ):
     packager = DockerPackager(
-        base_image=prefect_base_image,
+        base_image=syntask_base_image,
         python_environment=PythonEnvironment(
             python_version="3.9",
             pip_requirements=["requests==2.28.0"],
@@ -140,11 +140,11 @@ async def test_packaging_a_flow_to_registry_without_scheme(
 
 
 @pytest.fixture
-def howdy_context(prefect_base_image: str, tmp_path: Path) -> Path:
+def howdy_context(syntask_base_image: str, tmp_path: Path) -> Path:
     (tmp_path / "Dockerfile").write_text(
         textwrap.dedent(
             f"""
-            FROM {prefect_base_image}
+            FROM {syntask_base_image}
             COPY howdy.py /howdy.py
             """
         )
@@ -153,7 +153,7 @@ def howdy_context(prefect_base_image: str, tmp_path: Path) -> Path:
     (tmp_path / "howdy.py").write_text(
         textwrap.dedent(
             """
-            from prefect import flow
+            from syntask import flow
 
 
             @flow
@@ -192,10 +192,10 @@ async def test_packager_sets_manifest_flow_parameter_schema(howdy_context: Path)
 
 @pytest.mark.service("docker")
 async def test_unpackaging_inside_container(
-    prefect_base_image: str, docker: DockerClient
+    syntask_base_image: str, docker: DockerClient
 ):
     packager = DockerPackager(
-        base_image=prefect_base_image,
+        base_image=syntask_base_image,
         python_environment=PythonEnvironment(
             python_version="3.9",
             pip_requirements=["requests==2.28.0"],
@@ -220,7 +220,7 @@ def assert_unpackaged_flow_works(docker: DockerClient, manifest: DockerPackageMa
     test_script = textwrap.dedent(
         f"""
     import asyncio
-    from prefect.deprecated.packaging.docker import DockerPackageManifest
+    from syntask.deprecated.packaging.docker import DockerPackageManifest
 
     manifest = DockerPackageManifest.parse_raw({manifest.json()!r})
 

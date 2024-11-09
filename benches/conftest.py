@@ -27,7 +27,7 @@ def reset_object_registry():
     """
     Ensures each test has a clean object registry.
     """
-    from prefect.context import PrefectObjectRegistry
+    from syntask.context import SyntaskObjectRegistry
 
-    with PrefectObjectRegistry():
+    with SyntaskObjectRegistry():
         yield

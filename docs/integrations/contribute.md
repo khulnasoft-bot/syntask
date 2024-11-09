@@ -1,5 +1,5 @@
 ---
-description: Contribute blocks and integrations to the Prefect Integrations Catalog.
+description: Contribute blocks and integrations to the Syntask Integrations Catalog.
 tags:
   - blocks
   - storage
@@ -27,10 +27,10 @@ Building your own custom block is simple!
 1. Create the `pydantic.Field`s of the block with a type annotation, `default` or `default_factory`, and a short description about the field.
 1. Define the methods of the block.
 
-For example, this is how the [Secret block is implemented](https://github.com/PrefectHQ/prefect/blob/main/src/prefect/blocks/system.py#L76-L102):
+For example, this is how the [Secret block is implemented](https://github.com/Synopkg/syntask/blob/main/src/syntask/blocks/system.py#L76-L102):
 ```python
 from pydantic import Field, SecretStr
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 class Secret(Block):
     """
@@ -42,7 +42,7 @@ class Secret(Block):
 
     Example:
         ```python
-        from prefect.blocks.system import Secret
+        from syntask.blocks.system import Secret
         secret_block = Secret.load("BLOCK_NAME")
 
         # Access the stored secret
@@ -60,21 +60,21 @@ class Secret(Block):
         return self.value.get_secret_value()
 ```
 
-To view in Prefect Cloud or the Prefect server UI, [register the block](https://docs.prefect.io/concepts/blocks/#registering-blocks-for-use-in-the-prefect-ui).
+To view in Syntask Cloud or the Syntask server UI, [register the block](https://docs.syntask.io/concepts/blocks/#registering-blocks-for-use-in-the-syntask-ui).
 
 ## Contributing Integrations
 
-Anyone can create and share a Prefect Integration and we encourage anyone interested in creating an integration to do so!
+Anyone can create and share a Syntask Integration and we encourage anyone interested in creating an integration to do so!
 
 ### Generate a project
 
 To help you get started with your integration, we've created a template that gives the tools you need to create and publish your integration.
 
-Use the [Prefect Integration template](https://github.com/PrefectHQ/prefect-collection-template#quickstart) to get started creating an integration with a bootstrapped project!
+Use the [Syntask Integration template](https://github.com/Synopkg/syntask-collection-template#quickstart) to get started creating an integration with a bootstrapped project!
 
 ### List a project in the Integrations Catalog
 
-To list your integration in the Prefect Integrations Catalog, submit a PR to the Prefect repository adding a file to the `docs/integrations/catalog` directory with details about your integration. Please use `TEMPLATE.yaml` in that folder as a guide.
+To list your integration in the Syntask Integrations Catalog, submit a PR to the Syntask repository adding a file to the `docs/integrations/catalog` directory with details about your integration. Please use `TEMPLATE.yaml` in that folder as a guide.
 
 ## Contribute fixes or enhancements to Integrations
 

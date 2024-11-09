@@ -9,16 +9,16 @@ client_version = ".".join(_version[:3]).split("+")[0]
 
 setup(
     # Package metadata
-    name="prefect-client",
+    name="syntask-client",
     description="Workflow orchestration and management.",
-    author="Prefect Technologies, Inc.",
-    author_email="help@prefect.io",
-    url="https://www.prefect.io",
+    author="Syntask Technologies, Inc.",
+    author_email="help@syntask.io",
+    url="https://www.syntask.io",
     project_urls={
-        "Changelog": "https://github.com/PrefectHQ/prefect/blob/main/RELEASE-NOTES.md",
-        "Documentation": "https://docs.prefect.io",
-        "Source": "https://github.com/PrefectHQ/prefect",
-        "Tracker": "https://github.com/PrefectHQ/prefect/issues",
+        "Changelog": "https://github.com/Synopkg/syntask/blob/main/RELEASE-NOTES.md",
+        "Documentation": "https://docs.syntask.io",
+        "Source": "https://github.com/Synopkg/syntask",
+        "Tracker": "https://github.com/Synopkg/syntask/issues",
     },
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

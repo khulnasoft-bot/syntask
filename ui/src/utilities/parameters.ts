@@ -1,4 +1,4 @@
-import { RouteParam } from '@prefecthq/vue-compositions'
+import { RouteParam } from '@syntaskhq/vue-compositions'
 import { LocationQueryValue } from 'vue-router'
 
 export class JSONRouteParam extends RouteParam<Record<string, unknown>> {

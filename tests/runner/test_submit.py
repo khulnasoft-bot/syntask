@@ -5,15 +5,15 @@ from unittest import mock
 import httpx
 import pytest
 
-from prefect import flow
-from prefect.client.schemas.objects import FlowRun
-from prefect.runner import submit_to_runner
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_EXTRA_RUNNER_ENDPOINTS,
-    PREFECT_RUNNER_SERVER_ENABLE,
+from syntask import flow
+from syntask.client.schemas.objects import FlowRun
+from syntask.runner import submit_to_runner
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_EXTRA_RUNNER_ENDPOINTS,
+    SYNTASK_RUNNER_SERVER_ENABLE,
     temporary_settings,
 )
-from prefect.states import Running
+from syntask.states import Running
 
 
 @flow
@@ -42,7 +42,7 @@ def mock_webserver(monkeypatch):
         return FlowRun(flow_id=uuid.uuid4(), state=Running(), parameters=parameters)
 
     monkeypatch.setattr(
-        "prefect.runner.submit._submit_flow_to_runner", mock_submit_flow_to_runner
+        "syntask.runner.submit._submit_flow_to_runner", mock_submit_flow_to_runner
     )
 
 
@@ -52,7 +52,7 @@ def mock_webserver_not_running(monkeypatch):
         raise httpx.ConnectError("Mocked connection error")
 
     monkeypatch.setattr(
-        "prefect.runner.submit._submit_flow_to_runner", mock_submit_flow_to_runner
+        "syntask.runner.submit._submit_flow_to_runner", mock_submit_flow_to_runner
     )
 
 
@@ -60,8 +60,8 @@ def mock_webserver_not_running(monkeypatch):
 def runner_settings():
     with temporary_settings(
         {
-            PREFECT_RUNNER_SERVER_ENABLE: True,
-            PREFECT_EXPERIMENTAL_ENABLE_EXTRA_RUNNER_ENDPOINTS: True,
+            SYNTASK_RUNNER_SERVER_ENABLE: True,
+            SYNTASK_EXPERIMENTAL_ENABLE_EXTRA_RUNNER_ENDPOINTS: True,
         }
     ):
         yield
@@ -69,7 +69,7 @@ def runner_settings():
 
 def test_submission_raises_if_extra_endpoints_not_enabled(mock_webserver):
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_EXTRA_RUNNER_ENDPOINTS: False}
+        {SYNTASK_EXPERIMENTAL_ENABLE_EXTRA_RUNNER_ENDPOINTS: False}
     ):
         with pytest.raises(
             ValueError,
@@ -81,25 +81,25 @@ def test_submission_raises_if_extra_endpoints_not_enabled(mock_webserver):
             submit_to_runner(identity, {"whatever": 42})
 
 
-@pytest.mark.parametrize("prefect_callable", [identity, async_identity])
-def test_submit_to_runner_happy_path_sync_context(mock_webserver, prefect_callable):
-    flow_run = submit_to_runner(prefect_callable, {"whatever": 42})
+@pytest.mark.parametrize("syntask_callable", [identity, async_identity])
+def test_submit_to_runner_happy_path_sync_context(mock_webserver, syntask_callable):
+    flow_run = submit_to_runner(syntask_callable, {"whatever": 42})
 
     assert flow_run.state.is_running()
     assert flow_run.parameters == {"whatever": 42}
 
 
-@pytest.mark.parametrize("prefect_callable", [identity, async_identity])
+@pytest.mark.parametrize("syntask_callable", [identity, async_identity])
 async def test_submit_to_runner_happy_path_async_context(
-    mock_webserver, prefect_callable
+    mock_webserver, syntask_callable
 ):
-    flow_run = await submit_to_runner(prefect_callable, {"whatever": 42})
+    flow_run = await submit_to_runner(syntask_callable, {"whatever": 42})
 
     assert flow_run.state.is_running()
     assert flow_run.parameters == {"whatever": 42}
 
 
-async def test_submit_to_runner_raises_if_not_prefect_callable():
+async def test_submit_to_runner_raises_if_not_syntask_callable():
     with pytest.raises(
         TypeError,
         match=(
@@ -117,7 +117,7 @@ async def test_submission_with_optional_parameters(mock_webserver):
 
 
 def test_submission_raises_if_webserver_not_running(mock_webserver_not_running):
-    with temporary_settings({PREFECT_RUNNER_SERVER_ENABLE: False}):
+    with temporary_settings({SYNTASK_RUNNER_SERVER_ENABLE: False}):
         with pytest.raises(
             (httpx.ConnectTimeout, RuntimeError),
             match="Ensure that the server is running",
@@ -133,7 +133,7 @@ def test_return_for_submissions_matches_input(
         return FlowRun(flow_id=uuid.uuid4())
 
     with mock.patch(
-        "prefect.runner.submit._submit_flow_to_runner",
+        "syntask.runner.submit._submit_flow_to_runner",
         side_effect=_flow_run_generator,
     ):
         results = submit_to_runner(identity, input_)

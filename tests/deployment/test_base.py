@@ -5,18 +5,18 @@ from pathlib import Path
 import pytest
 import yaml
 
-import prefect
-from prefect.deployments.base import (
+import syntask
+from syntask.deployments.base import (
     _find_flow_functions_in_file,
     _search_for_flow_functions,
     configure_project_by_recipe,
     initialize_project,
 )
-from prefect.settings import PREFECT_DEBUG_MODE, temporary_settings
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
-from prefect.utilities.filesystem import tmpchdir
+from syntask.settings import SYNTASK_DEBUG_MODE, temporary_settings
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
+from syntask.utilities.filesystem import tmpchdir
 
-TEST_PROJECTS_DIR = prefect.__development_base_path__ / "tests" / "test-projects"
+TEST_PROJECTS_DIR = syntask.__development_base_path__ / "tests" / "test-projects"
 
 
 @pytest.fixture(autouse=True)
@@ -24,11 +24,11 @@ def project_dir(tmp_path):
     with tmpchdir(tmp_path):
         if sys.version_info >= (3, 8):
             shutil.copytree(TEST_PROJECTS_DIR, tmp_path, dirs_exist_ok=True)
-            (tmp_path / ".prefect").mkdir(exist_ok=True, mode=0o0700)
+            (tmp_path / ".syntask").mkdir(exist_ok=True, mode=0o0700)
             yield tmp_path
         else:
             shutil.copytree(TEST_PROJECTS_DIR, tmp_path / "three-seven")
-            (tmp_path / "three-seven" / ".prefect").mkdir(exist_ok=True, mode=0o0700)
+            (tmp_path / "three-seven" / ".syntask").mkdir(exist_ok=True, mode=0o0700)
             yield tmp_path / "three-seven"
 
 
@@ -42,9 +42,9 @@ class TestRecipes:
         [
             d.absolute().name
             for d in Path(
-                prefect.__development_base_path__
+                syntask.__development_base_path__
                 / "src"
-                / "prefect"
+                / "syntask"
                 / "deployments"
                 / "recipes"
             ).iterdir()
@@ -53,7 +53,7 @@ class TestRecipes:
     )
     async def test_configure_project_by_recipe_doesnt_raise(self, recipe):
         recipe_config = configure_project_by_recipe(recipe)
-        for key in ["name", "prefect-version", "build", "push", "pull"]:
+        for key in ["name", "syntask-version", "build", "push", "pull"]:
             assert key in recipe_config
 
     @pytest.mark.parametrize(
@@ -61,9 +61,9 @@ class TestRecipes:
         [
             d.absolute().name
             for d in Path(
-                prefect.__development_base_path__
+                syntask.__development_base_path__
                 / "src"
-                / "prefect"
+                / "syntask"
                 / "deployments"
                 / "recipes"
             ).iterdir()
@@ -74,16 +74,16 @@ class TestRecipes:
         recipe_config = configure_project_by_recipe(
             recipe, repository="test-org/test-repo"
         )
-        clone_step = recipe_config["pull"][0]["prefect.deployments.steps.git_clone"]
+        clone_step = recipe_config["pull"][0]["syntask.deployments.steps.git_clone"]
         assert clone_step["repository"] == "test-org/test-repo"
         assert clone_step["branch"] == "{{ branch }}"
 
     async def test_configure_project_replaces_templates_on_docker(self):
         recipe_config = configure_project_by_recipe("docker", name="test-dir")
         clone_step = recipe_config["pull"][0][
-            "prefect.deployments.steps.set_working_directory"
+            "syntask.deployments.steps.set_working_directory"
         ]
-        assert clone_step["directory"] == "/opt/prefect/test-dir"
+        assert clone_step["directory"] == "/opt/syntask/test-dir"
 
 
 class TestInitProject:
@@ -95,17 +95,17 @@ class TestInitProject:
             assert Path(file).exists()
 
         # test defaults
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             contents = yaml.safe_load(f)
 
         assert contents["name"] is not None
-        assert contents["prefect-version"] == prefect.__version__
+        assert contents["syntask-version"] == syntask.__version__
 
     async def test_initialize_project_with_name(self):
         files = initialize_project(name="my-test-its-a-test")
         assert len(files) >= 2
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             contents = yaml.safe_load(f)
 
         assert contents["name"] == "my-test-its-a-test"
@@ -114,23 +114,23 @@ class TestInitProject:
         files = initialize_project(recipe="docker-git")
         assert len(files) >= 2
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             contents = yaml.safe_load(f)
 
         clone_step = contents["pull"][0]
-        assert "prefect.deployments.steps.git_clone" in clone_step
+        assert "syntask.deployments.steps.git_clone" in clone_step
 
         build_step = contents["build"][0]
-        assert "prefect_docker.deployments.steps.build_docker_image" in build_step
+        assert "syntask_docker.deployments.steps.build_docker_image" in build_step
 
     @pytest.mark.parametrize(
         "recipe",
         [
             d.absolute().name
             for d in Path(
-                prefect.__development_base_path__
+                syntask.__development_base_path__
                 / "src"
-                / "prefect"
+                / "syntask"
                 / "deployments"
                 / "recipes"
             ).iterdir()
@@ -141,11 +141,11 @@ class TestInitProject:
         files = initialize_project(recipe=recipe)
         assert len(files) >= 2
 
-        with open("prefect.yaml", "r") as f:
+        with open("syntask.yaml", "r") as f:
             contents = yaml.safe_load(f)
 
         build_step = contents["build"][0]
-        assert "prefect_docker.deployments.steps.build_docker_image" in build_step
+        assert "syntask_docker.deployments.steps.build_docker_image" in build_step
 
         assert (
             contents["deployments"][0]["work_pool"]["job_variables"]["image"]
@@ -206,22 +206,22 @@ class TestDiscoverFlows:
         assert len(expected_flows) == 0, f"Missing flows: {expected_flows}"
 
     async def test_find_all_flows_works_on_large_directory_structures(self):
-        flows = await _search_for_flow_functions(str(prefect.__development_base_path__))
+        flows = await _search_for_flow_functions(str(syntask.__development_base_path__))
         assert len(flows) > 500
 
     async def test_find_flow_functions_in_file_returns_empty_list_on_file_error(
         self, caplog
     ):
-        with temporary_settings({PREFECT_DEBUG_MODE: True}):
+        with temporary_settings({SYNTASK_DEBUG_MODE: True}):
             assert await _find_flow_functions_in_file("foo.py") == []
             assert "Could not open foo.py" in caplog.text
 
-    async def test_prefect_can_be_imported_from_non_main_thread(self):
-        """testing due to `asyncio.Semaphore` error when importing prefect from a worker thread
+    async def test_syntask_can_be_imported_from_non_main_thread(self):
+        """testing due to `asyncio.Semaphore` error when importing syntask from a worker thread
         in python <= 3.9
         """
 
-        def import_prefect():
-            import prefect  # noqa: F401
+        def import_syntask():
+            import syntask  # noqa: F401
 
-        await run_sync_in_worker_thread(import_prefect)
+        await run_sync_in_worker_thread(import_syntask)

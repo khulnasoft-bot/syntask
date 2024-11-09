@@ -1,4 +1,4 @@
-import { showToast, Toast } from '@prefecthq/prefect-design'
+import { showToast, Toast } from '@syntaskhq/syntask-design'
 import { onUnmounted } from 'vue'
 
 /**

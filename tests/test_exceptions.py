@@ -1,12 +1,12 @@
 import cloudpickle
 import pytest
 
-from prefect.exceptions import (
+from syntask.exceptions import (
     ParameterBindError,
     ParameterTypeError,
     SignatureMismatchError,
 )
-from prefect.pydantic import BaseModel, ValidationError, field_validator
+from syntask.pydantic import BaseModel, ValidationError, field_validator
 
 
 class ValidationTestModel(BaseModel):

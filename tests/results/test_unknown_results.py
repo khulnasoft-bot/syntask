@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from prefect.results import BaseResult, UnknownResult
+from syntask.results import BaseResult, UnknownResult
 
 INVALID_VALUES = [True, False, "hey"]
 
@@ -45,7 +45,7 @@ async def test_unknown_result_json_roundtrip_base_result_parser():
 async def test_unknown_result_populates_default_artifact_metadata():
     result = await UnknownResult.create()
     assert result.artifact_type == "result"
-    assert result.artifact_description == "Unknown result persisted to Prefect."
+    assert result.artifact_description == "Unknown result persisted to Syntask."
 
 
 async def test_unknown_result_null_is_distinguishable_from_none():

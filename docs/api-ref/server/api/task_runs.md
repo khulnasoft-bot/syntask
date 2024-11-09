@@ -1,8 +1,8 @@
 ---
-description: Prefect API routes for interacting with task run objects.
+description: Syntask API routes for interacting with task run objects.
 tags:
-    - Prefect API
+    - Syntask API
     - task runs
 ---
 
-::: prefect.server.api.task_runs
+::: syntask.server.api.task_runs

@@ -1,7 +1,7 @@
 from typing import List
 from uuid import uuid4
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -10,8 +10,8 @@ else:
 
 import pytest
 
-from prefect.server import models, schemas
-from prefect.server.schemas.core import FlowRunNotificationPolicy
+from syntask.server import models, schemas
+from syntask.server.schemas.core import FlowRunNotificationPolicy
 
 
 @pytest.fixture

@@ -1,1 +1,1 @@
-::: prefect.server.models.saved_searches
+::: syntask.server.models.saved_searches

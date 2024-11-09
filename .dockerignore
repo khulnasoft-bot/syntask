@@ -34,7 +34,7 @@ docs/api-ref/schema.json
 site/
 
 # UI artifacts
-src/prefect/server/ui/*
+src/syntask/server/ui/*
 ui/node_modules
 
 # Databases

@@ -4,8 +4,8 @@ from unittest import mock
 
 import pytest
 
-import prefect.utilities.processutils
-from prefect.utilities.processutils import open_process, run_process
+import syntask.utilities.processutils
+from syntask.utilities.processutils import open_process, run_process
 
 
 class TestRunProcess:
@@ -109,11 +109,11 @@ class TestOpenProcess:
         """
         mock_ctrl_c_handler = mock.Mock()
         monkeypatch.setattr(
-            prefect.utilities.processutils, "_win32_ctrl_handler", mock_ctrl_c_handler
+            syntask.utilities.processutils, "_win32_ctrl_handler", mock_ctrl_c_handler
         )
         mock_set_console_ctrl_handler = mock.Mock()
         monkeypatch.setattr(
-            prefect.utilities.processutils.windll.kernel32,
+            syntask.utilities.processutils.windll.kernel32,
             "SetConsoleCtrlHandler",
             mock_set_console_ctrl_handler,
         )
@@ -122,10 +122,10 @@ class TestOpenProcess:
         mock_process.terminate = mock.MagicMock()
         mock_open_process = mock.AsyncMock(return_value=mock_process)
         monkeypatch.setattr(
-            prefect.utilities.processutils, "_open_anyio_process", mock_open_process
+            syntask.utilities.processutils, "_open_anyio_process", mock_open_process
         )
 
-        await prefect.utilities.processutils.run_process(
+        await syntask.utilities.processutils.run_process(
             self.list_cmd, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
         )
         mock_open_process.assert_called_once_with(

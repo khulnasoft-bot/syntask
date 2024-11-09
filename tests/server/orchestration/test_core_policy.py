@@ -8,16 +8,16 @@ from uuid import uuid4
 import pendulum
 import pytest
 
-from prefect.results import (
+from syntask.results import (
     LiteralResult,
     PersistedResult,
     UnknownResult,
     UnpersistedResult,
 )
-from prefect.server import schemas
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.models import concurrency_limits, flow_runs
-from prefect.server.orchestration.core_policy import (
+from syntask.server import schemas
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.models import concurrency_limits, flow_runs
+from syntask.server.orchestration.core_policy import (
     AddUnknownResult,
     BypassCancellingFlowRunsWithNoInfra,
     CacheInsertion,
@@ -40,15 +40,15 @@ from prefect.server.orchestration.core_policy import (
     UpdateFlowRunTrackerOnTasks,
     WaitForScheduledTime,
 )
-from prefect.server.orchestration.rules import (
+from syntask.server.orchestration.rules import (
     ALL_ORCHESTRATION_STATES,
     TERMINAL_STATES,
     BaseOrchestrationRule,
 )
-from prefect.server.schemas import actions, states
-from prefect.server.schemas.responses import SetStateStatus
-from prefect.server.schemas.states import StateType
-from prefect.testing.utilities import AsyncMock
+from syntask.server.schemas import actions, states
+from syntask.server.schemas.responses import SetStateStatus
+from syntask.server.schemas.states import StateType
+from syntask.testing.utilities import AsyncMock
 
 # Convert constants from sets to lists for deterministic ordering of tests
 ALL_ORCHESTRATION_STATES = list(
@@ -384,11 +384,11 @@ class TestFlowRetryingRule:
         ]
         read_task_runs = AsyncMock(side_effect=lambda *args, **kwargs: failed_task_runs)
         monkeypatch.setattr(
-            "prefect.server.models.task_runs.read_task_runs", read_task_runs
+            "syntask.server.models.task_runs.read_task_runs", read_task_runs
         )
         set_task_run_state = AsyncMock()
         monkeypatch.setattr(
-            "prefect.server.models.task_runs.set_task_run_state", set_task_run_state
+            "syntask.server.models.task_runs.set_task_run_state", set_task_run_state
         )
 
         retry_policy = [RetryFailedFlows]
@@ -610,7 +610,7 @@ class TestUpdatingFlowRunTrackerOnTasks:
                         rule(ctx, *intended_transition)
                     )
                     monkeypatch.setattr(
-                        "prefect.server.orchestration.rules.TaskOrchestrationContext.flow_run",
+                        "syntask.server.orchestration.rules.TaskOrchestrationContext.flow_run",
                         missing_flow_run,
                     )
 
@@ -621,7 +621,7 @@ class TestUpdatingFlowRunTrackerOnTasks:
 
 class TestPermitRerunningFailedTaskRuns:
     """
-    Following https://github.com/PrefectHQ/prefect/pull/9152 some of these test names
+    Following https://github.com/Synopkg/syntask/pull/9152 some of these test names
     may be stale however they are retained to simplify understanding of changed
     behavior. Generally, failed task runs can just retry whenever they want now.
     """
@@ -909,7 +909,7 @@ class TestTaskRetryingRule:
             return average_interval * (1 + clamping_factor)
 
         monkeypatch.setattr(
-            "prefect.server.orchestration.core_policy.clamped_poisson_interval",
+            "syntask.server.orchestration.core_policy.clamped_poisson_interval",
             randomizer,
         )
 
@@ -1680,7 +1680,7 @@ class TestTaskConcurrencyLimits:
                 ctx = await stack.enter_async_context(rule(ctx, *running_transition))
             await ctx.validate_proposed_state()
 
-        # instead of a WAIT response, Prefect should direct the client to ABORT
+        # instead of a WAIT response, Syntask should direct the client to ABORT
         assert ctx.response_status == SetStateStatus.ABORT
 
     async def test_returning_concurrency_slots_on_fizzle(

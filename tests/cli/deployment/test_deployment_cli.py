@@ -3,14 +3,14 @@ from datetime import timedelta
 
 import pytest
 
-from prefect import flow
-from prefect.client.orchestration import PrefectClient
-from prefect.deployments import Deployment
-from prefect.server.schemas.filters import DeploymentFilter, DeploymentFilterId
-from prefect.server.schemas.schedules import IntervalSchedule
-from prefect.settings import PREFECT_UI_URL, temporary_settings
-from prefect.testing.cli import invoke_and_assert
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+from syntask import flow
+from syntask.client.orchestration import SyntaskClient
+from syntask.deployments import Deployment
+from syntask.server.schemas.filters import DeploymentFilter, DeploymentFilterId
+from syntask.server.schemas.schedules import IntervalSchedule
+from syntask.settings import SYNTASK_UI_URL, temporary_settings
+from syntask.testing.cli import invoke_and_assert
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 @flow
@@ -24,7 +24,7 @@ def patch_import(monkeypatch):
     def fn():
         pass
 
-    monkeypatch.setattr("prefect.utilities.importtools.import_object", lambda path: fn)
+    monkeypatch.setattr("syntask.utilities.importtools.import_object", lambda path: fn)
     return fn
 
 
@@ -47,7 +47,7 @@ def test_deployment_apply_prints_deprecation_warning(tmp_path, patch_import):
         expected_output_contains=(
             "WARNING: The 'deployment apply' command has been deprecated.",
             "It will not be available after Sep 2024.",
-            "Use 'prefect deploy' to deploy flows via YAML instead.",
+            "Use 'syntask deploy' to deploy flows via YAML instead.",
         ),
     )
 
@@ -74,19 +74,19 @@ class TestOutputMessages:
                     "To execute flow runs from this deployment, start an agent "
                     f"that pulls work from the {d.work_queue_name!r} work queue:"
                 ),
-                f"$ prefect agent start -q {d.work_queue_name!r}",
+                f"$ syntask agent start -q {d.work_queue_name!r}",
             ],
         )
 
-    def test_message_with_prefect_agent_work_pool(
-        self, patch_import, tmp_path, prefect_agent_work_pool
+    def test_message_with_syntask_agent_work_pool(
+        self, patch_import, tmp_path, syntask_agent_work_pool
     ):
         Deployment.build_from_flow(
             flow=my_flow,
             name="TEST",
             flow_name="my_flow",
             output=str(tmp_path / "test.yaml"),
-            work_pool_name=prefect_agent_work_pool.name,
+            work_pool_name=syntask_agent_work_pool.name,
         )
         invoke_and_assert(
             [
@@ -97,9 +97,9 @@ class TestOutputMessages:
             expected_output_contains=[
                 (
                     "To execute flow runs from this deployment, start an agent that"
-                    f" pulls work from the {prefect_agent_work_pool.name!r} work pool:"
+                    f" pulls work from the {syntask_agent_work_pool.name!r} work pool:"
                 ),
-                f"$ prefect agent start -p {prefect_agent_work_pool.name!r}",
+                f"$ syntask agent start -p {syntask_agent_work_pool.name!r}",
             ],
         )
 
@@ -124,7 +124,7 @@ class TestOutputMessages:
                     "To execute flow runs from this deployment, start a worker "
                     f"that pulls work from the {process_work_pool.name!r} work pool:"
                 ),
-                f"$ prefect worker start -p {process_work_pool.name!r}",
+                f"$ syntask worker start -p {process_work_pool.name!r}",
             ],
         )
 
@@ -151,8 +151,8 @@ class TestOutputMessages:
                     f"{process_work_pool.name!r} work pool:"
                 ),
                 (
-                    "$ prefect config set PREFECT_EXPERIMENTAL_ENABLE_WORKERS=True\n"
-                    f"$ prefect worker start -p {process_work_pool.name!r}"
+                    "$ syntask config set SYNTASK_EXPERIMENTAL_ENABLE_WORKERS=True\n"
+                    f"$ syntask worker start -p {process_work_pool.name!r}"
                 ),
             ],
         )
@@ -163,7 +163,7 @@ class TestOutputMessages:
         tmp_path,
         monkeypatch,
     ):
-        with temporary_settings({PREFECT_UI_URL: "http://foo/bar"}):
+        with temporary_settings({SYNTASK_UI_URL: "http://foo/bar"}):
             Deployment.build_from_flow(
                 flow=my_flow,
                 name="TEST",
@@ -250,7 +250,7 @@ class TestOutputMessages:
                         " no such work pool exists."
                     ),
                     "To create a work pool via the CLI:",
-                    "$ prefect work-pool create 'gibberish'",
+                    "$ syntask work-pool create 'gibberish'",
                 ]
             ),
         )
@@ -258,15 +258,15 @@ class TestOutputMessages:
 
 class TestDeploymentSchedules:
     @pytest.fixture
-    async def flojo(self, prefect_client):
+    async def flojo(self, syntask_client):
         @flow
         async def rence_griffith():
             pass
 
-        flow_id = await prefect_client.create_flow(rence_griffith)
+        flow_id = await syntask_client.create_flow(rence_griffith)
         old_record = IntervalSchedule(interval=timedelta(seconds=10.76))
 
-        deployment_id = await prefect_client.create_deployment(
+        deployment_id = await syntask_client.create_deployment(
             flow_id=flow_id,
             name="test-deployment",
             version="git-commit-hash",
@@ -279,8 +279,8 @@ class TestDeploymentSchedules:
         return deployment_id
 
     @pytest.fixture
-    async def flojo_deployment(self, flojo, prefect_client):
-        return await prefect_client.read_deployment(flojo)
+    async def flojo_deployment(self, flojo, syntask_client):
+        return await syntask_client.read_deployment(flojo)
 
     def test_list_schedules(self, flojo_deployment):
         create_commands = [
@@ -879,7 +879,7 @@ class TestDeploymentSchedules:
             expected_code=1,
             expected_output_contains=[
                 "Deployment 'rence-griffith/test-deployment' has multiple schedules."
-                " Use `prefect deployment schedule pause <deployment_name>"
+                " Use `syntask deployment schedule pause <deployment_name>"
                 " <schedule_id>`"
             ],
         )
@@ -1284,8 +1284,8 @@ class TestDeploymentSchedules:
 
 class TestDeploymentRun:
     @pytest.fixture
-    async def deployment_name(self, deployment, prefect_client):
-        flow = await prefect_client.read_flow(deployment.flow_id)
+    async def deployment_name(self, deployment, syntask_client):
+        flow = await syntask_client.read_flow(deployment.flow_id)
         return f"{flow.name}/{deployment.name}"
 
     def test_run_wraps_parameter_stdin_parsing_exception(self, deployment_name):
@@ -1346,7 +1346,7 @@ class TestDeploymentRun:
         self,
         deployment,
         deployment_name,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         given,
         expected,
     ):
@@ -1359,7 +1359,7 @@ class TestDeploymentRun:
             ["deployment", "run", deployment_name, "--param", f"name={given}"],
         )
 
-        flow_runs = await prefect_client.read_flow_runs(
+        flow_runs = await syntask_client.read_flow_runs(
             deployment_filter=DeploymentFilter(
                 id=DeploymentFilterId(any_=[deployment.id])
             )
@@ -1373,7 +1373,7 @@ class TestDeploymentRun:
         self,
         deployment,
         deployment_name,
-        prefect_client,
+        syntask_client,
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1381,7 +1381,7 @@ class TestDeploymentRun:
             json.dumps({"name": "foo"}),  # stdin
         )
 
-        flow_runs = await prefect_client.read_flow_runs(
+        flow_runs = await syntask_client.read_flow_runs(
             deployment_filter=DeploymentFilter(
                 id=DeploymentFilterId(any_=[deployment.id])
             )
@@ -1395,7 +1395,7 @@ class TestDeploymentRun:
         self,
         deployment,
         deployment_name,
-        prefect_client,
+        syntask_client,
     ):
         await run_sync_in_worker_thread(
             invoke_and_assert,
@@ -1408,7 +1408,7 @@ class TestDeploymentRun:
             ],
         )
 
-        flow_runs = await prefect_client.read_flow_runs(
+        flow_runs = await syntask_client.read_flow_runs(
             deployment_filter=DeploymentFilter(
                 id=DeploymentFilterId(any_=[deployment.id])
             )

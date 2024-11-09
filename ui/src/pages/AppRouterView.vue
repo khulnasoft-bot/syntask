@@ -4,7 +4,7 @@
       <PGlobalSidebar class="app-router-view__mobile-menu">
         <template #upper-links>
           <router-link :to="appRoutes.root()">
-            <p-icon icon="Prefect" class="app-router-view__prefect-icon" />
+            <p-icon icon="Syntask" class="app-router-view__syntask-icon" />
           </router-link>
         </template>
         <template #bottom-links>
@@ -24,8 +24,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { PGlobalSidebar, PIcon, media, showToast } from '@prefecthq/prefect-design'
-  import { workspaceApiKey, canKey as designCanKey, createWorkspaceRoutes, workspaceRoutesKey } from '@prefecthq/prefect-ui-library'
+  import { PGlobalSidebar, PIcon, media, showToast } from '@syntaskhq/syntask-design'
+  import { workspaceApiKey, canKey as designCanKey, createWorkspaceRoutes, workspaceRoutesKey } from '@syntaskhq/syntask-ui-library'
   import { computed, provide, watchEffect } from 'vue'
   import { RouterView } from 'vue-router'
   import ContextSidebar from '@/components/ContextSidebar.vue'
@@ -33,17 +33,17 @@
   import { useCreateCan } from '@/compositions/useCreateCan'
   import { useMobileMenuOpen } from '@/compositions/useMobileMenuOpen'
   import { routes as appRoutes } from '@/router'
-  import { createPrefectApi, prefectApiKey } from '@/utilities/api'
+  import { createSyntaskApi, syntaskApiKey } from '@/utilities/api'
   import { canKey } from '@/utilities/permissions'
 
   const { can } = useCreateCan()
   const { config } = await useApiConfig()
-  const api = createPrefectApi(config)
+  const api = createSyntaskApi(config)
   const routes = createWorkspaceRoutes()
 
   provide(canKey, can)
   provide(designCanKey, can)
-  provide(prefectApiKey, api)
+  provide(syntaskApiKey, api)
   provide(workspaceApiKey, api)
   provide(workspaceRoutesKey, routes)
 
@@ -69,7 +69,7 @@
   flex-col
   bg-no-repeat
   overflow-auto;
-  --prefect-scroll-margin: theme('spacing.20');
+  --syntask-scroll-margin: theme('spacing.20');
   height: 100vh;
   background-image: url('/decorative_iso-pixel-grid_light.svg');
   background-attachment: fixed;
@@ -80,7 +80,7 @@
   background-image: url('/decorative_iso-pixel-grid_dark.svg');
 }
 
-.app-router-view__prefect-icon { @apply
+.app-router-view__syntask-icon { @apply
   w-7
   h-7
 }
@@ -110,7 +110,7 @@
 
 @screen lg {
   .app-router-view {
-    --prefect-scroll-margin: theme('spacing.2');
+    --syntask-scroll-margin: theme('spacing.2');
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
   }

@@ -3,9 +3,9 @@ from typing import Any, List
 
 import pytest
 
-from prefect._internal.pydantic._compat import BaseModel, ValidationError
-from prefect._internal.pydantic._flags import USE_V2_MODELS
-from prefect._internal.pydantic.utilities.model_validator import model_validator
+from syntask._internal.pydantic._compat import BaseModel, ValidationError
+from syntask._internal.pydantic._flags import USE_V2_MODELS
+from syntask._internal.pydantic.utilities.model_validator import model_validator
 
 if USE_V2_MODELS:
     from pydantic import (

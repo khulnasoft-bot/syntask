@@ -7,13 +7,13 @@ import pendulum
 import pytest
 from pendulum.datetime import DateTime
 
-from prefect.server.events.clients import (
+from syntask.server.events.clients import (
     AssertingEventsClient,
     NullEventsClient,
-    PrefectServerEventsClient,
+    SyntaskServerEventsClient,
 )
-from prefect.server.events.schemas.events import Event, ReceivedEvent, RelatedResource
-from prefect.server.utilities.messaging import CapturingPublisher
+from syntask.server.events.schemas.events import Event, ReceivedEvent, RelatedResource
+from syntask.server.utilities.messaging import CapturingPublisher
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def example_event(start_of_test: DateTime) -> Event:
     return Event(
         occurred=start_of_test,
         event="hello.world",
-        resource={"prefect.resource.id": "woot"},
+        resource={"syntask.resource.id": "woot"},
         id=uuid4(),
     )
 
@@ -68,7 +68,7 @@ def example_event_1(start_of_test: pendulum.DateTime) -> Event:
     return Event(
         occurred=start_of_test + timedelta(seconds=1),
         event="marvelous.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
         id=uuid4(),
     )
 
@@ -78,7 +78,7 @@ def example_event_2(start_of_test: pendulum.DateTime) -> Event:
     return Event(
         occurred=start_of_test + timedelta(seconds=2),
         event="wondrous.things.happened",
-        resource={"prefect.resource.id": "something-invaluable"},
+        resource={"syntask.resource.id": "something-invaluable"},
         id=uuid4(),
     )
 
@@ -89,21 +89,21 @@ def example_event_3(start_of_test: pendulum.DateTime) -> Event:
         occurred=start_of_test + timedelta(seconds=3),
         event="delightful.things.happened",
         resource={
-            "prefect.resource.id": "something-wondrous",
+            "syntask.resource.id": "something-wondrous",
             "wonder-type": "amazement",
         },
         related=[
             RelatedResource.parse_obj(
                 {
-                    "prefect.resource.id": "something-valuable",
-                    "prefect.resource.role": "shiny",
+                    "syntask.resource.id": "something-valuable",
+                    "syntask.resource.role": "shiny",
                     "name": "gold",
                 }
             ),
             RelatedResource.parse_obj(
                 {
-                    "prefect.resource.id": "something-glittery",
-                    "prefect.resource.role": "sparkle",
+                    "syntask.resource.id": "something-glittery",
+                    "syntask.resource.role": "sparkle",
                     "name": "diamond",
                 }
             ),
@@ -117,7 +117,7 @@ def example_event_4(start_of_test: pendulum.DateTime) -> Event:
     return Event(
         occurred=start_of_test + timedelta(seconds=4),
         event="ingenious.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
         id=uuid4(),
     )
 
@@ -127,7 +127,7 @@ def example_event_5(start_of_test: pendulum.DateTime) -> Event:
     return Event(
         occurred=start_of_test + timedelta(seconds=5),
         event="delectable.things.happened",
-        resource={"prefect.resource.id": "something-valuable"},
+        resource={"syntask.resource.id": "something-valuable"},
         payload={
             "glitter_count": "∞",
         },
@@ -200,38 +200,38 @@ async def test_asserting_resource(all_events_emitted: AssertingEventsClient):
 
 async def test_asserting_related(all_events_emitted: AssertingEventsClient):
     AssertingEventsClient.assert_emitted_event_with(
-        related=[{"prefect.resource.role": "sparkle"}]
+        related=[{"syntask.resource.role": "sparkle"}]
     )
     with pytest.raises(AssertionError):
         AssertingEventsClient.assert_no_emitted_event_with(
-            related=[{"prefect.resource.role": "sparkle"}]
+            related=[{"syntask.resource.role": "sparkle"}]
         )
 
     AssertingEventsClient.assert_emitted_event_with(
-        related=[{"prefect.resource.role": ["sparkle", "luster"]}]
+        related=[{"syntask.resource.role": ["sparkle", "luster"]}]
     )
     with pytest.raises(AssertionError):
         AssertingEventsClient.assert_no_emitted_event_with(
-            related=[{"prefect.resource.role": ["sparkle", "luster"]}]
+            related=[{"syntask.resource.role": ["sparkle", "luster"]}]
         )
 
     AssertingEventsClient.assert_emitted_event_with(
-        related=[{"prefect.resource.role": ["sparkle", "luster"]}, {"name": ["gold"]}]
+        related=[{"syntask.resource.role": ["sparkle", "luster"]}, {"name": ["gold"]}]
     )
     with pytest.raises(AssertionError):
         AssertingEventsClient.assert_no_emitted_event_with(
             related=[
-                {"prefect.resource.role": ["sparkle", "luster"]},
+                {"syntask.resource.role": ["sparkle", "luster"]},
                 {"name": ["gold"]},
             ]
         )
 
     AssertingEventsClient.assert_no_emitted_event_with(
-        related=[{"prefect.resource.role": ["dulling", "dimming"]}]
+        related=[{"syntask.resource.role": ["dulling", "dimming"]}]
     )
     with pytest.raises(AssertionError):
         AssertingEventsClient.assert_emitted_event_with(
-            related=[{"prefect.resource.role": ["dulling", "dimming"]}]
+            related=[{"syntask.resource.role": ["dulling", "dimming"]}]
         )
 
 
@@ -252,7 +252,7 @@ async def test_asserting_payload(all_events_emitted: AssertingEventsClient):
 @pytest.fixture
 def capturing_publisher() -> Generator[Type[CapturingPublisher], None, None]:
     with mock.patch(
-        "prefect.server.events.messaging.create_publisher",
+        "syntask.server.events.messaging.create_publisher",
         CapturingPublisher,
     ):
         CapturingPublisher.messages = []
@@ -272,7 +272,7 @@ async def test_server_client_publishes_events(
 ):
     received_event = example_event.receive(received=frozen_time)
 
-    async with PrefectServerEventsClient() as c:
+    async with SyntaskServerEventsClient() as c:
         await c.emit(example_event)
 
     assert captured_events(capturing_publisher) == [received_event]
@@ -280,13 +280,13 @@ async def test_server_client_publishes_events(
 
 async def test_server_client_must_be_opened(example_event: Event):
     with pytest.raises(TypeError, match="context manager"):
-        await PrefectServerEventsClient().emit(example_event)
+        await SyntaskServerEventsClient().emit(example_event)
 
 
 async def test_server_client_only_publishes_if_events(
     capturing_publisher: CapturingPublisher,
 ):
-    async with PrefectServerEventsClient():
+    async with SyntaskServerEventsClient():
         pass
 
     assert captured_events(capturing_publisher) == []
@@ -296,7 +296,7 @@ async def test_server_client_still_publishes_if_error(
     capturing_publisher: CapturingPublisher, example_event: Event, frozen_time: DateTime
 ):
     with pytest.raises(Exception, match="hi"):
-        async with PrefectServerEventsClient() as c:
+        async with SyntaskServerEventsClient() as c:
             received_event = await c.emit(example_event)
             raise Exception("hi!")
 
@@ -306,7 +306,7 @@ async def test_server_client_still_publishes_if_error(
 async def test_server_client_returns_received_event_from_emit(
     capturing_publisher: CapturingPublisher, example_event: Event, frozen_time: DateTime
 ):
-    async with PrefectServerEventsClient() as c:
+    async with SyntaskServerEventsClient() as c:
         received_event = await c.emit(example_event)
 
     assert isinstance(received_event, ReceivedEvent)

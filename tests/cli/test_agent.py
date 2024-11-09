@@ -3,13 +3,13 @@ from unittest.mock import ANY
 
 import pytest
 
-import prefect.cli.agent
-from prefect import PrefectClient
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
-from prefect.settings import PREFECT_AGENT_PREFETCH_SECONDS, temporary_settings
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.utilities import MagicMock
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+import syntask.cli.agent
+from syntask import SyntaskClient
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
+from syntask.settings import SYNTASK_AGENT_PREFETCH_SECONDS, temporary_settings
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.utilities import MagicMock
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 @pytest.fixture(autouse=True)
@@ -19,7 +19,7 @@ def ignore_agent_deprecation_warnings():
     test failures.
     """
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=PrefectDeprecationWarning)
+        warnings.simplefilter("ignore", category=SyntaskDeprecationWarning)
         yield
 
 
@@ -30,7 +30,7 @@ def test_start_agent_emits_deprecation_warning():
         expected_output_contains=[
             "The 'agent' command group has been deprecated.",
             "It will not be available after Sep 2024.",
-            " Use `prefect worker start` instead.",
+            " Use `syntask worker start` instead.",
             " Refer to the upgrade guide for more information",
         ],
     )
@@ -52,7 +52,7 @@ def test_start_agent_run_once():
     )
 
 
-async def test_start_agent_creates_work_queue(prefect_client: PrefectClient):
+async def test_start_agent_creates_work_queue(syntask_client: SyntaskClient):
     await run_sync_in_worker_thread(
         invoke_and_assert,
         command=["agent", "start", "--run-once", "-q", "test"],
@@ -60,7 +60,7 @@ async def test_start_agent_creates_work_queue(prefect_client: PrefectClient):
         expected_output_contains=["Agent stopped!", "Agent started!"],
     )
 
-    queue = await prefect_client.read_work_queue_by_name("test")
+    queue = await syntask_client.read_work_queue_by_name("test")
     assert queue
     assert queue.name == "test"
 
@@ -85,7 +85,7 @@ def test_start_agent_with_work_queue_and_tags():
 
 def test_start_agent_with_prefetch_seconds(monkeypatch):
     mock_agent = MagicMock()
-    monkeypatch.setattr(prefect.cli.agent, "PrefectAgent", mock_agent)
+    monkeypatch.setattr(syntask.cli.agent, "SyntaskAgent", mock_agent)
     invoke_and_assert(
         command=[
             "agent",
@@ -109,8 +109,8 @@ def test_start_agent_with_prefetch_seconds(monkeypatch):
 
 def test_start_agent_with_prefetch_seconds_from_setting_by_default(monkeypatch):
     mock_agent = MagicMock()
-    monkeypatch.setattr(prefect.cli.agent, "PrefectAgent", mock_agent)
-    with temporary_settings({PREFECT_AGENT_PREFETCH_SECONDS: 100}):
+    monkeypatch.setattr(syntask.cli.agent, "SyntaskAgent", mock_agent)
+    with temporary_settings({SYNTASK_AGENT_PREFETCH_SECONDS: 100}):
         invoke_and_assert(
             command=[
                 "agent",
@@ -132,7 +132,7 @@ def test_start_agent_with_prefetch_seconds_from_setting_by_default(monkeypatch):
 
 def test_start_agent_respects_work_queue_names(monkeypatch):
     mock_agent = MagicMock()
-    monkeypatch.setattr(prefect.cli.agent, "PrefectAgent", mock_agent)
+    monkeypatch.setattr(syntask.cli.agent, "SyntaskAgent", mock_agent)
     invoke_and_assert(
         command=["agent", "start", "-q", "a", "-q", "b", "--run-once"],
         expected_code=0,
@@ -148,7 +148,7 @@ def test_start_agent_respects_work_queue_names(monkeypatch):
 
 def test_start_agent_respects_work_queue_prefixes(monkeypatch):
     mock_agent = MagicMock()
-    monkeypatch.setattr(prefect.cli.agent, "PrefectAgent", mock_agent)
+    monkeypatch.setattr(syntask.cli.agent, "SyntaskAgent", mock_agent)
     invoke_and_assert(
         command=["agent", "start", "-m", "a", "-m", "b", "--run-once"],
         expected_code=0,
@@ -164,7 +164,7 @@ def test_start_agent_respects_work_queue_prefixes(monkeypatch):
 
 def test_start_agent_respects_limit(monkeypatch):
     mock_agent = MagicMock()
-    monkeypatch.setattr(prefect.cli.agent, "PrefectAgent", mock_agent)
+    monkeypatch.setattr(syntask.cli.agent, "SyntaskAgent", mock_agent)
     invoke_and_assert(
         command=["agent", "start", "--limit", "10", "--run-once", "-q", "test"],
         expected_code=0,
@@ -180,7 +180,7 @@ def test_start_agent_respects_limit(monkeypatch):
 
 def test_start_agent_respects_work_pool_name(monkeypatch):
     mock_agent = MagicMock()
-    monkeypatch.setattr(prefect.cli.agent, "PrefectAgent", mock_agent)
+    monkeypatch.setattr(syntask.cli.agent, "SyntaskAgent", mock_agent)
     invoke_and_assert(
         command=["agent", "start", "--pool", "test-pool", "--run-once", "-q", "test"],
         expected_code=0,
@@ -214,7 +214,7 @@ def test_start_agent_with_work_queue_match_and_work_queue():
 
 def test_start_agent_with_just_work_pool(monkeypatch):
     mock_agent = MagicMock()
-    monkeypatch.setattr(prefect.cli.agent, "PrefectAgent", mock_agent)
+    monkeypatch.setattr(syntask.cli.agent, "SyntaskAgent", mock_agent)
     invoke_and_assert(
         command=["agent", "start", "--pool", "test-pool", "--run-once"],
         expected_code=0,

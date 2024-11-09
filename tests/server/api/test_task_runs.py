@@ -2,11 +2,11 @@ from uuid import uuid4
 
 import pendulum
 import pytest
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.server import models, schemas
-from prefect.server.schemas import responses, states
-from prefect.server.schemas.responses import OrchestrationResult
+from syntask.server import models, schemas
+from syntask.server.schemas import responses, states
+from syntask.server.schemas.responses import OrchestrationResult
 
 
 class TestCreateTaskRun:
@@ -410,7 +410,7 @@ class TestSetTaskRunState:
         self, task_run, client, session, proposed_state
     ):
         # Task runner infrastructure may kill and restart tasks without informing
-        # Prefect. This test checks that a task can re-transition  its current state
+        # Syntask. This test checks that a task can re-transition  its current state
         # to ensure restarts occur without error.
 
         # first, ensure the parent flow run is in a running state

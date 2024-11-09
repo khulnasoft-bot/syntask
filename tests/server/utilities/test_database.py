@@ -7,7 +7,7 @@ from unittest import mock
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -19,11 +19,11 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import declarative_base
 
-from prefect.server.database.configurations import AioSqliteConfiguration
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.database.orm_models import AioSqliteORMConfiguration
-from prefect.server.database.query_components import AioSqliteQueryComponents
-from prefect.server.utilities.database import (
+from syntask.server.database.configurations import AioSqliteConfiguration
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.database.orm_models import AioSqliteORMConfiguration
+from syntask.server.database.query_components import AioSqliteQueryComponents
+from syntask.server.utilities.database import (
     JSON,
     Pydantic,
     Timestamp,
@@ -544,9 +544,9 @@ async def test_error_thrown_if_sqlite_version_is_below_minimum():
         with mock.patch.object(sqlite3, "sqlite_version", "3.23.9"):
             with pytest.raises(
                 RuntimeError,
-                match="Prefect requires sqlite >= 3.24.0 but we found version 3.23.9",
+                match="Syntask requires sqlite >= 3.24.0 but we found version 3.23.9",
             ):
-                db = PrefectDBInterface(
+                db = SyntaskDBInterface(
                     database_config=AioSqliteConfiguration(
                         connection_url="sqlite+aiosqlite:///file::memory",
                     ),

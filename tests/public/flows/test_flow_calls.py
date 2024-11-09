@@ -3,15 +3,15 @@ import inspect
 
 import anyio
 
-import prefect
+import syntask
 
 
-@prefect.flow
+@syntask.flow
 def identity_flow(x):
     return x
 
 
-@prefect.flow
+@syntask.flow
 async def aidentity_flow(x):
     return x
 

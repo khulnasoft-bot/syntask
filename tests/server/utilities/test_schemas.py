@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -16,48 +16,48 @@ else:
 
 import pytest
 
-from prefect.server.utilities.schemas import (
+from syntask.server.utilities.schemas import (
     DateTimeTZ,
     IDBaseModel,
     ORMBaseModel,
-    PrefectBaseModel,
+    SyntaskBaseModel,
 )
 
 
 @contextmanager
-def reload_prefect_base_model(
+def reload_syntask_base_model(
     test_mode_value,
-) -> Generator[Type[PrefectBaseModel], None, None]:
-    import prefect.server.utilities.schemas.bases
+) -> Generator[Type[SyntaskBaseModel], None, None]:
+    import syntask.server.utilities.schemas.bases
 
-    original_base_model = prefect.server.utilities.schemas.bases.PrefectBaseModel
-    original_environment = os.environ.get("PREFECT_TEST_MODE")
+    original_base_model = syntask.server.utilities.schemas.bases.SyntaskBaseModel
+    original_environment = os.environ.get("SYNTASK_TEST_MODE")
     if test_mode_value is not None:
-        os.environ["PREFECT_TEST_MODE"] = test_mode_value
+        os.environ["SYNTASK_TEST_MODE"] = test_mode_value
     else:
-        os.environ.pop("PREFECT_TEST_MODE")
+        os.environ.pop("SYNTASK_TEST_MODE")
 
     try:
         # We must re-execute the module since the setting is configured at base model
         # definition time
-        importlib.reload(prefect.server.utilities.schemas.bases)
+        importlib.reload(syntask.server.utilities.schemas.bases)
 
-        from prefect.server.utilities.schemas.bases import PrefectBaseModel
+        from syntask.server.utilities.schemas.bases import SyntaskBaseModel
 
-        yield PrefectBaseModel
+        yield SyntaskBaseModel
     finally:
         if original_environment is None:
-            os.environ.pop("PREFECT_TEST_MODE")
+            os.environ.pop("SYNTASK_TEST_MODE")
         else:
-            os.environ["PREFECT_TEST_MODE"] = original_environment
+            os.environ["SYNTASK_TEST_MODE"] = original_environment
 
         # We must restore this type or `isinstance` checks will fail later
-        prefect.server.utilities.schemas.bases.PrefectBaseModel = original_base_model
+        syntask.server.utilities.schemas.bases.SyntaskBaseModel = original_base_model
 
 
 class TestExtraForbidden:
     def test_extra_attributes_are_forbidden_during_unit_tests(self):
-        class Model(PrefectBaseModel):
+        class Model(SyntaskBaseModel):
             x: int
 
         with pytest.raises(
@@ -67,18 +67,18 @@ class TestExtraForbidden:
 
     @pytest.mark.parametrize("falsey_value", ["0", "False", "", None])
     def test_extra_attributes_are_allowed_outside_test_mode(self, falsey_value):
-        with reload_prefect_base_model(falsey_value) as PrefectBaseModel:
+        with reload_syntask_base_model(falsey_value) as SyntaskBaseModel:
 
-            class Model(PrefectBaseModel):
+            class Model(SyntaskBaseModel):
                 x: int
 
         Model(x=1, y=2)
 
     @pytest.mark.parametrize("truthy_value", ["1", "True", "true"])
     def test_extra_attributes_are_not_allowed_with_truthy_test_mode(self, truthy_value):
-        with reload_prefect_base_model(truthy_value) as PrefectBaseModel:
+        with reload_syntask_base_model(truthy_value) as SyntaskBaseModel:
 
-            class Model(PrefectBaseModel):
+            class Model(SyntaskBaseModel):
                 x: int
 
         with pytest.raises(
@@ -93,7 +93,7 @@ class TestNestedDict:
         class Child(pydantic.BaseModel):
             z: int
 
-        class Parent(PrefectBaseModel):
+        class Parent(SyntaskBaseModel):
             x: int
             y: Child
 
@@ -120,7 +120,7 @@ class TestNestedDict:
 
 
 class TestJsonCompatibleDict:
-    class Model(PrefectBaseModel):
+    class Model(SyntaskBaseModel):
         x: UUID
         y: datetime.datetime
 
@@ -129,7 +129,7 @@ class TestJsonCompatibleDict:
         class Child(pydantic.BaseModel):
             z: UUID
 
-        class Parent(PrefectBaseModel):
+        class Parent(SyntaskBaseModel):
             x: UUID
             y: Child
 
@@ -204,7 +204,7 @@ class TestEqualityExcludedFields:
         class Y(ORMBaseModel):
             val: int
 
-        class Z(PrefectBaseModel):
+        class Z(SyntaskBaseModel):
             val: int
 
         class A(pydantic.BaseModel):

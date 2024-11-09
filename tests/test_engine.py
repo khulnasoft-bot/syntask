@@ -13,20 +13,20 @@ import anyio
 import pendulum
 import pytest
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import BaseModel
 else:
     from pydantic import BaseModel
 
-import prefect.flows
-from prefect import engine, flow, task
-from prefect._internal.compatibility.experimental import ExperimentalFeature
-from prefect.client.orchestration import PrefectClient, get_client
-from prefect.client.schemas import OrchestrationResult
-from prefect.context import FlowRunContext, get_run_context
-from prefect.engine import (
+import syntask.flows
+from syntask import engine, flow, task
+from syntask._internal.compatibility.experimental import ExperimentalFeature
+from syntask.client.orchestration import SyntaskClient, get_client
+from syntask.client.schemas import OrchestrationResult
+from syntask.context import FlowRunContext, get_run_context
+from syntask.engine import (
     begin_flow_run,
     begin_task_run,
     create_and_begin_subflow_run,
@@ -38,7 +38,7 @@ from prefect.engine import (
     retrieve_flow_then_begin_flow_run,
     suspend_flow_run,
 )
-from prefect.exceptions import (
+from syntask.exceptions import (
     Abort,
     CrashedRun,
     FailedRun,
@@ -47,26 +47,26 @@ from prefect.exceptions import (
     PausedRun,
     SignatureMismatchError,
 )
-from prefect.futures import PrefectFuture
-from prefect.input import RunInput, read_flow_run_input
-from prefect.results import ResultFactory, UnknownResult
-from prefect.server.schemas.core import FlowRun
-from prefect.server.schemas.filters import FlowRunFilter
-from prefect.server.schemas.responses import (
+from syntask.futures import SyntaskFuture
+from syntask.input import RunInput, read_flow_run_input
+from syntask.results import ResultFactory, UnknownResult
+from syntask.server.schemas.core import FlowRun
+from syntask.server.schemas.filters import FlowRunFilter
+from syntask.server.schemas.responses import (
     SetStateStatus,
     StateAbortDetails,
     StateAcceptDetails,
     StateRejectDetails,
     StateWaitDetails,
 )
-from prefect.server.schemas.states import StateDetails, StateType
-from prefect.settings import (
-    PREFECT_FLOW_DEFAULT_RETRY_DELAY_SECONDS,
-    PREFECT_TASK_DEFAULT_RETRY_DELAY_SECONDS,
-    PREFECT_TASK_INTROSPECTION_WARN_THRESHOLD,
+from syntask.server.schemas.states import StateDetails, StateType
+from syntask.settings import (
+    SYNTASK_FLOW_DEFAULT_RETRY_DELAY_SECONDS,
+    SYNTASK_TASK_DEFAULT_RETRY_DELAY_SECONDS,
+    SYNTASK_TASK_INTROSPECTION_WARN_THRESHOLD,
     temporary_settings,
 )
-from prefect.states import (
+from syntask.states import (
     Cancelled,
     Completed,
     Failed,
@@ -76,15 +76,15 @@ from prefect.states import (
     State,
     Suspended,
 )
-from prefect.task_runners import (
+from syntask.task_runners import (
     BaseTaskRunner,
     SequentialTaskRunner,
     TaskConcurrencyType,
 )
-from prefect.tasks import exponential_backoff
-from prefect.testing.utilities import AsyncMock, exceptions_equal
-from prefect.utilities.annotations import quote
-from prefect.utilities.engine import (
+from syntask.tasks import exponential_backoff
+from syntask.testing.utilities import AsyncMock, exceptions_equal
+from syntask.utilities.annotations import quote
+from syntask.utilities.engine import (
     API_HEALTHCHECKS,
     check_api_reachable,
     collect_task_run_inputs,
@@ -94,9 +94,9 @@ from prefect.utilities.engine import (
 
 
 @pytest.fixture
-async def result_factory(prefect_client):
+async def result_factory(syntask_client):
     return await ResultFactory.default_factory(
-        client=prefect_client,
+        client=syntask_client,
     )
 
 
@@ -126,13 +126,13 @@ def parameterized_flow():
 
 
 @pytest.fixture
-async def get_flow_run_context(prefect_client, result_factory, local_filesystem):
+async def get_flow_run_context(syntask_client, result_factory, local_filesystem):
     @flow
     def foo():
         pass
 
     test_task_runner = SequentialTaskRunner()
-    flow_run = await prefect_client.create_flow_run(foo)
+    flow_run = await syntask_client.create_flow_run(foo)
 
     async def _get_flow_run_context():
         async with anyio.create_task_group() as tg:
@@ -140,7 +140,7 @@ async def get_flow_run_context(prefect_client, result_factory, local_filesystem)
                 background_tasks=tg,
                 flow=foo,
                 flow_run=flow_run,
-                client=prefect_client,
+                client=syntask_client,
                 task_runner=test_task_runner,
                 result_factory=result_factory,
                 parameters={},
@@ -191,7 +191,7 @@ class TestBlockingPause:
         self, monkeypatch
     ):
         sleeper = AsyncMock(side_effect=[None, None, None, None, None])
-        monkeypatch.setattr("prefect.engine.anyio.sleep", sleeper)
+        monkeypatch.setattr("syntask.engine.anyio.sleep", sleeper)
 
         @task
         async def doesnt_pause():
@@ -216,7 +216,7 @@ class TestBlockingPause:
 
     async def test_first_polling_is_smaller_than_the_timeout(self, monkeypatch):
         sleeper = AsyncMock(side_effect=[None])
-        monkeypatch.setattr("prefect.engine.anyio.sleep", sleeper)
+        monkeypatch.setattr("syntask.engine.anyio.sleep", sleeper)
 
         @flow(task_runner=SequentialTaskRunner())
         async def pausing_flow():
@@ -231,7 +231,7 @@ class TestBlockingPause:
         sleep_intervals = [c.args[0] for c in sleeper.await_args_list]
         assert sleep_intervals[0] == 4 / 2
 
-    async def test_paused_flows_block_execution_in_sync_flows(self, prefect_client):
+    async def test_paused_flows_block_execution_in_sync_flows(self, syntask_client):
         completed = False
 
         @flow(task_runner=SequentialTaskRunner())
@@ -243,7 +243,7 @@ class TestBlockingPause:
         pausing_flow(return_state=True)
         assert not completed
 
-    async def test_paused_flows_block_execution_in_async_flows(self, prefect_client):
+    async def test_paused_flows_block_execution_in_async_flows(self, syntask_client):
         @task
         async def foo():
             return 42
@@ -259,12 +259,12 @@ class TestBlockingPause:
 
         flow_run_state = await pausing_flow(return_state=True)
         flow_run_id = flow_run_state.state_details.flow_run_id
-        task_runs = await prefect_client.read_task_runs(
+        task_runs = await syntask_client.read_task_runs(
             flow_run_filter=FlowRunFilter(id={"any_": [flow_run_id]})
         )
         assert len(task_runs) == 2, "only two tasks should have completed"
 
-    async def test_paused_flows_can_be_resumed(self, prefect_client):
+    async def test_paused_flows_can_be_resumed(self, syntask_client):
         @task
         async def foo():
             return 42
@@ -281,7 +281,7 @@ class TestBlockingPause:
 
         async def flow_resumer():
             await anyio.sleep(3)
-            flow_runs = await prefect_client.read_flow_runs(limit=1)
+            flow_runs = await syntask_client.read_flow_runs(limit=1)
             active_flow_run = flow_runs[0]
             await resume_flow_run(active_flow_run.id)
 
@@ -290,12 +290,12 @@ class TestBlockingPause:
             flow_resumer(),
         )
         flow_run_id = flow_run_state.state_details.flow_run_id
-        task_runs = await prefect_client.read_task_runs(
+        task_runs = await syntask_client.read_task_runs(
             flow_run_filter=FlowRunFilter(id={"any_": [flow_run_id]})
         )
         assert len(task_runs) == 5, "all tasks should finish running"
 
-    async def test_paused_flows_can_receive_input(self, prefect_client):
+    async def test_paused_flows_can_receive_input(self, syntask_client):
         flow_run_id = None
 
         class FlowInput(RunInput):
@@ -318,10 +318,10 @@ class TestBlockingPause:
                 await anyio.sleep(0.1)
 
             # Wait on flow run to pause
-            flow_run = await prefect_client.read_flow_run(flow_run_id)
+            flow_run = await syntask_client.read_flow_run(flow_run_id)
             while not flow_run.state.is_paused():
                 await asyncio.sleep(0.1)
-                flow_run = await prefect_client.read_flow_run(flow_run_id)
+                flow_run = await syntask_client.read_flow_run(flow_run_id)
 
             keyset = flow_run.state.state_details.run_input_keyset
             assert keyset
@@ -347,7 +347,7 @@ class TestBlockingPause:
         assert schema is not None
 
     async def test_paused_flows_can_receive_automatic_input(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         flow_run_id = None
 
@@ -366,10 +366,10 @@ class TestBlockingPause:
                 await anyio.sleep(0.1)
 
             # Wait on flow run to pause
-            flow_run = await prefect_client.read_flow_run(flow_run_id)
+            flow_run = await syntask_client.read_flow_run(flow_run_id)
             while not flow_run.state.is_paused():
                 await asyncio.sleep(0.1)
-                flow_run = await prefect_client.read_flow_run(flow_run_id)
+                flow_run = await syntask_client.read_flow_run(flow_run_id)
 
             keyset = flow_run.state.state_details.run_input_keyset
             assert keyset
@@ -403,7 +403,7 @@ class TestNonblockingPause:
             yield
 
     async def test_paused_flows_do_not_block_execution_with_reschedule_flag(
-        self, prefect_client, deployment, session
+        self, syntask_client, deployment, session
     ):
         flow_run_id = None
 
@@ -417,7 +417,7 @@ class TestNonblockingPause:
             flow_run_id = get_run_context().flow_run.id
 
             # Add the deployment id to the flow run to allow a pause
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
@@ -439,9 +439,9 @@ class TestNonblockingPause:
             with pytest.raises(Pause):
                 await pausing_flow_without_blocking(return_state=True)
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id)
         assert flow_run.state.is_paused()
-        task_runs = await prefect_client.read_task_runs(
+        task_runs = await syntask_client.read_task_runs(
             flow_run_filter=FlowRunFilter(id={"any_": [flow_run_id]})
         )
         assert len(task_runs) == 2, "only two tasks should have completed"
@@ -456,11 +456,11 @@ class TestNonblockingPause:
         @flow(task_runner=SequentialTaskRunner())
         async def pausing_flow_without_blocking():
             # Add the deployment id to the flow run to allow a pause
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
-                prefect.runtime.flow_run.id,
+                syntask.runtime.flow_run.id,
                 FlowRun.construct(deployment_id=deployment.id),
             )
             await session.commit()
@@ -476,7 +476,7 @@ class TestNonblockingPause:
             await pausing_flow_without_blocking()
 
     async def test_paused_flows_can_be_resumed_then_rescheduled(
-        self, prefect_client, deployment, session
+        self, syntask_client, deployment, session
     ):
         flow_run_id = None
 
@@ -490,7 +490,7 @@ class TestNonblockingPause:
             flow_run_id = get_run_context().flow_run.id
 
             # Add the deployment id to the flow run to allow a pause
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
@@ -509,11 +509,11 @@ class TestNonblockingPause:
         with pytest.raises(Pause):
             await pausing_flow_without_blocking()
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id)
         assert flow_run.state.is_paused()
 
         await resume_flow_run(flow_run_id)
-        flow_run = await prefect_client.read_flow_run(flow_run_id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id)
         assert flow_run.state.is_scheduled()
 
     async def test_subflows_cannot_be_paused_with_reschedule_flag(
@@ -575,7 +575,7 @@ class TestOutOfProcessPause:
             yield
 
     async def test_flows_can_be_paused_out_of_process(
-        self, prefect_client, deployment, session
+        self, syntask_client, deployment, session
     ):
         @task
         async def foo():
@@ -588,11 +588,11 @@ class TestOutOfProcessPause:
         @flow(task_runner=SequentialTaskRunner())
         async def pausing_flow_without_blocking():
             # Add the deployment id to the flow run to allow a pause
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
-                prefect.runtime.flow_run.id,
+                syntask.runtime.flow_run.id,
                 FlowRun.construct(deployment_id=deployment.id),
             )
             await session.commit()
@@ -610,7 +610,7 @@ class TestOutOfProcessPause:
             await flow_run_state.result()
 
         flow_run_id = flow_run_state.state_details.flow_run_id
-        task_runs = await prefect_client.read_task_runs(
+        task_runs = await syntask_client.read_task_runs(
             flow_run_filter=FlowRunFilter(id={"any_": [flow_run_id]})
         )
         completed_task_runs = list(
@@ -631,11 +631,11 @@ class TestOutOfProcessPause:
         @flow(task_runner=SequentialTaskRunner())
         async def pausing_flow_without_blocking():
             # Add the deployment id to the flow run to allow a pause
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
-                prefect.runtime.flow_run.id,
+                syntask.runtime.flow_run.id,
                 FlowRun.construct(deployment_id=deployment.id),
             )
             await session.commit()
@@ -691,7 +691,7 @@ class TestSuspendFlowRun:
             yield
 
     async def test_suspended_flow_runs_do_not_block_execution(
-        self, prefect_client, deployment, session
+        self, syntask_client, deployment, session
     ):
         flow_run_id = None
 
@@ -702,7 +702,7 @@ class TestSuspendFlowRun:
             assert context.flow_run
             flow_run_id = context.flow_run.id
 
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
@@ -721,7 +721,7 @@ class TestSuspendFlowRun:
         assert end - start < 20
 
     async def test_suspended_flow_run_has_correct_state(
-        self, prefect_client, deployment, session
+        self, syntask_client, deployment, session
     ):
         flow_run_id = None
 
@@ -732,7 +732,7 @@ class TestSuspendFlowRun:
             assert context.flow_run
             flow_run_id = context.flow_run.id
 
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
@@ -746,7 +746,7 @@ class TestSuspendFlowRun:
         with pytest.raises(Pause):
             await suspending_flow()
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id)
         state = flow_run.state
         assert state.is_paused()
         assert state.name == "Suspended"
@@ -773,7 +773,7 @@ class TestSuspendFlowRun:
         with pytest.raises(RuntimeError, match="Cannot suspend subflows."):
             await main_flow()
 
-    async def test_suspend_flow_run_by_id(self, prefect_client, deployment, session):
+    async def test_suspend_flow_run_by_id(self, syntask_client, deployment, session):
         flow_run_id = None
         task_completions = 0
 
@@ -789,7 +789,7 @@ class TestSuspendFlowRun:
             context = get_run_context()
             assert context.flow_run
 
-            from prefect.server.models.flow_runs import update_flow_run
+            from syntask.server.models.flow_runs import update_flow_run
 
             await update_flow_run(
                 session,
@@ -824,12 +824,12 @@ class TestSuspendFlowRun:
         # of the tasks.
         assert task_completions > 0 and task_completions < 20
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id)
         state = flow_run.state
         assert state.is_paused()
         assert state.name == "Suspended"
 
-    async def test_suspend_can_receive_input(self, deployment, session, prefect_client):
+    async def test_suspend_can_receive_input(self, deployment, session, syntask_client):
         flow_run_id = None
 
         class FlowInput(RunInput):
@@ -844,7 +844,7 @@ class TestSuspendFlowRun:
             if not context.flow_run.deployment_id:
                 # Ensure that the flow run has a deployment id so it's
                 # suspendable.
-                from prefect.server.models.flow_runs import update_flow_run
+                from syntask.server.models.flow_runs import update_flow_run
 
                 await update_flow_run(
                     session,
@@ -864,7 +864,7 @@ class TestSuspendFlowRun:
 
         assert flow_run_id
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id)
         keyset = flow_run.state.state_details.run_input_keyset
 
         schema = await read_flow_run_input(
@@ -878,7 +878,7 @@ class TestSuspendFlowRun:
             flow=suspending_flow,
             flow_run=flow_run,
             parameters={},
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
 
@@ -886,7 +886,7 @@ class TestSuspendFlowRun:
         assert flow_input.x == 42
 
     async def test_suspend_can_receive_automatic_input(
-        self, deployment, session, prefect_client
+        self, deployment, session, syntask_client
     ):
         flow_run_id = None
 
@@ -899,7 +899,7 @@ class TestSuspendFlowRun:
             if not context.flow_run.deployment_id:
                 # Ensure that the flow run has a deployment id so it's
                 # suspendable.
-                from prefect.server.models.flow_runs import update_flow_run
+                from syntask.server.models.flow_runs import update_flow_run
 
                 await update_flow_run(
                     session,
@@ -919,7 +919,7 @@ class TestSuspendFlowRun:
 
         assert flow_run_id
 
-        flow_run = await prefect_client.read_flow_run(flow_run_id)
+        flow_run = await syntask_client.read_flow_run(flow_run_id)
         keyset = flow_run.state.state_details.run_input_keyset
 
         schema = await read_flow_run_input(
@@ -933,7 +933,7 @@ class TestSuspendFlowRun:
             flow=suspending_flow,
             flow_run=flow_run,
             parameters={},
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
 
@@ -943,16 +943,16 @@ class TestSuspendFlowRun:
 
 class TestOrchestrateTaskRun:
     async def test_propose_state_does_not_recurse(
-        self, monkeypatch, prefect_client, mock_anyio_sleep, flow_run
+        self, monkeypatch, syntask_client, mock_anyio_sleep, flow_run
     ):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/8825.
+        Regression test for https://github.com/Synopkg/syntask/issues/8825.
         Previously propose_state would make a recursive call. In extreme cases
         the server would instruct propose_state to wait almost indefinitely
         leading to propose_state to hit max recursion depth
         """
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -961,7 +961,7 @@ class TestOrchestrateTaskRun:
         def foo():
             return 1
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=foo,
             flow_run_id=flow_run.id,
             dynamic_key="0",
@@ -973,7 +973,7 @@ class TestOrchestrateTaskRun:
         delay_seconds = 30
         num_waits = sys.getrecursionlimit() + 50
 
-        prefect_client.set_task_run_state = AsyncMock(
+        syntask_client.set_task_run_state = AsyncMock(
             side_effect=[
                 *[
                     OrchestrationResult(
@@ -992,16 +992,16 @@ class TestOrchestrateTaskRun:
 
         with mock_anyio_sleep.assert_sleeps_for(delay_seconds * num_waits):
             await propose_state(
-                prefect_client, State(type=StateType.RUNNING), task_run_id=task_run.id
+                syntask_client, State(type=StateType.RUNNING), task_run_id=task_run.id
             )
 
     async def test_raises_on_pause_with_reschedule(
-        self, monkeypatch, prefect_client, mock_anyio_sleep, flow_run, result_factory
+        self, monkeypatch, syntask_client, mock_anyio_sleep, flow_run, result_factory
     ):
         paused_state = Suspended()
 
         # In this situation, the flow run is paused.
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=paused_state,
         )
@@ -1010,7 +1010,7 @@ class TestOrchestrateTaskRun:
         def foo():
             return 1
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=foo,
             flow_run_id=flow_run.id,
             dynamic_key="0",
@@ -1024,7 +1024,7 @@ class TestOrchestrateTaskRun:
             f"{flow_run.id}."
         )
 
-        prefect_client.set_task_run_state = AsyncMock(
+        syntask_client.set_task_run_state = AsyncMock(
             side_effect=[
                 OrchestrationResult(
                     state=paused_state,  # Same as the flow run's paused state
@@ -1042,17 +1042,17 @@ class TestOrchestrateTaskRun:
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
     async def test_raises_on_new_pause_state_with_reschedule(
-        self, monkeypatch, prefect_client, mock_anyio_sleep, flow_run, result_factory
+        self, monkeypatch, syntask_client, mock_anyio_sleep, flow_run, result_factory
     ):
         paused_state = Paused()
 
         # In this situation, the flow run is paused.
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=paused_state,
         )
@@ -1061,7 +1061,7 @@ class TestOrchestrateTaskRun:
         def foo():
             return 1
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=foo,
             flow_run_id=flow_run.id,
             dynamic_key="0",
@@ -1075,7 +1075,7 @@ class TestOrchestrateTaskRun:
             f"{flow_run.id}."
         )
 
-        prefect_client.set_task_run_state = AsyncMock(
+        syntask_client.set_task_run_state = AsyncMock(
             side_effect=[
                 OrchestrationResult(
                     state=paused_state,  # Same as the flow run's paused state
@@ -1098,17 +1098,17 @@ class TestOrchestrateTaskRun:
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
     async def test_abort_breaks_pause_loop(
-        self, monkeypatch, prefect_client, mock_anyio_sleep, flow_run, result_factory
+        self, monkeypatch, syntask_client, mock_anyio_sleep, flow_run, result_factory
     ):
         paused_state = Paused(timeout_seconds=1)
 
         # In this situation, the flow run is paused.
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=paused_state,
         )
@@ -1117,7 +1117,7 @@ class TestOrchestrateTaskRun:
         def foo():
             return 1
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=foo,
             flow_run_id=flow_run.id,
             dynamic_key="0",
@@ -1136,7 +1136,7 @@ class TestOrchestrateTaskRun:
         # failed due to exceeding the pause timeout. Orchestration would return
         # an Abort when we propose a running state again, which should cause us
         # to raise an Abort exception, exiting the loop.
-        prefect_client.set_task_run_state = AsyncMock(
+        syntask_client.set_task_run_state = AsyncMock(
             side_effect=[
                 OrchestrationResult(
                     state=paused_state,
@@ -1163,17 +1163,17 @@ class TestOrchestrateTaskRun:
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
     async def test_pending_in_pause_loop_submits_running_state(
-        self, monkeypatch, prefect_client, flow_run, result_factory
+        self, monkeypatch, syntask_client, flow_run, result_factory
     ):
         paused_state = Paused()
 
         # In this situation, the flow run is paused.
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1182,7 +1182,7 @@ class TestOrchestrateTaskRun:
         def foo():
             return 1
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=foo,
             flow_run_id=flow_run.id,
             dynamic_key="0",
@@ -1196,7 +1196,7 @@ class TestOrchestrateTaskRun:
             f"{flow_run.id}."
         )
 
-        prefect_client.set_task_run_state = AsyncMock(
+        syntask_client.set_task_run_state = AsyncMock(
             side_effect=[
                 OrchestrationResult(
                     state=paused_state,
@@ -1232,7 +1232,7 @@ class TestOrchestrateTaskRun:
             wait_for=None,
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1240,7 +1240,7 @@ class TestOrchestrateTaskRun:
 
     async def test_waits_until_scheduled_start_time(
         self,
-        prefect_client,
+        syntask_client,
         flow_run,
         mock_anyio_sleep,
         local_filesystem,
@@ -1248,7 +1248,7 @@ class TestOrchestrateTaskRun:
         monkeypatch,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1257,7 +1257,7 @@ class TestOrchestrateTaskRun:
         def foo():
             return 1
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=foo,
             flow_run_id=flow_run.id,
             dynamic_key="0",
@@ -1277,7 +1277,7 @@ class TestOrchestrateTaskRun:
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
@@ -1286,14 +1286,14 @@ class TestOrchestrateTaskRun:
 
     async def test_does_not_wait_for_scheduled_time_in_past(
         self,
-        prefect_client,
+        syntask_client,
         flow_run,
         mock_anyio_sleep,
         result_factory,
         local_filesystem,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1302,7 +1302,7 @@ class TestOrchestrateTaskRun:
         def foo():
             return 1
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=foo,
             flow_run_id=flow_run.id,
             dynamic_key="0",
@@ -1321,7 +1321,7 @@ class TestOrchestrateTaskRun:
             wait_for=None,
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1332,13 +1332,13 @@ class TestOrchestrateTaskRun:
     async def test_waits_for_awaiting_retry_scheduled_time(
         self,
         mock_anyio_sleep,
-        prefect_client,
+        syntask_client,
         flow_run,
         result_factory,
         local_filesystem,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1356,7 +1356,7 @@ class TestOrchestrateTaskRun:
             raise ValueError("try again, but only once")
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=flaky_function,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1372,7 +1372,7 @@ class TestOrchestrateTaskRun:
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
@@ -1380,7 +1380,7 @@ class TestOrchestrateTaskRun:
         assert await state.result() == 1
 
         # Check expected state transitions
-        states = await prefect_client.read_task_run_states(str(task_run.id))
+        states = await syntask_client.read_task_run_states(str(task_run.id))
         state_names = [state.type for state in states]
         assert state_names == [
             StateType.PENDING,
@@ -1393,13 +1393,13 @@ class TestOrchestrateTaskRun:
     async def test_waits_for_configurable_sleeps(
         self,
         mock_anyio_sleep,
-        prefect_client,
+        syntask_client,
         flow_run,
         result_factory,
         local_filesystem,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1417,7 +1417,7 @@ class TestOrchestrateTaskRun:
             raise ValueError("try again")
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=flaky_function,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1434,7 +1434,7 @@ class TestOrchestrateTaskRun:
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
@@ -1446,13 +1446,13 @@ class TestOrchestrateTaskRun:
     async def test_waits_configured_with_callable(
         self,
         mock_anyio_sleep,
-        prefect_client,
+        syntask_client,
         flow_run,
         result_factory,
         local_filesystem,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1470,7 +1470,7 @@ class TestOrchestrateTaskRun:
             raise ValueError("try again")
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=flaky_function,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1486,7 +1486,7 @@ class TestOrchestrateTaskRun:
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
@@ -1499,14 +1499,14 @@ class TestOrchestrateTaskRun:
     async def test_waits_jittery_sleeps(
         self,
         mock_anyio_sleep,
-        prefect_client,
+        syntask_client,
         flow_run,
         result_factory,
         local_filesystem,
         jitter_factor,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1524,7 +1524,7 @@ class TestOrchestrateTaskRun:
             raise ValueError("try again")
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=flaky_function,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1539,7 +1539,7 @@ class TestOrchestrateTaskRun:
             wait_for=None,
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1556,7 +1556,7 @@ class TestOrchestrateTaskRun:
     )
     async def test_returns_not_ready_when_any_upstream_futures_resolve_to_incomplete(
         self,
-        prefect_client,
+        syntask_client,
         flow_run,
         upstream_task_state,
         result_factory,
@@ -1570,7 +1570,7 @@ class TestOrchestrateTaskRun:
             mock()
 
         # Create an upstream task run
-        upstream_task_run = await prefect_client.create_task_run(
+        upstream_task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=upstream_task_state,
@@ -1580,7 +1580,7 @@ class TestOrchestrateTaskRun:
 
         # Create a future to wrap the upstream task, have it resolve to the given
         # incomplete state
-        future = PrefectFuture(
+        future = SyntaskFuture(
             key=str(upstream_task_run.id),
             name="foo",
             task_runner=None,
@@ -1591,7 +1591,7 @@ class TestOrchestrateTaskRun:
         future._submitted.set()
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1607,7 +1607,7 @@ class TestOrchestrateTaskRun:
             wait_for=None,
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1624,10 +1624,10 @@ class TestOrchestrateTaskRun:
         )
 
     async def test_quoted_parameters_are_resolved(
-        self, prefect_client, flow_run, result_factory, local_filesystem
+        self, syntask_client, flow_run, result_factory, local_filesystem
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1640,7 +1640,7 @@ class TestOrchestrateTaskRun:
             mock(x)
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1656,7 +1656,7 @@ class TestOrchestrateTaskRun:
             wait_for=None,
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1671,14 +1671,14 @@ class TestOrchestrateTaskRun:
     )
     async def test_states_in_parameters_can_be_incomplete_if_quoted(
         self,
-        prefect_client,
+        syntask_client,
         flow_run,
         upstream_task_state,
         result_factory,
         local_filesystem,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1691,7 +1691,7 @@ class TestOrchestrateTaskRun:
             mock(x)
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1706,7 +1706,7 @@ class TestOrchestrateTaskRun:
             wait_for=None,
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1717,13 +1717,13 @@ class TestOrchestrateTaskRun:
         assert state.is_completed()
 
     async def test_global_task_retry_delay_seconds(
-        self, mock_anyio_sleep, prefect_client, flow_run, result_factory
+        self, mock_anyio_sleep, syntask_client, flow_run, result_factory
     ):
         with temporary_settings(
-            updates={PREFECT_TASK_DEFAULT_RETRY_DELAY_SECONDS: [3, 5, 9]}
+            updates={SYNTASK_TASK_DEFAULT_RETRY_DELAY_SECONDS: [3, 5, 9]}
         ):
             # the flow run must be running prior to running tasks
-            await prefect_client.set_flow_run_state(
+            await syntask_client.set_flow_run_state(
                 flow_run_id=flow_run.id,
                 state=Running(),
             )
@@ -1741,7 +1741,7 @@ class TestOrchestrateTaskRun:
                 raise ValueError("try again")
 
             # Create a task run to test
-            task_run = await prefect_client.create_task_run(
+            task_run = await syntask_client.create_task_run(
                 task=flaky_function,
                 flow_run_id=flow_run.id,
                 state=Pending(),
@@ -1757,17 +1757,17 @@ class TestOrchestrateTaskRun:
                     wait_for=None,
                     result_factory=result_factory,
                     interruptible=False,
-                    client=prefect_client,
+                    client=syntask_client,
                     log_prints=False,
                 )
 
             assert mock_anyio_sleep.await_count == 3
 
     async def test_retry_condition_fn_retries_after_failure(
-        self, mock_anyio_sleep, prefect_client, flow_run, result_factory
+        self, mock_anyio_sleep, syntask_client, flow_run, result_factory
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1786,7 +1786,7 @@ class TestOrchestrateTaskRun:
             raise ValueError("try again, but only once")
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1801,7 +1801,7 @@ class TestOrchestrateTaskRun:
             parameters={"x": quote(1)},
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1810,10 +1810,10 @@ class TestOrchestrateTaskRun:
         assert mock.call_count == 2
 
     async def test_retry_condition_fn_no_retries_after_failure(
-        self, mock_anyio_sleep, prefect_client, flow_run, result_factory
+        self, mock_anyio_sleep, syntask_client, flow_run, result_factory
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1834,7 +1834,7 @@ class TestOrchestrateTaskRun:
             raise ValueError("try again, but only once")
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1849,7 +1849,7 @@ class TestOrchestrateTaskRun:
             parameters={"x": quote(1)},
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1860,10 +1860,10 @@ class TestOrchestrateTaskRun:
         assert mock_2.call_count == 1
 
     async def test_retry_condition_fn_when_retries_eq_0_does_not_retry(
-        self, mock_anyio_sleep, prefect_client, flow_run, result_factory
+        self, mock_anyio_sleep, syntask_client, flow_run, result_factory
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1884,7 +1884,7 @@ class TestOrchestrateTaskRun:
             raise ValueError("try again, but only once")
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1899,7 +1899,7 @@ class TestOrchestrateTaskRun:
             parameters={"x": quote(1)},
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1920,12 +1920,12 @@ class TestOrchestrateTaskRun:
         self,
         state_constructor_fn,
         mock_anyio_sleep,
-        prefect_client,
+        syntask_client,
         flow_run,
         result_factory,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1944,7 +1944,7 @@ class TestOrchestrateTaskRun:
             )
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -1959,7 +1959,7 @@ class TestOrchestrateTaskRun:
             parameters={},
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -1967,10 +1967,10 @@ class TestOrchestrateTaskRun:
         assert mock.call_count == 0
 
     async def test_retry_condition_fn_retry_handler_returns_false_does_not_retry(
-        self, mock_anyio_sleep, prefect_client, flow_run, result_factory, caplog
+        self, mock_anyio_sleep, syntask_client, flow_run, result_factory, caplog
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -1991,7 +1991,7 @@ class TestOrchestrateTaskRun:
             raise ValueError
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -2006,7 +2006,7 @@ class TestOrchestrateTaskRun:
             parameters={"x": quote(1)},
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -2022,10 +2022,10 @@ class TestOrchestrateTaskRun:
         )
 
     async def test_retry_condition_fn_retry_handler_returns_notfalse_retries(
-        self, mock_anyio_sleep, prefect_client, flow_run, result_factory, caplog
+        self, mock_anyio_sleep, syntask_client, flow_run, result_factory, caplog
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -2045,7 +2045,7 @@ class TestOrchestrateTaskRun:
             raise ValueError
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Pending(),
@@ -2060,7 +2060,7 @@ class TestOrchestrateTaskRun:
             parameters={"x": quote(1)},
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -2076,13 +2076,13 @@ class TestOrchestrateTaskRun:
     async def test_proposes_unknown_result_if_state_is_completed_and_result_data_is_missing(
         self,
         mock_anyio_sleep,
-        prefect_client: PrefectClient,
+        syntask_client: SyntaskClient,
         flow_run,
         result_factory,
         local_filesystem,
     ):
         # the flow run must be running prior to running tasks
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
@@ -2092,7 +2092,7 @@ class TestOrchestrateTaskRun:
             return 1
 
         # Create a task run to test
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             state=Completed(data=None),
@@ -2108,7 +2108,7 @@ class TestOrchestrateTaskRun:
             wait_for=None,
             result_factory=result_factory,
             interruptible=False,
-            client=prefect_client,
+            client=syntask_client,
             log_prints=False,
         )
 
@@ -2119,7 +2119,7 @@ class TestOrchestrateTaskRun:
 
 class TestBeginTaskRun:
     async def test_begin_task_run_handles_pause_signal(
-        self, monkeypatch, prefect_client, result_factory, patch_manifest_load
+        self, monkeypatch, syntask_client, result_factory, patch_manifest_load
     ):
         @task
         async def my_task():
@@ -2130,34 +2130,34 @@ class TestBeginTaskRun:
             return await my_task()
 
         await patch_manifest_load(my_flow)
-        flow_id = await prefect_client.create_flow(my_flow)
-        deployment_id = await prefect_client.create_deployment(
+        flow_id = await syntask_client.create_flow(my_flow)
+        deployment_id = await syntask_client.create_deployment(
             flow_id,
             name="test",
             manifest_path="file.json",
         )
-        flow_run = await prefect_client.create_flow_run_from_deployment(deployment_id)
+        flow_run = await syntask_client.create_flow_run_from_deployment(deployment_id)
 
         # The flow run must be running for us to create Pending task runs.
-        await prefect_client.set_flow_run_state(
+        await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Running(),
         )
 
-        task_run = await prefect_client.create_task_run(
+        task_run = await syntask_client.create_task_run(
             task=my_task,
             flow_run_id=flow_run.id,
             dynamic_key="0",
             state=State(type=StateType.PENDING),
         )
 
-        result = await prefect_client.set_flow_run_state(
+        result = await syntask_client.set_flow_run_state(
             flow_run_id=flow_run.id,
             state=Paused(reschedule=True),
         )
         print("RESULT ", result)
 
-        with FlowRunContext.construct(client=prefect_client, flow_run=flow_run):
+        with FlowRunContext.construct(client=syntask_client, flow_run=flow_run):
             state = await begin_task_run(
                 task=my_task,
                 task_run=task_run,
@@ -2165,7 +2165,7 @@ class TestBeginTaskRun:
                 result_factory=result_factory,
                 wait_for=[],
                 log_prints=False,
-                settings=prefect.context.SettingsContext.get().copy(),
+                settings=syntask.context.SettingsContext.get().copy(),
             )
 
         assert state
@@ -2183,10 +2183,10 @@ class TestOrchestrateFlowRun:
         )
 
     async def test_propose_state_does_not_recurse(
-        self, monkeypatch, prefect_client, mock_anyio_sleep
+        self, monkeypatch, syntask_client, mock_anyio_sleep
     ):
         """
-        Regression test for https://github.com/PrefectHQ/prefect/issues/8825.
+        Regression test for https://github.com/Synopkg/syntask/issues/8825.
         Previously propose_state would make a recursive call. In extreme cases
         the server would instruct propose_state to wait almost indefinitely
         leading to propose_state to hit max recursion depth
@@ -2196,7 +2196,7 @@ class TestOrchestrateFlowRun:
         def foo():
             return 1
 
-        flow_run = await prefect_client.create_flow_run(
+        flow_run = await syntask_client.create_flow_run(
             flow=foo,
             state=State(
                 type=StateType.PENDING,
@@ -2206,7 +2206,7 @@ class TestOrchestrateFlowRun:
         delay_seconds = 30
         num_waits = sys.getrecursionlimit() + 50
 
-        prefect_client.set_flow_run_state = AsyncMock(
+        syntask_client.set_flow_run_state = AsyncMock(
             side_effect=[
                 *[
                     OrchestrationResult(
@@ -2225,11 +2225,11 @@ class TestOrchestrateFlowRun:
 
         with mock_anyio_sleep.assert_sleeps_for(delay_seconds * num_waits):
             await propose_state(
-                prefect_client, State(type=StateType.RUNNING), flow_run_id=flow_run.id
+                syntask_client, State(type=StateType.RUNNING), flow_run_id=flow_run.id
             )
 
     async def test_waits_until_scheduled_start_time(
-        self, prefect_client, mock_anyio_sleep, partial_flow_run_context
+        self, syntask_client, mock_anyio_sleep, partial_flow_run_context
     ):
         @flow
         def foo():
@@ -2237,7 +2237,7 @@ class TestOrchestrateFlowRun:
 
         partial_flow_run_context.background_tasks = anyio.create_task_group()
 
-        flow_run = await prefect_client.create_flow_run(
+        flow_run = await syntask_client.create_flow_run(
             flow=foo,
             state=State(
                 type=StateType.SCHEDULED,
@@ -2252,7 +2252,7 @@ class TestOrchestrateFlowRun:
                 flow_run=flow_run,
                 parameters={},
                 wait_for=None,
-                client=prefect_client,
+                client=syntask_client,
                 interruptible=False,
                 partial_flow_run_context=partial_flow_run_context,
                 user_thread=threading.current_thread(),
@@ -2261,7 +2261,7 @@ class TestOrchestrateFlowRun:
         assert await state.result() == 1
 
     async def test_does_not_wait_for_scheduled_time_in_past(
-        self, prefect_client, mock_anyio_sleep, partial_flow_run_context
+        self, syntask_client, mock_anyio_sleep, partial_flow_run_context
     ):
         @flow
         def foo():
@@ -2269,7 +2269,7 @@ class TestOrchestrateFlowRun:
 
         partial_flow_run_context.background_tasks = anyio.create_task_group()
 
-        flow_run = await prefect_client.create_flow_run(
+        flow_run = await syntask_client.create_flow_run(
             flow=foo,
             state=State(
                 type=StateType.SCHEDULED,
@@ -2285,7 +2285,7 @@ class TestOrchestrateFlowRun:
                 flow_run=flow_run,
                 parameters={},
                 wait_for=None,
-                client=prefect_client,
+                client=syntask_client,
                 interruptible=False,
                 partial_flow_run_context=partial_flow_run_context,
                 user_thread=threading.current_thread(),
@@ -2295,7 +2295,7 @@ class TestOrchestrateFlowRun:
         assert await state.result() == 1
 
     async def test_waits_for_awaiting_retry_scheduled_time(
-        self, prefect_client, mock_anyio_sleep, partial_flow_run_context
+        self, syntask_client, mock_anyio_sleep, partial_flow_run_context
     ):
         flow_run_count = 0
 
@@ -2311,7 +2311,7 @@ class TestOrchestrateFlowRun:
 
             return 1
 
-        flow_run = await prefect_client.create_flow_run(
+        flow_run = await syntask_client.create_flow_run(
             flow=flaky_function, state=Pending()
         )
 
@@ -2321,7 +2321,7 @@ class TestOrchestrateFlowRun:
                 flow_run=flow_run,
                 parameters={},
                 wait_for=None,
-                client=prefect_client,
+                client=syntask_client,
                 interruptible=False,
                 partial_flow_run_context=partial_flow_run_context,
                 user_thread=threading.current_thread(),
@@ -2331,7 +2331,7 @@ class TestOrchestrateFlowRun:
         assert await state.result() == 1
 
         # Check expected state transitions
-        states = await prefect_client.read_flow_run_states(str(flow_run.id))
+        states = await syntask_client.read_flow_run_states(str(flow_run.id))
         state_names = [state.type for state in states]
         assert state_names == [
             StateType.PENDING,
@@ -2342,10 +2342,10 @@ class TestOrchestrateFlowRun:
         ]
 
     async def test_global_flow_retry_delay_seconds(
-        self, prefect_client, mock_anyio_sleep, partial_flow_run_context
+        self, syntask_client, mock_anyio_sleep, partial_flow_run_context
     ):
         with temporary_settings(
-            updates={PREFECT_FLOW_DEFAULT_RETRY_DELAY_SECONDS: "43"}
+            updates={SYNTASK_FLOW_DEFAULT_RETRY_DELAY_SECONDS: "43"}
         ):
             flow_run_count = 0
 
@@ -2361,7 +2361,7 @@ class TestOrchestrateFlowRun:
 
                 return 1
 
-            flow_run = await prefect_client.create_flow_run(
+            flow_run = await syntask_client.create_flow_run(
                 flow=flaky_function, state=Pending()
             )
 
@@ -2371,7 +2371,7 @@ class TestOrchestrateFlowRun:
                     flow_run=flow_run,
                     parameters={},
                     wait_for=None,
-                    client=prefect_client,
+                    client=syntask_client,
                     interruptible=False,
                     partial_flow_run_context=partial_flow_run_context,
                     user_thread=threading.current_thread(),
@@ -2393,7 +2393,7 @@ class TestFlowRunCrashes:
         except anyio.get_cancelled_exc_class() as exc:
             raise RuntimeError("The cancellation error was not caught.") from exc
 
-    async def test_flow_timeouts_are_not_crashes(self, flow_run, prefect_client):
+    async def test_flow_timeouts_are_not_crashes(self, flow_run, syntask_client):
         """
         Since timeouts use anyio cancellation scopes, we want to ensure that they are
         not marked as crashes
@@ -2407,16 +2407,16 @@ class TestFlowRunCrashes:
             flow=my_flow,
             parameters={},
             flow_run=flow_run,
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
 
         assert flow_run.state.is_failed()
         assert flow_run.state.type != StateType.CRASHED
         assert "exceeded timeout" in flow_run.state.message
 
-    async def test_aborts_are_not_crashes(self, flow_run, prefect_client):
+    async def test_aborts_are_not_crashes(self, flow_run, syntask_client):
         """
         Since aborts are base exceptions, we want to ensure that they are not marked as
         crashes
@@ -2432,11 +2432,11 @@ class TestFlowRunCrashes:
                 flow=my_flow,
                 parameters={},
                 flow_run=flow_run,
-                client=prefect_client,
+                client=syntask_client,
                 user_thread=threading.current_thread(),
             )
 
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
 
         assert flow_run.state.type != StateType.CRASHED
 
@@ -2447,7 +2447,7 @@ class TestTaskRunCrashes:
     )  # Pytest complains about unhandled exception in runtime thread
     @pytest.mark.parametrize("interrupt_type", [KeyboardInterrupt, SystemExit])
     async def test_interrupt_in_task_function_crashes_task_and_flow(
-        self, flow_run, prefect_client, interrupt_type
+        self, flow_run, syntask_client, interrupt_type
     ):
         @task
         async def my_task():
@@ -2462,18 +2462,18 @@ class TestTaskRunCrashes:
                 flow=my_flow,
                 flow_run=flow_run,
                 parameters={},
-                client=prefect_client,
+                client=syntask_client,
                 user_thread=threading.current_thread(),
             )
 
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
         assert flow_run.state.is_crashed()
         assert flow_run.state.type == StateType.CRASHED
         assert "Execution was aborted" in flow_run.state.message
         with pytest.raises(CrashedRun, match="Execution was aborted"):
             await flow_run.state.result()
 
-        task_runs = await prefect_client.read_task_runs()
+        task_runs = await syntask_client.read_task_runs()
         assert len(task_runs) == 1
         task_run = task_runs[0]
         assert task_run.state.is_crashed()
@@ -2487,10 +2487,10 @@ class TestTaskRunCrashes:
     )  # Pytest complains about unhandled exception in runtime thread
     @pytest.mark.parametrize("interrupt_type", [KeyboardInterrupt, SystemExit])
     async def test_interrupt_in_task_orchestration_crashes_task_and_flow(
-        self, flow_run, prefect_client, interrupt_type, monkeypatch
+        self, flow_run, syntask_client, interrupt_type, monkeypatch
     ):
         monkeypatch.setattr(
-            "prefect.engine.orchestrate_task_run", AsyncMock(side_effect=interrupt_type)
+            "syntask.engine.orchestrate_task_run", AsyncMock(side_effect=interrupt_type)
         )
 
         @task
@@ -2506,18 +2506,18 @@ class TestTaskRunCrashes:
                 flow=my_flow,
                 flow_run=flow_run,
                 parameters={},
-                client=prefect_client,
+                client=syntask_client,
                 user_thread=threading.current_thread(),
             )
 
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
         assert flow_run.state.is_crashed()
         assert flow_run.state.type == StateType.CRASHED
         assert "Execution was aborted" in flow_run.state.message
         with pytest.raises(CrashedRun, match="Execution was aborted"):
             await flow_run.state.result()
 
-        task_runs = await prefect_client.read_task_runs()
+        task_runs = await syntask_client.read_task_runs()
         assert len(task_runs) == 1
         task_run = task_runs[0]
         assert task_run.state.is_crashed()
@@ -2527,12 +2527,12 @@ class TestTaskRunCrashes:
             await task_run.state.result()
 
     async def test_error_in_task_orchestration_crashes_task_but_not_flow(
-        self, flow_run, prefect_client, monkeypatch
+        self, flow_run, syntask_client, monkeypatch
     ):
         exception = ValueError("Boo!")
 
         monkeypatch.setattr(
-            "prefect.engine.orchestrate_task_run", AsyncMock(side_effect=exception)
+            "syntask.engine.orchestrate_task_run", AsyncMock(side_effect=exception)
         )
 
         @task
@@ -2548,11 +2548,11 @@ class TestTaskRunCrashes:
             flow=my_flow,
             flow_run=flow_run,
             parameters={},
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
 
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
         assert flow_run.state.is_failed()
         assert flow_run.state.name == "Failed"
         assert "1/1 states failed" in flow_run.state.message
@@ -2572,7 +2572,7 @@ class TestTaskRunCrashes:
         )
 
         # Check that the state was reported to the server
-        task_run = await prefect_client.read_task_run(
+        task_run = await syntask_client.read_task_run(
             task_run_state.state_details.task_run_id
         )
         compare_fields = {"name", "type", "message"}
@@ -2590,34 +2590,34 @@ class TestDeploymentFlowRun:
             manifest_path="file.json",
         )
 
-    async def test_completed_run(self, prefect_client, patch_manifest_load):
+    async def test_completed_run(self, syntask_client, patch_manifest_load):
         @flow
         def my_flow(x: int):
             return x
 
         await patch_manifest_load(my_flow)
-        deployment_id = await self.create_deployment(prefect_client, my_flow)
+        deployment_id = await self.create_deployment(syntask_client, my_flow)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id, parameters={"x": 1}
         )
 
         state = await retrieve_flow_then_begin_flow_run(
-            flow_run.id, client=prefect_client, user_thread=threading.current_thread()
+            flow_run.id, client=syntask_client, user_thread=threading.current_thread()
         )
         assert await state.result() == 1
 
     async def test_retries_loaded_from_flow_definition(
-        self, prefect_client, patch_manifest_load, mock_anyio_sleep
+        self, syntask_client, patch_manifest_load, mock_anyio_sleep
     ):
         @flow(retries=2, retry_delay_seconds=3)
         def my_flow(x: int):
             raise ValueError()
 
         await patch_manifest_load(my_flow)
-        deployment_id = await self.create_deployment(prefect_client, my_flow)
+        deployment_id = await self.create_deployment(syntask_client, my_flow)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id, parameters={"x": 1}
         )
         assert flow_run.empirical_policy.retries is None
@@ -2630,70 +2630,70 @@ class TestDeploymentFlowRun:
         ):
             state = await retrieve_flow_then_begin_flow_run(
                 flow_run.id,
-                client=prefect_client,
+                client=syntask_client,
                 user_thread=threading.current_thread(),
             )
 
-        flow_run = await prefect_client.read_flow_run(flow_run.id)
+        flow_run = await syntask_client.read_flow_run(flow_run.id)
         assert flow_run.empirical_policy.retries == 2
         assert flow_run.empirical_policy.retry_delay == 3
         assert state.is_failed()
         assert flow_run.run_count == 3
 
-    async def test_failed_run(self, prefect_client, patch_manifest_load):
+    async def test_failed_run(self, syntask_client, patch_manifest_load):
         @flow
         def my_flow(x: int):
             raise ValueError("test!")
 
         await patch_manifest_load(my_flow)
-        deployment_id = await self.create_deployment(prefect_client, my_flow)
+        deployment_id = await self.create_deployment(syntask_client, my_flow)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id, parameters={"x": 1}
         )
 
         state = await retrieve_flow_then_begin_flow_run(
-            flow_run.id, client=prefect_client, user_thread=threading.current_thread()
+            flow_run.id, client=syntask_client, user_thread=threading.current_thread()
         )
         assert state.is_failed()
         with pytest.raises(ValueError, match="test!"):
             await state.result()
 
     async def test_parameters_are_cast_to_correct_type(
-        self, prefect_client, patch_manifest_load
+        self, syntask_client, patch_manifest_load
     ):
         @flow
         def my_flow(x: int):
             return x
 
         await patch_manifest_load(my_flow)
-        deployment_id = await self.create_deployment(prefect_client, my_flow)
+        deployment_id = await self.create_deployment(syntask_client, my_flow)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id, parameters={"x": "1"}
         )
 
         state = await retrieve_flow_then_begin_flow_run(
-            flow_run.id, client=prefect_client, user_thread=threading.current_thread()
+            flow_run.id, client=syntask_client, user_thread=threading.current_thread()
         )
         assert await state.result() == 1
 
     async def test_state_is_failed_when_parameters_fail_validation(
-        self, prefect_client, patch_manifest_load
+        self, syntask_client, patch_manifest_load
     ):
         @flow
         def my_flow(x: int):
             return x
 
         await patch_manifest_load(my_flow)
-        deployment_id = await self.create_deployment(prefect_client, my_flow)
+        deployment_id = await self.create_deployment(syntask_client, my_flow)
 
-        flow_run = await prefect_client.create_flow_run_from_deployment(
+        flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id, parameters={"x": "not-an-int"}
         )
 
         state = await retrieve_flow_then_begin_flow_run(
-            flow_run.id, client=prefect_client, user_thread=threading.current_thread()
+            flow_run.id, client=syntask_client, user_thread=threading.current_thread()
         )
         assert state.is_failed()
         assert "Validation of flow parameters failed with error" in state.message
@@ -2707,7 +2707,7 @@ class TestDeploymentFlowRun:
 
 
 class TestDynamicKeyHandling:
-    async def test_dynamic_key_increases_sequentially(self, prefect_client):
+    async def test_dynamic_key_increases_sequentially(self, syntask_client):
         @task
         def my_task():
             pass
@@ -2720,11 +2720,11 @@ class TestDynamicKeyHandling:
 
         my_flow()
 
-        task_runs = await prefect_client.read_task_runs()
+        task_runs = await syntask_client.read_task_runs()
 
         assert sorted([int(run.dynamic_key) for run in task_runs]) == [0, 1, 2]
 
-    async def test_subflow_resets_dynamic_key(self, prefect_client):
+    async def test_subflow_resets_dynamic_key(self, syntask_client):
         @task
         def my_task():
             pass
@@ -2742,7 +2742,7 @@ class TestDynamicKeyHandling:
 
         state = my_flow._run()
 
-        task_runs = await prefect_client.read_task_runs()
+        task_runs = await syntask_client.read_task_runs()
         parent_task_runs = [
             task_run
             for task_run in task_runs
@@ -2759,7 +2759,7 @@ class TestDynamicKeyHandling:
 
         assert int(subflow_task_runs[0].dynamic_key) == 0
 
-    async def test_dynamic_key_unique_per_task_key(self, prefect_client):
+    async def test_dynamic_key_unique_per_task_key(self, syntask_client):
         @task
         def task_one():
             pass
@@ -2777,21 +2777,21 @@ class TestDynamicKeyHandling:
 
         my_flow()
 
-        task_runs = await prefect_client.read_task_runs()
+        task_runs = await syntask_client.read_task_runs()
 
         assert sorted([int(run.dynamic_key) for run in task_runs]) == [0, 0, 1, 1]
 
 
 class TestCreateThenBeginFlowRun:
     async def test_handles_bad_parameter_types(
-        self, prefect_client, parameterized_flow
+        self, syntask_client, parameterized_flow
     ):
         state = await create_then_begin_flow_run(
             flow=parameterized_flow,
             parameters={"dog": [1, 2], "cat": "not an int"},
             wait_for=None,
             return_type="state",
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
         assert state.type == StateType.FAILED
@@ -2805,14 +2805,14 @@ class TestCreateThenBeginFlowRun:
             await state.result()
 
     async def test_handles_signature_mismatches(
-        self, prefect_client, parameterized_flow
+        self, syntask_client, parameterized_flow
     ):
         state = await create_then_begin_flow_run(
             flow=parameterized_flow,
             parameters={"puppy": "a string", "kitty": 42},
             wait_for=None,
             return_type="state",
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
         assert state.type == StateType.FAILED
@@ -2825,7 +2825,7 @@ class TestCreateThenBeginFlowRun:
             await state.result()
 
     async def test_does_not_raise_signature_mismatch_on_missing_default_args(
-        self, prefect_client
+        self, syntask_client
     ):
         @flow
         def flow_use_and_return_defaults(foo: str = "bar", bar: int = 1):
@@ -2839,21 +2839,21 @@ class TestCreateThenBeginFlowRun:
             parameters={},
             wait_for=None,
             return_type="state",
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
         assert state.type == StateType.COMPLETED
         assert await state.result() == ("bar", 1)
 
     async def test_handles_other_errors(
-        self, prefect_client, parameterized_flow, monkeypatch
+        self, syntask_client, parameterized_flow, monkeypatch
     ):
         def raise_unspecified_exception(*args, **kwargs):
             raise Exception("I am another exception!")
 
         # Patch validate_parameters to check for other exception case handling
         monkeypatch.setattr(
-            prefect.flows.Flow, "validate_parameters", raise_unspecified_exception
+            syntask.flows.Flow, "validate_parameters", raise_unspecified_exception
         )
 
         state = await create_then_begin_flow_run(
@@ -2861,7 +2861,7 @@ class TestCreateThenBeginFlowRun:
             parameters={"puppy": "a string", "kitty": 42},
             wait_for=None,
             return_type="state",
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
         assert state.type == StateType.FAILED
@@ -2873,16 +2873,16 @@ class TestCreateThenBeginFlowRun:
 
 class TestRetrieveFlowThenBeginFlowRun:
     async def test_handles_bad_parameter_types(
-        self, prefect_client, patch_manifest_load, parameterized_flow
+        self, syntask_client, patch_manifest_load, parameterized_flow
     ):
         await patch_manifest_load(parameterized_flow)
-        flow_id = await prefect_client.create_flow(parameterized_flow)
-        dep_id = await prefect_client.create_deployment(
+        flow_id = await syntask_client.create_flow(parameterized_flow)
+        dep_id = await syntask_client.create_deployment(
             flow_id,
             name="test",
             manifest_path="path/file.json",
         )
-        new_flow_run = await prefect_client.create_flow_run_from_deployment(
+        new_flow_run = await syntask_client.create_flow_run_from_deployment(
             deployment_id=dep_id, parameters={"dog": [1], "cat": "not an int"}
         )
         state = await retrieve_flow_then_begin_flow_run(
@@ -2899,14 +2899,14 @@ class TestRetrieveFlowThenBeginFlowRun:
             await state.result()
 
     async def test_handles_signature_mismatches(
-        self, prefect_client, parameterized_flow
+        self, syntask_client, parameterized_flow
     ):
         state = await create_then_begin_flow_run(
             flow=parameterized_flow,
             parameters={"puppy": "a string", "kitty": 42},
             wait_for=None,
             return_type="state",
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
         assert state.type == StateType.FAILED
@@ -2919,14 +2919,14 @@ class TestRetrieveFlowThenBeginFlowRun:
             await state.result()
 
     async def test_handles_other_errors(
-        self, prefect_client, parameterized_flow, monkeypatch
+        self, syntask_client, parameterized_flow, monkeypatch
     ):
         def raise_unspecified_exception(*args, **kwargs):
             raise Exception("I am another exception!")
 
         # Patch validate_parameters to check for other exception case handling
         monkeypatch.setattr(
-            prefect.flows.Flow, "validate_parameters", raise_unspecified_exception
+            syntask.flows.Flow, "validate_parameters", raise_unspecified_exception
         )
 
         state = await create_then_begin_flow_run(
@@ -2934,7 +2934,7 @@ class TestRetrieveFlowThenBeginFlowRun:
             parameters={"puppy": "a string", "kitty": 42},
             wait_for=None,
             return_type="state",
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
         assert state.type == StateType.FAILED
@@ -2947,7 +2947,7 @@ class TestRetrieveFlowThenBeginFlowRun:
 class TestCreateAndBeginSubflowRun:
     async def test_handles_bad_parameter_types(
         self,
-        prefect_client,
+        syntask_client,
         parameterized_flow,
         get_flow_run_context,
     ):
@@ -2957,7 +2957,7 @@ class TestCreateAndBeginSubflowRun:
                 parameters={"dog": [1, 2], "cat": "not an int"},
                 wait_for=None,
                 return_type="state",
-                client=prefect_client,
+                client=syntask_client,
                 user_thread=threading.current_thread(),
             )
 
@@ -2973,7 +2973,7 @@ class TestCreateAndBeginSubflowRun:
 
     async def test_handles_signature_mismatches(
         self,
-        prefect_client,
+        syntask_client,
         parameterized_flow,
         get_flow_run_context,
     ):
@@ -2983,7 +2983,7 @@ class TestCreateAndBeginSubflowRun:
                 parameters={"puppy": "a string", "kitty": 42},
                 wait_for=None,
                 return_type="state",
-                client=prefect_client,
+                client=syntask_client,
                 user_thread=threading.current_thread(),
             )
 
@@ -2997,14 +2997,14 @@ class TestCreateAndBeginSubflowRun:
             await state.result()
 
     async def test_handles_other_errors(
-        self, prefect_client, parameterized_flow, monkeypatch
+        self, syntask_client, parameterized_flow, monkeypatch
     ):
         def raise_unspecified_exception(*args, **kwargs):
             raise Exception("I am another exception!")
 
         # Patch validate_parameters to check for other exception case handling
         monkeypatch.setattr(
-            prefect.flows.Flow, "validate_parameters", raise_unspecified_exception
+            syntask.flows.Flow, "validate_parameters", raise_unspecified_exception
         )
 
         state = await create_then_begin_flow_run(
@@ -3012,7 +3012,7 @@ class TestCreateAndBeginSubflowRun:
             parameters={"puppy": "a string", "kitty": 42},
             wait_for=None,
             return_type="state",
-            client=prefect_client,
+            client=syntask_client,
             user_thread=threading.current_thread(),
         )
         assert state.type == StateType.FAILED
@@ -3182,10 +3182,10 @@ class TestAPIHealthcheck:
             await check_api_reachable(client, fail_message="test")
 
         # Check caching
-        assert "http://ephemeral-prefect/api/" in API_HEALTHCHECKS
-        assert isinstance(API_HEALTHCHECKS["http://ephemeral-prefect/api/"], float)
+        assert "http://ephemeral-syntask/api/" in API_HEALTHCHECKS
+        assert isinstance(API_HEALTHCHECKS["http://ephemeral-syntask/api/"], float)
 
-        assert API_HEALTHCHECKS["http://ephemeral-prefect/api/"] == pytest.approx(
+        assert API_HEALTHCHECKS["http://ephemeral-syntask/api/"] == pytest.approx(
             time.monotonic() + 60 * 10, abs=5
         )
 
@@ -3206,20 +3206,20 @@ class TestAPIHealthcheck:
     async def test_healthcheck_not_reset_within_expiration(self):
         async with get_client() as client:
             await check_api_reachable(client, fail_message="test")
-            value = API_HEALTHCHECKS["http://ephemeral-prefect/api/"]
+            value = API_HEALTHCHECKS["http://ephemeral-syntask/api/"]
             for _ in range(2):
                 await check_api_reachable(client, fail_message="test")
-                assert API_HEALTHCHECKS["http://ephemeral-prefect/api/"] == value
+                assert API_HEALTHCHECKS["http://ephemeral-syntask/api/"] == value
 
     async def test_healthcheck_reset_after_expiration(self):
         async with get_client() as client:
             await check_api_reachable(client, fail_message="test")
             value = API_HEALTHCHECKS[
-                "http://ephemeral-prefect/api/"
+                "http://ephemeral-syntask/api/"
             ] = time.monotonic()  # set it to expire now
             await check_api_reachable(client, fail_message="test")
-            assert API_HEALTHCHECKS["http://ephemeral-prefect/api/"] != value
-            assert API_HEALTHCHECKS["http://ephemeral-prefect/api/"] == pytest.approx(
+            assert API_HEALTHCHECKS["http://ephemeral-syntask/api/"] != value
+            assert API_HEALTHCHECKS["http://ephemeral-syntask/api/"] == pytest.approx(
                 time.monotonic() + 60 * 10, abs=5
             )
 
@@ -3228,12 +3228,12 @@ class TestAPIHealthcheck:
             client.api_healthcheck = AsyncMock(return_value=ValueError("test"))
             with pytest.raises(
                 RuntimeError,
-                match="test. Failed to reach API at http://ephemeral-prefect/api/.",
+                match="test. Failed to reach API at http://ephemeral-syntask/api/.",
             ):
                 await check_api_reachable(client, fail_message="test")
 
             # Not cached
-            assert "http://ephemeral-prefect/api/" not in API_HEALTHCHECKS
+            assert "http://ephemeral-syntask/api/" not in API_HEALTHCHECKS
             assert len(API_HEALTHCHECKS.keys()) == 0
 
 
@@ -3292,17 +3292,17 @@ def test_subflow_call_with_task_runner_duplicate_not_implemented(caplog):
 
 
 @patch(
-    "prefect.utilities.collections.visit_collection",
-    wraps=prefect.utilities.collections.visit_collection,
+    "syntask.utilities.collections.visit_collection",
+    wraps=syntask.utilities.collections.visit_collection,
 )
 @patch(
-    "prefect.utilities.engine.visit_collection",
-    wraps=prefect.utilities.engine.visit_collection,
+    "syntask.utilities.engine.visit_collection",
+    wraps=syntask.utilities.engine.visit_collection,
 )
 async def test_collect_task_run_inputs_respects_quote(
     mock_outer_visit_collection, mock_recursive_visit_collection
 ):
-    # Regression test for https://github.com/PrefectHQ/prefect/pull/10370
+    # Regression test for https://github.com/Synopkg/syntask/pull/10370
     # This test patches the original `visit_collection` functional call in
     # `collect_task_run_inputs` and the recursive call inside `visit_collection`
     # separately.
@@ -3322,10 +3322,10 @@ async def test_collect_task_run_inputs_respects_quote(
 
 
 async def test_long_task_introspection_warning_on(
-    prefect_client, flow_run, result_factory, monkeypatch, caplog
+    syntask_client, flow_run, result_factory, monkeypatch, caplog
 ):
     # the flow run must be running prior to running tasks
-    await prefect_client.set_flow_run_state(
+    await syntask_client.set_flow_run_state(
         flow_run_id=flow_run.id,
         state=Running(),
     )
@@ -3335,7 +3335,7 @@ async def test_long_task_introspection_warning_on(
         pass
 
     # Create a task run to test
-    task_run = await prefect_client.create_task_run(
+    task_run = await syntask_client.create_task_run(
         task=my_task,
         flow_run_id=flow_run.id,
         state=Pending(),
@@ -3343,14 +3343,14 @@ async def test_long_task_introspection_warning_on(
     )
 
     async def mock_resolve_inputs(*args, **kwargs):
-        # sleep for longer than PREFECT_TASK_INTROSPECTION_WARN_THRESHOLD
+        # sleep for longer than SYNTASK_TASK_INTROSPECTION_WARN_THRESHOLD
         await anyio.sleep(0.5)
         return {}
 
-    monkeypatch.setattr("prefect.engine.resolve_inputs", mock_resolve_inputs)
+    monkeypatch.setattr("syntask.engine.resolve_inputs", mock_resolve_inputs)
     with caplog.at_level("WARNING"):
         with temporary_settings(
-            updates={PREFECT_TASK_INTROSPECTION_WARN_THRESHOLD: "0.6"}
+            updates={SYNTASK_TASK_INTROSPECTION_WARN_THRESHOLD: "0.6"}
         ):
             await orchestrate_task_run(
                 task=my_task,
@@ -3359,7 +3359,7 @@ async def test_long_task_introspection_warning_on(
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 
@@ -3367,10 +3367,10 @@ async def test_long_task_introspection_warning_on(
 
 
 async def test_long_task_introspection_warning_off(
-    prefect_client, flow_run, result_factory, monkeypatch, caplog
+    syntask_client, flow_run, result_factory, monkeypatch, caplog
 ):
     # the flow run must be running prior to running tasks
-    await prefect_client.set_flow_run_state(
+    await syntask_client.set_flow_run_state(
         flow_run_id=flow_run.id,
         state=Running(),
     )
@@ -3380,7 +3380,7 @@ async def test_long_task_introspection_warning_off(
         pass
 
     # Create a task run to test
-    task_run = await prefect_client.create_task_run(
+    task_run = await syntask_client.create_task_run(
         task=my_task,
         flow_run_id=flow_run.id,
         state=Pending(),
@@ -3388,14 +3388,14 @@ async def test_long_task_introspection_warning_off(
     )
 
     async def mock_resolve_inputs(*args, **kwargs):
-        # sleep for longer than PREFECT_TASK_INTROSPECTION_WARN_THRESHOLD
+        # sleep for longer than SYNTASK_TASK_INTROSPECTION_WARN_THRESHOLD
         await anyio.sleep(0.5)
         return {}
 
-    monkeypatch.setattr("prefect.engine.resolve_inputs", mock_resolve_inputs)
+    monkeypatch.setattr("syntask.engine.resolve_inputs", mock_resolve_inputs)
     with caplog.at_level("WARNING"):
         with temporary_settings(
-            updates={PREFECT_TASK_INTROSPECTION_WARN_THRESHOLD: "0"}
+            updates={SYNTASK_TASK_INTROSPECTION_WARN_THRESHOLD: "0"}
         ):
             await orchestrate_task_run(
                 task=my_task,
@@ -3404,7 +3404,7 @@ async def test_long_task_introspection_warning_off(
                 wait_for=None,
                 result_factory=result_factory,
                 interruptible=False,
-                client=prefect_client,
+                client=syntask_client,
                 log_prints=False,
             )
 

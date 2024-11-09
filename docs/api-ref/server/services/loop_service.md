@@ -1,1 +1,1 @@
-::: prefect.server.services.loop_service
+::: syntask.server.services.loop_service

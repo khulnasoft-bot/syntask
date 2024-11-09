@@ -1,4 +1,4 @@
-from prefect import flow
+from syntask import flow
 
 from .utils import get_output
 

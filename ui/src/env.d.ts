@@ -1,3 +1,3 @@
 interface ImportMetaEnv {
-  readonly VITE_PREFECT_USE_MIRAGEJS: string,
+  readonly VITE_SYNTASK_USE_MIRAGEJS: string,
 }

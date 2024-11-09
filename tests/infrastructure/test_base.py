@@ -6,31 +6,31 @@ import pendulum
 import pytest
 from packaging.version import Version
 
-import prefect
-from prefect import engine
-from prefect.blocks.core import BlockNotSavedError
-from prefect.infrastructure import (
+import syntask
+from syntask import engine
+from syntask.blocks.core import BlockNotSavedError
+from syntask.infrastructure import (
     DockerContainer,
     Infrastructure,
     KubernetesJob,
     Process,
 )
-from prefect.infrastructure.base import MIN_COMPAT_PREFECT_VERSION
-from prefect.server.schemas.core import Deployment
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION,
-    PREFECT_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION,
+from syntask.infrastructure.base import MIN_COMPAT_SYNTASK_VERSION
+from syntask.server.schemas.core import Deployment
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION,
+    SYNTASK_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION,
     temporary_settings,
 )
-from prefect.utilities.dockerutils import get_prefect_image_name
+from syntask.utilities.dockerutils import get_syntask_image_name
 
 
 @pytest.fixture
 def enable_enhanced_cancellation():
     with temporary_settings(
         updates={
-            PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: True,
-            PREFECT_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: False,
+            SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: True,
+            SYNTASK_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: False,
         }
     ):
         yield
@@ -98,15 +98,15 @@ async def test_flow_run_by_infrastructure_type(
     flow,
     deployment,
     infrastructure_type,
-    prefect_client,
+    syntask_client,
     patch_manifest_load,
 ):
     await patch_manifest_load(flow)
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = infrastructure_type().prepare_for_flow_run(flow_run)
     result = await infrastructure.run()
 
-    flow_run = await prefect_client.read_flow_run(flow_run.id)
+    flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert flow_run.state.is_completed(), flow_run.state.message
 
     assert result.status_code == 0
@@ -114,22 +114,22 @@ async def test_flow_run_by_infrastructure_type(
 
 async def test_submission_adds_flow_run_metadata(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = MockInfrastructure().prepare_for_flow_run(flow_run)
     await infrastructure.run()
     MockInfrastructure._run.assert_called_once_with(
         {
             "type": "mock",
-            "env": {"PREFECT__FLOW_RUN_ID": str(flow_run.id)},
+            "env": {"SYNTASK__FLOW_RUN_ID": str(flow_run.id)},
             "labels": {
-                "prefect.io/flow-run-id": str(flow_run.id),
-                "prefect.io/flow-run-name": flow_run.name,
-                "prefect.io/version": prefect.__version__,
+                "syntask.io/flow-run-id": str(flow_run.id),
+                "syntask.io/flow-run-name": flow_run.name,
+                "syntask.io/version": syntask.__version__,
             },
             "name": flow_run.name,
-            "command": ["prefect", "flow-run", "execute"],
+            "command": ["syntask", "flow-run", "execute"],
         }
     )
 
@@ -140,20 +140,20 @@ async def test_submission_adds_flow_run_metadata(
         (
             {"name": "test", "updated": pendulum.from_timestamp(1668099059.5)},
             {
-                "prefect.io/deployment-name": "test",
-                "prefect.io/deployment-updated": "2022-11-10T16:50:59.500000Z",
+                "syntask.io/deployment-name": "test",
+                "syntask.io/deployment-updated": "2022-11-10T16:50:59.500000Z",
             },
         ),
-        ({"name": "test", "updated": None}, {"prefect.io/deployment-name": "test"}),
+        ({"name": "test", "updated": None}, {"syntask.io/deployment-name": "test"}),
     ],
 )
 async def test_submission_adds_deployment_metadata(
     deployment,
-    prefect_client,
+    syntask_client,
     deployment_fields,
     expected_labels,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = MockInfrastructure().prepare_for_flow_run(
         flow_run, deployment=Deployment(flow_id=deployment.flow_id, **deployment_fields)
     )
@@ -162,50 +162,50 @@ async def test_submission_adds_deployment_metadata(
     MockInfrastructure._run.assert_called_once_with(
         {
             "type": "mock",
-            "env": {"PREFECT__FLOW_RUN_ID": str(flow_run.id)},
+            "env": {"SYNTASK__FLOW_RUN_ID": str(flow_run.id)},
             "labels": {
                 **{
-                    "prefect.io/flow-run-id": str(flow_run.id),
-                    "prefect.io/flow-run-name": flow_run.name,
-                    "prefect.io/version": prefect.__version__,
+                    "syntask.io/flow-run-id": str(flow_run.id),
+                    "syntask.io/flow-run-name": flow_run.name,
+                    "syntask.io/version": syntask.__version__,
                 },
                 **expected_labels,
             },
             "name": flow_run.name,
-            "command": ["prefect", "flow-run", "execute"],
+            "command": ["syntask", "flow-run", "execute"],
         }
     )
 
 
 async def test_submission_adds_flow_metadata(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
-    flow = await prefect_client.read_flow(deployment.flow_id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
+    flow = await syntask_client.read_flow(deployment.flow_id)
     infrastructure = MockInfrastructure().prepare_for_flow_run(flow_run, flow=flow)
     await infrastructure.run()
     MockInfrastructure._run.assert_called_once_with(
         {
             "type": "mock",
-            "env": {"PREFECT__FLOW_RUN_ID": str(flow_run.id)},
+            "env": {"SYNTASK__FLOW_RUN_ID": str(flow_run.id)},
             "labels": {
-                "prefect.io/flow-run-id": str(flow_run.id),
-                "prefect.io/flow-run-name": flow_run.name,
-                "prefect.io/version": prefect.__version__,
-                "prefect.io/flow-name": flow.name,
+                "syntask.io/flow-run-id": str(flow_run.id),
+                "syntask.io/flow-run-name": flow_run.name,
+                "syntask.io/version": syntask.__version__,
+                "syntask.io/flow-name": flow.name,
             },
             "name": flow_run.name,
-            "command": ["prefect", "flow-run", "execute"],
+            "command": ["syntask", "flow-run", "execute"],
         }
     )
 
 
 async def test_submission_does_not_mutate_original_object(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     obj = MockInfrastructure()
     prepared = obj.prepare_for_flow_run(flow_run)
     await prepared.run()
@@ -217,9 +217,9 @@ async def test_submission_does_not_mutate_original_object(
 
 async def test_submission_does_not_override_existing_command(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = MockInfrastructure(command=["test"]).prepare_for_flow_run(flow_run)
     await infrastructure.run()
     MockInfrastructure._run.call_args[0][0]["command"] == ["test"]
@@ -227,9 +227,9 @@ async def test_submission_does_not_override_existing_command(
 
 async def test_submission_does_not_override_existing_env(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = MockInfrastructure(env={"foo": "bar"}).prepare_for_flow_run(
         flow_run
     )
@@ -242,9 +242,9 @@ async def test_submission_does_not_override_existing_env(
 
 async def test_submission_does_not_override_existing_labels(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = MockInfrastructure(labels={"foo": "bar"}).prepare_for_flow_run(
         flow_run
     )
@@ -257,9 +257,9 @@ async def test_submission_does_not_override_existing_labels(
 
 async def test_submission_does_not_override_existing_name(
     deployment,
-    prefect_client,
+    syntask_client,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = MockInfrastructure(name="test").prepare_for_flow_run(flow_run)
     await infrastructure.run()
     MockInfrastructure._run.call_args[0][0]["name"] == "test"
@@ -269,43 +269,43 @@ async def test_submission_does_not_override_existing_name(
 @pytest.mark.service("docker")
 @pytest.mark.usefixtures("use_hosted_api_server")
 @pytest.mark.skipif(
-    (Version(MIN_COMPAT_PREFECT_VERSION) > Version(prefect.__version__.split("+")[0])),
-    reason=f"Expected breaking change in next version: {MIN_COMPAT_PREFECT_VERSION}",
+    (Version(MIN_COMPAT_SYNTASK_VERSION) > Version(syntask.__version__.split("+")[0])),
+    reason=f"Expected breaking change in next version: {MIN_COMPAT_SYNTASK_VERSION}",
 )
-async def test_execution_is_compatible_with_old_prefect_container_version(
+async def test_execution_is_compatible_with_old_syntask_container_version(
     flow_run,
-    prefect_client,
+    syntask_client,
     deployment,
 ):
     """
     This test confirms that submission can properly start a flow run in a container
-    running an old version of Prefect. This tests for regression in the path of
+    running an old version of Syntask. This tests for regression in the path of
     "starting a flow run" as well as basic API communication.
 
     When making a breaking change to the API, it's likely that no compatible image
-    will exist. If so, bump MIN_COMPAT_PREFECT_VERSION past the current prefect
+    will exist. If so, bump MIN_COMPAT_SYNTASK_VERSION past the current syntask
     version and this test will be skipped until a compatible image can be found.
     """
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment_id=deployment.id
     )
 
     infrastructure = DockerContainer(
-        image=get_prefect_image_name(MIN_COMPAT_PREFECT_VERSION)
+        image=get_syntask_image_name(MIN_COMPAT_SYNTASK_VERSION)
     ).prepare_for_flow_run(flow_run)
 
     result = await infrastructure.run()
     assert result.status_code == 0
-    flow_run = await prefect_client.read_flow_run(flow_run.id)
+    flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert flow_run.state.is_completed()
 
 
 async def test_enabling_enhanced_cancellation_changes_default_command(
-    deployment, prefect_client, enable_enhanced_cancellation
+    deployment, syntask_client, enable_enhanced_cancellation
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(deployment.id)
+    flow_run = await syntask_client.create_flow_run_from_deployment(deployment.id)
     infrastructure = MockInfrastructure(name="test").prepare_for_flow_run(flow_run)
-    assert infrastructure.command == ["prefect", "flow-run", "execute"]
+    assert infrastructure.command == ["syntask", "flow-run", "execute"]
 
 
 async def test_generate_work_pool_base_job_template():
@@ -344,7 +344,7 @@ async def test_generate_work_pool_base_job_template():
     ],
 )
 async def test_publish_as_work_pool(
-    work_pool_name, monkeypatch, capsys, prefect_client
+    work_pool_name, monkeypatch, capsys, syntask_client
 ):
     block = MockInfrastructure()
     block._block_document_id = uuid.uuid4()
@@ -379,7 +379,7 @@ async def test_publish_as_work_pool(
     else:
         assert f"Work pool {work_pool_name} created!" in capsys.readouterr().out
 
-    work_pool = await prefect_client.read_work_pool(
+    work_pool = await syntask_client.read_work_pool(
         work_pool_name=work_pool_name or block._block_document_name
     )
 

@@ -12,26 +12,26 @@ import anyio.abc
 import pendulum
 import pytest
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import BaseModel
 else:
     from pydantic import BaseModel
 
-import prefect
-from prefect import flow
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas import State
-from prefect.exceptions import InfrastructureNotAvailable
-from prefect.server.schemas.core import WorkPool
-from prefect.server.schemas.states import StateDetails, StateType
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
+import syntask
+from syntask import flow
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas import State
+from syntask.exceptions import InfrastructureNotAvailable
+from syntask.server.schemas.core import WorkPool
+from syntask.server.schemas.states import StateDetails, StateType
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
     temporary_settings,
 )
-from prefect.testing.utilities import AsyncMock, MagicMock
-from prefect.workers.process import (
+from syntask.testing.utilities import AsyncMock, MagicMock
+from syntask.workers.process import (
     ProcessJobConfiguration,
     ProcessWorker,
     ProcessWorkerResult,
@@ -46,7 +46,7 @@ def example_process_worker_flow():
 @pytest.fixture
 def enable_infra_overrides():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
+        {SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
     ):
         yield
 
@@ -57,7 +57,7 @@ def patch_run_process(monkeypatch):
         mock_run_process = AsyncMock()
         mock_run_process.return_value.returncode = returncode
         mock_run_process.return_value.pid = pid
-        monkeypatch.setattr(prefect.workers.process, "run_process", mock_run_process)
+        monkeypatch.setattr(syntask.workers.process, "run_process", mock_run_process)
 
         return mock_run_process
 
@@ -65,8 +65,8 @@ def patch_run_process(monkeypatch):
 
 
 @pytest.fixture
-async def flow_run(prefect_client: PrefectClient):
-    flow_run = await prefect_client.create_flow_run(
+async def flow_run(syntask_client: SyntaskClient):
+    flow_run = await syntask_client.create_flow_run(
         flow=example_process_worker_flow,
         state=State(
             type=StateType.SCHEDULED,
@@ -80,8 +80,8 @@ async def flow_run(prefect_client: PrefectClient):
 
 
 @pytest.fixture
-async def flow_run_with_overrides(prefect_client: PrefectClient):
-    flow_run = await prefect_client.create_flow_run(
+async def flow_run_with_overrides(syntask_client: SyntaskClient):
+    flow_run = await syntask_client.create_flow_run(
         flow=example_process_worker_flow,
         state=State(
             type=StateType.SCHEDULED,
@@ -90,11 +90,11 @@ async def flow_run_with_overrides(prefect_client: PrefectClient):
             ),
         ),
     )
-    await prefect_client.update_flow_run(
+    await syntask_client.update_flow_run(
         flow_run_id=flow_run.id,
         job_variables={"working_dir": "/tmp/test"},
     )
-    return await prefect_client.read_flow_run(flow_run.id)
+    return await syntask_client.read_flow_run(flow_run.id)
 
     return flow_run
 
@@ -103,13 +103,13 @@ async def flow_run_with_overrides(prefect_client: PrefectClient):
 def mock_open_process(monkeypatch):
     if sys.platform == "win32":
         monkeypatch.setattr(
-            "prefect.utilities.processutils._open_anyio_process", AsyncMock()
+            "syntask.utilities.processutils._open_anyio_process", AsyncMock()
         )
-        prefect.utilities.processutils._open_anyio_process.return_value.terminate = (  # noqa
+        syntask.utilities.processutils._open_anyio_process.return_value.terminate = (  # noqa
             MagicMock()
         )
 
-        yield prefect.utilities.processutils._open_anyio_process  # noqa
+        yield syntask.utilities.processutils._open_anyio_process  # noqa
     else:
         monkeypatch.setattr("anyio.open_process", AsyncMock())
         anyio.open_process.return_value.terminate = MagicMock()  # noqa
@@ -140,7 +140,7 @@ def patch_client(monkeypatch, overrides: Optional[Dict[str, Any]] = None):
     mock_client.read_flow = mock_read_flow
     mock_get_client.return_value = mock_client
 
-    monkeypatch.setattr("prefect.workers.base.get_client", mock_get_client)
+    monkeypatch.setattr("syntask.workers.base.get_client", mock_get_client)
 
     return mock_read_deployment
 
@@ -191,10 +191,10 @@ async def test_worker_process_run_flow_run(
             [
                 sys.executable,
                 "-m",
-                "prefect.engine",
+                "syntask.engine",
             ],
         )
-        assert mock.call_args.kwargs["env"]["PREFECT__FLOW_RUN_ID"] == str(flow_run.id)
+        assert mock.call_args.kwargs["env"]["SYNTASK__FLOW_RUN_ID"] == str(flow_run.id)
 
 
 async def test_worker_process_run_flow_run_with_env_variables_job_config_defaults(
@@ -221,10 +221,10 @@ async def test_worker_process_run_flow_run_with_env_variables_job_config_default
             [
                 sys.executable,
                 "-m",
-                "prefect.engine",
+                "syntask.engine",
             ],
         )
-        assert mock.call_args.kwargs["env"]["PREFECT__FLOW_RUN_ID"] == str(flow_run.id)
+        assert mock.call_args.kwargs["env"]["SYNTASK__FLOW_RUN_ID"] == str(flow_run.id)
         assert mock.call_args.kwargs["env"]["EXISTING_ENV_VAR"] == "from_os"
         assert (
             mock.call_args.kwargs["env"]["CONFIG_ENV_VAR"] == "from_job_configuration"
@@ -255,10 +255,10 @@ async def test_worker_process_run_flow_run_with_env_variables_from_overrides(
             [
                 sys.executable,
                 "-m",
-                "prefect.engine",
+                "syntask.engine",
             ],
         )
-        assert mock.call_args.kwargs["env"]["PREFECT__FLOW_RUN_ID"] == str(flow_run.id)
+        assert mock.call_args.kwargs["env"]["SYNTASK__FLOW_RUN_ID"] == str(flow_run.id)
         assert mock.call_args.kwargs["env"]["EXISTING_ENV_VAR"] == "from_os"
         assert mock.call_args.kwargs["env"]["NEW_ENV_VAR"] == "from_deployment"
 
@@ -499,7 +499,7 @@ async def test_process_worker_uses_correct_default_command(
     correct_default = [
         sys.executable,
         "-m",
-        "prefect.engine",
+        "syntask.engine",
     ]
     patch_client(monkeypatch)
 
@@ -605,7 +605,7 @@ async def test_process_kill_early_return(monkeypatch, work_pool):
     os_kill = MagicMock(side_effect=[None, ProcessLookupError])
     anyio_sleep = AsyncMock()
     monkeypatch.setattr("os.kill", os_kill)
-    monkeypatch.setattr("prefect.infrastructure.process.anyio.sleep", anyio_sleep)
+    monkeypatch.setattr("syntask.infrastructure.process.anyio.sleep", anyio_sleep)
 
     infrastructure_pid = f"{socket.gethostname()}:12345"
     grace_seconds = 30

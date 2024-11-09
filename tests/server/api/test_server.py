@@ -7,10 +7,10 @@ import pytest
 import sqlalchemy as sa
 import toml
 from httpx import ASGITransport, AsyncClient
-from prefect._vendor.fastapi import APIRouter, status, testclient
+from syntask._vendor.fastapi import APIRouter, status, testclient
 
-from prefect.client.constants import SERVER_API_VERSION
-from prefect.server.api.server import (
+from syntask.client.constants import SERVER_API_VERSION
+from syntask.server.api.server import (
     API_ROUTERS,
     SQLITE_LOCKED_MSG,
     _memoize_block_auto_registration,
@@ -18,13 +18,13 @@ from prefect.server.api.server import (
     create_app,
     method_paths_from_routes,
 )
-from prefect.settings import (
-    PREFECT_API_DATABASE_CONNECTION_URL,
-    PREFECT_MEMO_STORE_PATH,
-    PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION,
+from syntask.settings import (
+    SYNTASK_API_DATABASE_CONNECTION_URL,
+    SYNTASK_MEMO_STORE_PATH,
+    SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION,
     temporary_settings,
 )
-from prefect.testing.utilities import AsyncMock
+from syntask.testing.utilities import AsyncMock
 
 
 async def test_validation_error_handler_422(client):
@@ -266,15 +266,15 @@ class TestMemoizeBlockAutoRegistration:
     def enable_memoization(self, tmp_path):
         with temporary_settings(
             {
-                PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION: True,
-                PREFECT_MEMO_STORE_PATH: tmp_path / "memo_store.toml",
+                SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION: True,
+                SYNTASK_MEMO_STORE_PATH: tmp_path / "memo_store.toml",
             }
         ):
             yield
 
     @pytest.fixture
     def memo_store_with_mismatched_key(self):
-        PREFECT_MEMO_STORE_PATH.value().write_text(
+        SYNTASK_MEMO_STORE_PATH.value().write_text(
             toml.dumps({"block_auto_registration": "not-a-real-key"})
         )
 
@@ -284,31 +284,31 @@ class TestMemoizeBlockAutoRegistration:
 
     @pytest.fixture
     def memo_store_with_accurate_key(self, current_block_registry_hash):
-        PREFECT_MEMO_STORE_PATH.value().write_text(
+        SYNTASK_MEMO_STORE_PATH.value().write_text(
             toml.dumps({"block_auto_registration": current_block_registry_hash})
         )
 
     async def test_runs_wrapped_function_on_missing_key(
         self, current_block_registry_hash
     ):
-        assert not PREFECT_MEMO_STORE_PATH.value().exists()
+        assert not SYNTASK_MEMO_STORE_PATH.value().exists()
         assert (
-            PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION.value()
+            SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION.value()
         ), "Memoization is not enabled"
 
         test_func = AsyncMock()
 
         # hashing fails randomly fails when running full test suite
         # mocking the hash stabilizes this test
-        with patch("prefect.server.api.server.hash_objects") as mock:
+        with patch("syntask.server.api.server.hash_objects") as mock:
             mock.return_value = current_block_registry_hash
             await _memoize_block_auto_registration(test_func)()
 
         test_func.assert_called_once()
 
-        assert PREFECT_MEMO_STORE_PATH.value().exists(), "Memo store was not created"
+        assert SYNTASK_MEMO_STORE_PATH.value().exists(), "Memo store was not created"
         assert (
-            toml.load(PREFECT_MEMO_STORE_PATH.value()).get("block_auto_registration")
+            toml.load(SYNTASK_MEMO_STORE_PATH.value()).get("block_auto_registration")
             == current_block_registry_hash
         ), "Key was not added to memo store"
 
@@ -318,21 +318,21 @@ class TestMemoizeBlockAutoRegistration:
         current_block_registry_hash,
     ):
         assert (
-            PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION.value()
+            SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION.value()
         ), "Memoization is not enabled"
 
         test_func = AsyncMock()
 
         # hashing fails randomly fails when running full test suite
         # mocking the hash stabilizes this test
-        with patch("prefect.server.api.server.hash_objects") as mock:
+        with patch("syntask.server.api.server.hash_objects") as mock:
             mock.return_value = current_block_registry_hash
             await _memoize_block_auto_registration(test_func)()
 
         test_func.assert_called_once()
 
         assert (
-            toml.load(PREFECT_MEMO_STORE_PATH.value()).get("block_auto_registration")
+            toml.load(SYNTASK_MEMO_STORE_PATH.value()).get("block_auto_registration")
             == current_block_registry_hash
         ), "Key was not updated in memo store"
 
@@ -341,7 +341,7 @@ class TestMemoizeBlockAutoRegistration:
     ):
         with temporary_settings(
             {
-                PREFECT_MEMOIZE_BLOCK_AUTO_REGISTRATION: False,
+                SYNTASK_MEMOIZE_BLOCK_AUTO_REGISTRATION: False,
             }
         ):
             test_func = AsyncMock()
@@ -357,7 +357,7 @@ class TestMemoizeBlockAutoRegistration:
 
         # hashing fails randomly fails when running full test suite
         # mocking the hash stabilizes this test
-        with patch("prefect.server.api.server.hash_objects") as mock:
+        with patch("syntask.server.api.server.hash_objects") as mock:
             mock.return_value = current_block_registry_hash
             await _memoize_block_auto_registration(test_func)()
 
@@ -368,7 +368,7 @@ class TestMemoizeBlockAutoRegistration:
     ):
         test_func = AsyncMock()
 
-        with patch("prefect.server.api.server.hash_objects") as mock:
+        with patch("syntask.server.api.server.hash_objects") as mock:
             mock.return_value = None
             await _memoize_block_auto_registration(test_func)()
 
@@ -376,19 +376,19 @@ class TestMemoizeBlockAutoRegistration:
 
     async def test_does_not_fail_on_read_only_filesystem(self, enable_memoization):
         try:
-            PREFECT_MEMO_STORE_PATH.value().parent.chmod(744)
+            SYNTASK_MEMO_STORE_PATH.value().parent.chmod(744)
 
             test_func = AsyncMock()
 
-            with patch("prefect.server.api.server.hash_objects") as mock:
+            with patch("syntask.server.api.server.hash_objects") as mock:
                 mock.return_value = None
                 await _memoize_block_auto_registration(test_func)()
 
             test_func.assert_called_once()
 
-            assert not PREFECT_MEMO_STORE_PATH.value().exists()
+            assert not SYNTASK_MEMO_STORE_PATH.value().exists()
         finally:
-            PREFECT_MEMO_STORE_PATH.value().parent.chmod(777)
+            SYNTASK_MEMO_STORE_PATH.value().parent.chmod(777)
 
     async def test_changing_database_breaks_cache(self, enable_memoization):
         test_func = AsyncMock()
@@ -399,7 +399,7 @@ class TestMemoizeBlockAutoRegistration:
 
         with temporary_settings(
             {
-                PREFECT_API_DATABASE_CONNECTION_URL: "something else",
+                SYNTASK_API_DATABASE_CONNECTION_URL: "something else",
             }
         ):
             await _memoize_block_auto_registration(test_func)()

@@ -3,12 +3,12 @@ from typing import Any, Dict
 
 import pytest
 
-from prefect.blocks.core import Block
-from prefect.blocks.system import JSON, DateTime, Secret, String
-from prefect.blocks.webhook import Webhook
-from prefect.client.orchestration import PrefectClient
-from prefect.utilities.annotations import NotSet
-from prefect.utilities.templating import (
+from syntask.blocks.core import Block
+from syntask.blocks.system import JSON, DateTime, Secret, String
+from syntask.blocks.webhook import Webhook
+from syntask.client.orchestration import SyntaskClient
+from syntask.utilities.annotations import NotSet
+from syntask.utilities.templating import (
     PlaceholderType,
     apply_values,
     find_placeholders,
@@ -76,11 +76,11 @@ class TestFindPlaceholders:
         assert names == {"first_name", "last_name"}
 
     def test_finds_block_document_placeholders(self):
-        template = "Hello {{prefect.blocks.document.name}}!"
+        template = "Hello {{syntask.blocks.document.name}}!"
         placeholders = find_placeholders(template)
         assert len(placeholders) == 1
         placeholder = placeholders.pop()
-        assert placeholder.name == "prefect.blocks.document.name"
+        assert placeholder.name == "syntask.blocks.document.name"
         assert placeholder.type is PlaceholderType.BLOCK_DOCUMENT
 
     def test_finds_env_var_placeholders(self, monkeypatch):
@@ -224,7 +224,7 @@ class TestApplyValues:
         assert apply_values(None, {"key": "value"}) is None
 
     def test_does_not_apply_values_to_block_document_placeholders(self):
-        template = "Hello {{prefect.blocks.document.name}}!"
+        template = "Hello {{syntask.blocks.document.name}}!"
         assert apply_values(template, {"name": "Alice"}) == template
 
     def test_apply_values_with_dot_delimited_placeholder_str(self):
@@ -269,17 +269,17 @@ class TestResolveBlockDocumentReferences:
         }
 
     async def test_resolve_block_document_references_with_one_block_document_reference(
-        self, prefect_client, block_document_id
+        self, syntask_client, block_document_id
     ):
         assert {
             "key": {"a": 1, "b": "hello"}
         } == await resolve_block_document_references(
             {"key": {"$ref": {"block_document_id": block_document_id}}},
-            client=prefect_client,
+            client=syntask_client,
         )
 
     async def test_resolve_block_document_references_with_nested_block_document_references(
-        self, prefect_client, block_document_id
+        self, syntask_client, block_document_id
     ):
         template = {
             "key": {
@@ -287,10 +287,10 @@ class TestResolveBlockDocumentReferences:
                 "other_nested_key": {"$ref": {"block_document_id": block_document_id}},
             }
         }
-        block_document = await prefect_client.read_block_document(block_document_id)
+        block_document = await syntask_client.read_block_document(block_document_id)
 
         result = await resolve_block_document_references(
-            template, client=prefect_client
+            template, client=syntask_client
         )
 
         assert result == {
@@ -301,36 +301,36 @@ class TestResolveBlockDocumentReferences:
         }
 
     async def test_resolve_block_document_references_with_list_of_block_document_references(
-        self, prefect_client, block_document_id
+        self, syntask_client, block_document_id
     ):
         template = [{"$ref": {"block_document_id": block_document_id}}]
-        block_document = await prefect_client.read_block_document(block_document_id)
+        block_document = await syntask_client.read_block_document(block_document_id)
 
         result = await resolve_block_document_references(
-            template, client=prefect_client
+            template, client=syntask_client
         )
 
         assert result == [block_document.data]
 
     async def test_resolve_block_document_references_with_dot_delimited_syntax(
-        self, prefect_client, block_document_id
+        self, syntask_client, block_document_id
     ):
-        template = {"key": "{{ prefect.blocks.arbitraryblock.arbitrary-block }}"}
+        template = {"key": "{{ syntask.blocks.arbitraryblock.arbitrary-block }}"}
 
-        block_document = await prefect_client.read_block_document(block_document_id)
+        block_document = await syntask_client.read_block_document(block_document_id)
 
         result = await resolve_block_document_references(
-            template, client=prefect_client
+            template, client=syntask_client
         )
 
         assert result == {"key": block_document.data}
 
     async def test_resolve_block_document_references_raises_on_multiple_placeholders(
-        self, prefect_client
+        self, syntask_client
     ):
         template = {
             "key": (
-                "{{ prefect.blocks.arbitraryblock.arbitrary-block }} {{"
+                "{{ syntask.blocks.arbitraryblock.arbitrary-block }} {{"
                 " another_placeholder }}"
             )
         }
@@ -342,13 +342,13 @@ class TestResolveBlockDocumentReferences:
                 " surrounding text is allowed."
             ),
         ):
-            await resolve_block_document_references(template, client=prefect_client)
+            await resolve_block_document_references(template, client=syntask_client)
 
     async def test_resolve_block_document_references_raises_on_extra_text(
-        self, prefect_client
+        self, syntask_client
     ):
         template = {
-            "key": "{{ prefect.blocks.arbitraryblock.arbitrary-block }} extra text"
+            "key": "{{ syntask.blocks.arbitraryblock.arbitrary-block }} extra text"
         }
 
         with pytest.raises(
@@ -358,7 +358,7 @@ class TestResolveBlockDocumentReferences:
                 " surrounding text is allowed."
             ),
         ):
-            await resolve_block_document_references(template, client=prefect_client)
+            await resolve_block_document_references(template, client=syntask_client)
 
     async def test_resolve_block_document_references_does_not_change_standard_placeholders(
         self,
@@ -376,10 +376,10 @@ class TestResolveBlockDocumentReferences:
         await String(value="hello").save(name="string-block")
 
         template = {
-            "json": "{{ prefect.blocks.json.json-block }}",
-            "secret": "{{ prefect.blocks.secret.secret-block }}",
-            "datetime": "{{ prefect.blocks.date-time.datetime-block }}",
-            "string": "{{ prefect.blocks.string.string-block }}",
+            "json": "{{ syntask.blocks.json.json-block }}",
+            "secret": "{{ syntask.blocks.secret.secret-block }}",
+            "datetime": "{{ syntask.blocks.date-time.datetime-block }}",
+            "string": "{{ syntask.blocks.string.string-block }}",
         }
 
         result = await resolve_block_document_references(template)
@@ -397,9 +397,9 @@ class TestResolveBlockDocumentReferences:
             name="nested-json-block"
         )
         template = {
-            "value": "{{ prefect.blocks.json.nested-json-block}}",
-            "keypath": "{{ prefect.blocks.json.nested-json-block.key }}",
-            "nested_keypath": "{{ prefect.blocks.json.nested-json-block.key.nested-key }}",
+            "value": "{{ syntask.blocks.json.nested-json-block}}",
+            "keypath": "{{ syntask.blocks.json.nested-json-block.key }}",
+            "nested_keypath": "{{ syntask.blocks.json.nested-json-block.key.nested-key }}",
         }
 
         result = await resolve_block_document_references(template)
@@ -414,10 +414,10 @@ class TestResolveBlockDocumentReferences:
             name="nested-json-block-2"
         )
         template = {
-            "value": "{{ prefect.blocks.json.nested-json-block-2.value }}",
-            "keypath": "{{ prefect.blocks.json.nested-json-block-2.value.key }}",
+            "value": "{{ syntask.blocks.json.nested-json-block-2.value }}",
+            "keypath": "{{ syntask.blocks.json.nested-json-block-2.value.key }}",
             "nested_keypath": (
-                "{{ prefect.blocks.json.nested-json-block-2.value.key.nested-key }}"
+                "{{ syntask.blocks.json.nested-json-block-2.value.key.nested-key }}"
             ),
         }
 
@@ -435,10 +435,10 @@ class TestResolveBlockDocumentReferences:
             value={"key": ["value1", {"nested": ["value2", "value3"]}, "value4"]}
         ).save(name="nested-json-list-block")
         template = {
-            "json_list": "{{ prefect.blocks.json.json-list-block.value.key[0] }}",
-            "list": "{{ prefect.blocks.json.list-block.value[1] }}",
+            "json_list": "{{ syntask.blocks.json.json-list-block.value.key[0] }}",
+            "list": "{{ syntask.blocks.json.list-block.value[1] }}",
             "nested_json_list": (
-                "{{ prefect.blocks.json.nested-json-list-block.value.key[1].nested[1] }}"
+                "{{ syntask.blocks.json.nested-json-list-block.value.key[1].nested[1] }}"
             ),
         }
 
@@ -454,21 +454,21 @@ class TestResolveBlockDocumentReferences:
             name="nested-json-block-3"
         )
         json_template = {
-            "json": "{{ prefect.blocks.json.nested-json-block-3.value.key.does_not_exist }}",
+            "json": "{{ syntask.blocks.json.nested-json-block-3.value.key.does_not_exist }}",
         }
         with pytest.raises(ValueError, match="Could not resolve the keypath"):
             await resolve_block_document_references(json_template)
 
         await JSON(value=["value1", "value2"]).save(name="index-error-block")
         index_error_template = {
-            "index_error": "{{ prefect.blocks.json.index-error-block.value[3] }}",
+            "index_error": "{{ syntask.blocks.json.index-error-block.value[3] }}",
         }
         with pytest.raises(ValueError, match="Could not resolve the keypath"):
             await resolve_block_document_references(index_error_template)
 
         await Webhook(url="https://example.com").save(name="webhook-block")
         webhook_template = {
-            "webhook": "{{ prefect.blocks.webhook.webhook-block.value }}",
+            "webhook": "{{ syntask.blocks.webhook.webhook-block.value }}",
         }
         with pytest.raises(ValueError, match="Could not resolve the keypath"):
             await resolve_block_document_references(webhook_template)
@@ -477,7 +477,7 @@ class TestResolveBlockDocumentReferences:
         await Webhook(url="https://example.com").save(name="webhook-block-2")
 
         template = {
-            "block_attribute": "{{ prefect.blocks.webhook.webhook-block-2.url }}",
+            "block_attribute": "{{ syntask.blocks.webhook.webhook-block-2.url }}",
         }
         result = await resolve_block_document_references(template)
 
@@ -488,108 +488,108 @@ class TestResolveBlockDocumentReferences:
 
 class TestResolveVariables:
     @pytest.fixture
-    async def variable_1(self, prefect_client: PrefectClient):
-        res = await prefect_client._client.post(
+    async def variable_1(self, syntask_client: SyntaskClient):
+        res = await syntask_client._client.post(
             "/variables/",
             json={"name": f"test_variable_{uuid.uuid4().hex}", "value": "test_value_1"},
         )
         return res.json()
 
     @pytest.fixture
-    async def variable_2(self, prefect_client: PrefectClient):
-        res = await prefect_client._client.post(
+    async def variable_2(self, syntask_client: SyntaskClient):
+        res = await syntask_client._client.post(
             "/variables/",
             json={"name": f"test_variable_{uuid.uuid4().hex}", "value": "test_value_2"},
         )
         return res.json()
 
-    async def test_resolve_string_no_placeholders(self, prefect_client: PrefectClient):
+    async def test_resolve_string_no_placeholders(self, syntask_client: SyntaskClient):
         template = "This is a simple string."
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == template
 
     async def test_resolve_string_with_standard_placeholder(
-        self, variable_1, prefect_client: PrefectClient
+        self, variable_1, syntask_client: SyntaskClient
     ):
         template = (
             "This is a string with a placeholder: {{"
-            f" prefect.variables.{variable_1['name']} }}}}."
+            f" syntask.variables.{variable_1['name']} }}}}."
         )
         expected = "This is a string with a placeholder: test_value_1."
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == expected
 
     async def test_resolve_string_with_multiple_standard_placeholders(
-        self, variable_1, variable_2, prefect_client: PrefectClient
+        self, variable_1, variable_2, syntask_client: SyntaskClient
     ):
         template = (
-            f"{{{{ prefect.variables.{variable_1['name']} }}}} - {{{{"
-            f" prefect.variables.{variable_2['name']} }}}}"
+            f"{{{{ syntask.variables.{variable_1['name']} }}}} - {{{{"
+            f" syntask.variables.{variable_2['name']} }}}}"
         )
         expected = "test_value_1 - test_value_2"
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == expected
 
-    async def test_resolve_dict(self, variable_1, prefect_client: PrefectClient):
+    async def test_resolve_dict(self, variable_1, syntask_client: SyntaskClient):
         template: Dict[str, Any] = {
             "key1": "value1",
-            "key2": f"{{{{ prefect.variables.{variable_1['name']} }}}}",
+            "key2": f"{{{{ syntask.variables.{variable_1['name']} }}}}",
         }
         expected = {"key1": "value1", "key2": "test_value_1"}
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == expected
 
     async def test_resolve_nested_dict(
-        self, variable_1, variable_2, prefect_client: PrefectClient
+        self, variable_1, variable_2, syntask_client: SyntaskClient
     ):
         template: Dict[str, Any] = {
             "key1": "value1",
-            "key2": f"{{{{ prefect.variables.{variable_1['name']} }}}}",
-            "key3": {"key4": f"{{{{ prefect.variables.{variable_2['name']} }}}}"},
+            "key2": f"{{{{ syntask.variables.{variable_1['name']} }}}}",
+            "key3": {"key4": f"{{{{ syntask.variables.{variable_2['name']} }}}}"},
         }
         expected = {
             "key1": "value1",
             "key2": "test_value_1",
             "key3": {"key4": "test_value_2"},
         }
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == expected
 
-    async def test_resolve_list(self, variable_1, prefect_client: PrefectClient):
-        template = ["value1", f"{{{{ prefect.variables.{variable_1['name']} }}}}", 42]
+    async def test_resolve_list(self, variable_1, syntask_client: SyntaskClient):
+        template = ["value1", f"{{{{ syntask.variables.{variable_1['name']} }}}}", 42]
         expected = ["value1", "test_value_1", 42]
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == expected
 
-    async def test_resolve_non_string_types(self, prefect_client: PrefectClient):
+    async def test_resolve_non_string_types(self, syntask_client: SyntaskClient):
         template = 42
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == template
 
     async def test_resolve_does_not_template_other_placeholder_types(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         template = {
             "key": "{{ another_placeholder }}",
-            "key2": "{{ prefect.blocks.arbitraryblock.arbitrary-block }}",
+            "key2": "{{ syntask.blocks.arbitraryblock.arbitrary-block }}",
             "key3": "{{ $another_placeholder }}",
         }
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == template
 
     async def test_resolve_clears_placeholder_for_missing_variable(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
-        template = "{{ prefect.variables.missing_variable }}"
-        result = await resolve_variables(template, client=prefect_client)
+        template = "{{ syntask.variables.missing_variable }}"
+        result = await resolve_variables(template, client=syntask_client)
         assert result == ""
 
     async def test_resolve_clears_placeholders_for_missing_variables(
-        self, prefect_client: PrefectClient
+        self, syntask_client: SyntaskClient
     ):
         template = (
-            "{{ prefect.variables.missing_variable_1 }} - {{"
-            " prefect.variables.missing_variable_2 }}"
+            "{{ syntask.variables.missing_variable_1 }} - {{"
+            " syntask.variables.missing_variable_2 }}"
         )
-        result = await resolve_variables(template, client=prefect_client)
+        result = await resolve_variables(template, client=syntask_client)
         assert result == " - "

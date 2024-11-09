@@ -1,13 +1,13 @@
 import pytest
 
-from prefect.deprecated.packaging import OrionPackager
-from prefect.deprecated.packaging.orion import OrionPackageManifest
-from prefect.deprecated.packaging.serializers import (
+from syntask.deprecated.packaging import OrionPackager
+from syntask.deprecated.packaging.orion import OrionPackageManifest
+from syntask.deprecated.packaging.serializers import (
     ImportSerializer,
     PickleSerializer,
     SourceSerializer,
 )
-from prefect.utilities.callables import parameter_schema
+from syntask.utilities.callables import parameter_schema
 
 from . import howdy
 

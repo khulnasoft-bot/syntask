@@ -6,14 +6,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from prefect.software.conda import (
+from syntask.software.conda import (
     CONDA_REQUIREMENT,
     CondaEnvironment,
     CondaError,
     CondaRequirement,
     current_environment_conda_requirements,
 )
-from prefect.software.pip import PipRequirement
+from syntask.software.pip import PipRequirement
 
 CONDA_REQUIREMENT_TEST_CASES = [
     ("x", {"name": "x"}),

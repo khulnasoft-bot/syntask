@@ -12,7 +12,7 @@
   import {
     PageHeadingArtifacts,
     ArtifactCollections
-  } from '@prefecthq/prefect-ui-library'
+  } from '@syntaskhq/syntask-ui-library'
   import { usePageTitle } from '@/compositions/usePageTitle'
 
   usePageTitle('Artifacts')

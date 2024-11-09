@@ -2,24 +2,24 @@ import asyncio
 
 import pytest
 
-from prefect.blocks import system
-from prefect.client import PrefectClient
-from prefect.exceptions import ObjectNotFound
-from prefect.server import models
-from prefect.settings import (
-    PREFECT_UI_URL,
+from syntask.blocks import system
+from syntask.client import SyntaskClient
+from syntask.exceptions import ObjectNotFound
+from syntask.server import models
+from syntask.settings import (
+    SYNTASK_UI_URL,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 TEST_BLOCK_CODE = """\
-from prefect.blocks.core import Block
+from syntask.blocks.core import Block
 
 class TestForFileRegister(Block):
     message: str
 """
 TEST_BLOCK_CODE_BAD_SYNTAX = """\
-from prefect.blocks.core import Bloc
+from syntask.blocks.core import Bloc
 
 class TestForFileRegister(Block):
     message: str
@@ -34,38 +34,38 @@ async def install_system_block_types(session):
 
 
 def test_register_blocks_from_module_with_ui_url():
-    with temporary_settings(set_defaults={PREFECT_UI_URL: "https://app.prefect.cloud"}):
+    with temporary_settings(set_defaults={SYNTASK_UI_URL: "https://app.syntask.cloud"}):
         invoke_and_assert(
-            ["block", "register", "-m", "prefect.blocks.core"],
+            ["block", "register", "-m", "syntask.blocks.core"],
             expected_code=0,
             expected_output_contains=[
                 "Successfully registered",
                 "blocks",
-                "Prefect UI: https://app.prefect.cloud/blocks/catalog",
+                "Syntask UI: https://app.syntask.cloud/blocks/catalog",
             ],
         )
 
 
 def test_register_blocks_from_module_without_ui_url():
-    with temporary_settings(set_defaults={PREFECT_UI_URL: None}):
+    with temporary_settings(set_defaults={SYNTASK_UI_URL: None}):
         invoke_and_assert(
-            ["block", "register", "-m", "prefect.blocks.core"],
+            ["block", "register", "-m", "syntask.blocks.core"],
             expected_code=0,
             expected_output_contains=[
                 "Successfully registered",
                 "blocks",
-                "Prefect UI.",
+                "Syntask UI.",
             ],
-            expected_output_does_not_contain=["Prefect UI: https://"],
+            expected_output_does_not_contain=["Syntask UI: https://"],
         )
 
 
 def test_register_blocks_from_nonexistent_module():
     invoke_and_assert(
-        ["block", "register", "-m", "prefect.blocks.blorp"],
+        ["block", "register", "-m", "syntask.blocks.blorp"],
         expected_code=1,
         expected_output_contains=(
-            "Unable to load prefect.blocks.blorp. Please make sure "
+            "Unable to load syntask.blocks.blorp. Please make sure "
             "the module is installed in your current environment."
         ),
     )
@@ -73,22 +73,22 @@ def test_register_blocks_from_nonexistent_module():
 
 def test_register_blocks_from_invalid_module():
     invoke_and_assert(
-        ["block", "register", "-m", "prefect-aws.credentials"],
+        ["block", "register", "-m", "syntask-aws.credentials"],
         expected_code=1,
         expected_output_contains=(
-            "Unable to load prefect-aws.credentials. Please make sure "
+            "Unable to load syntask-aws.credentials. Please make sure "
             "the module is installed in your current environment."
         ),
     )
 
 
-def test_register_blocks_from_file(tmp_path, prefect_client: PrefectClient):
+def test_register_blocks_from_file(tmp_path, syntask_client: SyntaskClient):
     test_file_path = tmp_path / "test.py"
 
     with open(test_file_path, "w") as f:
         f.write(TEST_BLOCK_CODE)
 
-    with temporary_settings(set_defaults={PREFECT_UI_URL: "https://app.prefect.cloud"}):
+    with temporary_settings(set_defaults={SYNTASK_UI_URL: "https://app.syntask.cloud"}):
         invoke_and_assert(
             ["block", "register", "-f", str(test_file_path)],
             expected_code=0,
@@ -99,7 +99,7 @@ def test_register_blocks_from_file(tmp_path, prefect_client: PrefectClient):
         )
 
     block_type = asyncio.run(
-        prefect_client.read_block_type_by_slug(slug="testforfileregister")
+        syntask_client.read_block_type_by_slug(slug="testforfileregister")
     )
     assert block_type is not None
 
@@ -162,7 +162,7 @@ def test_register_fails_on_no_options():
 
 def test_register_fails_on_multiple_options():
     invoke_and_assert(
-        ["block", "register", "-m", "prefect.blocks.blorp", "-f", "fake_file.py"],
+        ["block", "register", "-m", "syntask.blocks.blorp", "-f", "fake_file.py"],
         expected_code=1,
         expected_output_contains=(
             "Please specify either a module or a file containing blocks to be"
@@ -278,7 +278,7 @@ def test_inspecting_a_block_type(tmp_path):
     )
 
 
-def test_deleting_a_block_type(tmp_path, prefect_client):
+def test_deleting_a_block_type(tmp_path, syntask_client):
     test_file_path = tmp_path / "test.py"
 
     with open(test_file_path, "w") as f:
@@ -302,11 +302,11 @@ def test_deleting_a_block_type(tmp_path, prefect_client):
     )
 
     with pytest.raises(ObjectNotFound):
-        asyncio.run(prefect_client.read_block_type_by_slug(slug="testforfileregister"))
+        asyncio.run(syntask_client.read_block_type_by_slug(slug="testforfileregister"))
 
 
 def test_deleting_a_protected_block_type(
-    tmp_path, prefect_client, install_system_block_types
+    tmp_path, syntask_client, install_system_block_types
 ):
     expected_output = "is a protected block"
 

@@ -4,25 +4,25 @@ import pytest
 import respx
 from httpx import Response
 
-from prefect.context import use_profile
-from prefect.settings import (
+from syntask.context import use_profile
+from syntask.settings import (
     DEFAULT_PROFILES_PATH,
-    PREFECT_API_KEY,
-    PREFECT_DEBUG_MODE,
-    PREFECT_PROFILES_PATH,
+    SYNTASK_API_KEY,
+    SYNTASK_DEBUG_MODE,
+    SYNTASK_PROFILES_PATH,
     Profile,
     ProfilesCollection,
     load_profiles,
     save_profiles,
     temporary_settings,
 )
-from prefect.testing.cli import invoke_and_assert
+from syntask.testing.cli import invoke_and_assert
 
 
 @pytest.fixture(autouse=True)
 def temporary_profiles_path(tmp_path):
     path = tmp_path / "profiles.toml"
-    with temporary_settings({PREFECT_PROFILES_PATH: path}):
+    with temporary_settings({SYNTASK_PROFILES_PATH: path}):
         yield path
 
 
@@ -37,36 +37,36 @@ def test_use_profile_unknown_key():
 class TestChangingProfileAndCheckingOrionConnection:
     @pytest.fixture
     def profiles(self):
-        prefect_cloud_api_url = "https://mock-cloud.prefect.io/api"
-        prefect_cloud_orion_api_url = (
-            f"{prefect_cloud_api_url}/accounts/{uuid4()}/workspaces/{uuid4()}"
+        syntask_cloud_api_url = "https://mock-cloud.syntask.io/api"
+        syntask_cloud_orion_api_url = (
+            f"{syntask_cloud_api_url}/accounts/{uuid4()}/workspaces/{uuid4()}"
         )
-        hosted_orion_api_url = "https://hosted-orion.prefect.io/api"
+        hosted_orion_api_url = "https://hosted-orion.syntask.io/api"
 
         return ProfilesCollection(
             profiles=[
                 Profile(
-                    name="prefect-cloud",
+                    name="syntask-cloud",
                     settings={
-                        "PREFECT_API_URL": prefect_cloud_orion_api_url,
-                        "PREFECT_API_KEY": "a working cloud api key",
+                        "SYNTASK_API_URL": syntask_cloud_orion_api_url,
+                        "SYNTASK_API_KEY": "a working cloud api key",
                     },
                 ),
                 Profile(
-                    name="prefect-cloud-with-invalid-key",
+                    name="syntask-cloud-with-invalid-key",
                     settings={
-                        "PREFECT_API_URL": prefect_cloud_orion_api_url,
-                        "PREFECT_API_KEY": "a broken cloud api key",
+                        "SYNTASK_API_URL": syntask_cloud_orion_api_url,
+                        "SYNTASK_API_KEY": "a broken cloud api key",
                     },
                 ),
                 Profile(
                     name="hosted-orion",
                     settings={
-                        "PREFECT_API_URL": hosted_orion_api_url,
+                        "SYNTASK_API_URL": hosted_orion_api_url,
                     },
                 ),
                 Profile(
-                    name="ephemeral-prefect",
+                    name="ephemeral-syntask",
                     settings={},
                 ),
             ],
@@ -76,10 +76,10 @@ class TestChangingProfileAndCheckingOrionConnection:
     @pytest.fixture
     def authorized_cloud(self):
         # attempts to reach the Cloud 2 workspaces endpoint implies a good connection
-        # to Prefect Cloud as opposed to a hosted Prefect server instance
+        # to Syntask Cloud as opposed to a hosted Syntask server instance
         with respx.mock:
             authorized = respx.get(
-                "https://mock-cloud.prefect.io/api/me/workspaces",
+                "https://mock-cloud.syntask.io/api/me/workspaces",
             ).mock(return_value=Response(200, json=[]))
 
             yield authorized
@@ -89,7 +89,7 @@ class TestChangingProfileAndCheckingOrionConnection:
         # requests to cloud with an invalid key will result in a 401 response
         with respx.mock:
             unauthorized = respx.get(
-                "https://mock-cloud.prefect.io/api/me/workspaces",
+                "https://mock-cloud.syntask.io/api/me/workspaces",
             ).mock(return_value=Response(401, json={}))
 
             yield unauthorized
@@ -99,17 +99,17 @@ class TestChangingProfileAndCheckingOrionConnection:
         # Cloud may respond with a 500 error when having connection issues
         with respx.mock:
             unhealthy_cloud = respx.get(
-                "https://mock-cloud.prefect.io/api/me/workspaces",
+                "https://mock-cloud.syntask.io/api/me/workspaces",
             ).mock(return_value=Response(500, json={}))
 
             yield unhealthy_cloud
 
     @pytest.fixture
     def hosted_orion_has_no_cloud_api(self):
-        # if the API URL points to a hosted Prefect server instance, no Cloud API will be found
+        # if the API URL points to a hosted Syntask server instance, no Cloud API will be found
         with respx.mock:
             hosted = respx.get(
-                "https://hosted-orion.prefect.io/api/me/workspaces",
+                "https://hosted-orion.syntask.io/api/me/workspaces",
             ).mock(return_value=Response(404, json={}))
 
             yield hosted
@@ -118,7 +118,7 @@ class TestChangingProfileAndCheckingOrionConnection:
     def healthy_hosted_orion(self):
         with respx.mock:
             hosted = respx.get(
-                "https://hosted-orion.prefect.io/api/health",
+                "https://hosted-orion.syntask.io/api/health",
             ).mock(return_value=Response(200, json={}))
 
             yield hosted
@@ -130,7 +130,7 @@ class TestChangingProfileAndCheckingOrionConnection:
     def unhealthy_hosted_orion(self):
         with respx.mock:
             badly_hosted = respx.get(
-                "https://hosted-orion.prefect.io/api/health",
+                "https://hosted-orion.syntask.io/api/health",
             ).mock(side_effect=self.connection_error)
 
             yield badly_hosted
@@ -138,40 +138,40 @@ class TestChangingProfileAndCheckingOrionConnection:
     def test_authorized_cloud_connection(self, authorized_cloud, profiles):
         save_profiles(profiles)
         invoke_and_assert(
-            ["profile", "use", "prefect-cloud"],
+            ["profile", "use", "syntask-cloud"],
             expected_output_contains=(
-                "Connected to Prefect Cloud using profile 'prefect-cloud'"
+                "Connected to Syntask Cloud using profile 'syntask-cloud'"
             ),
             expected_code=0,
         )
 
         profiles = load_profiles()
-        assert profiles.active_name == "prefect-cloud"
+        assert profiles.active_name == "syntask-cloud"
 
     def test_unauthorized_cloud_connection(self, unauthorized_cloud, profiles):
         save_profiles(profiles)
         invoke_and_assert(
-            ["profile", "use", "prefect-cloud-with-invalid-key"],
+            ["profile", "use", "syntask-cloud-with-invalid-key"],
             expected_output_contains=(
-                "Error authenticating with Prefect Cloud using profile"
-                " 'prefect-cloud-with-invalid-key'"
+                "Error authenticating with Syntask Cloud using profile"
+                " 'syntask-cloud-with-invalid-key'"
             ),
             expected_code=1,
         )
 
         profiles = load_profiles()
-        assert profiles.active_name == "prefect-cloud-with-invalid-key"
+        assert profiles.active_name == "syntask-cloud-with-invalid-key"
 
     def test_unhealthy_cloud_connection(self, unhealthy_cloud, profiles):
         save_profiles(profiles)
         invoke_and_assert(
-            ["profile", "use", "prefect-cloud"],
-            expected_output_contains="Error connecting to Prefect Cloud",
+            ["profile", "use", "syntask-cloud"],
+            expected_output_contains="Error connecting to Syntask Cloud",
             expected_code=1,
         )
 
         profiles = load_profiles()
-        assert profiles.active_name == "prefect-cloud"
+        assert profiles.active_name == "syntask-cloud"
 
     def test_using_hosted_orion(
         self, hosted_orion_has_no_cloud_api, healthy_hosted_orion, profiles
@@ -180,7 +180,7 @@ class TestChangingProfileAndCheckingOrionConnection:
         invoke_and_assert(
             ["profile", "use", "hosted-orion"],
             expected_output_contains=(
-                "Connected to Prefect server using profile 'hosted-orion'"
+                "Connected to Syntask server using profile 'hosted-orion'"
             ),
             expected_code=0,
         )
@@ -194,7 +194,7 @@ class TestChangingProfileAndCheckingOrionConnection:
         save_profiles(profiles)
         invoke_and_assert(
             ["profile", "use", "hosted-orion"],
-            expected_output_contains="Error connecting to Prefect server",
+            expected_output_contains="Error connecting to Syntask server",
             expected_code=1,
         )
 
@@ -204,15 +204,15 @@ class TestChangingProfileAndCheckingOrionConnection:
     def test_using_ephemeral_orion(self, profiles):
         save_profiles(profiles)
         invoke_and_assert(
-            ["profile", "use", "ephemeral-prefect"],
+            ["profile", "use", "ephemeral-syntask"],
             expected_output_contains=(
-                "No Prefect server specified using profile 'ephemeral-prefect'"
+                "No Syntask server specified using profile 'ephemeral-syntask'"
             ),
             expected_code=0,
         )
 
         profiles = load_profiles()
-        assert profiles.active_name == "ephemeral-prefect"
+        assert profiles.active_name == "ephemeral-syntask"
 
 
 def test_ls_default_profiles():
@@ -296,16 +296,16 @@ def test_create_profile():
                 from name - None
 
             Use created profile for future, subsequent commands:
-                prefect profile use 'foo'
+                syntask profile use 'foo'
 
             Use created profile temporarily for a single command:
-                prefect -p 'foo' config view
+                syntask -p 'foo' config view
             """,
     )
 
     profiles = load_profiles()
     assert profiles["foo"] == Profile(
-        name="foo", settings={}, source=PREFECT_PROFILES_PATH.value()
+        name="foo", settings={}, source=SYNTASK_PROFILES_PATH.value()
     )
 
 
@@ -313,7 +313,7 @@ def test_create_profile_from_existing():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
@@ -327,19 +327,19 @@ def test_create_profile_from_existing():
                 from name - foo
 
             Use created profile for future, subsequent commands:
-                prefect profile use 'bar'
+                syntask profile use 'bar'
 
             Use created profile temporarily for a single command:
-                prefect -p 'bar' config view
+                syntask -p 'bar' config view
             """,
     )
 
     profiles = load_profiles()
-    assert profiles["foo"].settings == {PREFECT_API_KEY: "foo"}, "Foo is unchanged"
+    assert profiles["foo"].settings == {SYNTASK_API_KEY: "foo"}, "Foo is unchanged"
     assert profiles["bar"] == Profile(
         name="bar",
-        settings={PREFECT_API_KEY: "foo"},
-        source=PREFECT_PROFILES_PATH.value(),
+        settings={SYNTASK_API_KEY: "foo"},
+        source=SYNTASK_PROFILES_PATH.value(),
     )
 
 
@@ -358,7 +358,7 @@ def test_create_profile_with_existing_profile():
             Profile 'default' already exists.
             To create a new profile, remove the existing profile first:
 
-                prefect profile delete 'default'
+                syntask profile delete 'default'
             """,
         expected_code=1,
     )
@@ -368,8 +368,8 @@ def test_delete_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
-                Profile(name="bar", settings={PREFECT_API_KEY: "bar"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
+                Profile(name="bar", settings={SYNTASK_API_KEY: "bar"}),
             ],
             active=None,
         )
@@ -388,7 +388,7 @@ def test_delete_profile_default_is_reset():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="default", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="default", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
@@ -418,7 +418,7 @@ def test_delete_profile_cannot_target_active_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
@@ -465,7 +465,7 @@ def test_rename_profile_renames_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
@@ -480,7 +480,7 @@ def test_rename_profile_renames_profile():
     profiles = load_profiles()
     assert "foo" not in profiles, "The original profile should not exist anymore"
     assert profiles["bar"].settings == {
-        PREFECT_API_KEY: "foo"
+        SYNTASK_API_KEY: "foo"
     }, "Settings should be retained"
     assert profiles.active_name != "bar", "The active profile should not be changed"
 
@@ -489,7 +489,7 @@ def test_rename_profile_changes_active_profile():
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active="foo",
         )
@@ -509,18 +509,18 @@ def test_rename_profile_warns_on_environment_variable_active_profile(monkeypatch
     save_profiles(
         ProfilesCollection(
             profiles=[
-                Profile(name="foo", settings={PREFECT_API_KEY: "foo"}),
+                Profile(name="foo", settings={SYNTASK_API_KEY: "foo"}),
             ],
             active=None,
         )
     )
 
-    monkeypatch.setenv("PREFECT_PROFILE", "foo")
+    monkeypatch.setenv("SYNTASK_PROFILE", "foo")
 
     invoke_and_assert(
         ["profile", "rename", "foo", "bar"],
         expected_output_contains=(
-            "You have set your current profile to 'foo' with the PREFECT_PROFILE "
+            "You have set your current profile to 'foo' with the SYNTASK_PROFILE "
             "environment variable. You must update this variable to 'bar' "
             "to continue using the profile."
         ),
@@ -547,7 +547,7 @@ def test_inspect_profile():
             profiles=[
                 Profile(
                     name="foo",
-                    settings={PREFECT_API_KEY: "foo", PREFECT_DEBUG_MODE: True},
+                    settings={SYNTASK_API_KEY: "foo", SYNTASK_DEBUG_MODE: True},
                 ),
             ],
             active=None,
@@ -557,8 +557,8 @@ def test_inspect_profile():
     invoke_and_assert(
         ["profile", "inspect", "foo"],
         expected_output="""
-            PREFECT_API_KEY='foo'
-            PREFECT_DEBUG_MODE='True'
+            SYNTASK_API_KEY='foo'
+            SYNTASK_DEBUG_MODE='True'
             """,
     )
 

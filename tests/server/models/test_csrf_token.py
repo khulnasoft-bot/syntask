@@ -5,10 +5,10 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect import settings
-from prefect.server import models
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.schemas import core
+from syntask import settings
+from syntask.server import models
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.schemas import core
 
 
 @pytest.fixture
@@ -28,11 +28,11 @@ class TestCreateOrUpdateCsrfToken:
 
         now = datetime.now(timezone.utc)
         fuzzy_expiration_start = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             - timedelta(seconds=10)
         )
         fuzzy_expiration_end = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             + timedelta(seconds=10)
         )
 
@@ -55,11 +55,11 @@ class TestCreateOrUpdateCsrfToken:
 
         now = datetime.now(timezone.utc)
         fuzzy_expiration_start = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             - timedelta(seconds=10)
         )
         fuzzy_expiration_end = now + (
-            settings.PREFECT_SERVER_CSRF_TOKEN_EXPIRATION.value()
+            settings.SYNTASK_SERVER_CSRF_TOKEN_EXPIRATION.value()
             + timedelta(seconds=10)
         )
 
@@ -91,7 +91,7 @@ class TestTokenForClient:
         assert token is None
 
     async def test_none_expired_token(
-        self, db: PrefectDBInterface, session: AsyncSession, csrf_token: core.CsrfToken
+        self, db: SyntaskDBInterface, session: AsyncSession, csrf_token: core.CsrfToken
     ):
         await session.execute(
             sa.update(db.CsrfToken)
@@ -107,7 +107,7 @@ class TestTokenForClient:
 
 class TestDeleteExpiredTokens:
     async def test_can_delete_expired_tokens(
-        self, db: PrefectDBInterface, session: AsyncSession
+        self, db: SyntaskDBInterface, session: AsyncSession
     ):
         # Create some tokens
         for i in range(5):

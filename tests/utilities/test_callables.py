@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -15,8 +15,8 @@ import pytest
 from packaging.version import Version
 from pydantic import SecretStr
 
-from prefect.exceptions import ParameterBindError
-from prefect.utilities import callables
+from syntask.exceptions import ParameterBindError
+from syntask.utilities import callables
 
 
 class TestFunctionToSchema:

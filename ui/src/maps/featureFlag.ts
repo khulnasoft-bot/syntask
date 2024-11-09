@@ -1,4 +1,4 @@
-import { WorkspaceFeatureFlag } from '@prefecthq/prefect-ui-library'
+import { WorkspaceFeatureFlag } from '@syntaskhq/syntask-ui-library'
 import { MapFunction } from '@/services/mapper'
 import { FlagResponse } from '@/types/flagResponse'
 import { FeatureFlag } from '@/utilities/permissions'

@@ -12,26 +12,26 @@ include versioneer.py
 include requirements.txt
 include requirements-dev.txt
 include requirements-client.txt
-include src/prefect/_version.py
-include src/prefect/py.typed
-include src/prefect/profiles.toml
-include src/prefect/deployments/recipes/*/*.yaml
-include src/prefect/deployments/templates/*.yaml
-include src/prefect/.prefectignore
-include src/prefect/logging/logging.yml
-include src/prefect/cli/templates/*.yaml
-include src/prefect/server/collection_blocks_data.json
-include src/prefect/server/api/collections_data/views/*.json
+include src/syntask/_version.py
+include src/syntask/py.typed
+include src/syntask/profiles.toml
+include src/syntask/deployments/recipes/*/*.yaml
+include src/syntask/deployments/templates/*.yaml
+include src/syntask/.syntaskignore
+include src/syntask/logging/logging.yml
+include src/syntask/cli/templates/*.yaml
+include src/syntask/server/collection_blocks_data.json
+include src/syntask/server/api/collections_data/views/*.json
 
 # Migrations
-include src/prefect/server/database/alembic.ini
-include src/prefect/server/database/migrations/*
-include src/prefect/server/database/migrations/versions/*
-include src/prefect/server/database/migrations/versions/*/*
+include src/syntask/server/database/alembic.ini
+include src/syntask/server/database/migrations/*
+include src/syntask/server/database/migrations/versions/*
+include src/syntask/server/database/migrations/versions/*/*
 
 # SQL templates
-graft src/prefect/server/database/sql
+graft src/syntask/server/database/sql
 
 # Package files and data
-graft src/prefect/server/ui
-graft src/prefect/server/api/static
+graft src/syntask/server/ui
+graft src/syntask/server/api/static

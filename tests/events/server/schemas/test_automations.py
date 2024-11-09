@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 
-from prefect.server.events.schemas.automations import (
+from syntask.server.events.schemas.automations import (
     CompoundTrigger,
     EventTrigger,
     Posture,

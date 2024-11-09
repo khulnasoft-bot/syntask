@@ -6,7 +6,7 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 
-from prefect.server import models, schemas
+from syntask.server import models, schemas
 
 
 @pytest.fixture
@@ -722,7 +722,7 @@ class TestLog:
         fifteen_mins_ago = now - datetime.timedelta(minutes=15)
 
         log = db.Log(
-            name="prefect.flow_run",
+            name="syntask.flow_run",
             level=logging.INFO,
             message="Ahoy, captain",
             timestamp=now,
@@ -747,7 +747,7 @@ class TestLog:
         fifteen_mins_ago = now - datetime.timedelta(minutes=15)
 
         log = db.Log(
-            name="prefect.flow_run",
+            name="syntask.flow_run",
             level=logging.WARNING,
             message="Black flag ahead, captain!",
             flow_run_id=uuid4(),

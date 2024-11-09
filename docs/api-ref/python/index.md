@@ -1,5 +1,5 @@
 ---
-description: The Prefect Python SDK enables you to interact programmatically with Prefect's API
+description: The Syntask Python SDK enables you to interact programmatically with Syntask's API
 tags:
     - API
     - Python SDK
@@ -7,6 +7,6 @@ tags:
 
 # Python SDK
 
-The Prefect Python SDK is used to build, test, and execute workflows against the Prefect API.
+The Syntask Python SDK is used to build, test, and execute workflows against the Syntask API.
 
 Explore the modules in the navigation bar to the left to learn more.

@@ -12,17 +12,17 @@ import sqlalchemy as sa
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models, schemas
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.exceptions import FlowRunGraphTooLarge, ObjectNotFoundError
-from prefect.server.models.flow_runs import read_flow_run_graph
-from prefect.server.schemas.graph import Edge, Graph, GraphArtifact, GraphState, Node
-from prefect.server.schemas.states import StateType
-from prefect.settings import (
-    PREFECT_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS,
-    PREFECT_API_MAX_FLOW_RUN_GRAPH_NODES,
-    PREFECT_EXPERIMENTAL_ENABLE_ARTIFACTS_ON_FLOW_RUN_GRAPH,
-    PREFECT_EXPERIMENTAL_ENABLE_STATES_ON_FLOW_RUN_GRAPH,
+from syntask.server import models, schemas
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.exceptions import FlowRunGraphTooLarge, ObjectNotFoundError
+from syntask.server.models.flow_runs import read_flow_run_graph
+from syntask.server.schemas.graph import Edge, Graph, GraphArtifact, GraphState, Node
+from syntask.server.schemas.states import StateType
+from syntask.settings import (
+    SYNTASK_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS,
+    SYNTASK_API_MAX_FLOW_RUN_GRAPH_NODES,
+    SYNTASK_EXPERIMENTAL_ENABLE_ARTIFACTS_ON_FLOW_RUN_GRAPH,
+    SYNTASK_EXPERIMENTAL_ENABLE_STATES_ON_FLOW_RUN_GRAPH,
     temporary_settings,
 )
 
@@ -97,7 +97,7 @@ def base_time(start_of_test: pendulum.DateTime) -> pendulum.DateTime:
 
 @pytest.fixture
 async def unstarted_flow_run(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow,  # : db.Flow,
     base_time: pendulum.DateTime,
@@ -135,7 +135,7 @@ async def test_reading_graph_for_unstarted_flow_run_uses_expected_start_time(
 
 @pytest.fixture
 async def flow_run(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow,  # : db.Flow,
     base_time: pendulum.DateTime,
@@ -173,7 +173,7 @@ async def test_reading_graph_for_flow_run_with_no_tasks(
 
 @pytest.fixture
 async def flat_tasks(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run,  # db.FlowRun,
     base_time: pendulum.DateTime,
@@ -290,7 +290,7 @@ async def test_reading_graph_for_flow_run_with_flat_tasks(
 
 @pytest.fixture
 async def linked_tasks(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run,  # db.FlowRun,
     base_time: pendulum.DateTime,
@@ -501,7 +501,7 @@ async def test_reading_graph_for_flow_run_with_linked_tasks(
 
 
 async def test_reading_graph_for_flow_run_with_linked_unstarted_tasks(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run,  # db.FlowRun,
     linked_tasks: List,  # List[db.TaskRun],
@@ -745,7 +745,7 @@ async def test_reading_graph_for_flow_run_with_linked_tasks_incrementally(
 
 @pytest.fixture
 async def subflow_run(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run,  # db.FlowRun,
     base_time: pendulum.DateTime,
@@ -818,7 +818,7 @@ async def test_reading_graph_with_subflow_run(
 
 async def test_reading_graph_with_unstarted_subflow_run(
     session: AsyncSession,
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     flow,  # db.Flow,
     flow_run,  # db.FlowRun,
     subflow_run,  # db.FlowRun,
@@ -877,7 +877,7 @@ async def test_state_types_are_true_state_type_enums(
 
 @pytest.fixture
 async def flow_run_artifacts(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run,  # db.FlowRun,
 ):  # -> tuple[db.Artifact, list[db.Artifact]]:
@@ -911,7 +911,7 @@ async def flow_run_artifacts(
 
 @pytest.fixture
 async def flow_run_task_artifacts(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run,  # db.FlowRun,
     flat_tasks,  # list[db.TaskRun],
@@ -1010,7 +1010,7 @@ async def flow_run_task_artifacts(
 @pytest.fixture
 def enable_artifacts_on_flow_run_graph():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_ARTIFACTS_ON_FLOW_RUN_GRAPH: True}
+        {SYNTASK_EXPERIMENTAL_ENABLE_ARTIFACTS_ON_FLOW_RUN_GRAPH: True}
     ):
         yield
 
@@ -1018,7 +1018,7 @@ def enable_artifacts_on_flow_run_graph():
 @pytest.fixture
 def disable_artifacts_on_flow_run_graph():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_ARTIFACTS_ON_FLOW_RUN_GRAPH: False}
+        {SYNTASK_EXPERIMENTAL_ENABLE_ARTIFACTS_ON_FLOW_RUN_GRAPH: False}
     ):
         yield
 
@@ -1104,7 +1104,7 @@ async def test_artifacts_on_flow_run_graph_limited_by_setting(
     ), "Setup error - expected total # of graph artifacts to be greater than the limit being used for testing"
 
     with temporary_settings(
-        {PREFECT_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS: test_max_artifacts_setting}
+        {SYNTASK_API_MAX_FLOW_RUN_GRAPH_ARTIFACTS: test_max_artifacts_setting}
     ):
         graph = await read_flow_run_graph(
             session=session,
@@ -1119,7 +1119,7 @@ async def test_artifacts_on_flow_run_graph_limited_by_setting(
 @pytest.fixture
 def enable_states_on_flow_run_graph():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_STATES_ON_FLOW_RUN_GRAPH: True}
+        {SYNTASK_EXPERIMENTAL_ENABLE_STATES_ON_FLOW_RUN_GRAPH: True}
     ):
         yield
 
@@ -1127,14 +1127,14 @@ def enable_states_on_flow_run_graph():
 @pytest.fixture
 def disable_states_on_flow_run_graph():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_STATES_ON_FLOW_RUN_GRAPH: False}
+        {SYNTASK_EXPERIMENTAL_ENABLE_STATES_ON_FLOW_RUN_GRAPH: False}
     ):
         yield
 
 
 @pytest.fixture
 async def flow_run_states(
-    db: PrefectDBInterface,
+    db: SyntaskDBInterface,
     session: AsyncSession,
     flow_run,  # db.FlowRun,
 ):
@@ -1223,7 +1223,7 @@ def graph() -> Graph:
 def model_method_mock(graph: Graph, monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     mock = AsyncMock()
     mock.return_value = graph
-    monkeypatch.setattr("prefect.server.api.flow_runs.read_flow_run_graph", mock)
+    monkeypatch.setattr("syntask.server.api.flow_runs.read_flow_run_graph", mock)
     return mock
 
 
@@ -1293,7 +1293,7 @@ async def test_reading_graph_for_flow_run_with_linked_tasks_too_many_nodes(
     base_time: pendulum.DateTime,
 ):
     with temporary_settings(
-        updates={PREFECT_API_MAX_FLOW_RUN_GRAPH_NODES: 4},
+        updates={SYNTASK_API_MAX_FLOW_RUN_GRAPH_NODES: 4},
     ):
         with pytest.raises(FlowRunGraphTooLarge) as exc_info:
             await read_flow_run_graph(

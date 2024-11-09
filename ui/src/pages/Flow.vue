@@ -23,8 +23,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { DeploymentsList, PageHeadingFlow, FlowDetails, FlowRunFilteredList, useWorkspaceApi, useFlowRunsFilter, useDeploymentsFilter } from '@prefecthq/prefect-ui-library'
-  import { useSubscription, useRouteParam, useRouteQueryParam } from '@prefecthq/vue-compositions'
+  import { DeploymentsList, PageHeadingFlow, FlowDetails, FlowRunFilteredList, useWorkspaceApi, useFlowRunsFilter, useDeploymentsFilter } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription, useRouteParam, useRouteQueryParam } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
   import FlowStats from '@/components/FlowStats.vue'

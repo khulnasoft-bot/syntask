@@ -1,4 +1,4 @@
-::: prefect.server.orchestration.policies
+::: syntask.server.orchestration.policies
     options:
       inherited_members: false
       filters: ["!^_"]

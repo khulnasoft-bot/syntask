@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { PageHeadingWorkPoolCreate, WorkPoolCreateWizard } from '@prefecthq/prefect-ui-library'
+  import { PageHeadingWorkPoolCreate, WorkPoolCreateWizard } from '@syntaskhq/syntask-ui-library'
   import { usePageTitle } from '@/compositions/usePageTitle'
 
   usePageTitle('Create Work Pool')

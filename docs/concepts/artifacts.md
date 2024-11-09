@@ -1,5 +1,5 @@
 ---
-description: Prefect artifacts are persisted outputs designed for human consumption and available in the UI.
+description: Syntask artifacts are persisted outputs designed for human consumption and available in the UI.
 tags:
   - artifacts
   - UI
@@ -10,7 +10,7 @@ search:
 # Artifacts
 
 Artifacts are persisted outputs such as tables, Markdown, or links.
-They are stored on Prefect Cloud or a Prefect server instance and rendered in the Prefect UI.
+They are stored on Syntask Cloud or a Syntask server instance and rendered in the Syntask UI.
 Artifacts make it easy to track and monitor the objects that your flows produce and update over time.
 
 ![Markdown artifact sales report screenshot](/img/ui/md-artifact-info.png)
@@ -34,7 +34,7 @@ Creating artifacts allows you to publish data from task and flow runs or outside
 Currently, you can render three artifact types: links, Markdown, and tables.
 
 !!! note "Artifacts render individually"
-    Please note that every artifact created within a task will be displayed as an individual artifact in the Prefect UI.
+    Please note that every artifact created within a task will be displayed as an individual artifact in the Syntask UI.
     This means that each call to `create_link_artifact()` or `create_markdown_artifact()` generates a distinct artifact.
 
     Unlike the `print()` command, where you can concatenate multiple calls to include additional items in a report, within a task, these commands must be used multiple times if necessary. 
@@ -44,12 +44,12 @@ Currently, you can render three artifact types: links, Markdown, and tables.
 ### Creating link artifacts
 
 To create a link artifact, use the `create_link_artifact()` function.
-To create multiple versions of the same artifact and/or view them on the Artifacts page of the Prefect UI, provide a `key` argument to the `create_link_artifact()` function to track an artifact's history over time.
+To create multiple versions of the same artifact and/or view them on the Artifacts page of the Syntask UI, provide a `key` argument to the `create_link_artifact()` function to track an artifact's history over time.
 Without a `key`, the artifact will only be visible in the Artifacts tab of the associated flow run or task run.
 
 ```python
-from prefect import flow, task
-from prefect.artifacts import create_link_artifact
+from syntask import flow, task
+from syntask.artifacts import create_link_artifact
 
 @task
 def my_first_task():
@@ -89,15 +89,15 @@ Here, you'll also be able to view information about your artifact such as its as
 To make the links more readable for you and your collaborators, you can pass in a `link_text` argument for your link artifacts:
 
 ```python
-from prefect import flow
-from prefect.artifacts import create_link_artifact
+from syntask import flow
+from syntask.artifacts import create_link_artifact
 
 @flow
 def my_flow():
     create_link_artifact(
         key="my-important-link",
-        link="https://www.prefect.io/",
-        link_text="Prefect",
+        link="https://www.syntask.io/",
+        link_text="Syntask",
     )
 
 if __name__ == "__main__":
@@ -111,15 +111,15 @@ An optional `description` could also be added for context.
 ### Creating Markdown artifacts
 
 To create a Markdown artifact, you can use the `create_markdown_artifact()` function.
-To create multiple versions of the same artifact and/or view them on the Artifacts page of the Prefect UI, provide a `key` argument to the `create_markdown_artifact()` function to track an artifact's history over time.
+To create multiple versions of the same artifact and/or view them on the Artifacts page of the Syntask UI, provide a `key` argument to the `create_markdown_artifact()` function to track an artifact's history over time.
 Without a `key`, the artifact will only be visible in the Artifacts tab of the associated flow run or task run.
 
 !!! warning "Don't indent Markdown"
     Markdown in mult-line strings must be unindented to be interpreted correctly.
 
 ```python
-from prefect import flow, task
-from prefect.artifacts import create_markdown_artifact
+from syntask import flow, task
+from syntask.artifacts import create_markdown_artifact
 
 @task
 def markdown_task():
@@ -177,14 +177,14 @@ As with all artifacts, you'll be able to view the associated flow run or task ru
 ### Create table artifacts
 
 You can create a table artifact by calling `create_table_artifact()`.
-To create multiple versions of the same artifact and/or view them on the Artifacts page of the Prefect UI, provide a `key` argument to the `create_table_artifact()` function to track an artifact's history over time.
+To create multiple versions of the same artifact and/or view them on the Artifacts page of the Syntask UI, provide a `key` argument to the `create_table_artifact()` function to track an artifact's history over time.
 Without a `key`, the artifact will only be visible in the artifacts tab of the associated flow run or task run.
 
 !!! note
     The `create_table_artifact()` function accepts a `table` argument, which can be provided as either a list of lists, a list of dictionaries, or a dictionary of lists.
 
 ```python
-from prefect.artifacts import create_table_artifact
+from syntask.artifacts import create_table_artifact
 
 def my_fn():
     highest_churn_possibility = [
@@ -204,33 +204,33 @@ if __name__ == "__main__":
 
 ![Table artifact with customer info](/img/ui/table-artifact-info.png)
 As you can see, you don't need to create an artifact in a flow run context.
-You can create one anywhere in a Python script and see it in the Prefect UI.
+You can create one anywhere in a Python script and see it in the Syntask UI.
 
 ## Managing artifacts
 
 ### Reading artifacts
 
-In the Prefect UI, you can view all of the latest versions of your artifacts and click into a specific artifact to see its lineage over time.
+In the Syntask UI, you can view all of the latest versions of your artifacts and click into a specific artifact to see its lineage over time.
 Additionally, you can inspect all versions of an artifact with a given key from the CLI by running:
 
 ```bash
-prefect artifact inspect <my_key>
+syntask artifact inspect <my_key>
 ```
 
 or view all artifacts by running:
 
 ```bash
-prefect artifact ls
+syntask artifact ls
 ```
 
-You can also use the [Prefect REST API](https://app.prefect.cloud/api/docs#tag/Artifacts/operation/read_artifacts_api_accounts__account_id__workspaces__workspace_id__artifacts_filter_post) to programmatically filter your results.
+You can also use the [Syntask REST API](https://app.syntask.cloud/api/docs#tag/Artifacts/operation/read_artifacts_api_accounts__account_id__workspaces__workspace_id__artifacts_filter_post) to programmatically filter your results.
 
 ### Fetching artifacts
 
 In Python code, you can retrieve an existing artifact with the `Artifact.get` class method:
 
 ```python
-from prefect.artifacts import Artifact
+from syntask.artifacts import Artifact
 
 my_retrieved_artifact = Artifact.get("my_artifact_key")
 
@@ -241,18 +241,18 @@ my_retrieved_artifact = Artifact.get("my_artifact_key")
 You can delete an artifact directly using the CLI to delete specific artifacts with a given key or id:
 
 ```bash
-prefect artifact delete <my_key>
+syntask artifact delete <my_key>
 ```
 
 ```bash
-prefect artifact delete --id <my_id>
+syntask artifact delete --id <my_id>
 ```
 
-Alternatively, you can delete artifacts using the [Prefect REST API](https://docs.prefect.io/latest/api-ref/rest-api-reference/#tag/Artifacts/operation/delete_artifact_api_accounts__account_id__workspaces__workspace_id__artifacts__id__delete).
+Alternatively, you can delete artifacts using the [Syntask REST API](https://docs.syntask.io/latest/api-ref/rest-api-reference/#tag/Artifacts/operation/delete_artifact_api_accounts__account_id__workspaces__workspace_id__artifacts__id__delete).
 
 ## Artifacts API
 
-Prefect provides the [Prefect REST API](https://docs.prefect.io/latest/api-ref/rest-api-reference/#tag/Artifacts) to allow you to create, read, and delete artifacts programmatically.
+Syntask provides the [Syntask REST API](https://docs.syntask.io/latest/api-ref/rest-api-reference/#tag/Artifacts) to allow you to create, read, and delete artifacts programmatically.
 With the Artifacts API, you can automate the creation and management of artifacts as part of your workflow.
 
 For example, to read the five most recently created Markdown, table, and link artifacts, you can run the following:
@@ -260,8 +260,8 @@ For example, to read the five most recently created Markdown, table, and link ar
 ```python
 import requests
 
-PREFECT_API_URL="https://api.prefect.cloud/api/accounts/abc/workspaces/xyz"
-PREFECT_API_KEY="pnu_ghijk"
+SYNTASK_API_URL="https://api.syntask.cloud/api/accounts/abc/workspaces/xyz"
+SYNTASK_API_KEY="pnu_ghijk"
 data = {
     "sort": "CREATED_DESC",
     "limit": 5,
@@ -272,8 +272,8 @@ data = {
     }
 }
 
-headers = {"Authorization": f"Bearer {PREFECT_API_KEY}"}
-endpoint = f"{PREFECT_API_URL}/artifacts/filter"
+headers = {"Authorization": f"Bearer {SYNTASK_API_KEY}"}
+endpoint = f"{SYNTASK_API_URL}/artifacts/filter"
 
 response = requests.post(endpoint, headers=headers, json=data)
 assert response.status_code == 200
@@ -283,4 +283,4 @@ for artifact in response.json():
 
 If you don't specify a key or that a key must exist, you will also return results (which are a type of key-less artifact).
 
-See the rest of the [Prefect REST API documentation](https://app.prefect.cloud/api/docs#tag/Artifacts) on artifacts for more information!
+See the rest of the [Syntask REST API documentation](https://app.syntask.cloud/api/docs#tag/Artifacts) on artifacts for more information!

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pendulum
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -15,9 +15,9 @@ else:
 import pytest
 from sqlalchemy.exc import InterfaceError
 
-from prefect.client import get_client
-from prefect.server import models
-from prefect.server.schemas import actions, core, filters, schedules, states
+from syntask.client import get_client
+from syntask.server import models
+from syntask.server.schemas import actions, core, filters, schedules, states
 
 
 @pytest.fixture(autouse=True, scope="module")

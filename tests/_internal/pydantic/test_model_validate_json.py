@@ -1,8 +1,8 @@
 import pytest
 from pydantic import BaseModel
 
-from prefect._internal.pydantic import model_validate_json
-from prefect._internal.pydantic._flags import EXPECT_DEPRECATION_WARNINGS
+from syntask._internal.pydantic import model_validate_json
+from syntask._internal.pydantic._flags import EXPECT_DEPRECATION_WARNINGS
 
 
 class Model(BaseModel):

@@ -1,8 +1,8 @@
-import { applyColorModeClass, ColorMode, isColorMode } from '@prefecthq/prefect-ui-library'
-import { useLocalStorage } from '@prefecthq/vue-compositions'
+import { applyColorModeClass, ColorMode, isColorMode } from '@syntaskhq/syntask-ui-library'
+import { useLocalStorage } from '@syntaskhq/vue-compositions'
 import { computed } from 'vue'
 
-const colorModeLocalStorageKey = 'prefect-color-mode'
+const colorModeLocalStorageKey = 'syntask-color-mode'
 const nonJsonVersion = localStorage.getItem(colorModeLocalStorageKey)
 const defaultValue = isColorMode(nonJsonVersion) ? nonJsonVersion : null
 

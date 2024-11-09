@@ -7,7 +7,7 @@ import pendulum
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -16,14 +16,14 @@ else:
 
 import pytest
 import sqlalchemy as sa
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.input import RunInput, keyset_from_paused_state
-from prefect.server import models, schemas
-from prefect.server.schemas import actions, core, responses, states
-from prefect.server.schemas.core import TaskRunResult
-from prefect.server.schemas.responses import OrchestrationResult
-from prefect.server.schemas.states import StateType
+from syntask.input import RunInput, keyset_from_paused_state
+from syntask.server import models, schemas
+from syntask.server.schemas import actions, core, responses, states
+from syntask.server.schemas.core import TaskRunResult
+from syntask.server.schemas.responses import OrchestrationResult
+from syntask.server.schemas.states import StateType
 
 
 class TestCreateFlowRun:
@@ -338,7 +338,7 @@ class TestReadFlowRun:
         assert response.json()["deployment_version"] == "Deployment Version 1.0"
 
     async def test_read_flow_run_like_the_engine_does(self, flow, flow_run, client):
-        """Regression test for the hex format of UUIDs in `PREFECT__FLOW_RUN_ID`
+        """Regression test for the hex format of UUIDs in `SYNTASK__FLOW_RUN_ID`
 
         The only route that is requested in this way is `GET /flow_runs/{id}`; other
         methods aren't affected because they are based on prior requests for flow runs
@@ -357,7 +357,7 @@ class TestReadFlowRun:
     async def test_read_flow_run_with_invalid_id_is_rejected(self, client):
         """Additional safety check with for the above regression test to confirm that
         we're not attempting query with any old string as a flow run ID."""
-        with mock.patch("prefect.server.models.flow_runs.read_flow_run") as mock_read:
+        with mock.patch("syntask.server.models.flow_runs.read_flow_run") as mock_read:
             response = await client.get("/flow_runs/THISAINTIT")
             # Ideally this would be a 404, but we're letting FastAPI take care of this
             # at the parameter parsing level, so it's a 422
@@ -1244,7 +1244,7 @@ class TestResumeFlowrun:
         response = await client.post(
             f"/flow_runs/{paused_flow_run_waiting_for_input_with_default.id}/resume",
             json={
-                "run_input": {"how_many": {"__prefect_kind": "json", "value": '"3"'}}
+                "run_input": {"how_many": {"__syntask_kind": "json", "value": '"3"'}}
             },
         )
         assert response.status_code == 201
@@ -1272,7 +1272,7 @@ class TestResumeFlowrun:
             json={
                 "run_input": {
                     "how_many": {
-                        "__prefect_kind": "json",
+                        "__syntask_kind": "json",
                         "value": '{"invalid": json}',
                     },
                 }

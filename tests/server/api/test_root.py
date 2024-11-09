@@ -1,6 +1,6 @@
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.testing.utilities import AsyncMock
+from syntask.testing.utilities import AsyncMock
 
 
 async def test_hello_world(client):
@@ -19,7 +19,7 @@ async def test_ready_with_unavailable_db(client, monkeypatch):
     is_db_connectable_mock = AsyncMock(return_value=False)
 
     monkeypatch.setattr(
-        "prefect.server.database.interface.PrefectDBInterface.is_db_connectable",
+        "syntask.server.database.interface.SyntaskDBInterface.is_db_connectable",
         is_db_connectable_mock,
     )
     response = await client.get("/ready")

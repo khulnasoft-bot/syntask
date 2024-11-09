@@ -1,7 +1,7 @@
 import pytest
 
-from prefect.server.events import actions
-from prefect.server.events.schemas.automations import TriggeredAction
+from syntask.server.events import actions
+from syntask.server.events.schemas.automations import TriggeredAction
 
 
 async def test_doing_nothing(

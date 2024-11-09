@@ -1,8 +1,8 @@
 from uuid import uuid4
 
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.server import models, schemas
+from syntask.server import models, schemas
 
 
 class TestReadFlowRunStateById:

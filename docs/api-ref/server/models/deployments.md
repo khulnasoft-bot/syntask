@@ -1,1 +1,1 @@
-::: prefect.server.models.deployments
+::: syntask.server.models.deployments

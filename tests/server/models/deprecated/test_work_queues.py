@@ -4,11 +4,11 @@ from uuid import uuid4
 import pendulum
 import pytest
 
-from prefect.server import models, schemas
-from prefect.server.exceptions import ObjectNotFoundError
-from prefect.server.models.deployments import check_work_queues_for_deployment
-from prefect.server.utilities.database import get_dialect
-from prefect.settings import PREFECT_API_DATABASE_CONNECTION_URL
+from syntask.server import models, schemas
+from syntask.server.exceptions import ObjectNotFoundError
+from syntask.server.models.deployments import check_work_queues_for_deployment
+from syntask.server.utilities.database import get_dialect
+from syntask.settings import SYNTASK_API_DATABASE_CONNECTION_URL
 
 
 @pytest.fixture
@@ -621,7 +621,7 @@ class TestCheckWorkQueuesForDeployment:
             session=session, deployment_id=match_id
         )
 
-        connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+        connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
         dialect = get_dialect(connection_url)
 
         if dialect.name == "postgresql":
@@ -681,7 +681,7 @@ class TestCheckWorkQueuesForDeployment:
             session=session, deployment_id=match_id
         )
 
-        connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+        connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
         dialect = get_dialect(connection_url)
 
         if dialect.name == "postgresql":
@@ -761,7 +761,7 @@ class TestCheckWorkQueuesForDeployment:
             session=session, deployment_id=match_id
         )
 
-        connection_url = PREFECT_API_DATABASE_CONNECTION_URL.value()
+        connection_url = SYNTASK_API_DATABASE_CONNECTION_URL.value()
         dialect = get_dialect(connection_url)
 
         if dialect.name == "postgresql":

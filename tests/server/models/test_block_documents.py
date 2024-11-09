@@ -5,18 +5,18 @@ from uuid import uuid4
 import pytest
 import sqlalchemy as sa
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import SecretBytes, SecretStr
 else:
     from pydantic import SecretBytes, SecretStr
 
-from prefect.blocks.core import Block
-from prefect.blocks.fields import SecretDict
-from prefect.server import models, schemas
-from prefect.server.schemas.actions import BlockDocumentCreate
-from prefect.utilities.names import obfuscate, obfuscate_string
+from syntask.blocks.core import Block
+from syntask.blocks.fields import SecretDict
+from syntask.server import models, schemas
+from syntask.server.schemas.actions import BlockDocumentCreate
+from syntask.utilities.names import obfuscate, obfuscate_string
 
 
 def long_string(s: str):

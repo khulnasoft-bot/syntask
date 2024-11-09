@@ -1,5 +1,5 @@
 ---
-description: Learn how Prefect flow deployments enable configuring flows for scheduled and remote execution.
+description: Learn how Syntask flow deployments enable configuring flows for scheduled and remote execution.
 tags:
     - orchestration
     - flow runs
@@ -12,16 +12,16 @@ search:
 ---
 # Deploying Flows
 
-!!! note "Reminder to connect to Prefect Cloud or a self-hosted Prefect server instance"
-    Some features in this tutorial, such as scheduling, require you to be connected to a Prefect server.
-    If using a self-hosted setup, run `prefect server start` to run both the webserver and UI.
-    If using Prefect Cloud, make sure you have [successfully authenticated your local environment](/cloud/cloud-quickstart/).
+!!! note "Reminder to connect to Syntask Cloud or a self-hosted Syntask server instance"
+    Some features in this tutorial, such as scheduling, require you to be connected to a Syntask server.
+    If using a self-hosted setup, run `syntask server start` to run both the webserver and UI.
+    If using Syntask Cloud, make sure you have [successfully authenticated your local environment](/cloud/cloud-quickstart/).
 
 ## Why deployments?
 
-Some of the most common reasons to use an orchestration tool such as Prefect are for [scheduling](/concepts/schedules/) and [event-based triggering](/concepts/automations/).
-Up to this point, we’ve demonstrated running Prefect flows as scripts, but this means *you* have been the one triggering and managing flow runs.
-You can certainly continue to trigger your workflows in this way and use Prefect as a monitoring layer for other schedulers or systems, but you will miss out on many of the other benefits and features that Prefect offers.
+Some of the most common reasons to use an orchestration tool such as Syntask are for [scheduling](/concepts/schedules/) and [event-based triggering](/concepts/automations/).
+Up to this point, we’ve demonstrated running Syntask flows as scripts, but this means *you* have been the one triggering and managing flow runs.
+You can certainly continue to trigger your workflows in this way and use Syntask as a monitoring layer for other schedulers or systems, but you will miss out on many of the other benefits and features that Syntask offers.
 
 Deploying a flow exposes an API and UI so that you can:
 
@@ -32,7 +32,7 @@ Deploying a flow exposes an API and UI so that you can:
 ## What is a deployment?
 
 Deploying a flow is the act of specifying where and how it will run.
-This information is encapsulated and sent to Prefect as a [deployment](/concepts/deployments/) that contains the crucial metadata needed for remote orchestration.
+This information is encapsulated and sent to Syntask as a [deployment](/concepts/deployments/) that contains the crucial metadata needed for remote orchestration.
 Deployments elevate workflows from functions that you call manually to API-managed entities.
 
 Attributes of a deployment include (but are not limited to):
@@ -47,11 +47,11 @@ Using our `get_repo_info` flow from the previous sections, we can easily create 
 
 ```python hl_lines="16-17" title="repo_info.py"
 import httpx
-from prefect import flow
+from syntask import flow
 
 
 @flow(log_prints=True)
-def get_repo_info(repo_name: str = "PrefectHQ/prefect"):
+def get_repo_info(repo_name: str = "Synopkg/syntask"):
     url = f"https://api.github.com/repos/{repo_name}"
     response = httpx.get(url)
     response.raise_for_status()
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
 Running this script will do two things:
 
-- create a deployment called "my-first-deployment" for your flow in the Prefect API
+- create a deployment called "my-first-deployment" for your flow in the Syntask API
 - stay running to listen for flow runs for this deployment; when a run is found, it will be *asynchronously executed within a subprocess*
 
 !!! warning "Deployments must be defined in static files"
@@ -80,7 +80,7 @@ Let's use the CLI (in a separate terminal window) to create a run for this deplo
 <div class="terminal">
 
 ```bash
-prefect deployment run 'get-repo-info/my-first-deployment'
+syntask deployment run 'get-repo-info/my-first-deployment'
 ```
 
 </div>
@@ -123,7 +123,7 @@ This method is useful for creating deployments for single flows, but what if we 
 
 ```python hl_lines="2 18-20" title="multi_flow_deployment.py"
 import time
-from prefect import flow, serve
+from syntask import flow, serve
 
 
 @flow
@@ -158,17 +158,17 @@ A few potential next steps for exploration include:
 - cancelling an active run for the "sleeper" deployment from the UI (good luck cancelling the "fast" one 😉)
 
 !!! tip "Hybrid execution option"
-    Another implication of Prefect's deployment interface is that you can choose to use our hybrid execution model.
-    Whether you use Prefect Cloud or host a Prefect server instance yourself, you can run work flows in the environments best suited to their execution.
+    Another implication of Syntask's deployment interface is that you can choose to use our hybrid execution model.
+    Whether you use Syntask Cloud or host a Syntask server instance yourself, you can run work flows in the environments best suited to their execution.
     This model allows you efficient use of your infrastructure resources while maintaining the privacy of your code and data.
     There is no ingress required.
-    For more information [read more about our hybrid model](https://www.prefect.io/security/overview/#hybrid-model).
+    For more information [read more about our hybrid model](https://www.syntask.io/security/overview/#hybrid-model).
 
 ## Next steps
 
 Congratulations! You now have your first working deployment.
 
-Deploying flows through the `serve` method is a fast way to start scheduling flows with Prefect.
-However, if your team has more complex infrastructure requirements or you'd like to have Prefect manage flow execution, you can deploy flows to a work pool.
+Deploying flows through the `serve` method is a fast way to start scheduling flows with Syntask.
+However, if your team has more complex infrastructure requirements or you'd like to have Syntask manage flow execution, you can deploy flows to a work pool.
 
-Learn about work pools and how Prefect Cloud can handle infrastructure configuration for you in the [next step of the tutorial](/tutorial/work-pools/).
+Learn about work pools and how Syntask Cloud can handle infrastructure configuration for you in the [next step of the tutorial](/tutorial/work-pools/).

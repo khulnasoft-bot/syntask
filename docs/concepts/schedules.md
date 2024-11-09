@@ -1,5 +1,5 @@
 ---
-description: Prefect can schedule when to automatically create new flow runs based on your deployments.
+description: Syntask can schedule when to automatically create new flow runs based on your deployments.
 tags:
     - flows
     - flow runs
@@ -15,24 +15,24 @@ search:
 
 # Schedules
 
-Scheduling is one of the primary reasons for using an orchestrator such as Prefect.
-Prefect allows you to use schedules to automatically create new flow runs for deployments.
+Scheduling is one of the primary reasons for using an orchestrator such as Syntask.
+Syntask allows you to use schedules to automatically create new flow runs for deployments.
 
-Prefect Cloud can also schedule flow runs through event-driven [automations](/concepts/automations/).
+Syntask Cloud can also schedule flow runs through event-driven [automations](/concepts/automations/).
 
-Schedules tell the Prefect API how to create new flow runs for you automatically on a specified cadence.
+Schedules tell the Syntask API how to create new flow runs for you automatically on a specified cadence.
 
 You can add a schedule to any [deployment](/concepts/deployments/).
-The Prefect `Scheduler` service periodically reviews every deployment and creates new flow runs according to the schedule configured for the deployment.
+The Syntask `Scheduler` service periodically reviews every deployment and creates new flow runs according to the schedule configured for the deployment.
 
 !!! tip "Support for multiple schedules"
-    We are currently rolling out support for multiple schedules per deployment. You can now assign multiple schedules to deployments in the Prefect UI, the CLI via `prefect deployment schedule` commands, the `Deployment` class, and in [block-based deployment](/concepts/deployments/#block-based-deployments) YAML files.
+    We are currently rolling out support for multiple schedules per deployment. You can now assign multiple schedules to deployments in the Syntask UI, the CLI via `syntask deployment schedule` commands, the `Deployment` class, and in [block-based deployment](/concepts/deployments/#block-based-deployments) YAML files.
 
-    Support for multiple schedules in `flow.serve`, `flow.deploy`, `serve`, and [worker-based deployments](/concepts/work-pools/) with `prefect deploy` will arrive soon.
+    Support for multiple schedules in `flow.serve`, `flow.deploy`, `serve`, and [worker-based deployments](/concepts/work-pools/) with `syntask deploy` will arrive soon.
 
 ## Schedule types
 
-Prefect supports several types of schedules that cover a wide range of use cases and offer a large degree of customization:
+Syntask supports several types of schedules that cover a wide range of use cases and offer a large degree of customization:
 
 - [`Cron`](#cron) is most appropriate for users who are already familiar with `cron` from previous use.
 - [`Interval`](#interval) is best suited for deployments that need to run at some consistent cadence that isn't related to absolute time.
@@ -65,7 +65,7 @@ For example, with `day_or` set to `True`, the cron schedule `* * 3 1 2` runs a f
 With `day_or` set to `False`, the `day` (of the month) and `day_of_week` entries are joined with the more restrictive `AND` operation, as in the SQL statement `SELECT * from employees WHERE first_name = 'Andrew' AND last_name = 'Brookins';`. For example, the same schedule, when `day_or` is `False`, runs a flow on every minute on the **3rd Tuesday** in January. This behavior matches `fcron` instead of `cron`.
 
 !!! tip "Supported `croniter` features"
-    While Prefect supports most features of `croniter` for creating `cron`-like schedules, we do not currently support "R" random or "H" hashed keyword expressions or the schedule jittering possible with those expressions.
+    While Syntask supports most features of `croniter` for creating `cron`-like schedules, we do not currently support "R" random or "H" hashed keyword expressions or the schedule jittering possible with those expressions.
 
 !!! info "Daylight saving time considerations"
     If the `timezone` is a DST-observing one, then the schedule will adjust itself appropriately.
@@ -147,12 +147,12 @@ schedule:
 
 There are several ways to create a schedule for a deployment:
 
-- Through the Prefect UI
+- Through the Syntask UI
 - Via the `cron`, `interval`, or `rrule` parameters if building your deployment via the [`serve` method](/concepts/flows/#serving-a-flow) of the `Flow` object or [the `serve` utility](/concepts/flows/#serving-multiple-flows-at-once) for managing multiple flows simultaneously
 - If using [worker-based deployments](/concepts/work-pools/)
   - When you define a deployment with `flow.serve` or `flow.deploy`
-  - Through the interactive `prefect deploy` command
-  - With the `deployments` -> `schedules` section of the `prefect.yaml` file
+  - Through the interactive `syntask deploy` command
+  - With the `deployments` -> `schedules` section of the `syntask.yaml` file
 - If using [block-based deployments](/concepts/deployments/#block-based-deployments) - Deprecated 
   - `Through the schedules` section of the deployment YAML file
   - By passing `schedules` into the `Deployment` class or `Deployment.build_from_flow`
@@ -169,7 +169,7 @@ The **Schedules** section appears in the sidebar on the right side of the page o
 
 Under **Schedules**, select the **+ Schedule** button. A modal dialog will open. Choose **Interval** or **Cron** to create a schedule.
 
-![Prefect UI with Interval button selected](/img/ui/interval-schedule.png)
+![Syntask UI with Interval button selected](/img/ui/interval-schedule.png)
 
 !!! note "What about RRule?"
     The UI does not support creating RRule schedules. However, the UI will display RRule schedules that you've created via the command line.
@@ -214,7 +214,7 @@ Here's an example of creating an interval schedule with `serve` for a deployment
 
 ```python
 from datetime import timedelta, datetime
-from prefect.client.schemas.schedules import IntervalSchedule
+from syntask.client.schemas.schedules import IntervalSchedule
 
 my_flow.serve(name="flowing", schedule=IntervalSchedule(interval=timedelta(minutes=10), anchor_date=datetime(2023, 1, 1, 0, 0), timezone="America/Chicago"))
 ```
@@ -225,7 +225,7 @@ However, if you are using that deployment creation method you can create a sched
 Here's how you create the equivalent schedule in a Python deployment file.
 
 ```python
-from prefect.server.schemas.schedules import CronSchedule
+from syntask.server.schemas.schedules import CronSchedule
 
 cron_demo = Deployment.build_from_flow(
     pipeline,
@@ -234,15 +234,15 @@ cron_demo = Deployment.build_from_flow(
 )
 ```
 
-### Creating schedules with the interactive `prefect deploy` command
+### Creating schedules with the interactive `syntask deploy` command
 
-If you are using [worker-based deployments](/concepts/work-pools/), you can create a schedule through the interactive `prefect deploy` command.
+If you are using [worker-based deployments](/concepts/work-pools/), you can create a schedule through the interactive `syntask deploy` command.
 You will be prompted to choose which type of schedule to create.
 
-### Creating schedules in the `prefect.yaml` file's `deployments` -> `schedule` section
+### Creating schedules in the `syntask.yaml` file's `deployments` -> `schedule` section
 
-If you save the `prefect.yaml` file from the `prefect deploy` command, you will see it has a `schedules` section for your deployment.
-Alternatively, you can create a `prefect.yaml` file from a recipe or from scratch and add a `schedules` section to it.
+If you save the `syntask.yaml` file from the `syntask deploy` command, you will see it has a `schedules` section for your deployment.
+Alternatively, you can create a `syntask.yaml` file from a recipe or from scratch and add a `schedules` section to it.
 
 ```yaml
 deployments:
@@ -261,7 +261,7 @@ deployments:
 
 ## The `Scheduler` service
 
-The `Scheduler` service is started automatically when `prefect server start` is run and it is a built-in service of Prefect Cloud.
+The `Scheduler` service is started automatically when `syntask server start` is run and it is a built-in service of Syntask Cloud.
 
 By default, the `Scheduler` service visits deployments on a 60-second loop, though recently-modified deployments will be visited more frequently.
 The `Scheduler` evaluates each deployment's schedules and creates new runs appropriately.
@@ -274,18 +274,18 @@ More specifically, the `Scheduler` tries to create the smallest number of runs t
 - At least 3 runs will be scheduled.
 - Runs will be scheduled until at least one hour in the future.
 
-These behaviors can all be adjusted through the relevant settings that can be viewed with the terminal command `prefect config view --show-defaults`:
+These behaviors can all be adjusted through the relevant settings that can be viewed with the terminal command `syntask config view --show-defaults`:
 
 <div class='terminal'>
 ```bash
-PREFECT_API_SERVICES_SCHEDULER_DEPLOYMENT_BATCH_SIZE='100'
-PREFECT_API_SERVICES_SCHEDULER_ENABLED='True'
-PREFECT_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE='500'
-PREFECT_API_SERVICES_SCHEDULER_LOOP_SECONDS='60.0'
-PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS='3'
-PREFECT_API_SERVICES_SCHEDULER_MAX_RUNS='100'
-PREFECT_API_SERVICES_SCHEDULER_MIN_SCHEDULED_TIME='1:00:00'
-PREFECT_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME='100 days, 0:00:00'
+SYNTASK_API_SERVICES_SCHEDULER_DEPLOYMENT_BATCH_SIZE='100'
+SYNTASK_API_SERVICES_SCHEDULER_ENABLED='True'
+SYNTASK_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE='500'
+SYNTASK_API_SERVICES_SCHEDULER_LOOP_SECONDS='60.0'
+SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS='3'
+SYNTASK_API_SERVICES_SCHEDULER_MAX_RUNS='100'
+SYNTASK_API_SERVICES_SCHEDULER_MIN_SCHEDULED_TIME='1:00:00'
+SYNTASK_API_SERVICES_SCHEDULER_MAX_SCHEDULED_TIME='100 days, 0:00:00'
 ```
 </div>
 
@@ -295,7 +295,7 @@ These settings mean that if a deployment has an hourly schedule, the default set
 If it has a weekly schedule, the default settings will maintain the next 14 runs (up to 100 days in the future).
 
 !!! tip "The `Scheduler` does not affect execution"
-    The Prefect `Scheduler` service only creates new flow runs and places them in `Scheduled` states.
+    The Syntask `Scheduler` service only creates new flow runs and places them in `Scheduled` states.
     It is not involved in flow or task execution.
 
 If you change a schedule, previously scheduled flow runs that have not started are removed, and new scheduled flow runs are created to reflect the new schedule.

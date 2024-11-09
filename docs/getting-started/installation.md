@@ -1,5 +1,5 @@
 ---
-description: Installing Prefect and configuring your environment
+description: Installing Syntask and configuring your environment
 tags:
     - installation
     - pip install
@@ -15,33 +15,33 @@ search:
 
 # Installation
 
-Prefect requires Python 3.8 or newer.
+Syntask requires Python 3.8 or newer.
 
-Python 3.12 support is experimental, as not all dependencies support Python 3.12 yet. If you encounter any errors, please [open an issue](https://github.com/PrefectHQ/prefect/issues/new?assignees=&labels=needs%3Atriage%2Cbug&projects=&template=1_general_bug_report.yaml).
+Python 3.12 support is experimental, as not all dependencies support Python 3.12 yet. If you encounter any errors, please [open an issue](https://github.com/Synopkg/syntask/issues/new?assignees=&labels=needs%3Atriage%2Cbug&projects=&template=1_general_bug_report.yaml).
 
 <p align="left">
-    <a href="https://pypi.python.org/pypi/prefect/" alt="Python Versions">
-        <img src="https://img.shields.io/pypi/pyversions/prefect?color=0052FF&labelColor=090422" /></a>
-    <a href="https://pypi.python.org/pypi/prefect/" alt="PyPI version">
-        <img alt="PyPI" src="https://img.shields.io/pypi/v/prefect?color=0052FF&labelColor=090422"></a>
+    <a href="https://pypi.python.org/pypi/syntask/" alt="Python Versions">
+        <img src="https://img.shields.io/pypi/pyversions/syntask?color=0052FF&labelColor=090422" /></a>
+    <a href="https://pypi.python.org/pypi/syntask/" alt="PyPI version">
+        <img alt="PyPI" src="https://img.shields.io/pypi/v/syntask?color=0052FF&labelColor=090422"></a>
 </p>
 
-We recommend installing Prefect using a Python virtual environment manager such as `pipenv`, `conda`, or `virtualenv`/`venv`.
+We recommend installing Syntask using a Python virtual environment manager such as `pipenv`, `conda`, or `virtualenv`/`venv`.
 
 !!! info "Windows and Linux requirements"
     See [Windows installation notes](#windows-installation-notes) and [Linux installation notes](#linux-installation-notes) for details on additional installation requirements and considerations.
 
-## Install Prefect
+## Install Syntask
 
-The following sections describe how to install Prefect in your development or execution environment.
+The following sections describe how to install Syntask in your development or execution environment.
 
 ### Installing the latest version
 
-Prefect is published as a Python package. To install the latest release or upgrade an existing Prefect install, run the following command in your terminal:
+Syntask is published as a Python package. To install the latest release or upgrade an existing Syntask install, run the following command in your terminal:
 
 <div class="terminal">
 ```bash
-pip install -U prefect
+pip install -U syntask
 ```
 </div>
 
@@ -49,11 +49,11 @@ To install a specific version, specify the version number like this:
 
 <div class="terminal">
 ```bash
-pip install -U "prefect==2.16.2"
+pip install -U "syntask==2.16.2"
 ```
 </div>
 
-See available release versions in the [Prefect Release Notes](https://github.com/PrefectHQ/prefect/blob/main/RELEASE-NOTES.md).
+See available release versions in the [Syntask Release Notes](https://github.com/Synopkg/syntask/blob/main/RELEASE-NOTES.md).
 
 ### Installing the bleeding edge
 
@@ -61,7 +61,7 @@ If you'd like to test with the most up-to-date code, you can install directly of
 
 <div class="terminal">
 ```bash
-pip install -U git+https://github.com/PrefectHQ/prefect
+pip install -U git+https://github.com/Synopkg/syntask
 ```
 </div>
 
@@ -70,30 +70,30 @@ pip install -U git+https://github.com/PrefectHQ/prefect
 
 ### Installing for development
 
-If you'd like to install a version of Prefect for development:
+If you'd like to install a version of Syntask for development:
 
-1. Clone the [Prefect repository](https://github.com/PrefectHQ/prefect).
+1. Clone the [Syntask repository](https://github.com/Synopkg/syntask).
 2. Install an editable version of the Python package with `pip install -e`.
 3. Install pre-commit hooks.
 
 <div class="terminal">
 ```bash
-$ git clone https://github.com/PrefectHQ/prefect.git
-$ cd prefect
+$ git clone https://github.com/Synopkg/syntask.git
+$ cd syntask
 $ pip install -e ".[dev]"
 $ pre-commit install
 ```
 </div>
 
-See our [Contributing](/contributing/overview/) guide for more details about standards and practices for contributing to Prefect.
+See our [Contributing](/contributing/overview/) guide for more details about standards and practices for contributing to Syntask.
 
 ### Checking your installation
 
-To confirm that Prefect was installed correctly, run the command `prefect version` to print the version and environment details to your console.
+To confirm that Syntask was installed correctly, run the command `syntask version` to print the version and environment details to your console.
 
 <div class="terminal">
 ```
-$ prefect version
+$ syntask version
 
 Version:             2.10.21
 API version:         0.8.4
@@ -112,7 +112,7 @@ Server:
 
 ## Windows installation notes
 
-You can install and run Prefect via Windows PowerShell, the Windows Command Prompt, or [`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/install/windows.html). After installation, you may need to manually add the Python local packages `Scripts` folder to your `Path` environment variable.
+You can install and run Syntask via Windows PowerShell, the Windows Command Prompt, or [`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/install/windows.html). After installation, you may need to manually add the Python local packages `Scripts` folder to your `Path` environment variable.
 
 The `Scripts` folder path looks something like this (the username and Python version may be different on your system):
 
@@ -126,7 +126,7 @@ If you're using Windows Subsystem for Linux (WSL), see [Linux installation notes
 
 ## Linux installation notes
 
-Linux is a popular operating system for running Prefect. You can use [Prefect Cloud](/ui/cloud/) as your API server, or [host your own Prefect server](/host/) backed by [PostgreSQL](/concepts/database/#configuring_a_postgresql_database).
+Linux is a popular operating system for running Syntask. You can use [Syntask Cloud](/ui/cloud/) as your API server, or [host your own Syntask server](/host/) backed by [PostgreSQL](/concepts/database/#configuring_a_postgresql_database).
 
 For development, you can use [SQLite](/concepts/database/#configuring_a_sqlite_database) 2.24 or newer as your database. Note that certain Linux versions of SQLite can be problematic. Compatible versions include Ubuntu 22.04 LTS and Ubuntu 20.04 LTS.
 
@@ -139,27 +139,27 @@ environment to trust the certificate. You can add the
 certificate to your system bundle and pointing your tools to use that bundle by configuring the `SSL_CERT_FILE` environment variable.
 
 If the certificate is not part of your system bundle, you can set the
-`PREFECT_API_TLS_INSECURE_SKIP_VERIFY` to `True` to disable certificate verification altogether.
+`SYNTASK_API_TLS_INSECURE_SKIP_VERIFY` to `True` to disable certificate verification altogether.
 
 ***Note:*** Disabling certificate validation is insecure and only suggested as an option for testing!
 
 ## Proxies
 
-Prefect supports communicating via proxies through environment variables. Simply set `HTTPS_PROXY` and `SSL_CERT_FILE` in your environment, and the underlying network libraries will route Prefect’s requests appropriately. Read more about using Prefect Cloud with proxies [here](https://discourse.prefect.io/t/using-prefect-cloud-with-proxies/1696).
+Syntask supports communicating via proxies through environment variables. Simply set `HTTPS_PROXY` and `SSL_CERT_FILE` in your environment, and the underlying network libraries will route Syntask’s requests appropriately. Read more about using Syntask Cloud with proxies [here](https://discourse.syntask.io/t/using-syntask-cloud-with-proxies/1696).
 
 ## External requirements
 
 ### SQLite
 
-You can use [Prefect Cloud](/ui/cloud/) as your API server, or [host your own Prefect server](/host/) backed by [PostgreSQL](/concepts/database/#configuring_a_postgresql_database).
+You can use [Syntask Cloud](/ui/cloud/) as your API server, or [host your own Syntask server](/host/) backed by [PostgreSQL](/concepts/database/#configuring_a_postgresql_database).
 
-By default, a local Prefect server instance uses SQLite as the backing database. SQLite is not packaged with the Prefect installation. Most systems will already have SQLite installed, because it is typically bundled as a part of Python.
+By default, a local Syntask server instance uses SQLite as the backing database. SQLite is not packaged with the Syntask installation. Most systems will already have SQLite installed, because it is typically bundled as a part of Python.
 
-The Prefect CLI command `prefect version` prints environment details to your console, including the server database. For example:
+The Syntask CLI command `syntask version` prints environment details to your console, including the server database. For example:
 
 <div class="terminal">
 ```
-$ prefect version
+$ syntask version
 Version:             2.10.21
 API version:         0.8.4
 Python version:      3.10.12
@@ -211,17 +211,17 @@ echo 'export LD_LIBRARY_PATH="/usr/local/lib"' >> /etc/profile
 
 Restart your shell to register these changes.
 
-Now you can install Prefect using `pip`.
+Now you can install Syntask using `pip`.
 
 <div class="terminal">
 ```bash
-pip3 install prefect
+pip3 install syntask
 ```
 </div>
 
-## Using Prefect in an environment with HTTP proxies
+## Using Syntask in an environment with HTTP proxies
 
-If you are using Prefect Cloud or hosting your own Prefect server instance, the Prefect library
+If you are using Syntask Cloud or hosting your own Syntask server instance, the Syntask library
 will connect to the API via any proxies you have listed in the `HTTP_PROXY`,
 `HTTPS_PROXY`, or `ALL_PROXY` environment variables.  You may also use the `NO_PROXY`
 environment variable to specify which hosts should not be sent through the proxy.
@@ -231,4 +231,4 @@ documentation](https://everything.curl.dev/usingcurl/proxies/env).
 
 ## Next steps
 
-Now that you have Prefect installed and your environment configured, you may want to check out the [Tutorial](/tutorial/) to get more familiar with Prefect.
+Now that you have Syntask installed and your environment configured, you may want to check out the [Tutorial](/tutorial/) to get more familiar with Syntask.

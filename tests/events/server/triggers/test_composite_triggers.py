@@ -8,10 +8,10 @@ import pytest
 from pendulum.datetime import DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.events import actions, triggers
-from prefect.server.events.models import automations
-from prefect.server.events.schemas.automations import (
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.events import actions, triggers
+from syntask.server.events.models import automations
+from syntask.server.events.schemas.automations import (
     Automation,
     CompoundTrigger,
     EventTrigger,
@@ -20,7 +20,7 @@ from prefect.server.events.schemas.automations import (
     SequenceTrigger,
     TriggerState,
 )
-from prefect.server.events.schemas.events import ReceivedEvent
+from syntask.server.events.schemas.events import ReceivedEvent
 
 
 @pytest.fixture
@@ -31,72 +31,72 @@ def flow_run_events(
     return [
         ReceivedEvent(
             occurred=start_of_test + timedelta(microseconds=1),
-            event="prefect.flow-run.Pending",
+            event="syntask.flow-run.Pending",
             resource={
                 "flow_run_id": "1234",
                 "flow_id": "5678",
                 "tenant_id": "1234",
-                "prefect.resource.id": "prefect.flow-run.23456",
+                "syntask.resource.id": "syntask.flow-run.23456",
             },
             related=[
                 {
-                    "prefect.resource.id": "my-deployment",
-                    "prefect.resource.role": "deployment",
-                    "prefect.resource.name": "My Sweet Deployment",
+                    "syntask.resource.id": "my-deployment",
+                    "syntask.resource.role": "deployment",
+                    "syntask.resource.name": "My Sweet Deployment",
                 },
             ],
             id=uuid4(),
         ),
         ReceivedEvent(
             occurred=start_of_test + timedelta(microseconds=2),
-            event="prefect.flow-run.Running",
+            event="syntask.flow-run.Running",
             resource={
                 "flow_run_id": "1234",
                 "flow_id": "5678",
                 "tenant_id": "1234",
-                "prefect.resource.id": "prefect.flow-run.34567",
+                "syntask.resource.id": "syntask.flow-run.34567",
             },
             related=[
                 {
-                    "prefect.resource.id": "my-deployment",
-                    "prefect.resource.role": "deployment",
-                    "prefect.resource.name": "My Sweet Deployment",
+                    "syntask.resource.id": "my-deployment",
+                    "syntask.resource.role": "deployment",
+                    "syntask.resource.name": "My Sweet Deployment",
                 },
             ],
             id=uuid4(),
         ),
         ReceivedEvent(
             occurred=start_of_test + timedelta(microseconds=3),
-            event="prefect.flow-run.Completed",
+            event="syntask.flow-run.Completed",
             resource={
                 "flow_run_id": "1234",
                 "flow_id": "5678",
                 "tenant_id": "1234",
-                "prefect.resource.id": "prefect.flow-run.45678",
+                "syntask.resource.id": "syntask.flow-run.45678",
             },
             related=[
                 {
-                    "prefect.resource.id": "my-deployment",
-                    "prefect.resource.role": "deployment",
-                    "prefect.resource.name": "My Sweet Deployment",
+                    "syntask.resource.id": "my-deployment",
+                    "syntask.resource.role": "deployment",
+                    "syntask.resource.name": "My Sweet Deployment",
                 },
             ],
             id=uuid4(),
         ),
         ReceivedEvent(
             occurred=start_of_test + timedelta(microseconds=4),
-            event="prefect.flow-run.Failed",
+            event="syntask.flow-run.Failed",
             resource={
                 "flow_run_id": "1234",
                 "flow_id": "5678",
                 "tenant_id": "1234",
-                "prefect.resource.id": "prefect.flow-run.56789",
+                "syntask.resource.id": "syntask.flow-run.56789",
             },
             related=[
                 {
-                    "prefect.resource.id": "my-deployment",
-                    "prefect.resource.role": "deployment",
-                    "prefect.resource.name": "My Sweet Deployment",
+                    "syntask.resource.id": "my-deployment",
+                    "syntask.resource.role": "deployment",
+                    "syntask.resource.name": "My Sweet Deployment",
                 },
             ],
             id=uuid4(),
@@ -107,7 +107,7 @@ def flow_run_events(
 @pytest.fixture
 def act(monkeypatch: pytest.MonkeyPatch) -> mock.AsyncMock:
     mock_act = mock.AsyncMock()
-    monkeypatch.setattr("prefect.server.events.triggers.act", mock_act)
+    monkeypatch.setattr("syntask.server.events.triggers.act", mock_act)
     return mock_act
 
 
@@ -130,14 +130,14 @@ class TestCompoundTriggerAny:
                 within=timedelta(minutes=5),
                 triggers=[
                     EventTrigger(
-                        expect={"prefect.flow-run.Failed"},
-                        match={"prefect.resource.id": "prefect.flow-run.*"},
+                        expect={"syntask.flow-run.Failed"},
+                        match={"syntask.resource.id": "syntask.flow-run.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
                     EventTrigger(
-                        expect={"prefect.flow-run.NonExistent"},
-                        match={"prefect.resource.id": "prefect.flow-run.*"},
+                        expect={"syntask.flow-run.NonExistent"},
+                        match={"syntask.resource.id": "syntask.flow-run.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
@@ -178,14 +178,14 @@ class TestCompoundTriggerAny:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Failed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Failed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.NonExistent"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.NonExistent"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -228,14 +228,14 @@ class TestCompoundTriggerAny:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Failed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Failed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.NonExistent"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.NonExistent"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -246,14 +246,14 @@ class TestCompoundTriggerAny:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.NonExistent"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.NonExistent"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -348,14 +348,14 @@ class TestCompoundTriggerAll:
                 within=timedelta(minutes=5),
                 triggers=[
                     EventTrigger(
-                        expect={"prefect.flow-run.Failed"},
-                        match={"prefect.resource.id": "prefect.flow-run.*"},
+                        expect={"syntask.flow-run.Failed"},
+                        match={"syntask.resource.id": "syntask.flow-run.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
                     EventTrigger(
-                        expect={"prefect.flow-run.NotExistent"},
-                        match={"prefect.resource.id": "prefect.flow-run.*"},
+                        expect={"syntask.flow-run.NotExistent"},
+                        match={"syntask.resource.id": "syntask.flow-run.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
@@ -407,14 +407,14 @@ class TestCompoundTriggerAll:
                 within=timedelta(minutes=5),
                 triggers=[
                     EventTrigger(
-                        expect={"prefect.flow-run.Failed"},
-                        match={"prefect.resource.id": "prefect.flow-run.*"},
+                        expect={"syntask.flow-run.Failed"},
+                        match={"syntask.resource.id": "syntask.flow-run.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
                     EventTrigger(
-                        expect={"prefect.flow-run.Completed"},
-                        match={"prefect.resource.id": "prefect.flow-run.*"},
+                        expect={"syntask.flow-run.Completed"},
+                        match={"syntask.resource.id": "syntask.flow-run.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
@@ -454,7 +454,7 @@ class TestCompoundTriggerAll:
 
     async def test_compound_automation_all_will_not_double_fire(
         self,
-        db: PrefectDBInterface,
+        db: SyntaskDBInterface,
         act: mock.AsyncMock,
         flow_run_events: List[ReceivedEvent],
         compound_automation_all_with_match: Automation,
@@ -493,7 +493,7 @@ class TestCompoundTriggerAll:
             ]
 
         monkeypatch.setattr(
-            "prefect.server.events.triggers.get_child_firings", get_child_firings
+            "syntask.server.events.triggers.get_child_firings", get_child_firings
         )
 
         for received_event in flow_run_events:
@@ -523,14 +523,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Failed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Failed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -541,14 +541,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.NonExistent"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.NonExistent"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -612,14 +612,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Failed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Failed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -630,14 +630,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.NonExistent"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.NonExistent"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -702,14 +702,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Failed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Failed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -720,14 +720,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.NonExistent"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.NonExistent"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -785,14 +785,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Failed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Failed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -803,14 +803,14 @@ class TestCompoundTriggerAll:
                         within=timedelta(minutes=5),
                         triggers=[
                             EventTrigger(
-                                expect={"prefect.flow-run.Completed"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Completed"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
-                                expect={"prefect.flow-run.Pending"},
-                                match={"prefect.resource.id": "prefect.flow-run.*"},
+                                expect={"syntask.flow-run.Pending"},
+                                match={"syntask.resource.id": "syntask.flow-run.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -887,19 +887,19 @@ async def chonk_baker(
             triggers=[
                 EventTrigger(
                     expect={"ingredients.buy"},
-                    match={"prefect.resource.id": "prefect.ingredients.*"},
+                    match={"syntask.resource.id": "syntask.ingredients.*"},
                     posture=Posture.Reactive,
                     threshold=1,
                 ),
                 EventTrigger(
                     expect={"ingredients.mix"},
-                    match={"prefect.resource.id": "prefect.ingredients.*"},
+                    match={"syntask.resource.id": "syntask.ingredients.*"},
                     posture=Posture.Reactive,
                     threshold=1,
                 ),
                 EventTrigger(
                     expect={"cake.bake"},
-                    match={"prefect.resource.id": "prefect.cake.*"},
+                    match={"syntask.resource.id": "syntask.cake.*"},
                     posture=Posture.Reactive,
                     threshold=1,
                 ),
@@ -936,12 +936,12 @@ async def chonk_twins(
             triggers=[
                 EventTrigger(
                     expect={"ingredients.buy"},
-                    match={"prefect.resource.id": "prefect.ingredients.*"},
+                    match={"syntask.resource.id": "syntask.ingredients.*"},
                     posture=Posture.Reactive,
                 ),
                 EventTrigger(
                     expect={"ingredients.buy"},
-                    match={"prefect.resource.id": "prefect.ingredients.*"},
+                    match={"syntask.resource.id": "syntask.ingredients.*"},
                     posture=Posture.Reactive,
                 ),
             ],
@@ -972,7 +972,7 @@ async def chonk_buyer(
             triggers=[
                 EventTrigger(
                     expect={"cake.buy"},
-                    match={"prefect.resource.id": "prefect.cake.*"},
+                    match={"syntask.resource.id": "syntask.cake.*"},
                     posture=Posture.Reactive,
                     threshold=1,
                 ),
@@ -1002,7 +1002,7 @@ class TestSequenceTriggers:
         return ReceivedEvent(
             occurred=start_of_test + timedelta(seconds=4),
             resource={
-                "prefect.resource.id": "prefect.cake.12345",
+                "syntask.resource.id": "syntask.cake.12345",
             },
             event="cake.buy",
             id=uuid4(),
@@ -1032,7 +1032,7 @@ class TestSequenceTriggers:
         return ReceivedEvent(
             occurred=start_of_test + timedelta(seconds=1),
             resource={
-                "prefect.resource.id": "prefect.ingredients.12345",
+                "syntask.resource.id": "syntask.ingredients.12345",
             },
             event="ingredients.buy",
             id=uuid4(),
@@ -1057,7 +1057,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=1),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1065,7 +1065,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=2),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1073,7 +1073,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=3),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1100,7 +1100,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=1),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1108,7 +1108,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=2),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1116,7 +1116,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=3),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1150,7 +1150,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=1),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1158,7 +1158,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=2),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1166,7 +1166,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(minutes=14),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1222,7 +1222,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=1),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1230,7 +1230,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=2),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1238,7 +1238,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=3),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1246,7 +1246,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=start_of_test + timedelta(seconds=4),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1288,7 +1288,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=1),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.23456",
+                    "syntask.resource.id": "syntask.ingredients.23456",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1296,7 +1296,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=2),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1304,7 +1304,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=3),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1312,7 +1312,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=4),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1349,7 +1349,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=1),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1357,7 +1357,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=2),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1365,7 +1365,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=3),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1373,7 +1373,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(minutes=14),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1414,19 +1414,19 @@ class TestSequenceTriggers:
                 triggers=[
                     EventTrigger(
                         expect={"ingredients.buy"},
-                        match={"prefect.resource.id": "prefect.ingredients.*"},
+                        match={"syntask.resource.id": "syntask.ingredients.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
                     EventTrigger(
                         expect={"ingredients.mix"},
-                        match={"prefect.resource.id": "prefect.ingredients.*"},
+                        match={"syntask.resource.id": "syntask.ingredients.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
                     EventTrigger(
                         expect={"cake.bake"},
-                        match={"prefect.resource.id": "prefect.cake.*"},
+                        match={"syntask.resource.id": "syntask.cake.*"},
                         posture=Posture.Reactive,
                         threshold=1,
                     ),
@@ -1436,13 +1436,13 @@ class TestSequenceTriggers:
                         triggers=[
                             EventTrigger(
                                 expect={"guests.greet"},
-                                match={"prefect.resource.id": "prefect.guests.*"},
+                                match={"syntask.resource.id": "syntask.guests.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
                             EventTrigger(
                                 expect={"cake.serve"},
-                                match={"prefect.resource.id": "prefect.cake.*"},
+                                match={"syntask.resource.id": "syntask.cake.*"},
                                 posture=Posture.Reactive,
                                 threshold=1,
                             ),
@@ -1474,7 +1474,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=4),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1482,7 +1482,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=5),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1490,7 +1490,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=6),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1498,7 +1498,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=7),
                 resource={
-                    "prefect.resource.id": "prefect.guests.12345",
+                    "syntask.resource.id": "syntask.guests.12345",
                 },
                 event="guests.greet",
                 id=uuid4(),
@@ -1506,7 +1506,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=8),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.serve",
                 id=uuid4(),
@@ -1561,7 +1561,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=4),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.12345",
+                    "syntask.resource.id": "syntask.ingredients.12345",
                 },
                 event="ingredients.buy",
                 id=uuid4(),
@@ -1569,7 +1569,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=5),
                 resource={
-                    "prefect.resource.id": "prefect.cake.12345",
+                    "syntask.resource.id": "syntask.cake.12345",
                 },
                 event="cake.bake",
                 id=uuid4(),
@@ -1577,7 +1577,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=6),
                 resource={
-                    "prefect.resource.id": "prefect.ingredients.23456",
+                    "syntask.resource.id": "syntask.ingredients.23456",
                 },
                 event="ingredients.mix",
                 id=uuid4(),
@@ -1585,7 +1585,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=7),
                 resource={
-                    "prefect.resource.id": "prefect.cake.23456",
+                    "syntask.resource.id": "syntask.cake.23456",
                 },
                 event="cake.serve",
                 id=uuid4(),
@@ -1593,7 +1593,7 @@ class TestSequenceTriggers:
             ReceivedEvent(
                 occurred=baseline.add(seconds=8),
                 resource={
-                    "prefect.resource.id": "prefect.guests.12345",
+                    "syntask.resource.id": "syntask.guests.12345",
                 },
                 event="guests.greet",
                 id=uuid4(),

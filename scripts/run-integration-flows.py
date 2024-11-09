@@ -10,7 +10,7 @@ Usage:
 
 Example:
 
-    PREFECT_API_URL="http://localhost:4200" ./scripts/run-integration-flows.py
+    SYNTASK_API_URL="http://localhost:4200" ./scripts/run-integration-flows.py
 """
 import os
 import runpy
@@ -18,13 +18,13 @@ import sys
 from pathlib import Path
 from typing import Union
 
-import prefect
-from prefect import __version__
+import syntask
+from syntask import __version__
 
-# See https://github.com/PrefectHQ/prefect/pull/9136
+# See https://github.com/Synopkg/syntask/pull/9136
 DEFAULT_PATH = (
     getattr(
-        prefect, "__development_base_path__", getattr(prefect, "__root_path__", None)
+        syntask, "__development_base_path__", getattr(syntask, "__root_path__", None)
     )
     / "flows"
 )

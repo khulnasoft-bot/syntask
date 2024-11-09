@@ -1,5 +1,5 @@
 ---
-description: Prefect walkthrough on how to use automations and common best practices 
+description: Syntask walkthrough on how to use automations and common best practices 
 tags:
     - automations
     - event-driven
@@ -19,20 +19,20 @@ In this guide, we will showcase the following common use cases:
 - Build upon an event based automation
 - Combine into a multi-layered responsive deployment pattern
 
-!!! cloud-ad "Available only on Prefect Cloud"
-        Automations are a Prefect Cloud feature.
+!!! cloud-ad "Available only on Syntask Cloud"
+        Automations are a Syntask Cloud feature.
 
 ## Prerequisites
 Please have the following before exploring the guide:
 
 - Python installed
-- Prefect installed (follow the [installation guide](/getting-started/installation/))
-- Authenticated to a [Prefect Cloud workspace](/getting-started/quickstart/#step-2-connect-to-prefects-api/)
+- Syntask installed (follow the [installation guide](/getting-started/installation/))
+- Authenticated to a [Syntask Cloud workspace](/getting-started/quickstart/#step-2-connect-to-syntasks-api/)
 - A [work pool](/concepts/work-pools/) set up to handle the deployments
 
 ## Creating the example script
 
-Automations allow you to take actions in response to triggering events recorded by Prefect. 
+Automations allow you to take actions in response to triggering events recorded by Syntask. 
 
 For example, let's try to grab data from an API and send a notification based on the end state. 
 
@@ -41,7 +41,7 @@ We can start by pulling hypothetical user data from an endpoint and then perform
 Let's create a simple extract method, that pulls the data from a random user data generator endpoint. 
 
 ```python
-from prefect import flow, task, get_run_logger
+from syntask import flow, task, get_run_logger
 import requests
 import json
 
@@ -105,24 +105,24 @@ Now let's try to send a notification based off a completed state outcome. We can
     Keep in mind, we did not need to create a deployment to trigger our automation, where a state outcome of a local flow run helped trigger this notification block. We are not required to create a deployment to trigger a notification.
 Now that you've seen how to create an email notification from a flow run completion, let's see how we can kick off a deployment run in response to an event.
 ## Event-based deployment automation 
-We can create an automation that can kick off a deployment instead of a notification. Let's explore how we can programmatically create this automation. We will take advantage of Prefect's REST API to help create this automation.  
+We can create an automation that can kick off a deployment instead of a notification. Let's explore how we can programmatically create this automation. We will take advantage of Syntask's REST API to help create this automation.  
 
-See the [REST API documentation](https://docs.prefect.io/latest/api-ref/rest-api/#interacting-with-the-rest-api) as a reference for interacting with the Prefect Cloud automation endpoints.
+See the [REST API documentation](https://docs.syntask.io/latest/api-ref/rest-api/#interacting-with-the-rest-api) as a reference for interacting with the Syntask Cloud automation endpoints.
 
 Let's create a deployment where we can kick off some work based on how long a flow is running. For example, if the `build_names` flow is taking too long to execute, we can kick off a deployment of the with the same `build_names` flow, but replace the `count` value with a lower number - to speed up completion.
-You can create a deployment with a `prefect.yaml` file or a Python file that uses `flow.deploy`.
-=== "prefect.yaml"
+You can create a deployment with a `syntask.yaml` file or a Python file that uses `flow.deploy`.
+=== "syntask.yaml"
 
-    Create a `prefect.yaml` file like this one for our flow `build_names`:
+    Create a `syntask.yaml` file like this one for our flow `build_names`:
 
     ```yaml
-      # Welcome to your prefect.yaml file! You can use this file for storing and managing
+      # Welcome to your syntask.yaml file! You can use this file for storing and managing
       # configuration for deploying your flows. We recommend committing this file to source
       # control along with your flow code.
 
       # Generic metadata about this project
       name: automations-guide
-      prefect-version: 2.13.1
+      syntask-version: 2.13.1
 
       # build section allows you to manage and build docker images
       build: null
@@ -132,8 +132,8 @@ You can create a deployment with a `prefect.yaml` file or a Python file that use
 
       # pull section allows you to provide instructions for cloning this project in remote locations
       pull:
-      - prefect.deployments.steps.set_working_directory:
-          directory: /Users/src/prefect/Playground/automations-guide
+      - syntask.deployments.steps.set_working_directory:
+          directory: /Users/src/syntask/Playground/automations-guide
 
       # the deployments section allows you to provide configuration for deploying flows
       deployments:
@@ -169,11 +169,11 @@ You can create a deployment with a `prefect.yaml` file or a Python file that use
 Now let's grab our `deployment_id` from this deployment, and embed it in our automation. There are many ways to obtain the `deployment_id`, but the CLI is a quick way to see all of your deployment ids. 
 
 !!! Tip "Find deployment_id from the CLI"
-      The quickest way to see the ID's associated with your deployment would be running `prefect deployment ls`
+      The quickest way to see the ID's associated with your deployment would be running `syntask deployment ls`
       in an authenticated command prompt, and you will be able to see the id's associated with all of your deployments
 
 ```bash 
-prefect deployment ls
+syntask deployment ls
                                           Deployments                                           
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Name                                                  ┃ ID                                   ┃
@@ -187,7 +187,7 @@ We can create an automation via a POST call, where we can programmatically creat
 
 ```python
 def create_event_driven_automation():
-    api_url = f"https://api.prefect.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/automations/"
+    api_url = f"https://api.syntask.cloud/api/accounts/{account_id}/workspaces/{workspace_id}/automations/"
     data = {
     "name": "Event Driven Redeploy",
     "description": "Programmatically created an automation to redeploy a flow based on an event",
@@ -197,10 +197,10 @@ def create_event_driven_automation():
         "string"
     ],
     "expect": [
-        "prefect.flow-run.Running"
+        "syntask.flow-run.Running"
     ],
     "for_each": [
-        "prefect.resource.id"
+        "syntask.resource.id"
     ],
     "posture": "Proactive",
     "threshold": 30,
@@ -217,7 +217,7 @@ def create_event_driven_automation():
     "owner_resource": "string"
         }
     
-    headers = {"Authorization": f"Bearer {PREFECT_API_KEY}"}
+    headers = {"Authorization": f"Bearer {SYNTASK_API_KEY}"}
     response = requests.post(api_url, headers=headers, json=data)
     
     print(response.json())
@@ -241,14 +241,14 @@ name: Cancel long running flows
 description: Cancel any flow run after an hour of execution
 trigger:
   match:
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   match_related: {}
   after:
-    - "prefect.flow-run.Failed"
+    - "syntask.flow-run.Failed"
   expect:
-    - "prefect.flow-run.*"
+    - "syntask.flow-run.*"
   for_each:
-    - "prefect.resource.id"
+    - "syntask.resource.id"
   posture: "Proactive"
   threshold: 1
   within: 30
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     create_or_update_automation()
 ```
 
-You can find a complete repo with these APIs examples in this [GitHub repository](https://github.com/EmilRex/prefect-api-examples/tree/main). 
+You can find a complete repo with these APIs examples in this [GitHub repository](https://github.com/EmilRex/syntask-api-examples/tree/main). 
 
 In this example, we managed to create the automation by registering the .yaml file with a helper function. This offers another experience when trying to create an automation.
 
@@ -301,8 +301,8 @@ Here is the webhook we can use to create these dynamic events.
 {
     "event": "model-update",
     "resource": {
-        "prefect.resource.id": "product.models.{{ body.model_id}}",
-        "prefect.resource.name": "{{ body.friendly_name }}",
+        "syntask.resource.id": "product.models.{{ body.model_id}}",
+        "syntask.resource.name": "{{ body.friendly_name }}",
         "run_count": "{{body.run_count}}"
     }
 }
@@ -315,7 +315,7 @@ Each webhook will correspond to a custom event created, where you can react to i
 
 For example, we can create a curl request that sends the endpoint information such as a run count for our deployment. 
 ```console
-curl -X POST https://api.prefect.cloud/hooks/34iV2SFke3mVa6y5Y-YUoA -d "model_id=adhoc" -d "run_count=10" -d "friendly_name=test-user-input"
+curl -X POST https://api.syntask.cloud/hooks/34iV2SFke3mVa6y5Y-YUoA -d "model_id=adhoc" -d "run_count=10" -d "friendly_name=test-user-input"
 ```
 From here, we can make a webhook that is connected to pulling in parameters on the curl command, and then it kicks off a deployment that uses these pulled parameters.
 ![Webhook created](/img/guides/webhook-created.png)
@@ -323,7 +323,7 @@ From here, we can make a webhook that is connected to pulling in parameters on t
 Let us go into the event feed, and we can automate straight from this event. 
 ![Webhook automate](/img/guides/webhook-automate.png)
 
-This allows us to create automations that respond to these webhook events. From a few clicks in the UI, we are able to associate an external process with the Prefect events API, that can enable us to trigger downstream deployments. 
+This allows us to create automations that respond to these webhook events. From a few clicks in the UI, we are able to associate an external process with the Syntask events API, that can enable us to trigger downstream deployments. 
 ![Automation custom](/img/guides/automation-custom.png)
 
 In the next section, we will explore event triggers that automate the kickoff of a deployment run.
@@ -331,7 +331,7 @@ In the next section, we will explore event triggers that automate the kickoff of
 ## Using triggers
 
 Let's take this idea one step further, by creating a deployment that will be triggered when a flow run takes longer than expected. 
-We can take advantage of Prefect's [Marvin](https://www.askmarvin.ai/) library that will use an LLM to classify our data. 
+We can take advantage of Syntask's [Marvin](https://www.askmarvin.ai/) library that will use an LLM to classify our data. 
 Marvin is great at embedding data science and data analysis applications within your pre-existing data engineering workflows. In this case, we can use [Marvin'd AI functions](https://www.askmarvin.ai/components/ai_function/#ai-function) to help make our dataset more information rich. 
 
 Install Marvin with `pip install marvin` and set you OpenAI API key as shown [here](https://www.askmarvin.ai/welcome/quickstart/)
@@ -369,15 +369,15 @@ if __name__ == "__main__":
     
 ```
 
-Let's kick off a deployment with a trigger defined in a `prefect.yaml` file. Let's specify what we want to trigger when the event stays in a running state for longer than 30 seconds. 
+Let's kick off a deployment with a trigger defined in a `syntask.yaml` file. Let's specify what we want to trigger when the event stays in a running state for longer than 30 seconds. 
 ```yaml
-# Welcome to your prefect.yaml file! You can use this file for storing and managing
+# Welcome to your syntask.yaml file! You can use this file for storing and managing
 # configuration for deploying your flows. We recommend committing this file to source
 # control along with your flow code.
 
 # Generic metadata about this project
 name: automations-guide
-prefect-version: 2.13.1
+syntask-version: 2.13.1
 
 # build section allows you to manage and build docker images
 build: null
@@ -387,8 +387,8 @@ push: null
 
 # pull section allows you to provide instructions for cloning this project in remote locations
 pull:
-- prefect.deployments.steps.set_working_directory:
-    directory: /Users/src/prefect/Playground/marvin-extension
+- syntask.deployments.steps.set_working_directory:
+    directory: /Users/src/syntask/Playground/marvin-extension
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
@@ -396,10 +396,10 @@ deployments:
   triggers:
     - enabled: true
       match:
-        prefect.resource.id: "prefect.flow-run.*"
-      after: "prefect.flow-run.Running",
+        syntask.resource.id: "syntask.flow-run.*"
+      after: "syntask.flow-run.Running",
       expect: [],
-      for_each: ["prefect.resource.id"],
+      for_each: ["syntask.resource.id"],
       parameters:
         param_1: 10
       posture: "Proactive"
@@ -417,6 +417,6 @@ deployments:
 
 ## Next steps
 
-You've seen how to create automations via the UI, REST API, and a triggers defined in a `prefect.yaml` deployment definition.
+You've seen how to create automations via the UI, REST API, and a triggers defined in a `syntask.yaml` deployment definition.
 
 To learn more about events that can act as automation triggers, see the [events docs](/concepts/events/).  To learn more about event webhooks in particular, see the [webhooks guide](/guides/webhooks/).

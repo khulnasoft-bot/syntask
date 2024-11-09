@@ -1,5 +1,5 @@
 name: 📝 Suggest a change to documentation
-description: Propose edits, enhancements, or fixes to Prefect documentation
+description: Propose edits, enhancements, or fixes to Syntask documentation
 labels: ["docs", "needs:triage"]
 body:
   - type: checkboxes

@@ -2,14 +2,14 @@ import warnings
 
 import pytest
 
-from prefect.deprecated.data_documents import (
+from syntask.deprecated.data_documents import (
     _SERIALIZERS,
     DataDocument,
     Serializer,
     register_serializer,
 )
-from prefect.settings import PREFECT_ASYNC_FETCH_STATE_RESULT, temporary_settings
-from prefect.states import Completed
+from syntask.settings import SYNTASK_ASYNC_FETCH_STATE_RESULT, temporary_settings
+from syntask.states import Completed
 
 
 @pytest.fixture(autouse=True)
@@ -76,7 +76,7 @@ async def test_async_state_result_with_data_document():
     state = Completed(data=DataDocument.encode("json", 1))
     result = state.result(fetch=False)
 
-    with temporary_settings({PREFECT_ASYNC_FETCH_STATE_RESULT: False}):
+    with temporary_settings({SYNTASK_ASYNC_FETCH_STATE_RESULT: False}):
         with pytest.warns(
             DeprecationWarning,
             match=r"State.result\(\) was called from an async context but not awaited.",
@@ -88,7 +88,7 @@ async def test_async_state_result_with_data_document():
 
 async def test_async_state_result_does_not_raise_warning_with_opt_out():
     state = Completed(data=DataDocument.encode("json", 1))
-    with temporary_settings({PREFECT_ASYNC_FETCH_STATE_RESULT: False}):
+    with temporary_settings({SYNTASK_ASYNC_FETCH_STATE_RESULT: False}):
         result = state.result(fetch=False)
 
     assert result == 1

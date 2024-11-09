@@ -6,14 +6,14 @@ import docker.errors as docker_errors
 import pytest
 from typer.testing import CliRunner
 
-import prefect
-from prefect.cli.dev import dev_app
-from prefect.infrastructure.container import CONTAINER_LABELS
-from prefect.logging import get_logger
-from prefect.utilities.dockerutils import (
+import syntask
+from syntask.cli.dev import dev_app
+from syntask.infrastructure.container import CONTAINER_LABELS
+from syntask.logging import get_logger
+from syntask.utilities.dockerutils import (
     IMAGE_LABELS,
     docker_client,
-    get_prefect_image_name,
+    get_syntask_image_name,
     silence_docker_warnings,
 )
 
@@ -53,19 +53,19 @@ def docker(worker_id: str) -> Generator[DockerClient, None, None]:
 
 @contextmanager
 def cleanup_all_new_docker_objects(docker: DockerClient, worker_id: str):
-    IMAGE_LABELS["io.prefect.test-worker"] = worker_id
-    CONTAINER_LABELS["io.prefect.test-worker"] = worker_id
+    IMAGE_LABELS["io.syntask.test-worker"] = worker_id
+    CONTAINER_LABELS["io.syntask.test-worker"] = worker_id
     try:
         yield
     finally:
         try:
             for container in docker.containers.list(all=True):
-                if container.labels.get("io.prefect.test-worker") == worker_id:
+                if container.labels.get("io.syntask.test-worker") == worker_id:
                     _safe_remove_container(container)
-                elif container.labels.get("io.prefect.delete-me"):
+                elif container.labels.get("io.syntask.delete-me"):
                     _safe_remove_container(container)
 
-            filters = {"label": f"io.prefect.test-worker={worker_id}"}
+            filters = {"label": f"io.syntask.test-worker={worker_id}"}
             for image in docker.images.list(filters=filters):
                 for tag in image.tags:
                     docker.images.remove(tag, force=True)
@@ -74,9 +74,9 @@ def cleanup_all_new_docker_objects(docker: DockerClient, worker_id: str):
 
 
 @pytest.fixture(scope="session")
-def prefect_base_image(pytestconfig: "pytest.Config", docker: DockerClient):
-    """Ensure that the prefect dev image is available and up-to-date"""
-    image_name = get_prefect_image_name()
+def syntask_base_image(pytestconfig: "pytest.Config", docker: DockerClient):
+    """Ensure that the syntask dev image is available and up-to-date"""
+    image_name = get_syntask_image_name()
 
     image_exists, version_is_right = False, False
 
@@ -87,10 +87,10 @@ def prefect_base_image(pytestconfig: "pytest.Config", docker: DockerClient):
 
     if image_exists:
         output = docker.containers.run(
-            image_name, ["prefect", "--version"], remove=True
+            image_name, ["syntask", "--version"], remove=True
         )
         image_version = output.decode().strip()
-        version_is_right = image_version == prefect.__version__
+        version_is_right = image_version == syntask.__version__
 
     if not image_exists or not version_is_right:
         if pytestconfig.getoption("--disable-docker-image-builds"):
@@ -102,7 +102,7 @@ def prefect_base_image(pytestconfig: "pytest.Config", docker: DockerClient):
             if not version_is_right:
                 raise Exception(
                     "The --disable-docker-image-builds flag is set, but "
-                    f"{image_name} includes {image_version}, not {prefect.__version__}"
+                    f"{image_name} includes {image_version}, not {syntask.__version__}"
                 )
         else:
             CliRunner().invoke(dev_app, ["build-image"])

@@ -1,1 +1,1 @@
-::: prefect.server.models.csrf_token
+::: syntask.server.models.csrf_token

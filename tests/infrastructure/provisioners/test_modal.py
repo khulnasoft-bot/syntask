@@ -5,9 +5,9 @@ from uuid import UUID
 
 import pytest
 
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient
-from prefect.infrastructure.provisioners.modal import ModalPushProvisioner
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient
+from syntask.infrastructure.provisioners.modal import ModalPushProvisioner
 
 
 @pytest.fixture(autouse=True)
@@ -33,31 +33,31 @@ async def modal_credentials_block_id(modal_credentials_block_cls: Block):
 
 @pytest.fixture
 def mock_run_process():
-    with patch("prefect.infrastructure.provisioners.modal.run_process") as mock:
+    with patch("syntask.infrastructure.provisioners.modal.run_process") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_modal(monkeypatch):
     mock = MagicMock()
-    monkeypatch.setattr("prefect.infrastructure.provisioners.modal.modal", mock)
+    monkeypatch.setattr("syntask.infrastructure.provisioners.modal.modal", mock)
     yield mock
 
 
 @pytest.fixture
 def mock_importlib():
-    with patch("prefect.infrastructure.provisioners.modal.importlib") as mock:
+    with patch("syntask.infrastructure.provisioners.modal.importlib") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_confirm():
-    with patch("prefect.infrastructure.provisioners.modal.Confirm") as mock:
+    with patch("syntask.infrastructure.provisioners.modal.Confirm") as mock:
         yield mock
 
 
 async def test_provision(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     mock_run_process: AsyncMock,
     mock_modal: MagicMock,
     mock_confirm: MagicMock,
@@ -90,11 +90,11 @@ async def test_provision(
     base_job_template = {"variables": {"properties": {"modal_credentials": {}}}}
 
     result = await provisioner.provision(
-        work_pool_name, base_job_template, client=prefect_client
+        work_pool_name, base_job_template, client=syntask_client
     )
 
     # Check if the block document exists and has expected values
-    block_document = await prefect_client.read_block_document_by_name(
+    block_document = await syntask_client.read_block_document_by_name(
         "work-pool-name-modal-credentials", "modal-credentials"
     )
 
@@ -118,7 +118,7 @@ async def test_provision(
 
 
 async def test_provision_existing_modal_credentials_block(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     modal_credentials_block_id: UUID,
     mock_run_process: AsyncMock,
 ):
@@ -131,7 +131,7 @@ async def test_provision_existing_modal_credentials_block(
     base_job_template = {"variables": {"properties": {"modal_credentials": {}}}}
 
     result = await provisioner.provision(
-        work_pool_name, base_job_template, client=prefect_client
+        work_pool_name, base_job_template, client=syntask_client
     )
 
     # Check if the base job template was updated
@@ -143,7 +143,7 @@ async def test_provision_existing_modal_credentials_block(
 
 
 async def test_provision_existing_modal_credentials(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     mock_run_process: AsyncMock,
     mock_modal: MagicMock,
     mock_confirm: MagicMock,
@@ -168,11 +168,11 @@ async def test_provision_existing_modal_credentials(
     base_job_template = {"variables": {"properties": {"modal_credentials": {}}}}
 
     result = await provisioner.provision(
-        work_pool_name, base_job_template, client=prefect_client
+        work_pool_name, base_job_template, client=syntask_client
     )
 
     # Check if the block document exists and has expected values
-    block_document = await prefect_client.read_block_document_by_name(
+    block_document = await syntask_client.read_block_document_by_name(
         "work-pool-name-modal-credentials", "modal-credentials"
     )
 

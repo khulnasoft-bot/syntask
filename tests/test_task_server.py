@@ -3,18 +3,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import prefect.results
-from prefect import flow, task
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.client.schemas.objects import TaskRun
-from prefect.exceptions import MissingResult
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING,
+import syntask.results
+from syntask import flow, task
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.client.schemas.objects import TaskRun
+from syntask.exceptions import MissingResult
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING,
     temporary_settings,
 )
-from prefect.states import Running
-from prefect.task_server import TaskServer, serve
-from prefect.tasks import task_input_hash
+from syntask.states import Running
+from syntask.task_server import TaskServer, serve
+from syntask.tasks import task_input_hash
 
 if HAS_PYDANTIC_V2:
     from pydantic.v1 import BaseModel
@@ -26,7 +26,7 @@ else:
 def mock_settings():
     with temporary_settings(
         {
-            PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: True,
+            SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: True,
         }
     ):
         yield
@@ -34,9 +34,9 @@ def mock_settings():
 
 @pytest.fixture(autouse=True)
 async def clear_cached_filesystems():
-    prefect.results._default_task_scheduling_storages.clear()
+    syntask.results._default_task_scheduling_storages.clear()
     yield
-    prefect.results._default_task_scheduling_storages.clear()
+    syntask.results._default_task_scheduling_storages.clear()
 
 
 # model defined outside of the test function to avoid pickling issues
@@ -72,7 +72,7 @@ def async_foo_task():
 @pytest.fixture
 def mock_task_server_start(monkeypatch):
     monkeypatch.setattr(
-        "prefect.task_server.TaskServer.start", mock_start := AsyncMock()
+        "syntask.task_server.TaskServer.start", mock_start := AsyncMock()
     )
     return mock_start
 
@@ -87,7 +87,7 @@ def task_task_runner_mock():
 @pytest.fixture
 def mock_create_subscription(monkeypatch):
     monkeypatch.setattr(
-        "prefect.task_server.TaskServer._subscribe_to_task_scheduling",
+        "syntask.task_server.TaskServer._subscribe_to_task_scheduling",
         create_subscription := AsyncMock(),
     )
     return create_subscription
@@ -144,13 +144,13 @@ async def test_task_server_client_id_is_set():
 
 
 async def test_task_server_handles_aborted_task_run_submission(
-    foo_task, prefect_client, caplog
+    foo_task, syntask_client, caplog
 ):
     task_server = TaskServer(foo_task)
 
     task_run = foo_task.submit(42)
 
-    await prefect_client.set_task_run_state(task_run.id, Running(), force=True)
+    await syntask_client.set_task_run_state(task_run.id, Running(), force=True)
 
     await task_server.execute_task_run(task_run)
 
@@ -158,13 +158,13 @@ async def test_task_server_handles_aborted_task_run_submission(
 
 
 async def test_task_server_handles_deleted_task_run_submission(
-    foo_task, prefect_client, caplog
+    foo_task, syntask_client, caplog
 ):
     task_server = TaskServer(foo_task)
 
     task_run = foo_task.submit(42)
 
-    await prefect_client.delete_task_run(task_run.id)
+    await syntask_client.delete_task_run(task_run.id)
 
     await task_server.execute_task_run(task_run)
 
@@ -176,10 +176,10 @@ async def test_task_server_handles_deleted_task_run_submission(
 @pytest.mark.usefixtures("mock_task_server_start")
 class TestServe:
     async def test_serve_raises_if_task_scheduling_not_enabled(self, foo_task):
-        with temporary_settings({PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: False}):
+        with temporary_settings({SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING: False}):
             with pytest.raises(
                 RuntimeError,
-                match="set PREFECT_EXPERIMENTAL_ENABLE_TASK_SCHEDULING to True",
+                match="set SYNTASK_EXPERIMENTAL_ENABLE_TASK_SCHEDULING to True",
             ):
                 await serve(foo_task)
 
@@ -205,7 +205,7 @@ class TestServe:
 
 
 async def test_task_server_can_execute_a_single_async_single_task_run(
-    async_foo_task, prefect_client
+    async_foo_task, syntask_client
 ):
     task_server = TaskServer(async_foo_task)
 
@@ -213,7 +213,7 @@ async def test_task_server_can_execute_a_single_async_single_task_run(
 
     await task_server.execute_task_run(task_run)
 
-    updated_task_run = await prefect_client.read_task_run(task_run.id)
+    updated_task_run = await syntask_client.read_task_run(task_run.id)
 
     assert updated_task_run.state.is_completed()
 
@@ -221,7 +221,7 @@ async def test_task_server_can_execute_a_single_async_single_task_run(
 
 
 async def test_task_server_can_execute_a_single_sync_single_task_run(
-    foo_task, prefect_client
+    foo_task, syntask_client
 ):
     task_server = TaskServer(foo_task)
 
@@ -229,7 +229,7 @@ async def test_task_server_can_execute_a_single_sync_single_task_run(
 
     await task_server.execute_task_run(task_run)
 
-    updated_task_run = await prefect_client.read_task_run(task_run.id)
+    updated_task_run = await syntask_client.read_task_run(task_run.id)
 
     assert updated_task_run.state.is_completed()
 
@@ -237,7 +237,7 @@ async def test_task_server_can_execute_a_single_sync_single_task_run(
 
 
 class TestTaskServerTaskRunRetries:
-    async def test_task_run_via_task_server_respects_retry_policy(self, prefect_client):
+    async def test_task_run_via_task_server_respects_retry_policy(self, syntask_client):
         count = 0
 
         @task(retries=1, persist_result=True)
@@ -255,7 +255,7 @@ class TestTaskServerTaskRunRetries:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
@@ -269,7 +269,7 @@ class TestTaskServerTaskRunRetries:
         ids=["will_retry", "wont_retry"],
     )
     async def test_task_run_via_task_server_respects_retry_condition_fn(
-        self, should_retry, prefect_client
+        self, should_retry, syntask_client
     ):
         count = 0
 
@@ -294,7 +294,7 @@ class TestTaskServerTaskRunRetries:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.type == expected_state
 
@@ -304,7 +304,7 @@ class TestTaskServerTaskRunRetries:
 class TestTaskServerTaskResults:
     @pytest.mark.parametrize("persist_result", [True, False], ids=["persisted", "not"])
     async def test_task_run_via_task_server_respects_persist_result(
-        self, persist_result, prefect_client
+        self, persist_result, syntask_client
     ):
         @task(persist_result=persist_result)
         def some_task():
@@ -316,7 +316,7 @@ class TestTaskServerTaskResults:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
@@ -333,7 +333,7 @@ class TestTaskServerTaskResults:
         "storage_key", ["foo", "{parameters[x]}"], ids=["static", "dynamic"]
     )
     async def test_task_run_via_task_server_respects_result_storage_key(
-        self, storage_key, prefect_client
+        self, storage_key, syntask_client
     ):
         @task(persist_result=True, result_storage_key=storage_key)
         def some_task(x):
@@ -345,7 +345,7 @@ class TestTaskServerTaskResults:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
@@ -354,7 +354,7 @@ class TestTaskServerTaskResults:
         assert updated_task_run.state.data.storage_key == "foo"
 
     async def test_task_run_via_task_server_with_complex_result_type(
-        self, prefect_client
+        self, syntask_client
     ):
         @task(persist_result=True)
         def americas_third_largest_city() -> City:
@@ -372,7 +372,7 @@ class TestTaskServerTaskResults:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
@@ -385,7 +385,7 @@ class TestTaskServerTaskResults:
         )
 
     async def test_task_run_via_task_server_respects_caching(
-        self, async_foo_task, prefect_client, caplog
+        self, async_foo_task, syntask_client, caplog
     ):
         count = 0
 
@@ -401,7 +401,7 @@ class TestTaskServerTaskResults:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
@@ -412,7 +412,7 @@ class TestTaskServerTaskResults:
         with caplog.at_level("INFO"):
             await task_server.execute_task_run(new_task_run)
 
-        new_updated_task_run = await prefect_client.read_task_run(task_run.id)
+        new_updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert "Finished in state Cached(type=COMPLETED)" in caplog.text
 
@@ -423,7 +423,7 @@ class TestTaskServerTaskResults:
 
 class TestTaskServerTaskTags:
     async def test_task_run_via_task_server_respects_tags(
-        self, async_foo_task, prefect_client
+        self, async_foo_task, syntask_client
     ):
         @task(tags=["foo", "bar"])
         async def task_with_tags(x):
@@ -435,7 +435,7 @@ class TestTaskServerTaskTags:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
@@ -444,7 +444,7 @@ class TestTaskServerTaskTags:
 
 class TestTaskServerCustomTaskRunName:
     async def test_task_run_via_task_server_respects_custom_task_run_name(
-        self, async_foo_task, prefect_client
+        self, async_foo_task, syntask_client
     ):
         async_foo_task_with_custom_name = async_foo_task.with_options(
             task_run_name="{x}"
@@ -456,7 +456,7 @@ class TestTaskServerCustomTaskRunName:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
@@ -465,7 +465,7 @@ class TestTaskServerCustomTaskRunName:
 
 class TestTaskServerTaskStateHooks:
     async def test_task_run_via_task_server_runs_on_completion_hook(
-        self, async_foo_task, prefect_client, capsys
+        self, async_foo_task, syntask_client, capsys
     ):
         async_foo_task_with_on_completion_hook = async_foo_task.with_options(
             on_completion=[
@@ -479,14 +479,14 @@ class TestTaskServerTaskStateHooks:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
         assert "Running on_completion hook" in capsys.readouterr().out
 
     async def test_task_run_via_task_server_runs_on_failure_hook(
-        self, prefect_client, capsys
+        self, syntask_client, capsys
     ):
         @task(
             on_failure=[lambda task, task_run, state: print("Running on_failure hook")]
@@ -500,7 +500,7 @@ class TestTaskServerTaskStateHooks:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_failed()
 
@@ -508,7 +508,7 @@ class TestTaskServerTaskStateHooks:
 
 
 class TestTaskServerNestedTasks:
-    async def test_nested_task_run_via_task_server(self, prefect_client):
+    async def test_nested_task_run_via_task_server(self, syntask_client):
         @task
         def inner_task(x):
             return x
@@ -523,13 +523,13 @@ class TestTaskServerNestedTasks:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 
         assert await updated_task_run.state.result() == 42
 
-    async def test_nested_flow_run_via_task_server(self, prefect_client):
+    async def test_nested_flow_run_via_task_server(self, syntask_client):
         @flow
         def inner_flow(x):
             return x
@@ -544,7 +544,7 @@ class TestTaskServerNestedTasks:
 
         await task_server.execute_task_run(task_run)
 
-        updated_task_run = await prefect_client.read_task_run(task_run.id)
+        updated_task_run = await syntask_client.read_task_run(task_run.id)
 
         assert updated_task_run.state.is_completed()
 

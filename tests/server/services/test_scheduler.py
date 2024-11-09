@@ -4,12 +4,12 @@ import pendulum
 import pytest
 import sqlalchemy as sa
 
-from prefect import states
-from prefect.server import models, schemas
-from prefect.server.services.scheduler import RecentDeploymentsScheduler, Scheduler
-from prefect.settings import (
-    PREFECT_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE,
-    PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS,
+from syntask import states
+from syntask.server import models, schemas
+from syntask.server.services.scheduler import RecentDeploymentsScheduler, Scheduler
+from syntask.settings import (
+    SYNTASK_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE,
+    SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS,
 )
 
 
@@ -234,8 +234,8 @@ async def test_create_schedules_from_multiple_deployments_in_batches(flow, sessi
     # create deployments that will have to insert
     # flow runs in batches of scheduler_insertion_batch_size
     deployments_to_schedule = (
-        PREFECT_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE.value()
-        // PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        SYNTASK_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE.value()
+        // SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
     ) + 1
     for i in range(deployments_to_schedule):
         await models.deployments.create_deployment(
@@ -263,9 +263,9 @@ async def test_create_schedules_from_multiple_deployments_in_batches(flow, sessi
     runs = await models.flow_runs.read_flow_runs(session)
     assert (
         len(runs)
-        == deployments_to_schedule * PREFECT_API_SERVICES_SCHEDULER_MIN_RUNS.value()
+        == deployments_to_schedule * SYNTASK_API_SERVICES_SCHEDULER_MIN_RUNS.value()
     )
-    assert len(runs) > PREFECT_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE.value()
+    assert len(runs) > SYNTASK_API_SERVICES_SCHEDULER_INSERT_BATCH_SIZE.value()
 
 
 async def test_scheduler_respects_paused(flow, session):

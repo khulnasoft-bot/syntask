@@ -2,7 +2,7 @@ import httpx
 import pytest
 import respx
 
-from prefect.server.api import collections
+from syntask.server.api import collections
 
 FAKE_DEFAULT_BASE_JOB_TEMPLATE = {
     "job_configuration": {
@@ -48,7 +48,7 @@ def k8s_default_base_job_template():
                             "serviceAccountName": "{{ service_account_name }}",
                             "containers": [
                                 {
-                                    "name": "prefect-job",
+                                    "name": "syntask-job",
                                     "env": "{{ env }}",
                                     "image": "{{ image }}",
                                     "imagePullPolicy": "{{ image_pull_policy }}",
@@ -112,9 +112,9 @@ def k8s_default_base_job_template():
                     "title": "Image",
                     "description": (
                         "The image reference of a container image to use for created"
-                        " jobs. If not set, the latest Prefect image will be used."
+                        " jobs. If not set, the latest Syntask image will be used."
                     ),
-                    "example": "docker.io/prefecthq/prefect:2-latest",
+                    "example": "docker.io/syntaskhq/syntask:2-latest",
                     "type": "string",
                 },
                 "service_account_name": {
@@ -238,7 +238,7 @@ def docker_default_base_job_template():
                 "   env: The environment variables to set in created Docker"
                 " containers.\n    labels: The labels to set on created Docker"
                 " containers.\n    image: The image reference of a container image to"
-                " use for created jobs.\n        If not set, the latest Prefect image"
+                " use for created jobs.\n        If not set, the latest Syntask image"
                 " will be used.\n    image_pull_policy: The image pull policy to use"
                 " when pulling images.\n    networks: Docker networks that created"
                 " containers should be connected to.\n    network_mode: The network"
@@ -298,9 +298,9 @@ def docker_default_base_job_template():
                     "title": "Image",
                     "description": (
                         "The image reference of a container image to use for created"
-                        " jobs. If not set, the latest Prefect image will be used."
+                        " jobs. If not set, the latest Syntask image will be used."
                     ),
-                    "example": "docker.io/prefecthq/prefect:2-latest",
+                    "example": "docker.io/syntaskhq/syntask:2-latest",
                     "type": "string",
                 },
                 "image_pull_policy": {
@@ -393,38 +393,38 @@ def mock_collection_registry(
     k8s_default_base_job_template,
 ):
     mock_body = {
-        "prefect": {
-            "prefect-agent": {
-                "type": "prefect-agent",
+        "syntask": {
+            "syntask-agent": {
+                "type": "syntask-agent",
                 "default_base_job_configuration": {},
-                "display_name": "Prefect Agent",
-                "description": "A Prefect Agent pool.",
+                "display_name": "Syntask Agent",
+                "description": "A Syntask Agent pool.",
             }
         },
-        "prefect-fake": {
+        "syntask-fake": {
             "fake": {
                 "type": "fake",
                 "default_base_job_configuration": FAKE_DEFAULT_BASE_JOB_TEMPLATE,
-                "display_name": "Prefect Fake",
-                "description": "A Prefect Fake pool.",
+                "display_name": "Syntask Fake",
+                "description": "A Syntask Fake pool.",
             }
         },
-        "prefect-cloud": {
-            "prefect-cloud:push": {
+        "syntask-cloud": {
+            "syntask-cloud:push": {
                 "type": "cloud-run:push",
                 "default_base_job_configuration": {},
                 "is_push_pool": True,
-                "display_name": "Prefect Cloud Run: Push",
-                "description": "A Prefect Cloud Run: Push pool.",
+                "display_name": "Syntask Cloud Run: Push",
+                "description": "A Syntask Cloud Run: Push pool.",
             }
         },
-        "prefect-docker": {
+        "syntask-docker": {
             "docker": {
                 "type": "docker",
                 "default_base_job_configuration": docker_default_base_job_template,
             }
         },
-        "prefect-kubernetes": {
+        "syntask-kubernetes": {
             "kubernetes": {
                 "type": "kubernetes",
                 "default_base_job_configuration": k8s_default_base_job_template,
@@ -437,6 +437,6 @@ def mock_collection_registry(
         assert_all_called=False,
     ) as respx_mock:
         respx_mock.get(
-            "https://raw.githubusercontent.com/PrefectHQ/prefect-collection-registry/main/views/aggregate-worker-metadata.json"
+            "https://raw.githubusercontent.com/Synopkg/syntask-collection-registry/main/views/aggregate-worker-metadata.json"
         ).mock(return_value=httpx.Response(200, json=mock_body))
         yield

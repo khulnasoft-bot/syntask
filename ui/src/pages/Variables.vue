@@ -15,8 +15,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { localization, PageHeadingVariables, VariablesTable, VariablesPageEmptyState, useWorkspaceApi } from '@prefecthq/prefect-ui-library'
-  import { useSubscription } from '@prefecthq/vue-compositions'
+  import { localization, PageHeadingVariables, VariablesTable, VariablesPageEmptyState, useWorkspaceApi } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription } from '@syntaskhq/vue-compositions'
   import { ref, computed } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 

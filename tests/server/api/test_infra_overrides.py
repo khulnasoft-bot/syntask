@@ -3,11 +3,11 @@ from typing import Any, Dict, Optional
 
 import pytest
 
-from prefect.infrastructure import KubernetesClusterConfig
-from prefect.server import models, schemas
-from prefect.server.models import deployments
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
+from syntask.infrastructure import KubernetesClusterConfig
+from syntask.server import models, schemas
+from syntask.server.models import deployments
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES,
     temporary_settings,
 )
 
@@ -15,7 +15,7 @@ from prefect.settings import (
 @pytest.fixture
 def enable_infra_overrides():
     with temporary_settings(
-        {PREFECT_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
+        {SYNTASK_EXPERIMENTAL_ENABLE_FLOW_RUN_INFRA_OVERRIDES: True}
     ):
         yield
 

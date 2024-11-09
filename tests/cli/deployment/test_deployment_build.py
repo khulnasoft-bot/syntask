@@ -6,15 +6,15 @@ from unittest.mock import Mock
 import pendulum
 import pytest
 
-import prefect.server.models as models
-import prefect.server.schemas as schemas
-from prefect import flow
-from prefect.deployments import Deployment
-from prefect.filesystems import LocalFileSystem
-from prefect.infrastructure import Process
-from prefect.testing.cli import invoke_and_assert
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.asyncutils import run_sync_in_worker_thread
+import syntask.server.models as models
+import syntask.server.schemas as schemas
+from syntask import flow
+from syntask.deployments import Deployment
+from syntask.filesystems import LocalFileSystem
+from syntask.infrastructure import Process
+from syntask.testing.cli import invoke_and_assert
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.asyncutils import run_sync_in_worker_thread
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def patch_import(monkeypatch):
         pass
 
     monkeypatch.setattr(
-        "prefect.cli.deployment.load_flow_from_entrypoint", lambda path: fn
+        "syntask.cli.deployment.load_flow_from_entrypoint", lambda path: fn
     )
     return fn
 
@@ -121,12 +121,12 @@ def mock_build_from_flow(monkeypatch):
     mock_build_from_flow.return_value = ret
 
     monkeypatch.setattr(
-        "prefect.cli.deployment.Deployment.build_from_flow", mock_build_from_flow
+        "syntask.cli.deployment.Deployment.build_from_flow", mock_build_from_flow
     )
 
     # not needed for test
     monkeypatch.setattr(
-        "prefect.cli.deployment.create_work_queue_and_set_concurrency_limit",
+        "syntask.cli.deployment.create_work_queue_and_set_concurrency_limit",
         AsyncMock(),
     )
 
@@ -138,7 +138,7 @@ def mock_create_default_ignore_file(monkeypatch):
     mock_create_default_ignore_file = Mock(return_value=True)
 
     monkeypatch.setattr(
-        "prefect.cli.deployment.create_default_ignore_file",
+        "syntask.cli.deployment.create_default_ignore_file",
         mock_create_default_ignore_file,
     )
 
@@ -157,7 +157,7 @@ async def ensure_default_agent_pool_exists(session):
         default_work_pool = await models.workers.create_work_pool(
             session=session,
             work_pool=schemas.actions.WorkPoolCreate(
-                name=models.workers.DEFAULT_AGENT_WORK_POOL_NAME, type="prefect-agent"
+                name=models.workers.DEFAULT_AGENT_WORK_POOL_NAME, type="syntask-agent"
             ),
         )
         await session.commit()
@@ -180,7 +180,7 @@ def test_deployment_build_prints_deprecation_warning(tmp_path, patch_import):
         expected_output_contains=(
             "WARNING: The 'deployment build' command has been deprecated.",
             "It will not be available after Sep 2024.",
-            "Use 'prefect deploy' to deploy flows via YAML instead.",
+            "Use 'syntask deploy' to deploy flows via YAML instead.",
         ),
     )
 
@@ -644,7 +644,7 @@ class TestEntrypoint:
 
     def test_entrypoint_that_points_to_wrong_flow_raises_error(self, tmp_path):
         code = """
-        from prefect import flow
+        from syntask import flow
 
         @flow
         def cat():
@@ -687,7 +687,7 @@ class TestEntrypoint:
 
     def test_entrypoint_works_with_flow_with_custom_name(self, tmp_path, monkeypatch):
         flow_code = """
-        from prefect import flow
+        from syntask import flow
 
         @flow(name="SoMe CrAz_y N@me")
         def dog():
@@ -712,7 +712,7 @@ class TestEntrypoint:
         self, tmp_path, monkeypatch
     ):
         flow_code = """
-        from prefect import flow
+        from syntask import flow
 
         @flow
         def dog_flow_func():
@@ -778,7 +778,7 @@ class TestWorkQueue:
                     "To execute flow runs from this deployment, start an agent "
                     "that pulls work from the 'default' work queue:"
                 ),
-                "$ prefect agent start -q 'default'",
+                "$ syntask agent start -q 'default'",
             ],
         )
 
@@ -874,14 +874,14 @@ class TestAutoApply:
                         " no such work pool exists."
                     ),
                     "To create a work pool via the CLI:",
-                    "$ prefect work-pool create 'gibberish'",
+                    "$ syntask work-pool create 'gibberish'",
                 ]
             ),
             temp_dir=tmp_path,
         )
 
-    def test_message_with_prefect_agent_work_pool(
-        self, patch_import, tmp_path, prefect_agent_work_pool
+    def test_message_with_syntask_agent_work_pool(
+        self, patch_import, tmp_path, syntask_agent_work_pool
     ):
         invoke_and_assert(
             [
@@ -893,15 +893,15 @@ class TestAutoApply:
                 "-o",
                 str(tmp_path / "test.yaml"),
                 "-p",
-                prefect_agent_work_pool.name,
+                syntask_agent_work_pool.name,
                 "--apply",
             ],
             expected_output_contains=[
                 (
                     "To execute flow runs from this deployment, start an agent that"
-                    f" pulls work from the {prefect_agent_work_pool.name!r} work pool:"
+                    f" pulls work from the {syntask_agent_work_pool.name!r} work pool:"
                 ),
-                f"$ prefect agent start -p {prefect_agent_work_pool.name!r}",
+                f"$ syntask agent start -p {syntask_agent_work_pool.name!r}",
             ],
             temp_dir=tmp_path,
         )
@@ -927,7 +927,7 @@ class TestAutoApply:
                     "To execute flow runs from this deployment, start a worker "
                     f"that pulls work from the {process_work_pool.name!r} work pool:"
                 ),
-                f"$ prefect worker start -p {process_work_pool.name!r}",
+                f"$ syntask worker start -p {process_work_pool.name!r}",
             ],
             temp_dir=tmp_path,
         )
@@ -955,8 +955,8 @@ class TestAutoApply:
                     f"{process_work_pool.name!r} work pool:"
                 ),
                 (
-                    "$ prefect config set PREFECT_EXPERIMENTAL_ENABLE_WORKERS=True\n"
-                    f"$ prefect worker start -p {process_work_pool.name!r}"
+                    "$ syntask config set SYNTASK_EXPERIMENTAL_ENABLE_WORKERS=True\n"
+                    f"$ syntask worker start -p {process_work_pool.name!r}"
                 ),
             ],
             temp_dir=tmp_path,
@@ -965,17 +965,17 @@ class TestAutoApply:
 
 class TestWorkQueueConcurrency:
     async def test_setting_work_queue_concurrency_limits_with_build(
-        self, built_deployment_with_queue_and_limit_overrides, prefect_client
+        self, built_deployment_with_queue_and_limit_overrides, syntask_client
     ):
-        queue = await prefect_client.read_work_queue_by_name(
+        queue = await syntask_client.read_work_queue_by_name(
             "the-queue-to-end-all-queues"
         )
         assert queue.concurrency_limit == 424242
 
     async def test_setting_work_queue_concurrency_limits_with_apply(
-        self, applied_deployment_with_queue_and_limit_overrides, prefect_client
+        self, applied_deployment_with_queue_and_limit_overrides, syntask_client
     ):
-        queue = await prefect_client.read_work_queue_by_name("the-mother-of-all-queues")
+        queue = await syntask_client.read_work_queue_by_name("the-mother-of-all-queues")
         assert queue.concurrency_limit == 4242
 
 

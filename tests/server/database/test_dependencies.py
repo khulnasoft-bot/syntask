@@ -7,25 +7,25 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.database import dependencies
-from prefect.server.database.configurations import (
+from syntask.server.database import dependencies
+from syntask.server.database.configurations import (
     AioSqliteConfiguration,
     AsyncPostgresConfiguration,
     BaseDatabaseConfiguration,
 )
-from prefect.server.database.dependencies import inject_db
-from prefect.server.database.interface import PrefectDBInterface
-from prefect.server.database.orm_models import (
+from syntask.server.database.dependencies import inject_db
+from syntask.server.database.interface import SyntaskDBInterface
+from syntask.server.database.orm_models import (
     AioSqliteORMConfiguration,
     AsyncPostgresORMConfiguration,
     BaseORMConfiguration,
 )
-from prefect.server.database.query_components import (
+from syntask.server.database.query_components import (
     AioSqliteQueryComponents,
     AsyncPostgresQueryComponents,
     BaseQueryComponents,
 )
-from prefect.server.schemas.graph import Graph
+from syntask.server.schemas.graph import Graph
 
 
 @pytest.mark.parametrize(
@@ -133,7 +133,7 @@ async def test_injecting_really_dumb_query_components():
 
         async def flow_run_graph_v2(
             self,
-            db: PrefectDBInterface,
+            db: SyntaskDBInterface,
             session: AsyncSession,
             flow_run_id: UUID,
             since: datetime,
@@ -212,7 +212,7 @@ async def test_inject_db(db):
 
 
 async def test_inject_interface_class():
-    class TestInterface(PrefectDBInterface):
+    class TestInterface(SyntaskDBInterface):
         @property
         def new_property(self):
             return 42

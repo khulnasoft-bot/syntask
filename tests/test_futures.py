@@ -4,20 +4,20 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from prefect.client import PrefectClient
-from prefect.exceptions import FailedRun
-from prefect.flows import flow
-from prefect.futures import PrefectFuture, resolve_futures_to_data
-from prefect.states import Completed, Failed
-from prefect.tasks import task
-from prefect.testing.utilities import assert_does_not_warn
+from syntask.client import SyntaskClient
+from syntask.exceptions import FailedRun
+from syntask.flows import flow
+from syntask.futures import SyntaskFuture, resolve_futures_to_data
+from syntask.states import Completed, Failed
+from syntask.tasks import task
+from syntask.testing.utilities import assert_does_not_warn
 
-mock_client = MagicMock(spec=PrefectClient)()
+mock_client = MagicMock(spec=SyntaskClient)()
 mock_client.read_flow_run_states.return_value = [Completed()]
 
 
 async def test_resolve_futures_transforms_future(task_run):
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -30,7 +30,7 @@ async def test_resolve_futures_transforms_future(task_run):
 
 @pytest.mark.parametrize("typ", [list, tuple, set])
 async def test_resolve_futures_transforms_future_in_listlike_type(typ, task_run):
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -45,7 +45,7 @@ async def test_resolve_futures_transforms_future_in_listlike_type(typ, task_run)
 
 @pytest.mark.xfail(reason="2-step traversal of collections exhausts generators")
 async def test_resolve_futures_transforms_future_in_generator_type(task_run):
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -64,7 +64,7 @@ async def test_resolve_futures_transforms_future_in_generator_type(task_run):
 
 @pytest.mark.xfail(reason="2-step traversal of collections exhausts generators")
 async def test_resolve_futures_transforms_future_in_nested_generator_types(task_run):
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -86,7 +86,7 @@ async def test_resolve_futures_transforms_future_in_nested_generator_types(task_
 
 @pytest.mark.parametrize("typ", [dict, OrderedDict])
 async def test_resolve_futures_transforms_future_in_dictlike_type(typ, task_run):
-    key_future = PrefectFuture(
+    key_future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -94,7 +94,7 @@ async def test_resolve_futures_transforms_future_in_dictlike_type(typ, task_run)
     )
     key_future.task_run = task_run
     key_future._submitted.set()
-    value_future = PrefectFuture(
+    value_future = SyntaskFuture(
         key=str(task_run.id),
         name="bar",
         task_runner=None,
@@ -114,7 +114,7 @@ async def test_resolve_futures_transforms_future_in_dataclass(task_run):
         foo: str
         b: int = 2
 
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -134,7 +134,7 @@ async def test_resolves_futures_in_nested_collections(task_run):
         nested_list: list
         nested_dict: dict
 
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -169,7 +169,7 @@ def test_raise_warning_futures_in_condition():
         if a_task().result():
             pass
 
-    match = "A 'PrefectFuture' from a task call was cast to a boolean"
+    match = "A 'SyntaskFuture' from a task call was cast to a boolean"
     with pytest.warns(UserWarning, match=match):
         if_flow._run()
 
@@ -181,7 +181,7 @@ def test_raise_warning_futures_in_condition():
 
 
 async def test_resolve_futures_to_data_raises_exception_default(task_run):
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,
@@ -200,7 +200,7 @@ async def test_resolve_futures_to_data_raises_exception_default(task_run):
 
 
 async def test_resolve_futures_to_data_dont_raises_exception(task_run):
-    future = PrefectFuture(
+    future = SyntaskFuture(
         key=str(task_run.id),
         name="foo",
         task_runner=None,

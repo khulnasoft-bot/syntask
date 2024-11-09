@@ -1,10 +1,10 @@
 ---
-description: Prefect task runners let you specify the executors for tasks in a flow run, including returning a PrefectFuture containing both results and state. 
+description: Syntask task runners let you specify the executors for tasks in a flow run, including returning a SyntaskFuture containing both results and state. 
 tags:
     - tasks
     - task runners
     - executors
-    - PrefectFuture
+    - SyntaskFuture
     - submit
     - concurrent execution
     - sequential execution
@@ -17,7 +17,7 @@ search:
 
 # Task runners
 
-Task runners enable you to engage specific executors for Prefect tasks, such as for concurrent, parallel, or distributed execution of tasks.
+Task runners enable you to engage specific executors for Syntask tasks, such as for concurrent, parallel, or distributed execution of tasks.
 
 Task runners are not required for task execution. If you call a task function directly, the task executes as a regular Python function, without a task runner, and produces whatever result is returned by the function.
 
@@ -29,17 +29,17 @@ However, that's not the only way to run tasks!
 
 You can use the `.submit()` method on a task function to submit the task to a _task runner_. Using a task runner enables you to control whether tasks run sequentially, concurrently, or if you want to take advantage of a parallel or distributed execution library such as Dask or Ray.
 
-Using the `.submit()` method to submit a task also causes the task run to return a [`PrefectFuture`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture), a Prefect object that contains both any _data_ returned by the task function and a [`State`](/api-ref/server/schemas/states/), a Prefect object indicating the state of the task run.
+Using the `.submit()` method to submit a task also causes the task run to return a [`SyntaskFuture`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture), a Syntask object that contains both any _data_ returned by the task function and a [`State`](/api-ref/server/schemas/states/), a Syntask object indicating the state of the task run.
 
-Prefect currently provides the following built-in task runners: 
+Syntask currently provides the following built-in task runners: 
 
-- [`SequentialTaskRunner`](/api-ref/prefect/task-runners/#prefect.task_runners.SequentialTaskRunner) can run tasks sequentially. 
-- [`ConcurrentTaskRunner`](/api-ref/prefect/task-runners/#prefect.task_runners.ConcurrentTaskRunner) can run tasks concurrently, allowing tasks to switch when blocking on IO. Tasks will be submitted to a thread pool maintained by `anyio`.
+- [`SequentialTaskRunner`](/api-ref/syntask/task-runners/#syntask.task_runners.SequentialTaskRunner) can run tasks sequentially. 
+- [`ConcurrentTaskRunner`](/api-ref/syntask/task-runners/#syntask.task_runners.ConcurrentTaskRunner) can run tasks concurrently, allowing tasks to switch when blocking on IO. Tasks will be submitted to a thread pool maintained by `anyio`.
 
-In addition, the following Prefect-developed task runners for parallel or distributed task execution may be installed as [Prefect Integrations](/integrations/catalog/). 
+In addition, the following Syntask-developed task runners for parallel or distributed task execution may be installed as [Syntask Integrations](/integrations/catalog/). 
 
-- [`DaskTaskRunner`](https://prefecthq.github.io/prefect-dask/) can run tasks requiring parallel execution using [`dask.distributed`](http://distributed.dask.org/). 
-- [`RayTaskRunner`](https://prefecthq.github.io/prefect-ray/) can run tasks requiring parallel execution using [Ray](https://www.ray.io/).
+- [`DaskTaskRunner`](https://syntaskhq.github.io/syntask-dask/) can run tasks requiring parallel execution using [`dask.distributed`](http://distributed.dask.org/). 
+- [`RayTaskRunner`](https://syntaskhq.github.io/syntask-ray/) can run tasks requiring parallel execution using [Ray](https://www.ray.io/).
 
 !!! note "Concurrency versus parallelism"
     The words "concurrency" and "parallelism" may sound the same, but they mean different things in computing.
@@ -60,8 +60,8 @@ To configure your flow to use a specific task runner, import a task runner and a
 For example, you can use `ConcurrentTaskRunner` to allow tasks to switch when they would block.
 
 ```python hl_lines="2 11"
-from prefect import flow, task
-from prefect.task_runners import ConcurrentTaskRunner
+from syntask import flow, task
+from syntask.task_runners import ConcurrentTaskRunner
 import time
 
 @task
@@ -76,10 +76,10 @@ def elevator():
         stop_at_floor.submit(floor)
 ```
 
-If you specify an uninitialized task runner class, a task runner instance of that type is created with the default settings. You can also pass additional configuration parameters for task runners that accept parameters, such as [`DaskTaskRunner`](https://prefecthq.github.io/prefect-dask/) and [`RayTaskRunner`](https://prefecthq.github.io/prefect-ray/).
+If you specify an uninitialized task runner class, a task runner instance of that type is created with the default settings. You can also pass additional configuration parameters for task runners that accept parameters, such as [`DaskTaskRunner`](https://syntaskhq.github.io/syntask-dask/) and [`RayTaskRunner`](https://syntaskhq.github.io/syntask-ray/).
 
 !!! tip "Default task runner"
-    If you don't specify a task runner for a flow and you call a task with `.submit()` within the flow, Prefect uses the default `ConcurrentTaskRunner`.
+    If you don't specify a task runner for a flow and you call a task with `.submit()` within the flow, Syntask uses the default `ConcurrentTaskRunner`.
 
 ## Running tasks sequentially
 
@@ -91,8 +91,8 @@ Sometimes, it's useful to force tasks to run sequentially to make it easier to r
 The following example demonstrates using the `SequentialTaskRunner` to ensure that tasks run sequentially. In the example, the flow `glass_tower` runs the task `stop_at_floor` for floors one through 38, in that order.
 
 ```python
-from prefect import flow, task
-from prefect.task_runners import SequentialTaskRunner
+from syntask import flow, task
+from syntask.task_runners import SequentialTaskRunner
 import random
 
 @task
@@ -117,9 +117,9 @@ Each flow can only have a single task runner, but sometimes you may want a subse
 For example, you can have a flow (in the example below called `sequential_flow`) that runs its tasks locally using the `SequentialTaskRunner`. If you have some tasks that can run more efficiently in parallel on a Dask cluster, you could create a subflow (such as `dask_subflow`) to run those tasks using the `DaskTaskRunner`.
 
 ```python
-from prefect import flow, task
-from prefect.task_runners import SequentialTaskRunner
-from prefect_dask.task_runners import DaskTaskRunner
+from syntask import flow, task
+from syntask.task_runners import SequentialTaskRunner
+from syntask_dask.task_runners import DaskTaskRunner
 
 @task
 def hello_local():
@@ -150,15 +150,15 @@ This script outputs the following logs demonstrating the use of the Dask task ru
 
 <div class="terminal">
 ```bash 
-120:14:29.785 | INFO    | prefect.engine - Created flow run 'ivory-caiman' for flow 'sequential-flow'
+120:14:29.785 | INFO    | syntask.engine - Created flow run 'ivory-caiman' for flow 'sequential-flow'
 20:14:29.785 | INFO    | Flow run 'ivory-caiman' - Starting 'SequentialTaskRunner'; submitted tasks will be run sequentially...
 20:14:29.880 | INFO    | Flow run 'ivory-caiman' - Created task run 'hello_local-7633879f-0' for task 'hello_local'
 20:14:29.881 | INFO    | Flow run 'ivory-caiman' - Executing 'hello_local-7633879f-0' immediately...
 Hello!
 20:14:29.904 | INFO    | Task run 'hello_local-7633879f-0' - Finished in state Completed()
 20:14:29.952 | INFO    | Flow run 'ivory-caiman' - Created subflow run 'nimble-sparrow' for flow 'dask-subflow'
-20:14:29.953 | INFO    | prefect.task_runner.dask - Creating a new Dask cluster with `distributed.deploy.local.LocalCluster`
-20:14:31.862 | INFO    | prefect.task_runner.dask - The Dask dashboard is available at http://127.0.0.1:8787/status
+20:14:29.953 | INFO    | syntask.task_runner.dask - Creating a new Dask cluster with `distributed.deploy.local.LocalCluster`
+20:14:31.862 | INFO    | syntask.task_runner.dask - The Dask dashboard is available at http://127.0.0.1:8787/status
 20:14:31.901 | INFO    | Flow run 'nimble-sparrow' - Created task run 'hello_dask-2b96d711-0' for task 'hello_dask'
 20:14:32.370 | INFO    | Flow run 'nimble-sparrow' - Submitted task run 'hello_dask-2b96d711-0' for execution.
 Hello from Dask!
@@ -174,14 +174,14 @@ Hello!
 
 ## Using results from submitted tasks
 
-When you use `.submit()` to submit a task to a task runner, the task runner creates a [`PrefectFuture`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture) for access to the state and result of the task.
+When you use `.submit()` to submit a task to a task runner, the task runner creates a [`SyntaskFuture`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture) for access to the state and result of the task.
 
-A `PrefectFuture` is an object that provides access to a computation happening in a task runner &mdash; even if that computation is happening on a remote system.
+A `SyntaskFuture` is an object that provides access to a computation happening in a task runner &mdash; even if that computation is happening on a remote system.
 
 In the following example, we save the return value of calling `.submit()` on the task `say_hello` to the variable `future`, and then we print the type of the variable:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def say_hello(name):
@@ -195,22 +195,22 @@ def hello_world():
 hello_world()
 ```
 
-When you run this code, you'll see that the variable `future` is a `PrefectFuture`:
+When you run this code, you'll see that the variable `future` is a `SyntaskFuture`:
 
 <div class="terminal">
 ```bash
-variable 'future' is type <class 'prefect.futures.PrefectFuture'>
+variable 'future' is type <class 'syntask.futures.SyntaskFuture'>
 ```
 </div>
 
-When you pass a future into a task, Prefect waits for the "upstream" task &mdash; the one that the future references &mdash; to reach a final state before starting the downstream task.
+When you pass a future into a task, Syntask waits for the "upstream" task &mdash; the one that the future references &mdash; to reach a final state before starting the downstream task.
 
-This means that the downstream task won't receive the `PrefectFuture` you passed as an argument. Instead, the downstream task will receive the value that the upstream task returned.
+This means that the downstream task won't receive the `SyntaskFuture` you passed as an argument. Instead, the downstream task will receive the value that the upstream task returned.
 
 Take a look at how this works in the following example
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def say_hello(name):
@@ -236,10 +236,10 @@ Hello Marvin!
 ```
 </div>
 
-Futures have a few useful methods. For example, you can get the return value of the task run with  [`.result()`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture.result):
+Futures have a few useful methods. For example, you can get the return value of the task run with  [`.result()`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture.result):
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -257,7 +257,7 @@ my_flow()
 The `.result()` method will wait for the task to complete before returning the result to the caller. If the task run fails, `.result()` will raise the task run's exception. You may disable this behavior with the `raise_on_failure` option:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def my_task():
@@ -276,7 +276,7 @@ def my_flow():
         ...
 ```
 
-You can retrieve the current state of the task run associated with the `PrefectFuture` using [`.get_state()`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture.get_state):
+You can retrieve the current state of the task run associated with the `SyntaskFuture` using [`.get_state()`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture.get_state):
 
 ```python
 @flow
@@ -285,7 +285,7 @@ def my_flow():
     state = future.get_state()
 ```
 
-You can also wait for a task to complete by using the [`.wait()`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture.wait) method:
+You can also wait for a task to complete by using the [`.wait()`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture.wait) method:
 
 ```python
 @flow
@@ -309,7 +309,7 @@ def my_flow():
 ```
 
 
-You may also use the [`wait_for=[]`](/api-ref/prefect/tasks/#prefect.tasks.Task.submit) parameter when calling a task, specifying upstream task dependencies. This enables you to control task execution order for tasks that do not share data dependencies.
+You may also use the [`wait_for=[]`](/api-ref/syntask/tasks/#syntask.tasks.Task.submit) parameter when calling a task, specifying upstream task dependencies. This enables you to control task execution order for tasks that do not share data dependencies.
 
 ```python
 @task
@@ -346,7 +346,7 @@ The simplest pattern for writing a flow is either only using tasks or only using
 Using only tasks:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def say_hello(name):
@@ -367,7 +367,7 @@ hello_world()
 Using only Python functions:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 def say_hello(name):
     return f"Hello {name}!"
@@ -387,7 +387,7 @@ hello_world()
 Mixing tasks and Python functions:
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 def say_hello_extra_nicely_to_marvin(hello): # not a task or flow!
     if hello == "Hello Marvin!":
@@ -418,14 +418,14 @@ def hello_world():
 hello_world()
 ```
 
-Note that `.result()` also limits Prefect's ability to track task dependencies. In the "mixed" example above, Prefect will not be aware that `say_hello` is upstream of `nice_to_meet_you`.
+Note that `.result()` also limits Syntask's ability to track task dependencies. In the "mixed" example above, Syntask will not be aware that `say_hello` is upstream of `nice_to_meet_you`.
 
 
 !!! note "Calling `.result()` is blocking"
     When calling `.result()`, be mindful your flow function will have to wait until the task run is completed before continuing.
 
 ```python
-from prefect import flow, task
+from syntask import flow, task
 
 @task
 def say_hello(name):
@@ -446,17 +446,17 @@ hello_world()
 
 ## Running tasks on Dask
 
-The [`DaskTaskRunner`](https://prefecthq.github.io/prefect-dask/) is a parallel task runner that submits tasks to the [`dask.distributed`](http://distributed.dask.org/) scheduler. By default, a temporary Dask cluster is created for the duration of the flow run. If you already have a Dask cluster running, either local or cloud hosted, you can provide the connection URL via the `address` kwarg.
+The [`DaskTaskRunner`](https://syntaskhq.github.io/syntask-dask/) is a parallel task runner that submits tasks to the [`dask.distributed`](http://distributed.dask.org/) scheduler. By default, a temporary Dask cluster is created for the duration of the flow run. If you already have a Dask cluster running, either local or cloud hosted, you can provide the connection URL via the `address` kwarg.
 
-1. Make sure the `prefect-dask` collection is installed: `pip install prefect-dask`.
-2. In your flow code, import `DaskTaskRunner` from `prefect_dask.task_runners`.
+1. Make sure the `syntask-dask` collection is installed: `pip install syntask-dask`.
+2. In your flow code, import `DaskTaskRunner` from `syntask_dask.task_runners`.
 3. Assign it as the task runner when the flow is defined using the `task_runner=DaskTaskRunner` argument.
 
 For example, this flow uses the `DaskTaskRunner` configured to access an existing Dask cluster at `http://my-dask-cluster`.
 
 ```python hl_lines="4"
-from prefect import flow
-from prefect_dask.task_runners import DaskTaskRunner
+from syntask import flow
+from syntask_dask.task_runners import DaskTaskRunner
 
 @flow(task_runner=DaskTaskRunner(address="http://my-dask-cluster"))
 def my_flow():
@@ -478,7 +478,7 @@ def my_flow():
     in scripts must be guarded with `if __name__ == "__main__":` or you will encounter 
     warnings and errors.
 
-If you don't provide the `address` of a Dask scheduler, Prefect creates a temporary local cluster automatically. The number of workers used is based on the number of cores on your machine. The default provides a mix of processes and threads that should work well for
+If you don't provide the `address` of a Dask scheduler, Syntask creates a temporary local cluster automatically. The number of workers used is based on the number of cores on your machine. The default provides a mix of processes and threads that should work well for
 most workloads. If you want to specify this explicitly, you can pass values for `n_workers` or `threads_per_worker` to `cluster_kwargs`.
 
 ```python
@@ -500,18 +500,18 @@ To configure, you need to provide a `cluster_class`. This can be:
 
 You can also configure `cluster_kwargs`, which takes a dictionary of keyword arguments to pass to `cluster_class` when starting the flow run.
 
-For example, to configure a flow to use a temporary `dask_cloudprovider.aws.FargateCluster` with 4 workers running with an image named `my-prefect-image`:
+For example, to configure a flow to use a temporary `dask_cloudprovider.aws.FargateCluster` with 4 workers running with an image named `my-syntask-image`:
 
 ```python
 DaskTaskRunner(
     cluster_class="dask_cloudprovider.aws.FargateCluster",
-    cluster_kwargs={"n_workers": 4, "image": "my-prefect-image"},
+    cluster_kwargs={"n_workers": 4, "image": "my-syntask-image"},
 )
 ```
 
 ### Connecting to an existing cluster
 
-Multiple Prefect flow runs can all use the same existing Dask cluster. You
+Multiple Syntask flow runs can all use the same existing Dask cluster. You
 might manage a single long-running Dask cluster (maybe using the Dask 
 [Helm Chart](https://docs.dask.org/en/latest/setup/kubernetes-helm.html)) and
 configure flows to connect to it during execution. This has a few downsides
@@ -565,8 +565,8 @@ For example, we can set the [priority](http://distributed.dask.org/en/stable/pri
 
 ```python
 import dask
-from prefect import flow, task
-from prefect_dask.task_runners import DaskTaskRunner
+from syntask import flow, task
+from syntask_dask.task_runners import DaskTaskRunner
 
 @task
 def show(x):
@@ -586,8 +586,8 @@ Another common use case is [resource](http://distributed.dask.org/en/stable/reso
 
 ```python
 import dask
-from prefect import flow, task
-from prefect_dask.task_runners import DaskTaskRunner
+from syntask import flow, task
+from syntask_dask.task_runners import DaskTaskRunner
 
 @task
 def show(x):
@@ -621,22 +621,22 @@ if __name__ == "__main__":
 
 ## Running tasks on Ray
 
-The [`RayTaskRunner`](https://prefecthq.github.io/prefect-ray/) &mdash; installed separately as a [Prefect Collection](/collections/catalog/) &mdash; is a parallel task runner that submits tasks to [Ray](https://www.ray.io/). By default, a temporary Ray instance is created for the duration of the flow run. If you already have a Ray instance running, you can provide the connection URL via an `address` argument.
+The [`RayTaskRunner`](https://syntaskhq.github.io/syntask-ray/) &mdash; installed separately as a [Syntask Collection](/collections/catalog/) &mdash; is a parallel task runner that submits tasks to [Ray](https://www.ray.io/). By default, a temporary Ray instance is created for the duration of the flow run. If you already have a Ray instance running, you can provide the connection URL via an `address` argument.
 
 !!! note "Remote storage and Ray tasks"
     We recommend configuring [remote storage](/concepts/storage/) for task execution with the `RayTaskRunner`. This ensures tasks executing in Ray have access to task result storage, particularly when accessing a Ray instance outside of your execution environment.
 
 To configure your flow to use the `RayTaskRunner`:
 
-1. Make sure the `prefect-ray` collection is installed: `pip install prefect-ray`.
-2. In your flow code, import `RayTaskRunner` from `prefect_ray.task_runners`.
+1. Make sure the `syntask-ray` collection is installed: `pip install syntask-ray`.
+2. In your flow code, import `RayTaskRunner` from `syntask_ray.task_runners`.
 3. Assign it as the task runner when the flow is defined using the `task_runner=RayTaskRunner` argument.
 
 For example, this flow uses the `RayTaskRunner` configured to access an existing Ray instance at `ray://192.0.2.255:8786`.
 
 ```python hl_lines="4"
-from prefect import flow
-from prefect_ray.task_runners import RayTaskRunner
+from syntask import flow
+from syntask_ray.task_runners import RayTaskRunner
 
 @flow(task_runner=RayTaskRunner(address="ray://192.0.2.255:8786"))
 def my_flow():
@@ -650,14 +650,14 @@ def my_flow():
 | address | Address of a currently running Ray instance, starting with the [ray://](https://docs.ray.io/en/master/cluster/ray-client.html) URI. |
 | init_kwargs | Additional kwargs to use when calling `ray.init`. |
 
-Note that Ray Client uses the [ray://](https://docs.ray.io/en/master/cluster/ray-client.html) URI to indicate the address of a Ray instance. If you don't provide the `address` of a Ray instance, Prefect creates a temporary instance automatically.
+Note that Ray Client uses the [ray://](https://docs.ray.io/en/master/cluster/ray-client.html) URI to indicate the address of a Ray instance. If you don't provide the `address` of a Ray instance, Syntask creates a temporary instance automatically.
 
 !!! warning "Ray environment limitations"
-    While we're excited about adding support for parallel task execution via Ray to Prefect, there are some inherent limitations with Ray you should be aware of:
+    While we're excited about adding support for parallel task execution via Ray to Syntask, there are some inherent limitations with Ray you should be aware of:
     
     Ray's support for Python 3.11 is [experimental](https://docs.ray.io/en/latest/ray-overview/installation.html#install-nightlies).
 
-    Ray support for non-x86/64 architectures such as ARM/M1 processors with installation from `pip` alone and will be skipped during installation of Prefect. It is possible to manually install the blocking component with `conda`. See the [Ray documentation](https://docs.ray.io/en/latest/ray-overview/installation.html#m1-mac-apple-silicon-support) for instructions.
+    Ray support for non-x86/64 architectures such as ARM/M1 processors with installation from `pip` alone and will be skipped during installation of Syntask. It is possible to manually install the blocking component with `conda`. See the [Ray documentation](https://docs.ray.io/en/latest/ray-overview/installation.html#m1-mac-apple-silicon-support) for instructions.
 
     See the [Ray installation documentation](https://docs.ray.io/en/latest/ray-overview/installation.html) for further compatibility information.
 

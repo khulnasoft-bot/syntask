@@ -1,8 +1,8 @@
 ---
-description: Prefect API middleware
+description: Syntask API middleware
 tags:
-    - Prefect API
+    - Syntask API
     - middleware
 ---
 
-::: prefect.server.api.middleware
+::: syntask.server.api.middleware

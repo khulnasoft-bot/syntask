@@ -1,4 +1,4 @@
-name: Create prefect-helm release
+name: Create syntask-helm release
 
 on:
   # As soon as this repo creates an official release, we will
@@ -10,10 +10,10 @@ jobs:
   create_helm_release:
     runs-on: ubuntu-latest
     steps:
-      - name: Create prefect-helm release
+      - name: Create syntask-helm release
         run: |
           gh workflow run helm-release.yaml \
-            --repo PrefectHQ/prefect-helm \
+            --repo Synopkg/syntask-helm \
             --ref main
         env:
-          GH_TOKEN: ${{ secrets.PREFECT_HELM_ACTIONS_RW }}
+          GH_TOKEN: ${{ secrets.SYNTASK_HELM_ACTIONS_RW }}

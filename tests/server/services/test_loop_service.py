@@ -5,7 +5,7 @@ import sys
 import pendulum
 import pytest
 
-from prefect.server.services.loop_service import LoopService
+from syntask.server.services.loop_service import LoopService
 
 
 async def test_asyncio_sleep_accepts_negative_numbers():

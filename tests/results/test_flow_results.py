@@ -3,26 +3,26 @@ import pickle
 
 import pytest
 
-from prefect import flow, task
-from prefect.context import get_run_context
-from prefect.exceptions import MissingResult
-from prefect.filesystems import LocalFileSystem
-from prefect.results import PersistedResultBlob, UnpersistedResult
-from prefect.serializers import (
+from syntask import flow, task
+from syntask.context import get_run_context
+from syntask.exceptions import MissingResult
+from syntask.filesystems import LocalFileSystem
+from syntask.results import PersistedResultBlob, UnpersistedResult
+from syntask.serializers import (
     CompressedSerializer,
     JSONSerializer,
     PickleSerializer,
     Serializer,
 )
-from prefect.server import schemas
-from prefect.settings import (
-    PREFECT_DEFAULT_RESULT_STORAGE_BLOCK,
-    PREFECT_HOME,
-    PREFECT_RESULTS_PERSIST_BY_DEFAULT,
+from syntask.server import schemas
+from syntask.settings import (
+    SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK,
+    SYNTASK_HOME,
+    SYNTASK_RESULTS_PERSIST_BY_DEFAULT,
     temporary_settings,
 )
-from prefect.states import Cancelled, Completed, Failed
-from prefect.testing.utilities import (
+from syntask.states import Cancelled, Completed, Failed
+from syntask.testing.utilities import (
     assert_blocks_equal,
     assert_uses_result_serializer,
     assert_uses_result_storage,
@@ -44,7 +44,7 @@ class MyIntSerializer(Serializer):
 
 
 @pytest.mark.parametrize("persist_result", [False, None])
-async def test_flow_with_unpersisted_result(prefect_client, persist_result):
+async def test_flow_with_unpersisted_result(syntask_client, persist_result):
     @flow(persist_result=persist_result)
     def foo():
         return 1
@@ -53,13 +53,13 @@ async def test_flow_with_unpersisted_result(prefect_client, persist_result):
     assert await state.result() == 1
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     with pytest.raises(MissingResult):
         await api_state.result()
 
 
-async def test_flow_with_uncached_and_unpersisted_result(prefect_client):
+async def test_flow_with_uncached_and_unpersisted_result(syntask_client):
     @flow(persist_result=False, cache_result_in_memory=False)
     def foo():
         return 1
@@ -69,13 +69,13 @@ async def test_flow_with_uncached_and_unpersisted_result(prefect_client):
         await state.result()
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     with pytest.raises(MissingResult):
         await api_state.result()
 
 
-async def test_flow_with_uncached_and_unpersisted_null_result(prefect_client):
+async def test_flow_with_uncached_and_unpersisted_null_result(syntask_client):
     @flow(persist_result=False, cache_result_in_memory=False)
     def foo():
         return None
@@ -85,13 +85,13 @@ async def test_flow_with_uncached_and_unpersisted_null_result(prefect_client):
     assert await state.result() is None
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     with pytest.raises(MissingResult):
         await api_state.result()
 
 
-async def test_flow_with_uncached_but_persisted_result(prefect_client):
+async def test_flow_with_uncached_but_persisted_result(syntask_client):
     @flow(persist_result=True, cache_result_in_memory=False)
     def foo():
         return 1
@@ -101,12 +101,12 @@ async def test_flow_with_uncached_but_persisted_result(prefect_client):
     assert await state.result() == 1
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
 
 
-async def test_flow_with_uncached_but_literal_result(prefect_client):
+async def test_flow_with_uncached_but_literal_result(syntask_client):
     @flow(persist_result=True, cache_result_in_memory=False)
     def foo():
         return True
@@ -117,12 +117,12 @@ async def test_flow_with_uncached_but_literal_result(prefect_client):
     assert await state.result() is True
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     assert await api_state.result() is True
 
 
-async def test_flow_result_missing_with_null_return(prefect_client):
+async def test_flow_result_missing_with_null_return(syntask_client):
     @flow
     def foo():
         return None
@@ -131,7 +131,7 @@ async def test_flow_result_missing_with_null_return(prefect_client):
     assert await state.result() is None
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     with pytest.raises(MissingResult):
         await api_state.result()
@@ -139,12 +139,12 @@ async def test_flow_result_missing_with_null_return(prefect_client):
 
 @pytest.mark.parametrize("value", [True, False, None])
 async def test_flow_literal_result_is_available_but_not_serialized_or_persisted(
-    prefect_client, value
+    syntask_client, value
 ):
     @flow(
         persist_result=True,
         result_serializer="pickle",
-        result_storage=LocalFileSystem(basepath=PREFECT_HOME.value()),
+        result_storage=LocalFileSystem(basepath=SYNTASK_HOME.value()),
     )
     def foo():
         return value
@@ -153,12 +153,12 @@ async def test_flow_literal_result_is_available_but_not_serialized_or_persisted(
     assert await state.result() is value
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     assert await api_state.result() is value
 
 
-async def test_flow_exception_is_persisted(prefect_client):
+async def test_flow_exception_is_persisted(syntask_client):
     @flow(persist_result=True)
     def foo():
         raise ValueError("Hello world")
@@ -168,7 +168,7 @@ async def test_flow_exception_is_persisted(prefect_client):
         await state.result()
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     with pytest.raises(ValueError, match="Hello world"):
         await api_state.result()
@@ -188,7 +188,7 @@ async def test_flow_exception_is_persisted(prefect_client):
         CompressedSerializer(serializer=MyIntSerializer()),
     ],
 )
-async def test_flow_result_serializer(serializer, prefect_client):
+async def test_flow_result_serializer(serializer, syntask_client):
     @flow(result_serializer=serializer, persist_result=True)
     def foo():
         return 1
@@ -198,14 +198,14 @@ async def test_flow_result_serializer(serializer, prefect_client):
     await assert_uses_result_serializer(state, serializer)
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
     await assert_uses_result_serializer(api_state, serializer)
 
 
-async def test_flow_result_storage_by_instance(prefect_client):
-    storage = LocalFileSystem(basepath=PREFECT_HOME.value() / "test-storage")
+async def test_flow_result_storage_by_instance(syntask_client):
+    storage = LocalFileSystem(basepath=SYNTASK_HOME.value() / "test-storage")
 
     @flow(result_storage=storage, persist_result=True)
     def foo():
@@ -216,14 +216,14 @@ async def test_flow_result_storage_by_instance(prefect_client):
     await assert_uses_result_storage(state, storage)
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
     await assert_uses_result_storage(api_state, storage)
 
 
-async def test_flow_result_storage_by_slug(prefect_client):
-    await LocalFileSystem(basepath=PREFECT_HOME.value() / "test-storage").save("test")
+async def test_flow_result_storage_by_slug(syntask_client):
+    await LocalFileSystem(basepath=SYNTASK_HOME.value() / "test-storage").save("test")
     slug = LocalFileSystem.get_block_type_slug() + "/test"
 
     @flow(result_storage=slug, persist_result=True)
@@ -232,18 +232,18 @@ async def test_flow_result_storage_by_slug(prefect_client):
 
     state = foo(return_state=True)
     assert await state.result() == 1
-    await assert_uses_result_storage(state, slug, client=prefect_client)
+    await assert_uses_result_storage(state, slug, client=syntask_client)
 
     api_state = (
-        await prefect_client.read_flow_run(state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
-    await assert_uses_result_storage(api_state, slug, client=prefect_client)
+    await assert_uses_result_storage(api_state, slug, client=syntask_client)
 
 
 @pytest.mark.parametrize("options", [{"retries": 3}])
 async def test_child_flow_persisted_result_due_to_parent_feature(
-    prefect_client, options
+    syntask_client, options
 ):
     @flow(**options)
     def foo():
@@ -258,12 +258,12 @@ async def test_child_flow_persisted_result_due_to_parent_feature(
     assert await child_state.result() == 1
 
     api_state = (
-        await prefect_client.read_flow_run(child_state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(child_state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
 
 
-async def test_child_flow_persisted_result_due_to_opt_in(prefect_client):
+async def test_child_flow_persisted_result_due_to_opt_in(syntask_client):
     @flow
     def foo():
         return bar(return_state=True)
@@ -277,13 +277,13 @@ async def test_child_flow_persisted_result_due_to_opt_in(prefect_client):
     assert await child_state.result() == 1
 
     api_state = (
-        await prefect_client.read_flow_run(child_state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(child_state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
 
 
 @pytest.mark.parametrize("source", ["child", "parent"])
-async def test_child_flow_result_serializer(prefect_client, source):
+async def test_child_flow_result_serializer(syntask_client, source):
     serializer = "json"
 
     @flow(result_serializer=serializer if source == "parent" else None)
@@ -303,15 +303,15 @@ async def test_child_flow_result_serializer(prefect_client, source):
     await assert_uses_result_serializer(child_state, serializer)
 
     api_state = (
-        await prefect_client.read_flow_run(child_state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(child_state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
     await assert_uses_result_serializer(api_state, serializer)
 
 
 @pytest.mark.parametrize("source", ["child", "parent"])
-async def test_child_flow_result_storage(prefect_client, source):
-    storage = LocalFileSystem(basepath=PREFECT_HOME.value() / "test-storage")
+async def test_child_flow_result_storage(syntask_client, source):
+    storage = LocalFileSystem(basepath=SYNTASK_HOME.value() / "test-storage")
 
     @flow(result_storage=storage if source == "parent" else None)
     def foo():
@@ -327,13 +327,13 @@ async def test_child_flow_result_storage(prefect_client, source):
     await assert_uses_result_storage(child_state, storage)
 
     api_state = (
-        await prefect_client.read_flow_run(child_state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(child_state.state_details.flow_run_id)
     ).state
     assert await api_state.result() == 1
     await assert_uses_result_storage(api_state, storage)
 
 
-async def test_child_flow_result_missing_with_null_return(prefect_client):
+async def test_child_flow_result_missing_with_null_return(syntask_client):
     @flow
     def foo():
         return bar(return_state=True)
@@ -348,7 +348,7 @@ async def test_child_flow_result_missing_with_null_return(prefect_client):
     assert await child_state.result() is None
 
     api_state = (
-        await prefect_client.read_flow_run(child_state.state_details.flow_run_id)
+        await syntask_client.read_flow_run(child_state.state_details.flow_run_id)
     ).state
     with pytest.raises(MissingResult):
         await api_state.result()
@@ -435,7 +435,7 @@ def test_flow_server_state_schema_result_is_respected(persist_result, return_sta
     def my_flow():
         return return_state
 
-    with pytest.warns(DeprecationWarning, match="Use `prefect.states.State` instead"):
+    with pytest.warns(DeprecationWarning, match="Use `syntask.states.State` instead"):
         state = my_flow(return_state=True)
 
     assert state.type == return_state.type
@@ -449,7 +449,7 @@ def test_flow_server_state_schema_result_is_respected(persist_result, return_sta
     ) == return_state.dict(exclude={"id", "timestamp", "state_details", "data"})
 
     if return_state.data:
-        with pytest.warns(DeprecationWarning, match="use `prefect.states.State`"):
+        with pytest.warns(DeprecationWarning, match="use `syntask.states.State`"):
             assert state.result(raise_on_failure=False) == return_state.data
 
 
@@ -464,8 +464,8 @@ async def test_root_flow_default_remote_storage():
 
     with temporary_settings(
         {
-            PREFECT_RESULTS_PERSIST_BY_DEFAULT: True,
-            PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: "local-file-system/my-result-storage",
+            SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True,
+            SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: "local-file-system/my-result-storage",
         }
     ):
         storage_block = await foo()
@@ -475,7 +475,7 @@ async def test_root_flow_default_remote_storage():
 
 
 async def test_root_flow_default_remote_storage_saves_correct_result():
-    await LocalFileSystem(basepath="~/.prefect/results").save("my-result-storage")
+    await LocalFileSystem(basepath="~/.syntask/results").save("my-result-storage")
 
     @task(result_storage_key="my-result.pkl")
     async def bar():
@@ -487,15 +487,15 @@ async def test_root_flow_default_remote_storage_saves_correct_result():
 
     with temporary_settings(
         {
-            PREFECT_RESULTS_PERSIST_BY_DEFAULT: True,
-            PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: "local-file-system/my-result-storage",
+            SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True,
+            SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: "local-file-system/my-result-storage",
         }
     ):
         result = await foo()
 
     assert result == {"foo": "bar"}
     local_storage = await LocalFileSystem.load("my-result-storage")
-    result_bytes = await local_storage.read_path("~/.prefect/results/my-result.pkl")
+    result_bytes = await local_storage.read_path("~/.syntask/results/my-result.pkl")
     saved_python_result = pickle.loads(
         base64.b64decode(PersistedResultBlob.parse_raw(result_bytes).data)
     )
@@ -511,8 +511,8 @@ async def test_root_flow_nonexistent_default_storage_block_fails():
 
     with temporary_settings(
         {
-            PREFECT_RESULTS_PERSIST_BY_DEFAULT: True,
-            PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: "local-file-system/my-result-storage",
+            SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True,
+            SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: "local-file-system/my-result-storage",
         }
     ):
         with pytest.raises(
@@ -522,8 +522,8 @@ async def test_root_flow_nonexistent_default_storage_block_fails():
 
 
 async def test_root_flow_explicit_result_storage_settings_overrides_default():
-    await LocalFileSystem(basepath="~/.prefect/results").save("explicit-storage")
-    await LocalFileSystem(basepath="~/.prefect/other-results").save(
+    await LocalFileSystem(basepath="~/.syntask/results").save("explicit-storage")
+    await LocalFileSystem(basepath="~/.syntask/other-results").save(
         "default-result-storage"
     )
 
@@ -533,8 +533,8 @@ async def test_root_flow_explicit_result_storage_settings_overrides_default():
 
     with temporary_settings(
         {
-            PREFECT_RESULTS_PERSIST_BY_DEFAULT: True,
-            PREFECT_DEFAULT_RESULT_STORAGE_BLOCK: (
+            SYNTASK_RESULTS_PERSIST_BY_DEFAULT: True,
+            SYNTASK_DEFAULT_RESULT_STORAGE_BLOCK: (
                 "local-file-system/default-result-storage"
             ),
         }

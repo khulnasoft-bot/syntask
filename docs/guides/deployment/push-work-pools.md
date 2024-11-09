@@ -1,5 +1,5 @@
 ---
-description: Learn how to use Prefect push work pools to schedule work on serverless infrastructure without having to run a worker.
+description: Learn how to use Syntask push work pools to schedule work on serverless infrastructure without having to run a worker.
 tags:
     - work pools
     - deployments
@@ -21,7 +21,7 @@ search:
 
 # Push Work to Serverless Computing Infrastructure <span class="badge cloud"></span>
 
-Push [work pools](/concepts/work-pools/#work-pool-overview) are a special type of work pool that allows Prefect Cloud to submit flow runs for execution to serverless computing infrastructure without running a worker.
+Push [work pools](/concepts/work-pools/#work-pool-overview) are a special type of work pool that allows Syntask Cloud to submit flow runs for execution to serverless computing infrastructure without running a worker.
 Push work pools currently support execution in AWS ECS tasks, Azure Container Instances, Google Cloud Run jobs, and Modal.
 
 In this guide you will:
@@ -30,7 +30,7 @@ In this guide you will:
 - Deploy a flow to that work pool
 - Execute a flow without having to run a worker or agent process to poll for flow runs
 
-You can automatically provision infrastructure and create your push work pool using the `prefect work-pool create` CLI command with the `--provision-infra` flag.
+You can automatically provision infrastructure and create your push work pool using the `syntask work-pool create` CLI command with the `--provision-infra` flag.
 This approach greatly simplifies the setup process.
 
 Let's explore automatic infrastructure provisioning for push work pools first, and then we'll cover how to manually set up your push work pool.
@@ -38,11 +38,11 @@ Let's explore automatic infrastructure provisioning for push work pools first, a
 ## Automatic infrastructure provisioning
 
 With Perfect Cloud you can provision infrastructure for use with an AWS ECS, Google Cloud Run, ACI push work pool.
-Push work pools in Prefect Cloud simplify the setup and management of the infrastructure necessary to run your flows.
+Push work pools in Syntask Cloud simplify the setup and management of the infrastructure necessary to run your flows.
 However, setting up infrastructure on your cloud provider can still be a time-consuming process.
-Prefect can dramatically simplify this process by automatically provisioning the necessary infrastructure for you.
+Syntask can dramatically simplify this process by automatically provisioning the necessary infrastructure for you.
 
-We'll use the `prefect work-pool create` CLI command with the `--provision-infra` flag to automatically provision your serverless cloud resources and set up your Prefect workspace to use a new push pool.
+We'll use the `syntask work-pool create` CLI command with the `--provision-infra` flag to automatically provision your serverless cloud resources and set up your Syntask workspace to use a new push pool.
 
 ### Prerequisites
 
@@ -169,14 +169,14 @@ Here's the command to create a new push work pool and configure the necessary in
     <div class="terminal">
 
     ```bash
-    prefect work-pool create --type ecs:push --provision-infra my-ecs-pool
+    syntask work-pool create --type ecs:push --provision-infra my-ecs-pool
     ```
 
     </div>
 
     Using the `--provision-infra` flag will automatically set up your default AWS account to be ready to execute flows via ECS tasks. 
     In your AWS account, this command will create a new IAM user, IAM policy, ECS cluster that uses AWS Fargate, VPC, and ECR repository if they don't already exist.
-    In your Prefect workspace, this command will create an [`AWSCredentials` block](https://prefecthq.github.io/prefect-aws/credentials/) for storing the generated credentials.
+    In your Syntask workspace, this command will create an [`AWSCredentials` block](https://syntaskhq.github.io/syntask-aws/credentials/) for storing the generated credentials.
 
     Here's an abbreviated example output from running the command:
 
@@ -186,12 +186,12 @@ Here's the command to create a new push work pool and configure the necessary in
     ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
     │ Provisioning infrastructure for your work pool my-ecs-pool will require:                                          │
     │                                                                                                                   │
-    │          - Creating an IAM user for managing ECS tasks: prefect-ecs-user                                          │
-    │          - Creating and attaching an IAM policy for managing ECS tasks: prefect-ecs-policy                        │
+    │          - Creating an IAM user for managing ECS tasks: syntask-ecs-user                                          │
+    │          - Creating and attaching an IAM policy for managing ECS tasks: syntask-ecs-policy                        │
     │          - Storing generated AWS credentials in a block                                                           │
-    │          - Creating an ECS cluster for running Prefect flows: prefect-ecs-cluster                                 │
-    │          - Creating a VPC with CIDR 172.31.0.0/16 for running ECS tasks: prefect-ecs-vpc                          │
-    │          - Creating an ECR repository for storing Prefect images: prefect-flows                                   │
+    │          - Creating an ECS cluster for running Syntask flows: syntask-ecs-cluster                                 │
+    │          - Creating a VPC with CIDR 172.31.0.0/16 for running ECS tasks: syntask-ecs-vpc                          │
+    │          - Creating an ECR repository for storing Syntask images: syntask-flows                                   │
     ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
     Proceed with infrastructure provisioning? [y/n]: y
     Provisioning IAM user
@@ -221,8 +221,8 @@ Here's the command to create a new push work pool and configure the necessary in
         To take advantage of this, you can write your deploy scripts like this:
 
         ```python hl_lines="14" title="example_deploy_script.py"
-        from prefect import flow
-        from prefect.deployments import DeploymentImage
+        from syntask import flow
+        from syntask.deployments import DeploymentImage
 
         @flow(log_prints=True)            
         def my_flow(name: str = "world"):                          
@@ -249,13 +249,13 @@ Here's the command to create a new push work pool and configure the necessary in
     <div class="terminal">
 
     ```bash
-    prefect work-pool create --type azure-container-instance:push --provision-infra my-aci-pool
+    syntask work-pool create --type azure-container-instance:push --provision-infra my-aci-pool
     ```
     </div>
 
     Using the `--provision-infra` flag will automatically set up your default Azure account to be ready to execute flows via Azure Container Instances.
     In your Azure account, this command will create a resource group, app registration, service account with necessary permission, generate a secret for the app registration, and create an Azure Container Registry, if they don't already exist.
-    In your Prefect workspace, this command will create an [`AzureContainerInstanceCredentials` block](https://prefecthq.github.io/prefect-azure/credentials/#prefect_azure.credentials.AzureContainerInstanceCredentials) for storing the client secret value from the generated secret.
+    In your Syntask workspace, this command will create an [`AzureContainerInstanceCredentials` block](https://syntaskhq.github.io/syntask-azure/credentials/#syntask_azure.credentials.AzureContainerInstanceCredentials) for storing the client secret value from the generated secret.
 
     Here's an abbreviated example output from running the command:
 
@@ -268,16 +268,16 @@ Here's the command to create a new push work pool and configure the necessary in
     │     Updates in subscription Azure subscription 1                                          │
     │                                                                                           │
     │         - Create a resource group in location eastus                                      │
-    │         - Create an app registration in Azure AD prefect-aci-push-pool-app                │
+    │         - Create an app registration in Azure AD syntask-aci-push-pool-app                │
     │         - Create/use a service principal for app registration                             │
     │         - Generate a secret for app registration                                          │
-    │         - Create an Azure Container Registry with prefix prefect                          │
-    │         - Create an identity prefect-acr-identity to allow access to the created registry │
+    │         - Create an Azure Container Registry with prefix syntask                          │
+    │         - Create an identity syntask-acr-identity to allow access to the created registry │
     │         - Assign Contributor role to service account                                      │
     │         - Create an ACR registry for image hosting                                        │
     │         - Create an identity for Azure Container Instance to allow access to the registry │
     │                                                                                           │
-    │     Updates in Prefect workspace                                                          │
+    │     Updates in Syntask workspace                                                          │
     │                                                                                           │
     │         - Create Azure Container Instance credentials block aci-push-pool-credentials     │
     │                                                                                           │
@@ -287,7 +287,7 @@ Here's the command to create a new push work pool and configure the necessary in
     Creating app registration
     Generating secret for app registration
     Creating ACI credentials block
-    ACI credentials block 'aci-push-pool-credentials' created in Prefect Cloud
+    ACI credentials block 'aci-push-pool-credentials' created in Syntask Cloud
     Assigning Contributor role to service account
     Creating Azure Container Registry
     Creating identity
@@ -306,8 +306,8 @@ Here's the command to create a new push work pool and configure the necessary in
         To take advantage of this functionality, you can write your deploy scripts like this:
 
         ```python hl_lines="14" title="example_deploy_script.py"
-        from prefect import flow                                                       
-        from prefect.deployments import DeploymentImage                                
+        from syntask import flow                                                       
+        from syntask.deployments import DeploymentImage                                
 
 
         @flow(log_prints=True)                                                         
@@ -333,14 +333,14 @@ Here's the command to create a new push work pool and configure the necessary in
     <div class="terminal">
 
     ```bash
-    prefect work-pool create --type cloud-run:push --provision-infra my-cloud-run-pool 
+    syntask work-pool create --type cloud-run:push --provision-infra my-cloud-run-pool 
     ```
 
     </div>
 
     Using the `--provision-infra` flag will allow you to select a GCP project to use for your work pool and automatically configure it to be ready to execute flows via Cloud Run.
     In your GCP project, this command will activate the Cloud Run API, create a service account, and create a key for the service account, if they don't already exist.
-    In your Prefect workspace, this command will create a [`GCPCredentials` block](https://prefecthq.github.io/prefect-gcp/credentials/) for storing the service account key.
+    In your Syntask workspace, this command will create a [`GCPCredentials` block](https://syntaskhq.github.io/syntask-gcp/credentials/) for storing the service account key.
 
     Here's an abbreviated example output from running the command:
 
@@ -354,14 +354,14 @@ Here's the command to create a new push work pool and configure the necessary in
     │                                                                                                          │
     │         - Activate the Cloud Run API for your project                                                    │
     │         - Activate the Artifact Registry API for your project                                            │
-    │         - Create an Artifact Registry repository named prefect-images                                    │
-    │         - Create a service account for managing Cloud Run jobs: prefect-cloud-run                        │
+    │         - Create an Artifact Registry repository named syntask-images                                    │
+    │         - Create a service account for managing Cloud Run jobs: syntask-cloud-run                        │
     │             - Service account will be granted the following roles:                                       │
     │                 - Service Account User                                                                   │
     │                 - Cloud Run Developer                                                                    │
-    │         - Create a key for service account prefect-cloud-run                                             │
+    │         - Create a key for service account syntask-cloud-run                                             │
     │                                                                                                          │
-    │     Updates in Prefect workspace                                                                         │
+    │     Updates in Syntask workspace                                                                         │
     │                                                                                                          │
     │         - Create GCP credentials block my--pool-push-pool-credentials to store the service account key   │
     │                                                                                                          │
@@ -391,8 +391,8 @@ Here's the command to create a new push work pool and configure the necessary in
         To take advantage of this functionality, you can write your deploy scripts like this:
 
         ```python hl_lines="14" title="example_deploy_script.py"
-        from prefect import flow                                                       
-        from prefect.deployments import DeploymentImage                                
+        from syntask import flow                                                       
+        from syntask.deployments import DeploymentImage                                
 
 
         @flow(log_prints=True)
@@ -417,12 +417,12 @@ Here's the command to create a new push work pool and configure the necessary in
     <div class="terminal">
 
     ```bash
-    prefect work-pool create --type modal:push --provision-infra my-modal-pool 
+    syntask work-pool create --type modal:push --provision-infra my-modal-pool 
     ```
 
     </div>
 
-    Using the `--provision-infra` flag will trigger the creation of a `ModalCredentials` block in your Prefect Cloud workspace. This block will store your Modal API token, which is used to authenticate with Modal's API. By default, the token for your current Modal profile will be used for the new `ModalCredentials` block. If Prefect is unable to discover a Modal API token for your current profile, you will be prompted to create a new one.
+    Using the `--provision-infra` flag will trigger the creation of a `ModalCredentials` block in your Syntask Cloud workspace. This block will store your Modal API token, which is used to authenticate with Modal's API. By default, the token for your current Modal profile will be used for the new `ModalCredentials` block. If Syntask is unable to discover a Modal API token for your current profile, you will be prompted to create a new one.
 
 
 That's it!
@@ -431,18 +431,18 @@ Reminder that no worker is needed to run flows with a push work pool.
 
 ### Using existing resources with automatic infrastructure provisioning
 
-If you already have the necessary infrastructure set up, Prefect will detect that upon work pool creation and the infrastructure provisioning for that resource will be skipped.
+If you already have the necessary infrastructure set up, Syntask will detect that upon work pool creation and the infrastructure provisioning for that resource will be skipped.
 
-For example, here's how `prefect work-pool create my-work-pool --provision-infra` looks when existing Azure resources are detected:
+For example, here's how `syntask work-pool create my-work-pool --provision-infra` looks when existing Azure resources are detected:
 
 <div class="terminal">
 
 ```bash
 Proceed with infrastructure provisioning? [y/n]: y
 Creating resource group
-Resource group 'prefect-aci-push-pool-rg' already exists in location 'eastus'.
+Resource group 'syntask-aci-push-pool-rg' already exists in location 'eastus'.
 Creating app registration
-App registration 'prefect-aci-push-pool-app' already exists.
+App registration 'syntask-aci-push-pool-app' already exists.
 Generating secret for app registration
 Provisioning infrastructure
 ACI credentials block 'bb-push-pool-credentials' created
@@ -450,7 +450,7 @@ Assigning Contributor role to service account...
 Service principal with object ID '4be6fed7-...' already has the 'Contributor' role assigned in 
 '/subscriptions/.../'
 Creating Azure Container Instance
-Container instance 'prefect-aci-push-pool-container' already exists.
+Container instance 'syntask-aci-push-pool-container' already exists.
 Creating Azure Container Instance credentials block
 Provisioning infrastructure... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 Infrastructure successfully provisioned!
@@ -467,12 +467,12 @@ For example, you can run the following command if you have a work pool named "my
 <div class="terminal">
 
 ```bash
-prefect work-pool provision-infra my-work-pool
+syntask work-pool provision-infra my-work-pool
 ```
 
 </div>
 
-Prefect will create the necessary infrastructure for the `my-work-pool` work pool and provide you with a summary of the changes to be made:
+Syntask will create the necessary infrastructure for the `my-work-pool` work pool and provide you with a summary of the changes to be made:
 
 <div class="terminal">
 
@@ -483,13 +483,13 @@ Prefect will create the necessary infrastructure for the `my-work-pool` work poo
 │     Updates in subscription Azure subscription 1                                                               │
 │                                                                                                                │
 │         - Create a resource group in location eastus                                                           │
-│         - Create an app registration in Azure AD prefect-aci-push-pool-app                                     │
+│         - Create an app registration in Azure AD syntask-aci-push-pool-app                                     │
 │         - Create/use a service principal for app registration                                                  │
 │         - Generate a secret for app registration                                                               │
 │         - Assign Contributor role to service account                                                           │
-│         - Create Azure Container Instance 'aci-push-pool-container' in resource group prefect-aci-push-pool-rg │
+│         - Create Azure Container Instance 'aci-push-pool-container' in resource group syntask-aci-push-pool-rg │
 │                                                                                                                │
-│     Updates in Prefect workspace                                                                               │
+│     Updates in Syntask workspace                                                                               │
 │                                                                                                                │
 │         - Create Azure Container Instance credentials block aci-push-pool-credentials                          │
 │                                                                                                                │
@@ -506,7 +506,7 @@ As with the examples above, you will need to have the related cloud CLI library 
 ## Manual infrastructure provisioning
 
 If you prefer to set up your infrastructure manually, don't include the `--provision-infra` flag in the CLI command.
-In the examples below, we'll create a push work pool via the Prefect Cloud UI.
+In the examples below, we'll create a push work pool via the Syntask Cloud UI.
 
 === "AWS ECS"
 
@@ -560,7 +560,7 @@ In the examples below, we'll create a push work pool via the Prefect Cloud UI.
 
 ### Work pool configuration
 
-Our push work pool will store information about what type of infrastructure our flow will run on, what default values to provide to compute jobs, and other important execution environment parameters. Because our push work pool needs to integrate securely with your serverless infrastructure, we need to start by storing our credentials in Prefect Cloud, which we'll do by making a block.
+Our push work pool will store information about what type of infrastructure our flow will run on, what default values to provide to compute jobs, and other important execution environment parameters. Because our push work pool needs to integrate securely with your serverless infrastructure, we need to start by storing our credentials in Syntask Cloud, which we'll do by making a block.
 
 ### Creating a Credentials block
 
@@ -605,7 +605,7 @@ Click **Create** to start configuring your push work pool by selecting a push op
 
     Each step has several optional fields that are detailed in the [work pools documentation](/concepts/work-pools/). 
     Select the block you created under the AWS Credentials field. 
-    This will allow Prefect Cloud to securely interact with your ECS cluster.
+    This will allow Syntask Cloud to securely interact with your ECS cluster.
 
 === "Azure Container Instances"
 
@@ -616,13 +616,13 @@ Click **Create** to start configuring your push work pool by selecting a push op
 
     Each step has several optional fields that are detailed in the [work pools documentation](/concepts/work-pools/). 
     Select the block you created under the GCP Credentials field. 
-    This will allow Prefect Cloud to securely interact with your GCP project.
+    This will allow Syntask Cloud to securely interact with your GCP project.
 
 === "Modal"
 
     Each step has several optional fields that are detailed in the [work pools documentation](/concepts/work-pools/). 
     Select the block you created under the Modal Credentials field. 
-    This will allow Prefect Cloud to securely interact with your Modal account.
+    This will allow Syntask Cloud to securely interact with your Modal account.
 
 Create your pool and you are ready to deploy flows to your Push work pool.
 
@@ -630,7 +630,7 @@ Create your pool and you are ready to deploy flows to your Push work pool.
 
 Deployment details are described in the deployments [concept section](/concepts/deployments/).
 Your deployment needs to be configured to send flow runs to our push work pool.
-For example, if you create a deployment through the interactive command line experience, choose the work pool you just created. If you are deploying an existing `prefect.yaml` file, the deployment would contain:
+For example, if you create a deployment through the interactive command line experience, choose the work pool you just created. If you are deploying an existing `syntask.yaml` file, the deployment would contain:
 
 ```yaml
   work_pool:
@@ -640,17 +640,17 @@ For example, if you create a deployment through the interactive command line exp
 Deploying your flow to the `my-push-pool` work pool will ensure that runs that are ready for execution will be submitted immediately, without the need for a worker to poll for them.
 
 !!! danger "Serverless infrastructure may require a certain image architecture"
-    Note that serverless infrastructure may assume a certain Docker image architecture; for example, Google Cloud Run will fail to run images built with `linux/arm64` architecture. If using Prefect to build your image, you can change the image architecture through the `platform` keyword (e.g., `platform="linux/amd64"`).
+    Note that serverless infrastructure may assume a certain Docker image architecture; for example, Google Cloud Run will fail to run images built with `linux/arm64` architecture. If using Syntask to build your image, you can change the image architecture through the `platform` keyword (e.g., `platform="linux/amd64"`).
 
 ## Putting it all together
 
 With your deployment created, navigate to its detail page and create a new flow run.
-You'll see the flow start running without ever having to poll the work pool, because Prefect Cloud securely connected to your serverless infrastructure, created a job, ran the job, and began reporting on its execution.
+You'll see the flow start running without ever having to poll the work pool, because Syntask Cloud securely connected to your serverless infrastructure, created a job, ran the job, and began reporting on its execution.
 
 ![A flow running on a cloud run push work pool](/img/guides/push-flow-running.png)
 
 ## Next steps
 
-Learn more about workers and work pools in the [Prefect concept documentation](/concepts/work-pools/).
+Learn more about workers and work pools in the [Syntask concept documentation](/concepts/work-pools/).
 
-Learn about installing dependencies at runtime or baking them into your Docker image in the [Deploying Flows to Work Pools and Workers guide](/guides/prefect-deploy/#creating-work-pool-based-deployments-with-deploy).
+Learn about installing dependencies at runtime or baking them into your Docker image in the [Deploying Flows to Work Pools and Workers guide](/guides/syntask-deploy/#creating-work-pool-based-deployments-with-deploy).

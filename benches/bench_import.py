@@ -3,7 +3,7 @@ import subprocess
 from pytest_benchmark.fixture import BenchmarkFixture
 
 
-def bench_import_prefect(benchmark: BenchmarkFixture):
+def bench_import_syntask(benchmark: BenchmarkFixture):
     benchmark.pedantic(
-        subprocess.check_call, args=(["python", "-c", "import prefect"],), rounds=5
+        subprocess.check_call, args=(["python", "-c", "import syntask"],), rounds=5
     )

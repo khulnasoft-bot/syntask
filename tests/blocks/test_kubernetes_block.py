@@ -3,8 +3,8 @@ import re
 from pathlib import Path
 from typing import Dict
 
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -16,7 +16,7 @@ import yaml
 from kubernetes.client import ApiClient
 from kubernetes.config.kube_config import list_kube_config_contexts
 
-from prefect.blocks.kubernetes import KubernetesClusterConfig
+from syntask.blocks.kubernetes import KubernetesClusterConfig
 
 sample_base64_string = base64.b64encode(b"hello marvin from the other side")
 
@@ -53,7 +53,7 @@ def config_file(tmp_path) -> Path:
 
 
 async def test_raises_deprecation_warning():
-    with pytest.warns(PrefectDeprecationWarning):
+    with pytest.warns(SyntaskDeprecationWarning):
         KubernetesClusterConfig(config=CONFIG_CONTENT, context_name="docker-desktop")
 
 

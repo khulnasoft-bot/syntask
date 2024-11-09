@@ -4,15 +4,15 @@ from unittest.mock import MagicMock
 import pendulum
 import pytest
 
-from prefect import flow
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
-from prefect.blocks.core import Block
-from prefect.client.schemas.actions import WorkPoolCreate
-from prefect.infrastructure.base import Infrastructure
-from prefect.server import models, schemas
-from prefect.states import Cancelled, Cancelling, Completed, Pending, Running, Scheduled
-from prefect.utilities.callables import parameter_schema
-from prefect.workers.block import (
+from syntask import flow
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
+from syntask.blocks.core import Block
+from syntask.client.schemas.actions import WorkPoolCreate
+from syntask.infrastructure.base import Infrastructure
+from syntask.server import models, schemas
+from syntask.states import Cancelled, Cancelling, Completed, Pending, Running, Scheduled
+from syntask.utilities.callables import parameter_schema
+from syntask.workers.block import (
     BlockWorker,
     BlockWorkerJobConfiguration,
 )
@@ -61,9 +61,9 @@ async def mock_infra_block_doc_id():
 
 
 @pytest.fixture
-async def block_work_pool(prefect_client, mock_infra_block_doc_id):
+async def block_work_pool(syntask_client, mock_infra_block_doc_id):
     block_schema = MockInfrastructure.schema()
-    return await prefect_client.create_work_pool(
+    return await syntask_client.create_work_pool(
         WorkPoolCreate(
             name="test",
             type="block",
@@ -183,7 +183,7 @@ async def test_block_worker_run(
     block_worker,
     block_worker_deployment,
     block_work_pool,
-    prefect_client,
+    syntask_client,
     monkeypatch,
 ):
     @flow
@@ -191,7 +191,7 @@ async def test_block_worker_run(
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             block_worker_deployment.id, state=state
         )
 
@@ -211,13 +211,13 @@ async def test_block_worker_run(
         ),
         await create_run_with_deployment(Running()),
         await create_run_with_deployment(Completed()),
-        await prefect_client.create_flow_run(test_flow, state=Scheduled()),
+        await syntask_client.create_flow_run(test_flow, state=Scheduled()),
     ]
 
     test_block = MockInfrastructure()
     await test_block.save("test-block-worker-run")
     monkeypatch.setattr(
-        "prefect.workers.block.Block._from_block_document",
+        "syntask.workers.block.Block._from_block_document",
         lambda *args, **kwargs: test_block,
     )
 
@@ -227,7 +227,7 @@ async def test_block_worker_run(
 
     assert MockInfrastructure._run.call_count == 3
     assert {
-        call.kwargs["env"]["PREFECT__FLOW_RUN_ID"]
+        call.kwargs["env"]["SYNTASK__FLOW_RUN_ID"]
         for call in MockInfrastructure._run.call_args_list
     } == {str(fr.id) for fr in flow_runs[1:4]}
 
@@ -236,7 +236,7 @@ async def test_block_worker_run_infra_overrides(
     block_worker,
     block_worker_deployment_with_infra_overrides,
     block_work_pool,
-    prefect_client,
+    syntask_client,
     monkeypatch,
 ):
     @flow
@@ -244,7 +244,7 @@ async def test_block_worker_run_infra_overrides(
         pass
 
     def create_run_with_deployment(state):
-        return prefect_client.create_flow_run_from_deployment(
+        return syntask_client.create_flow_run_from_deployment(
             block_worker_deployment_with_infra_overrides.id, state=state
         )
 
@@ -261,7 +261,7 @@ async def test_block_worker_run_infra_overrides(
         return block
 
     monkeypatch.setattr(
-        "prefect.workers.block.Block._from_block_document", capture_block
+        "syntask.workers.block.Block._from_block_document", capture_block
     )
 
     async with block_worker as worker:
@@ -282,17 +282,17 @@ def legacy_named_cancelling_state(**kwargs):
 )
 async def test_block_worker_cancellation(
     block_worker,
-    prefect_client,
+    syntask_client,
     block_worker_deployment,
     cancelling_constructor,
     monkeypatch,
     disable_enhanced_cancellation,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         block_worker_deployment.id,
         state=cancelling_constructor(),
     )
-    await prefect_client.update_flow_run(
+    await syntask_client.update_flow_run(
         flow_run_id=flow_run.id, infrastructure_pid="bloop"
     )
 
@@ -305,7 +305,7 @@ async def test_block_worker_cancellation(
         return block
 
     monkeypatch.setattr(
-        "prefect.workers.block.Block._from_block_document", capture_block
+        "syntask.workers.block.Block._from_block_document", capture_block
     )
 
     async with block_worker as worker:

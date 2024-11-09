@@ -2,9 +2,9 @@ from uuid import uuid4
 
 import pytest
 
-from prefect.client.schemas import filters
-from prefect.server import models, schemas
-from prefect.server.schemas import actions
+from syntask.client.schemas import filters
+from syntask.server import models, schemas
+from syntask.server.schemas import actions
 
 
 class TestReadFlowRuns:
@@ -108,7 +108,7 @@ class TestReadFlowRuns:
 
     async def test_read_subflow_runs(
         self,
-        prefect_client,
+        syntask_client,
         parent_flow_run,
         child_runs,
         # included to make sure we're only going 1 level deep
@@ -122,7 +122,7 @@ class TestReadFlowRuns:
                 any_=[parent_flow_run.id]
             )
         )
-        response = await prefect_client.read_flow_runs(flow_run_filter=subflow_filter)
+        response = await syntask_client.read_flow_runs(flow_run_filter=subflow_filter)
 
         assert len(response) == len(child_runs)
 
@@ -132,12 +132,12 @@ class TestReadFlowRuns:
 
     async def test_read_subflow_runs_non_existant(
         self,
-        prefect_client,
+        syntask_client,
     ):
         """With a UUID that isn't of a flow run, an empty list should be returned."""
         subflow_filter = filters.FlowRunFilter(
             parent_flow_run_id=filters.FlowRunFilterParentFlowRunId(any_=[uuid4()])
         )
-        response = await prefect_client.read_flow_runs(flow_run_filter=subflow_filter)
+        response = await syntask_client.read_flow_runs(flow_run_filter=subflow_filter)
 
         assert len(response) == 0

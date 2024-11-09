@@ -10,29 +10,29 @@ import pendulum
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server.events import actions, triggers
-from prefect.server.events.models import automations
-from prefect.server.events.schemas.automations import (
+from syntask.server.events import actions, triggers
+from syntask.server.events.models import automations
+from syntask.server.events.schemas.automations import (
     Automation,
     EventTrigger,
     Firing,
     Posture,
     TriggerState,
 )
-from prefect.server.events.schemas.events import Event, ReceivedEvent
-from prefect.server.events.triggers import (
+from syntask.server.events.schemas.events import Event, ReceivedEvent
+from syntask.server.events.triggers import (
     MAX_DEPTH_OF_PRECEDING_EVENT,
     MaxDepthExceeded,
 )
-from prefect.server.models import work_queues
-from prefect.server.schemas.actions import WorkQueueCreate
-from prefect.server.schemas.core import WorkQueue
+from syntask.server.models import work_queues
+from syntask.server.schemas.actions import WorkQueueCreate
+from syntask.server.schemas.core import WorkQueue
 
 
 @pytest.fixture
 def act(monkeypatch: pytest.MonkeyPatch) -> mock.AsyncMock:
     mock_act = mock.AsyncMock()
-    monkeypatch.setattr("prefect.server.events.triggers.act", mock_act)
+    monkeypatch.setattr("syntask.server.events.triggers.act", mock_act)
     return mock_act
 
 
@@ -55,7 +55,7 @@ async def unhealthy_work_queue_automation(
     cleared_automations: None,
     automations_session: AsyncSession,
 ) -> Automation:
-    # Automation for issue 8871: https://github.com/PrefectHQ/prefect/issues/8871
+    # Automation for issue 8871: https://github.com/Synopkg/syntask/issues/8871
     automation = await automations.create_automation(
         automations_session,
         Automation(
@@ -63,11 +63,11 @@ async def unhealthy_work_queue_automation(
             description="Any work queues that are unhealthy for more than 2 hours",
             trigger=EventTrigger(
                 match={
-                    "prefect.resource.id": f"prefect.work-queue.{work_queue.id}",
+                    "syntask.resource.id": f"syntask.work-queue.{work_queue.id}",
                 },
-                for_each={"prefect.resource.id"},
-                after={"prefect.work-queue.unhealthy"},
-                expect={"prefect.work-queue.healthy"},
+                for_each={"syntask.resource.id"},
+                after={"syntask.work-queue.unhealthy"},
+                expect={"syntask.work-queue.healthy"},
                 posture=Posture.Proactive,
                 threshold=1,
                 within=timedelta(minutes=119),
@@ -88,8 +88,8 @@ def work_queue_health_unhealthy(
     events = [
         Event(
             occurred=frozen_time,
-            event="prefect.work-queue.unhealthy",
-            resource={"prefect.resource.id": f"prefect.work-queue.{work_queue.id}"},
+            event="syntask.work-queue.unhealthy",
+            resource={"syntask.resource.id": f"syntask.work-queue.{work_queue.id}"},
             related=[],
             payload={},
             id=uuid4(),
@@ -107,16 +107,16 @@ def work_queue_health_healthy(
     events = (
         Event(
             occurred=frozen_time,
-            event="prefect.work-queue.unhealthy",
-            resource={"prefect.resource.id": f"prefect.work-queue.{work_queue.id}"},
+            event="syntask.work-queue.unhealthy",
+            resource={"syntask.resource.id": f"syntask.work-queue.{work_queue.id}"},
             related=[],
             payload={},
             id=uuid4(),
         ),
         Event(
             occurred=frozen_time + timedelta(minutes=20),
-            event="prefect.work-queue.healthy",
-            resource={"prefect.resource.id": f"prefect.work-queue.{work_queue.id}"},
+            event="syntask.work-queue.healthy",
+            resource={"syntask.resource.id": f"syntask.work-queue.{work_queue.id}"},
             related=[],
             payload={},
             id=uuid4(),
@@ -157,7 +157,7 @@ async def test_alerts_work_queue_unhealthy(
             trigger_states={TriggerState.Triggered},
             triggered=frozen_time,  # type: ignore
             triggering_labels={
-                "prefect.resource.id": f"prefect.work-queue.{work_queue.id}"
+                "syntask.resource.id": f"syntask.work-queue.{work_queue.id}"
             },
             triggering_event=work_queue_health_unhealthy[-1],
         )
@@ -196,7 +196,7 @@ async def reactive_immediate_expect_and_after(
     cleared_automations: None,
     automations_session: AsyncSession,
 ) -> Automation:
-    # Automation for https://github.com/PrefectHQ/nebula/issues/4201
+    # Automation for https://github.com/Synopkg/nebula/issues/4201
     # If we set `within` to 0, we can never react, because we'll never be "after" an
     # event that we're also expecting
     automation = await automations.create_automation(
@@ -223,7 +223,7 @@ async def test_same_event_in_expect_and_after_never_reacts_immediately(
     frozen_time: pendulum.DateTime,
     reactive_immediate_expect_and_after: Automation,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/4201, where
+    """Regression test for https://github.com/Synopkg/nebula/issues/4201, where
     having the same event in after and expect causes weird behavior
 
     Case one: Reactive, within = 0 (immediately fires on all events) -> this will never
@@ -233,7 +233,7 @@ async def test_same_event_in_expect_and_after_never_reacts_immediately(
         Event(
             occurred=frozen_time,
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -243,7 +243,7 @@ async def test_same_event_in_expect_and_after_never_reacts_immediately(
         Event(
             occurred=frozen_time + timedelta(seconds=1),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -253,7 +253,7 @@ async def test_same_event_in_expect_and_after_never_reacts_immediately(
         Event(
             occurred=frozen_time + timedelta(seconds=2),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -263,7 +263,7 @@ async def test_same_event_in_expect_and_after_never_reacts_immediately(
         Event(
             occurred=frozen_time + timedelta(seconds=3),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -276,7 +276,7 @@ async def reactive_extended_expect_and_after(
     cleared_automations: None,
     automations_session: AsyncSession,
 ) -> Automation:
-    # Automation for https://github.com/PrefectHQ/nebula/issues/4201
+    # Automation for https://github.com/Synopkg/nebula/issues/4201
     automation = await automations.create_automation(
         automations_session,
         Automation(
@@ -301,7 +301,7 @@ async def test_same_event_in_expect_and_after_reacts_after_threshold_is_met(
     frozen_time: pendulum.DateTime,
     reactive_extended_expect_and_after: Automation,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/4201, where
+    """Regression test for https://github.com/Synopkg/nebula/issues/4201, where
     having the same event in after and expect causes weird behavior.
 
     Case two: Reactive, within > 0 -> this will fire on the second (or `threshold + 1`)
@@ -311,7 +311,7 @@ async def test_same_event_in_expect_and_after_reacts_after_threshold_is_met(
         Event(
             occurred=frozen_time + timedelta(seconds=1),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -322,7 +322,7 @@ async def test_same_event_in_expect_and_after_reacts_after_threshold_is_met(
         Event(
             occurred=frozen_time + timedelta(seconds=2),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -335,7 +335,7 @@ async def test_same_event_in_expect_and_after_reacts_after_threshold_is_met(
         Event(
             occurred=frozen_time + timedelta(seconds=3),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -346,7 +346,7 @@ async def test_same_event_in_expect_and_after_reacts_after_threshold_is_met(
         Event(
             occurred=frozen_time + timedelta(seconds=4),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -359,7 +359,7 @@ async def test_same_event_in_expect_and_after_reacts_after_threshold_is_met(
         Event(
             occurred=frozen_time + timedelta(seconds=61),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -370,7 +370,7 @@ async def test_same_event_in_expect_and_after_reacts_after_threshold_is_met(
         Event(
             occurred=frozen_time + timedelta(seconds=62),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -383,7 +383,7 @@ async def proactive_extended_expect_and_after(
     cleared_automations: None,
     automations_session: AsyncSession,
 ) -> Automation:
-    # Automation for https://github.com/PrefectHQ/nebula/issues/4201
+    # Automation for https://github.com/Synopkg/nebula/issues/4201
     automation = await automations.create_automation(
         automations_session,
         Automation(
@@ -408,7 +408,7 @@ async def test_same_event_in_expect_and_after_proactively_does_not_fire(
     frozen_time: pendulum.DateTime,
     proactive_extended_expect_and_after: Automation,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/4201, where
+    """Regression test for https://github.com/Synopkg/nebula/issues/4201, where
     having the same event in after and expect causes weird behavior
 
     Case three (negative): Proactive -> this will not fire if get `threshold - 1`
@@ -420,7 +420,7 @@ async def test_same_event_in_expect_and_after_proactively_does_not_fire(
         Event(
             occurred=frozen_time + timedelta(seconds=1),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -436,7 +436,7 @@ async def test_same_event_in_expect_and_after_proactively_does_not_fire(
         Event(
             occurred=frozen_time + timedelta(seconds=2),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -451,7 +451,7 @@ async def test_same_event_in_expect_and_after_proactively_does_not_fire(
         Event(
             occurred=frozen_time + timedelta(seconds=3),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -481,7 +481,7 @@ async def test_same_event_in_expect_and_after_proactively_fires(
     frozen_time: pendulum.DateTime,
     proactive_extended_expect_and_after: Automation,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/4201, where
+    """Regression test for https://github.com/Synopkg/nebula/issues/4201, where
     having the same event in after and expect causes weird behavior
 
     Case three (positive): Proactive -> this will fire if we don't get `threshold - 1`
@@ -493,7 +493,7 @@ async def test_same_event_in_expect_and_after_proactively_fires(
         Event(
             occurred=frozen_time + timedelta(seconds=1),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -509,7 +509,7 @@ async def test_same_event_in_expect_and_after_proactively_fires(
         Event(
             occurred=frozen_time + timedelta(seconds=3),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=uuid4(),
         ).receive()
     )
@@ -545,7 +545,7 @@ async def test_max_recursion_depth_handling():
         event = ReceivedEvent(
             occurred=pendulum.now(),
             event=f"event_{i}",
-            resource={"prefect.resource.id": f"resource_id_{i}"},
+            resource={"syntask.resource.id": f"resource_id_{i}"},
             received=pendulum.now(),
             id=uuid4(),
             follows=events[-1].id if events else None,
@@ -554,13 +554,13 @@ async def test_max_recursion_depth_handling():
 
     # Mock to avoid EventArrivedEarly exception
     with mock.patch(
-        "prefect.server.events.triggers.event_has_been_seen", return_value=True
+        "syntask.server.events.triggers.event_has_been_seen", return_value=True
     ), mock.patch(
-        "prefect.server.events.triggers.record_follower", return_value=None
+        "syntask.server.events.triggers.record_follower", return_value=None
     ), mock.patch(
-        "prefect.server.events.triggers.update_events_clock", mock.AsyncMock()
+        "syntask.server.events.triggers.update_events_clock", mock.AsyncMock()
     ), mock.patch(
-        "prefect.server.events.triggers.get_followers",
+        "syntask.server.events.triggers.get_followers",
         mock.AsyncMock(return_value=events),
     ):
         for event in reversed(events):
@@ -575,7 +575,7 @@ async def rapid_fire_automation(
     cleared_automations: None,
     automations_session: AsyncSession,
 ) -> Automation:
-    # Automation for https://github.com/PrefectHQ/nebula/issues/4201
+    # Automation for https://github.com/Synopkg/nebula/issues/4201
     automation = await automations.create_automation(
         automations_session,
         Automation(
@@ -601,7 +601,7 @@ async def test_rapid_fire_events(
     automations_session: AsyncSession,
     frozen_time: pendulum.DateTime,
 ):
-    """Regression test for https://github.com/PrefectHQ/prefect/issues/11199, where very
+    """Regression test for https://github.com/Synopkg/syntask/issues/11199, where very
     rapidly arriving events wouldn't all trigger an action.
 
     Note: there's a small false negative rate in this test when we're trying to detect
@@ -613,7 +613,7 @@ async def test_rapid_fire_events(
         Event(
             occurred=start_of_test + timedelta(microseconds=i),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=UUID(int=i),
         ).receive()
         for i in range(50)
@@ -649,7 +649,7 @@ async def rapid_fire_automation_with_a_threshold(
     cleared_automations: None,
     automations_session: AsyncSession,
 ) -> Automation:
-    # Automation for https://github.com/PrefectHQ/nebula/issues/4201
+    # Automation for https://github.com/Synopkg/nebula/issues/4201
     automation = await automations.create_automation(
         automations_session,
         Automation(
@@ -675,7 +675,7 @@ async def test_rapid_fire_events_with_a_threshold(
     automations_session: AsyncSession,
     frozen_time: pendulum.DateTime,
 ):
-    """Regression test for https://github.com/PrefectHQ/nebula/issues/7230, where very
+    """Regression test for https://github.com/Synopkg/nebula/issues/7230, where very
     rapidly arriving events wouldn't cause a trigger to fire if it had a `threshold` >1
     and a non-zero `within`.
     """
@@ -683,7 +683,7 @@ async def test_rapid_fire_events_with_a_threshold(
         Event(
             occurred=start_of_test + timedelta(microseconds=i),
             event="some-event",
-            resource={"prefect.resource.id": "some.resource"},
+            resource={"syntask.resource.id": "some.resource"},
             id=UUID(int=i),
         ).receive()
         for i in range(10)

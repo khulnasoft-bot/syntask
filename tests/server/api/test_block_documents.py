@@ -2,7 +2,7 @@ import string
 from typing import List
 from uuid import uuid4
 
-from prefect._internal.pydantic import HAS_PYDANTIC_V2
+from syntask._internal.pydantic import HAS_PYDANTIC_V2
 
 if HAS_PYDANTIC_V2:
     import pydantic.v1 as pydantic
@@ -12,14 +12,14 @@ else:
     from pydantic import SecretBytes, SecretStr
 
 import pytest
-from prefect._vendor.starlette import status
+from syntask._vendor.starlette import status
 
-from prefect.blocks.core import Block
-from prefect.blocks.fields import SecretDict
-from prefect.server import models, schemas
-from prefect.server.schemas.actions import BlockDocumentCreate, BlockDocumentUpdate
-from prefect.server.schemas.core import BlockDocument
-from prefect.utilities.names import obfuscate_string
+from syntask.blocks.core import Block
+from syntask.blocks.fields import SecretDict
+from syntask.server import models, schemas
+from syntask.server.schemas.actions import BlockDocumentCreate, BlockDocumentUpdate
+from syntask.server.schemas.core import BlockDocument
+from syntask.utilities.names import obfuscate_string
 
 
 def long_string(s: str):

@@ -1,5 +1,5 @@
 {
-  "name": "@prefecthq/ui",
+  "name": "@syntaskhq/ui",
   "version": "2.8.0",
   "private": true,
   "scripts": {
@@ -10,10 +10,6 @@
     "validate:types": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@prefecthq/prefect-design": "2.7.9",
-    "@prefecthq/prefect-ui-library": "2.8.12",
-    "@prefecthq/vue-charts": "2.0.3",
-    "@prefecthq/vue-compositions": "1.11.4",
     "@types/lodash.debounce": "4.0.9",
     "axios": "1.6.7",
     "lodash.debounce": "4.0.8",
@@ -23,7 +19,11 @@
     "vue-router": "4.3.0"
   },
   "devDependencies": {
-    "@prefecthq/eslint-config": "1.0.32",
+    "@syntaskhq/eslint-config": "workspace:*",
+    "@syntaskhq/syntask-design": "workspace:*",
+    "@syntaskhq/syntask-ui-library": "workspace:*",
+    "@syntaskhq/vue-charts": "workspace:*",
+    "@syntaskhq/vue-compositions": "workspace:*",
     "@types/lodash.merge": "^4.6.9",
     "@vitejs/plugin-vue": "5.0.4",
     "autoprefixer": "10.4.19",
@@ -32,5 +32,6 @@
     "typescript": "^5.4.4",
     "vite": "5.2.8",
     "vue-tsc": "^2.0.11"
-  }
+  },
+  "packageManager": "pnpm@9.12.3"
 }

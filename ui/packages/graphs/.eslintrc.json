@@ -1,0 +1,26 @@
+{
+  "root": true,
+  "env": {
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "project": "./tsconfig.json"
+  },
+  "extends": ["@synopkg"],
+  "globals": {
+    "defineProps": "readonly",
+    "defineEmits": "readonly",
+    "globalThis": "readonly"
+  },
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "project": "./tsconfig.json"
+      }
+    }
+  },
+  "rules": {
+    "camelcase": "off"
+  }
+}

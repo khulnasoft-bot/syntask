@@ -1,7 +1,7 @@
 from textwrap import dedent
 
-from prefect.software.pip import PipRequirement
-from prefect.software.python import PythonEnvironment
+from syntask.software.pip import PipRequirement
+from syntask.software.python import PythonEnvironment
 
 
 class TestPythonEnvironment:

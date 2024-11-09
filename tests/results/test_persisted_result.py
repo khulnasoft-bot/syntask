@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from prefect.filesystems import LocalFileSystem
-from prefect.results import DEFAULT_STORAGE_KEY_FN, PersistedResult, PersistedResultBlob
-from prefect.serializers import JSONSerializer, PickleSerializer
+from syntask.filesystems import LocalFileSystem
+from syntask.results import DEFAULT_STORAGE_KEY_FN, PersistedResult, PersistedResultBlob
+from syntask.serializers import JSONSerializer, PickleSerializer
 
 
 @pytest.fixture

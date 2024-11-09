@@ -8,7 +8,7 @@ from functools import partial, wraps
 import anyio
 import pytest
 
-from prefect.utilities.asyncutils import (
+from syntask.utilities.asyncutils import (
     GatherIncomplete,
     LazySemaphore,
     add_event_loop_shutdown_callback,

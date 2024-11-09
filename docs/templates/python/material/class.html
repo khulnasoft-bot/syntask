@@ -1,9 +1,9 @@
 {{ log.debug() }}
 {% if config.show_if_no_docstring or class.has_contents %}
 
-<div class="prefect-container">
+<div class="syntask-container">
   <div class="doc doc-object doc-class">
-    <a class="prefect-heading" href="#{{ class.path }}">
+    <a class="syntask-heading" href="#{{ class.path }}">
     {% with html_id = class.path %}
 
       {% if not root or config.show_root_heading %}

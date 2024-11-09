@@ -1,5 +1,5 @@
 ---
-description: Learn about contributing to Prefect.
+description: Learn about contributing to Syntask.
 tags:
     - open source
     - contributing
@@ -12,7 +12,7 @@ search:
 
 # Contributing
 
-Thanks for considering contributing to Prefect!
+Thanks for considering contributing to Syntask!
 
 ## Setting up a development environment
 
@@ -21,8 +21,8 @@ First, you'll need to download the source code and install an editable version o
 <div class="terminal">
 ```bash
 # Clone the repository
-git clone https://github.com/PrefectHQ/prefect.git
-cd prefect
+git clone https://github.com/Synopkg/syntask.git
+cd syntask
 
 # We recommend using a virtual environment
 
@@ -65,10 +65,10 @@ pytest tests/test_flows.py
 ```
 </div>
 
-!!! tip "Building the Prefect UI"
-    If you intend to run a local Prefect server during development, you must first build the UI. See [UI development](#ui-development) for instructions.
+!!! tip "Building the Syntask UI"
+    If you intend to run a local Syntask server during development, you must first build the UI. See [UI development](#ui-development) for instructions.
 
-## Prefect Code of Conduct
+## Syntask Code of Conduct
 
 ### Our Pledge
 
@@ -125,7 +125,7 @@ a project may be further defined and clarified by project maintainers.
 ### Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting Chris White at [chris@prefect.io](mailto:chris@prefect.io). All
+reported by contacting Chris White at [chris@syntask.io](mailto:chris@syntask.io). All
 complaints will be reviewed and investigated and will result in a response that
 is deemed necessary and appropriate to the circumstances. The project team is
 obligated to maintain confidentiality with regard to the reporter of an incident.
@@ -147,56 +147,56 @@ For answers to common questions about this code of conduct, see
 
 ## Developer tooling
 
-The Prefect CLI provides several helpful commands to aid development.
+The Syntask CLI provides several helpful commands to aid development.
 
 Start all services with hot-reloading on code changes (requires UI dependencies to be installed):
 
 <div class="terminal">
 ```bash
-prefect dev start
+syntask dev start
 ```
 
 </div>
 
-Start a Prefect API that reloads on code changes:
+Start a Syntask API that reloads on code changes:
 
 <div class="terminal">
 ```bash
-prefect dev api
+syntask dev api
 ```
 </div>
 
-Start a Prefect worker that reloads on code changes:
+Start a Syntask worker that reloads on code changes:
 
 <div class="terminal">
 ```bash
-prefect dev agent
+syntask dev agent
 ```
 </div>
 
 ### UI development
 
-Developing the Prefect UI requires that [npm](https://github.com/npm/cli) is installed.
+Developing the Syntask UI requires that [npm](https://github.com/npm/cli) is installed.
 
 Start a development UI that reloads on code changes:
 
 <div class="terminal">
 ```bash
-prefect dev ui
+syntask dev ui
 ```
 </div>
 
-Build the static UI (the UI served by `prefect server start`):
+Build the static UI (the UI served by `syntask server start`):
 
 <div class="terminal">
 ```bash
-prefect dev build-ui
+syntask dev build-ui
 ```
 </div>
 
 ### Docs Development
 
-Prefect uses [mkdocs](https://www.mkdocs.org/) for the docs website and the [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) theme. While we use `mkdocs-material-insiders` for production, builds can still happen without the extra plugins. Deploy previews are available on pull requests, so you'll be able to browse the final look of your changes before merging.
+Syntask uses [mkdocs](https://www.mkdocs.org/) for the docs website and the [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) theme. While we use `mkdocs-material-insiders` for production, builds can still happen without the extra plugins. Deploy previews are available on pull requests, so you'll be able to browse the final look of your changes before merging.
 
 To build the docs:
 
@@ -227,7 +227,7 @@ We use the [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) theme
 Internal developers can install the production theme by running:
 
 ```bash
-pip install -e git+https://github.com/PrefectHQ/mkdocs-material-insiders.git#egg=mkdocs-material
+pip install -e git+https://github.com/Synopkg/mkdocs-material-insiders.git#egg=mkdocs-material
 mkdocs build # or mkdocs build --config-file mkdocs.insiders.yml if needed
 ```
 
@@ -237,37 +237,37 @@ Generate a manifest to deploy a development API to a local kubernetes cluster:
 
 <div class="terminal">
 ```bash
-prefect dev kubernetes-manifest
+syntask dev kubernetes-manifest
 ```
 </div>
 
-To access the Prefect UI running in a Kubernetes cluster, use the `kubectl port-forward` command to forward a port on your local machine to an open port within the cluster. For example:
+To access the Syntask UI running in a Kubernetes cluster, use the `kubectl port-forward` command to forward a port on your local machine to an open port within the cluster. For example:
 
 <div class="terminal">
 ```bash
-kubectl port-forward deployment/prefect-dev 4200:4200
+kubectl port-forward deployment/syntask-dev 4200:4200
 ```
 </div>
 
-This forwards port 4200 on the default internal loop IP for localhost to the Prefect server deployment.
+This forwards port 4200 on the default internal loop IP for localhost to the Syntask server deployment.
 
-To tell the local `prefect` command how to communicate with the Prefect API running in Kubernetes, set the `PREFECT_API_URL` environment variable:
+To tell the local `syntask` command how to communicate with the Syntask API running in Kubernetes, set the `SYNTASK_API_URL` environment variable:
 
 <div class="terminal">
 ```bash
-export PREFECT_API_URL=http://localhost:4200/api
+export SYNTASK_API_URL=http://localhost:4200/api
 ```
 </div>
 
-Since you previously configured port forwarding for the localhost port to the Kubernetes environment, you’ll be able to interact with the Prefect API running in Kubernetes when using local Prefect CLI commands.
+Since you previously configured port forwarding for the localhost port to the Kubernetes environment, you’ll be able to interact with the Syntask API running in Kubernetes when using local Syntask CLI commands.
 
 ### Adding Database Migrations
 
-To make changes to a table, first update the SQLAlchemy model in `src/prefect/server/database/orm_models.py`. For example,
+To make changes to a table, first update the SQLAlchemy model in `src/syntask/server/database/orm_models.py`. For example,
 if you wanted to add a new column to the `flow_run` table, you would add a new column to the `FlowRun` model:
 
 ```python
-# src/prefect/server/database/orm_models.py
+# src/syntask/server/database/orm_models.py
 
 @declarative_mixin
 class ORMFlowRun(ORMRun):
@@ -277,14 +277,14 @@ class ORMFlowRun(ORMRun):
 ```
 
 Next, you will need to generate new migration files. You must generate a new migration file for each database type.
-Migrations will be generated for whatever database type `PREFECT_API_DATABASE_CONNECTION_URL` is set to. See [here](/concepts/database/#configuring-the-database)
+Migrations will be generated for whatever database type `SYNTASK_API_DATABASE_CONNECTION_URL` is set to. See [here](/concepts/database/#configuring-the-database)
 for how to set the database connection URL for each database type.
 
 To generate a new migration file, run the following command:
 
 <div class="terminal">
 ```bash
-prefect server database revision --autogenerate -m "<migration name>"
+syntask server database revision --autogenerate -m "<migration name>"
 ```
 </div>
 
@@ -300,14 +300,14 @@ The `--autogenerate` flag will automatically generate a migration file based on 
     Be sure to check the file to make sure it only includes the changes you want to make. Additionally, you may need to
     remove extra statements that were included and not related to your change.
 
-The new migration can be found in the `src/prefect/server/database/migrations/versions/` directory. Each database type
-has its own subdirectory. For example, the SQLite migrations are stored in `src/prefect/server/database/migrations/versions/sqlite/`.
+The new migration can be found in the `src/syntask/server/database/migrations/versions/` directory. Each database type
+has its own subdirectory. For example, the SQLite migrations are stored in `src/syntask/server/database/migrations/versions/sqlite/`.
 
 After you have inspected the migration file, you can apply the migration to your database by running the following command:
 
 <div class="terminal">
 ```bash
-prefect server database upgrade -y
+syntask server database upgrade -y
 ```
 </div>
 

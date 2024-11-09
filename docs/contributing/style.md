@@ -1,5 +1,5 @@
 ---
-description: Code style and best practices for contributions to Prefect.
+description: Code style and best practices for contributions to Syntask.
 tags:
     - standards
     - code style
@@ -32,7 +32,7 @@ from .flows import flow
 
 ```python
 # Wrong
-from prefect.flows import flow
+from syntask.flows import flow
 ```
 
 #### Exposing submodules
@@ -42,7 +42,7 @@ Generally, submodules should _not_ be imported in the `__init__` file. Submodule
 For example, we do this for our schema and model modules because it is important to know if you are working with an API schema or database model, both of which may have similar names.
 
 ```python
-import prefect.server.schemas as schemas
+import syntask.server.schemas as schemas
 
 # The full module is accessible now
 schemas.core.FlowRun
@@ -57,7 +57,7 @@ from . import flows
 
 ```python
 # Wrong
-import prefect.flows
+import syntask.flows
 ```
 
 #### Importing to run side-effects
@@ -68,8 +68,8 @@ Often, global side-effects on import are a dangerous pattern. Avoid them if feas
 
 We have a couple acceptable use-cases for this currently:
 
-- To register dispatchable types, e.g. `prefect.serializers`.
-- To extend a CLI application e.g. `prefect.cli`.
+- To register dispatchable types, e.g. `syntask.serializers`.
+- To extend a CLI application e.g. `syntask.cli`.
 
 ### Imports in modules
 
@@ -79,13 +79,13 @@ The `from` syntax should be reserved for importing objects from modules. Modules
 
 ```python
 # Correct
-import prefect.server.schemas  # use with the full name
-import prefect.server.schemas as schemas  # use the shorter name
+import syntask.server.schemas  # use with the full name
+import syntask.server.schemas as schemas  # use the shorter name
 ```
 
 ```python
 # Wrong
-from prefect.server import schemas
+from syntask.server import schemas
 ```
 
 Unless in an `__init__.py` file, relative imports should not be used.
@@ -93,7 +93,7 @@ Unless in an `__init__.py` file, relative imports should not be used.
 
 ```python
 # Correct
-from prefect.utilities.foo import bar
+from syntask.utilities.foo import bar
 ```
 
 ```python
@@ -121,7 +121,7 @@ Sometimes, we must defer an import and perform it _within_ a function to avoid a
 ## This function in `settings.py` requires a method from the global `context` but the context
 ## uses settings
 def from_context():
-    from prefect.context import get_profile_context
+    from syntask.context import get_profile_context
 
     ...
 ```
@@ -139,7 +139,7 @@ If you are just using the imported object for a type signature, you should use t
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from prefect.server.schemas.states import State
+    from syntask.server.schemas.states import State
 
 def foo(state: "State"):
     pass
@@ -153,7 +153,7 @@ We do not have a best practice for this yet. See the `kubernetes`, `docker`, and
 
 #### Delaying expensive imports
 
-Sometimes, imports are slow. We'd like to keep the `prefect` module import times fast. In these cases, we can lazily import the slow module by deferring import to the relevant function body. For modules that are consumed by many functions, the pattern used for optional requirements may be used instead.
+Sometimes, imports are slow. We'd like to keep the `syntask` module import times fast. In these cases, we can lazily import the slow module by deferring import to the relevant function body. For modules that are consumed by many functions, the pattern used for optional requirements may be used instead.
 
 ## Command line interface (CLI) output messages
 
@@ -166,7 +166,7 @@ Upon executing a command that creates an object, the output message should offer
 
 Output Example:
 ```bash
-$ prefect work-queue create testing
+$ syntask work-queue create testing
 
 Created work queue with properties:
     name - 'abcde'
@@ -175,10 +175,10 @@ Created work queue with properties:
     deployment_ids - None
 
 Start an agent to pick up flows from the created work queue:
-    prefect agent start -q 'abcde'
+    syntask agent start -q 'abcde'
 
 Inspect the created work queue:
-    prefect work-queue inspect 'abcde'
+    syntask work-queue inspect 'abcde'
 
 ```
 
@@ -193,7 +193,7 @@ Additionally:
 Placeholder Example:
 ```bash
 Create a work queue with tags:
-    prefect work-queue create '<WORK QUEUE NAME>' -t '<OPTIONAL TAG 1>' -t '<OPTIONAL TAG 2>'
+    syntask work-queue create '<WORK QUEUE NAME>' -t '<OPTIONAL TAG 1>' -t '<OPTIONAL TAG 2>'
 ```
 
 Dedent Example:
@@ -209,23 +209,23 @@ output_msg = dedent(
         deployment_ids - {deployment_ids or None}
 
     Start an agent to pick up flows from the created work queue:
-        prefect agent start -q {name!r}
+        syntask agent start -q {name!r}
 
     Inspect the created work queue:
-        prefect work-queue inspect {name!r}
+        syntask work-queue inspect {name!r}
     """
 )
 ```
 
 ## API Versioning
 
-The Prefect client can be run separately from the Prefect orchestration server and communicate entirely via an API. Among other things, the Prefect client includes anything that runs task or flow code, (e.g. agents, and the Python client) or any consumer of Prefect metadata, (e.g. the Prefect UI, and CLI). The Prefect server stores this metadata and serves it via the REST API.
+The Syntask client can be run separately from the Syntask orchestration server and communicate entirely via an API. Among other things, the Syntask client includes anything that runs task or flow code, (e.g. agents, and the Python client) or any consumer of Syntask metadata, (e.g. the Syntask UI, and CLI). The Syntask server stores this metadata and serves it via the REST API.
 
-Sometimes, we make breaking changes to the API (for good reasons). In order to check that a Prefect client is compatible with the API it's making requests to, every API call the client makes includes a three-component `API_VERSION` header with major, minor, and patch versions.
+Sometimes, we make breaking changes to the API (for good reasons). In order to check that a Syntask client is compatible with the API it's making requests to, every API call the client makes includes a three-component `API_VERSION` header with major, minor, and patch versions.
 
-For example, a request with the `X-PREFECT-API-VERSION=3.2.1` header has a major version of `3`, minor version `2`, and patch version `1`.
+For example, a request with the `X-SYNTASK-API-VERSION=3.2.1` header has a major version of `3`, minor version `2`, and patch version `1`.
 
-This version header can be changed by modifying the `API_VERSION` constant in `prefect.server.api.server`.
+This version header can be changed by modifying the `API_VERSION` constant in `syntask.server.api.server`.
 
 When making a breaking change to the API, we should consider if the change might be *backwards compatible for clients*, meaning that the previous version of the client would still be able to make calls against the updated version of the server code. This might happen if the changes are purely additive: such as adding a non-critical API route. In these cases, we should make sure to bump the patch version.
 

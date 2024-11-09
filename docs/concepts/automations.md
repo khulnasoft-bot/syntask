@@ -1,12 +1,12 @@
 ---
-description: Configure automations based on flow state from the Prefect UI and Prefect Cloud.
+description: Configure automations based on flow state from the Syntask UI and Syntask Cloud.
 tags:
     - UI
     - states
     - flow runs
     - events
     - triggers
-    - Prefect Cloud
+    - Syntask Cloud
     - automations
 search:
   boost: 2
@@ -14,14 +14,14 @@ search:
 
 # Automations <span class="badge cloud"></span>
 
-Automations in Prefect Cloud enable you to configure [actions](#actions) that Prefect executes automatically based on [trigger](#triggers) conditions.
+Automations in Syntask Cloud enable you to configure [actions](#actions) that Syntask executes automatically based on [trigger](#triggers) conditions.
 
 Potential triggers include the occurrence of events from changes in a flow run's state - or the absence of such events. You can even define your own custom trigger to fire based on an [event](/cloud/events/) created from a webhook or a custom event defined in Python code.
 
 Potential actions include kicking off flow runs, pausing schedules, and sending custom notifications.
 
-!!! cloud-ad "Automations are only available in Prefect Cloud"
-    [Notifications](/concepts/notifications/) in an open-source Prefect server provide a subset of the notification message-sending features available in Automations.
+!!! cloud-ad "Automations are only available in Syntask Cloud"
+    [Notifications](/concepts/notifications/) in an open-source Syntask server provide a subset of the notification message-sending features available in Automations.
 
 Automations provide a flexible and powerful framework for automatically taking action in response to events.
 
@@ -29,7 +29,7 @@ Automations provide a flexible and powerful framework for automatically taking a
 
 The **Automations** page provides an overview of all configured automations for your workspace.
 
-![Viewing automations for a workspace in Prefect Cloud.](/img/ui/automations.png)
+![Viewing automations for a workspace in Syntask Cloud.](/img/ui/automations.png)
 
 Selecting the toggle next to an automation pauses execution of the automation.
 
@@ -47,7 +47,7 @@ On the **Automations** page, select the **+** icon to create a new automation. Y
 
 ### Triggers
 
-Triggers specify the conditions under which your action should be performed. The Prefect UI includes templates for many common conditions, such as:
+Triggers specify the conditions under which your action should be performed. The Syntask UI includes templates for many common conditions, such as:
 
 - Flow run state change
   - Note - Flow Run Tags currently are only evaluated with `OR` criteria
@@ -59,11 +59,11 @@ Triggers specify the conditions under which your action should be performed. The
 - Custom event triggers
 
 !!! note "Automations API"
-    The [automations API](https://app.prefect.cloud/api/docs#tag/Automations) enables further programmatic customization of trigger and action policies based on arbitrary [events](https://app.prefect.cloud/api/docs#tag/Events).
+    The [automations API](https://app.syntask.cloud/api/docs#tag/Automations) enables further programmatic customization of trigger and action policies based on arbitrary [events](https://app.syntask.cloud/api/docs#tag/Events).
 
 Importantly, triggers can be configured not only in reaction to events, but also proactively: to fire in the absence of an expected event.
 
-![Configuring a trigger for an automation in Prefect Cloud.](/img/ui/automations-trigger.png)
+![Configuring a trigger for an automation in Syntask Cloud.](/img/ui/automations-trigger.png)
 
 For example, in the case of flow run state change triggers, you might expect production flows to finish in no longer than thirty minutes. But transient infrastructure or network issues could cause your flow to get “stuck” in a running state. A trigger could kick off an action if the flow stays in a running state for more than 30 minutes. This action could be taken on the flow itself, such as canceling or restarting it. Or the action could take the form of a notification so someone can take manual remediation steps. Or you could set both actions to to take place when the trigger occurs.
 
@@ -84,7 +84,7 @@ Actions specify what your automation does when its trigger criteria are met. Cur
 - Declare an incident (available on Pro and Custom plans)
 - Change the state of a flow run
 
-![Configuring an action for an automation in Prefect Cloud.](/img/ui/automations-action.png)
+![Configuring an action for an automation in Syntask Cloud.](/img/ui/automations-action.png)
 
 ### Selected and inferred action targets
 
@@ -98,13 +98,13 @@ For example, if a trigger fires on a flow run that is stuck in a running state, 
 
 Similarly, if a trigger fires on a work queue event and the corresponding action is to pause an inferred work queue, the inferred work queue is the one that emitted the event.
 
-Prefect tries to infer the relevant event whenever possible, but sometimes one does not exist.
+Syntask tries to infer the relevant event whenever possible, but sometimes one does not exist.
 
 Specify a name and, optionally, a description for the automation.
 
 ## Custom triggers
 
-When you need a trigger that doesn't quite fit the templates in UI trigger builder, you can define a custom trigger in JSON.  With custom triggers, you have access to the full capabilities of Prefect's automation system - allowing you to react to many kinds of events and metrics in your workspace.
+When you need a trigger that doesn't quite fit the templates in UI trigger builder, you can define a custom trigger in JSON.  With custom triggers, you have access to the full capabilities of Syntask's automation system - allowing you to react to many kinds of events and metrics in your workspace.
 
 Each automation has a single trigger that, when fired, will cause all of its associated actions to run.  That single trigger may be a reactive or proactive event trigger, a trigger monitoring the value of a metric, or a composite trigger that combines several underlying triggers.
 
@@ -112,7 +112,7 @@ Each automation has a single trigger that, when fired, will cause all of its ass
 
 Event triggers are the most common types of trigger, and they are intended to react to the presence or absence of an event happening in your workspace.  Event triggers are indicated with `{"type": "event"}`.
 
-![Viewing a custom trigger for automations for a workspace in Prefect Cloud.](/img/ui/automations-custom.png)
+![Viewing a custom trigger for automations for a workspace in Syntask Cloud.](/img/ui/automations-custom.png)
 
 The schema that defines an event trigger is as follows:
 
@@ -129,25 +129,25 @@ The schema that defines an event trigger is as follows:
 
 ### Resource matching
 
-Both the `event` and `metric` triggers support matching events for specific resources in your workspace, including most Prefect objects (like flows, deployment, blocks, work pools, tags, etc) as well as resources you have defined in any events you emit yourself.  The `match` and `match_related` fields control which events a trigger considers for evaluation by filtering on the contents of their `resource` and `related` fields, respectively. Each label added to a `match` filter is `AND`ed with the other labels, and can accept a single value or a list of multiple values that are `OR`ed together.
+Both the `event` and `metric` triggers support matching events for specific resources in your workspace, including most Syntask objects (like flows, deployment, blocks, work pools, tags, etc) as well as resources you have defined in any events you emit yourself.  The `match` and `match_related` fields control which events a trigger considers for evaluation by filtering on the contents of their `resource` and `related` fields, respectively. Each label added to a `match` filter is `AND`ed with the other labels, and can accept a single value or a list of multiple values that are `OR`ed together.
 
-Consider the `resource` and `related` fields on the following `prefect.flow-run.Completed` event, truncated for the sake of example. Its primary resource is a flow run, and since that flow run was started via a deployment, it is related to both its flow and its deployment:
+Consider the `resource` and `related` fields on the following `syntask.flow-run.Completed` event, truncated for the sake of example. Its primary resource is a flow run, and since that flow run was started via a deployment, it is related to both its flow and its deployment:
 
 ```json
 "resource": {
-  "prefect.resource.id": "prefect.flow-run.925eacce-7fe5-4753-8f02-77f1511543db",
-  "prefect.resource.name": "cute-kittiwake"
+  "syntask.resource.id": "syntask.flow-run.925eacce-7fe5-4753-8f02-77f1511543db",
+  "syntask.resource.name": "cute-kittiwake"
 }
 "related": [
   {
-    "prefect.resource.id": "prefect.flow.cb6126db-d528-402f-b439-96637187a8ca",
-    "prefect.resource.role": "flow",
-    "prefect.resource.name": "hello"
+    "syntask.resource.id": "syntask.flow.cb6126db-d528-402f-b439-96637187a8ca",
+    "syntask.resource.role": "flow",
+    "syntask.resource.name": "hello"
   },
   {
-    "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e",
-    "prefect.resource.role": "deployment",
-    "prefect.resource.name": "example"
+    "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e",
+    "syntask.resource.role": "deployment",
+    "syntask.resource.name": "example"
   }
 ]
 ```
@@ -158,8 +158,8 @@ The following configuration will filter for any events whose primary resource is
 
 ```json
 "match": {
-  "prefect.resource.id": "prefect.flow-run.*",
-  "prefect.resource.name": ["cute-*", "radical-*"]
+  "syntask.resource.id": "syntask.flow-run.*",
+  "syntask.resource.name": ["cute-*", "radical-*"]
 },
 "match_related": {},
 ...
@@ -170,20 +170,20 @@ This configuration, on the other hand, will filter for any events for which this
 ```json
 "match": {},
 "match_related": {
-  "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
+  "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
 },
 ...
 ```
 
-Both of the above approaches will select the example `prefect.flow-run.Completed` event, but will permit additional, possibly undesired events through the filter as well. `match` and `match_related` can be combined for more restrictive filtering:
+Both of the above approaches will select the example `syntask.flow-run.Completed` event, but will permit additional, possibly undesired events through the filter as well. `match` and `match_related` can be combined for more restrictive filtering:
 
 ```json
 "match": {
-  "prefect.resource.id": "prefect.flow-run.*",
-  "prefect.resource.name": ["cute-*", "radical-*"]
+  "syntask.resource.id": "syntask.flow-run.*",
+  "syntask.resource.name": ["cute-*", "radical-*"]
 },
 "match_related": {
-  "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
+  "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
 },
 ...
 ```
@@ -194,20 +194,20 @@ Now this trigger will filter only for events whose primary resource is a flow ru
 
 Once an event has passed through the `match` filters, it must be decided if this event should be counted toward the trigger's `threshold`. Whether that is the case is determined by the event names present in `expect`.
 
-This configuration informs the trigger to evaluate _only_ `prefect.flow-run.Completed` events that have passed the `match` filters.
+This configuration informs the trigger to evaluate _only_ `syntask.flow-run.Completed` events that have passed the `match` filters.
 
 ```json
 "expect": [
-  "prefect.flow-run.Completed"
+  "syntask.flow-run.Completed"
 ],
 ...
 ```
 
-`threshold` decides the quantity of `expect`ed events needed to satisfy the trigger. Increasing the `threshold` above 1 will also require use of `within` to define a range of time in which multiple events are seen. The following configuration will expect two occurrences of `prefect.flow-run.Completed` within 60 seconds.
+`threshold` decides the quantity of `expect`ed events needed to satisfy the trigger. Increasing the `threshold` above 1 will also require use of `within` to define a range of time in which multiple events are seen. The following configuration will expect two occurrences of `syntask.flow-run.Completed` within 60 seconds.
 
 ```json
 "expect": [
-  "prefect.flow-run.Completed"
+  "syntask.flow-run.Completed"
 ],
 "threshold": 2,
 "within": 60,
@@ -219,8 +219,8 @@ This configuration informs the trigger to evaluate _only_ `prefect.flow-run.Comp
 Take, for example, this flow which emits an event indicating the table it operates on is missing or empty:
 
 ```python
-from prefect import flow
-from prefect.events import emit_event
+from syntask import flow
+from syntask.events import emit_event
 from db import Table
 
 
@@ -231,12 +231,12 @@ def transform(table_name: str):
   if not table.exists():
     emit_event(
         event="table-missing",
-        resource={"prefect.resource.id": "etl-events.transform"}
+        resource={"syntask.resource.id": "etl-events.transform"}
     )
   elif table.is_empty():
     emit_event(
         event="table-empty",
-        resource={"prefect.resource.id": "etl-events.transform"}
+        resource={"syntask.resource.id": "etl-events.transform"}
     )
   else:
     # transform data
@@ -249,20 +249,20 @@ The following configuration uses `after` to prevent this automation from firing 
 
 ```json
 "match": {
-  "prefect.resource.id": [
-    "prefect.flow-run.*",
+  "syntask.resource.id": [
+    "syntask.flow-run.*",
     "etl-events.transform"
   ]
 },
 "match_related": {
-  "prefect.resource.id": "prefect.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
+  "syntask.resource.id": "syntask.deployment.37ca4a08-e2d9-4628-a310-cc15a323378e"
 }
 "after": [
   "table-missing",
   "table-empty"
 ]
 "expect": [
-  "prefect.flow-run.Completed"
+  "syntask.flow-run.Completed"
 ],
 ...
 ```
@@ -271,19 +271,19 @@ The following configuration uses `after` to prevent this automation from firing 
 
 All of the previous examples were designed around a reactive `posture` - that is, count up events toward the `threshold` until it is met, then execute actions. To respond to the absence of events, use a proactive `posture`. A proactive trigger will fire when its `threshold` has _not_ been met by the end of the window of time defined by `within`. Proactive triggers must have a `within` value of at least 10 seconds.
 
-The following trigger will fire if a `prefect.flow-run.Completed` event is not seen within 60 seconds after a `prefect.flow-run.Running` event is seen.
+The following trigger will fire if a `syntask.flow-run.Completed` event is not seen within 60 seconds after a `syntask.flow-run.Running` event is seen.
 
 ```json
 {
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {},
   "after": [
-    "prefect.flow-run.Running"
+    "syntask.flow-run.Running"
   ],
   "expect": [
-    "prefect.flow-run.Completed"
+    "syntask.flow-run.Completed"
   ],
   "for_each": [],
   "posture": "Proactive",
@@ -292,22 +292,22 @@ The following trigger will fire if a `prefect.flow-run.Completed` event is not s
 }
 ```
 
-However, without `for_each`, a `prefect.flow-run.Completed` event from a _different_ flow run than the one that started this trigger with its `prefect.flow-run.Running` event could satisfy the condition. Adding a `for_each` of `prefect.resource.id` will cause this trigger to be evaluated separately for each flow run id associated with these events.
+However, without `for_each`, a `syntask.flow-run.Completed` event from a _different_ flow run than the one that started this trigger with its `syntask.flow-run.Running` event could satisfy the condition. Adding a `for_each` of `syntask.resource.id` will cause this trigger to be evaluated separately for each flow run id associated with these events.
 
 ```json
 {
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {},
   "after": [
-    "prefect.flow-run.Running"
+    "syntask.flow-run.Running"
   ],
   "expect": [
-    "prefect.flow-run.Completed"
+    "syntask.flow-run.Completed"
   ],
   "for_each": [
-    "prefect.resource.id"
+    "syntask.resource.id"
   ],
   "posture": "Proactive",
   "threshold": 1,
@@ -319,9 +319,9 @@ However, without `for_each`, a `prefect.flow-run.Completed` event from a _differ
 
 Metric triggers (`{"type": "metric"}`) fire when the value of a metric in your workspace crosses a threshold you've defined.  For example, you can trigger an automation when the success rate of flows in your workspace drops below 95% over the course of an hour.
 
-Prefect's metrics are all derived by examining your workspace's events, and if applicable, use the `occurred` times of those events as the basis for their calculations.
+Syntask's metrics are all derived by examining your workspace's events, and if applicable, use the `occurred` times of those events as the basis for their calculations.
 
-Prefect defines three metrics today:
+Syntask defines three metrics today:
 
 - **Successes** (`{"name": "successes"}`), defined as the number of flow runs that went `Pending` and then the latest state we saw was not a failure (`Failed` or `Crashed`).  This metric accounts for retries if the ultimate state was successful.
 - **Duration** (`{"name": "duration"}`), defined as the _length of time_ that a flow remains in a `Running` state before transitioning to a terminal state such as `Completed`, `Failed`, or `Crashed`.  Because this time is derived in terms of flow run state change events, it may be greater than the runtime of your function.
@@ -339,7 +339,7 @@ And the `MetricTriggerQuery` query is defined as:
 
 | Name           | Type                                  | Description                                                            |
 | -------------- | ------------------------------------- | ---------------------------------------------------------------------- |
-| **name**       | string                                | The name of the Prefect metric to evaluate (see above).                |
+| **name**       | string                                | The name of the Syntask metric to evaluate (see above).                |
 | **threshold**  | number                                | The threshold to which the current metric value is compared            |
 | **operator**   | string (`"<"`, `"<="`, `">"`, `">="`) | The comparison operator to use to decide if the threshold value is met |
 | **range**      | duration in seconds                   | How far back to evaluate the metric                                    |
@@ -351,11 +351,11 @@ For example, to fire when flow runs tagged `production` in your workspace are fa
 {
   "type": "metric",
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {
-    "prefect.resource.id": "prefect.tag.production",
-    "prefect.resource.role": "tag"
+    "syntask.resource.id": "syntask.tag.production",
+    "syntask.resource.role": "tag"
   },
   "metric": {
     "name": "successes",
@@ -373,11 +373,11 @@ To detect when the average lateness of your Kubernetes workloads (running on a w
 {
   "type": "metric",
   "match": {
-    "prefect.resource.id": "prefect.flow-run.*"
+    "syntask.resource.id": "syntask.flow-run.*"
   },
   "match_related": {
-    "prefect.resource.id": "prefect.work-pool.kubernetes",
-    "prefect.resource.role": "work-pool"
+    "syntask.resource.id": "syntask.work-pool.kubernetes",
+    "syntask.resource.role": "work-pool"
   },
   "metric": {
     "name": "lateness",
@@ -404,28 +404,28 @@ For example, if you want to run a deployment only after three different flows in
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.block.remote-file-system.write_path.called"],
+      "expect": ["syntask.block.remote-file-system.write_path.called"],
       "match_related": {
-        "prefect.resource.name": "daily-customer-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-customer-export",
+        "syntask.resource.role": "flow"
       }
     },
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.block.remote-file-system.write_path.called"],
+      "expect": ["syntask.block.remote-file-system.write_path.called"],
       "match_related": {
-        "prefect.resource.name": "daily-revenue-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-revenue-export",
+        "syntask.resource.role": "flow"
       }
     },
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.block.remote-file-system.write_path.called"],
+      "expect": ["syntask.block.remote-file-system.write_path.called"],
       "match_related": {
-        "prefect.resource.name": "daily-expenses-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-expenses-export",
+        "syntask.resource.role": "flow"
       }
     }
   ]
@@ -446,10 +446,10 @@ If you want a flow run to complete prior to starting to watch for those three ev
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.flow-run.Completed"],
+      "expect": ["syntask.flow-run.Completed"],
       "match_related": {
-        "prefect.resource.name": "daily-export-initiator",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-export-initiator",
+        "syntask.resource.role": "flow"
       }
     },
     // and the second child trigger being the compound trigger from the prior example
@@ -461,28 +461,28 @@ If you want a flow run to complete prior to starting to watch for those three ev
         {
           "type": "event",
           "posture": "Reactive",
-          "expect": ["prefect.block.remote-file-system.write_path.called"],
+          "expect": ["syntask.block.remote-file-system.write_path.called"],
           "match_related": {
-            "prefect.resource.name": "daily-customer-export",
-            "prefect.resource.role": "flow"
+            "syntask.resource.name": "daily-customer-export",
+            "syntask.resource.role": "flow"
           }
         },
         {
           "type": "event",
           "posture": "Reactive",
-          "expect": ["prefect.block.remote-file-system.write_path.called"],
+          "expect": ["syntask.block.remote-file-system.write_path.called"],
           "match_related": {
-            "prefect.resource.name": "daily-revenue-export",
-            "prefect.resource.role": "flow"
+            "syntask.resource.name": "daily-revenue-export",
+            "syntask.resource.role": "flow"
           }
         },
         {
           "type": "event",
           "posture": "Reactive",
-          "expect": ["prefect.block.remote-file-system.write_path.called"],
+          "expect": ["syntask.block.remote-file-system.write_path.called"],
           "match_related": {
-            "prefect.resource.name": "daily-expenses-export",
-            "prefect.resource.role": "flow"
+            "syntask.resource.name": "daily-expenses-export",
+            "syntask.resource.role": "flow"
           }
         }
       ]
@@ -505,20 +505,20 @@ Any type of trigger may be composed into higher-order composite triggers, includ
     {
       "type": "event",
       "posture": "Proactive",
-      "after": ["prefect.flow-run.Pending"],
-      "expect": ["prefect.flow-run.Running", "prefect.flow-run.Crashed"],
-      "for_each": ["prefect.resource.id"],
+      "after": ["syntask.flow-run.Pending"],
+      "expect": ["syntask.flow-run.Running", "syntask.flow-run.Crashed"],
+      "for_each": ["syntask.resource.id"],
       "match_related": {
-        "prefect.resource.name": "daily-customer-export",
-        "prefect.resource.role": "flow"
+        "syntask.resource.name": "daily-customer-export",
+        "syntask.resource.role": "flow"
       }
     },
     {
       "type": "event",
       "posture": "Reactive",
-      "expect": ["prefect.work-pool.not_ready"],
+      "expect": ["syntask.work-pool.not_ready"],
       "match": {
-        "prefect.resource.name": "kubernetes-workers",
+        "syntask.resource.name": "kubernetes-workers",
       }
     },
     {
@@ -554,13 +554,13 @@ Sequence triggers are defined as:
 
 ## Create an automation via deployment triggers
 
-To enable the simple configuration of event-driven deployments, Prefect provides deployment triggers - a shorthand for creating automations that are linked to specific deployments to run them based on the presence or absence of events.
+To enable the simple configuration of event-driven deployments, Syntask provides deployment triggers - a shorthand for creating automations that are linked to specific deployments to run them based on the presence or absence of events.
 
-Trigger definitions for deployments are supported in `prefect.yaml`, `.serve`, and `.deploy`. At deployment time, specified trigger definitions will create linked automations that are triggered by events matching your chosen [grammar](/concepts/events/#event-grammar). Each trigger definition may include a [jinja template](https://en.wikipedia.org/wiki/Jinja_(template_engine)) to render the triggering `event` as the `parameters` of your  deployment's flow run.
+Trigger definitions for deployments are supported in `syntask.yaml`, `.serve`, and `.deploy`. At deployment time, specified trigger definitions will create linked automations that are triggered by events matching your chosen [grammar](/concepts/events/#event-grammar). Each trigger definition may include a [jinja template](https://en.wikipedia.org/wiki/Jinja_(template_engine)) to render the triggering `event` as the `parameters` of your  deployment's flow run.
 
-### Defining triggers in `prefect.yaml`
+### Defining triggers in `syntask.yaml`
 
-A list of triggers can be included directly on any deployment in a `prefect.yaml` file:
+A list of triggers can be included directly on any deployment in a `syntask.yaml` file:
 
 ```yaml
 deployments:
@@ -572,7 +572,7 @@ deployments:
       - type: event
         enabled: true
         match:
-          prefect.resource.id: my.external.resource
+          syntask.resource.id: my.external.resource
         expect:
           - external.resource.pinged
         parameters:
@@ -595,23 +595,23 @@ deployments:
         triggers:
           - type: event
             match:
-              prefect.resource.id: my.external.resource
+              syntask.resource.id: my.external.resource
             expect:
               - external.resource.pinged
           - type: event
             match:
-              prefect.resource.id: my.external.resource
+              syntask.resource.id: my.external.resource
             expect:
               - external.resource.replied
 ```
 
 ### Defining triggers in `.serve` and `.deploy`
 
-For creating deployments with triggers in Python, the trigger types `DeploymentEventTrigger`, `DeploymentMetricTrigger`, `DeploymentCompoundTrigger`, and `DeploymentSequenceTrigger` can be imported from `prefect.events`:
+For creating deployments with triggers in Python, the trigger types `DeploymentEventTrigger`, `DeploymentMetricTrigger`, `DeploymentCompoundTrigger`, and `DeploymentSequenceTrigger` can be imported from `syntask.events`:
 
 ```python
-from prefect import flow
-from prefect.events import DeploymentEventTrigger 
+from syntask import flow
+from syntask.events import DeploymentEventTrigger 
 
 
 @flow(log_prints=True)
@@ -625,7 +625,7 @@ if __name__=="__main__":
         triggers=[
             DeploymentEventTrigger(
                 enabled=True,
-                match={"prefect.resource.id": "my.external.resource"},
+                match={"syntask.resource.id": "my.external.resource"},
                 expect=["external.resource.pinged"],
                 parameters={
                     "param_1": "{{ event }}",
@@ -638,8 +638,8 @@ if __name__=="__main__":
 As with prior examples, composite triggers must be supplied with a list of underlying triggers:
 
 ```python
-from prefect import flow
-from prefect.events import DeploymentEventTrigger, DeploymentCompoundTrigger
+from syntask import flow
+from syntask.events import DeploymentEventTrigger, DeploymentCompoundTrigger
 
 
 @flow(log_prints=True)
@@ -650,18 +650,18 @@ def decorated_fn(param_1: str):
 if __name__=="__main__":
     decorated_fn.deploy(
         name="my-deployment",
-        image="prefecthq/prefect:2-latest"
+        image="syntaskhq/syntask:2-latest"
         triggers=[
             DeploymentCompoundTrigger(
                 name="my-compound-trigger",
                 require="all",
                 triggers=[
                     DeploymentEventTrigger(
-                      match={"prefect.resource.id": "my.external.resource"},
+                      match={"syntask.resource.id": "my.external.resource"},
                       expect=["external.resource.pinged"],
                     ),
                     DeploymentEventTrigger(
-                      match={"prefect.resource.id": "my.external.resource"},
+                      match={"syntask.resource.id": "my.external.resource"},
                       expect=["external.resource.replied"],
                     ),
                 ],
@@ -675,24 +675,24 @@ if __name__=="__main__":
 ```
 
 
-### Pass triggers to `prefect deploy`
+### Pass triggers to `syntask deploy`
 
-You can pass one or more `--trigger` arguments to `prefect deploy`, which can be either a JSON string or a path to a `.yaml` or `.json` file.
+You can pass one or more `--trigger` arguments to `syntask deploy`, which can be either a JSON string or a path to a `.yaml` or `.json` file.
 
 ```bash
 # Pass a trigger as a JSON string
-prefect deploy -n test-deployment \
+syntask deploy -n test-deployment \
   --trigger '{
     "enabled": true,
     "match": {
-      "prefect.resource.id": "prefect.flow-run.*"
+      "syntask.resource.id": "syntask.flow-run.*"
     },
-    "expect": ["prefect.flow-run.Completed"]
+    "expect": ["syntask.flow-run.Completed"]
   }'
 
 # Pass a trigger using a JSON/YAML file
-prefect deploy -n test-deployment --trigger triggers.yaml
-prefect deploy -n test-deployment --trigger my_stuff/triggers.json
+syntask deploy -n test-deployment --trigger triggers.yaml
+syntask deploy -n test-deployment --trigger my_stuff/triggers.json
 ```
 
 For example, a `triggers.yaml` file could have many triggers defined:
@@ -701,25 +701,25 @@ For example, a `triggers.yaml` file could have many triggers defined:
 triggers:
   - enabled: true
     match:
-      prefect.resource.id: my.external.resource
+      syntask.resource.id: my.external.resource
     expect:
       - external.resource.pinged
     parameters:
       param_1: "{{ event }}"
   - enabled: true
     match:
-      prefect.resource.id: my.other.external.resource
+      syntask.resource.id: my.other.external.resource
     expect:
       - some.other.event
     parameters:
       param_1: "{{ event }}"
 ```
 
-Both of the above triggers would be attached to `test-deployment` after running `prefect deploy`.
+Both of the above triggers would be attached to `test-deployment` after running `syntask deploy`.
 
-!!! warning "Triggers passed to `prefect deploy` will override any triggers defined in `prefect.yaml`"
-    While you can define triggers in `prefect.yaml` for a given deployment, triggers passed to `prefect deploy` will
-    take precedence over those defined in `prefect.yaml`.
+!!! warning "Triggers passed to `syntask deploy` will override any triggers defined in `syntask.yaml`"
+    While you can define triggers in `syntask.yaml` for a given deployment, triggers passed to `syntask deploy` will
+    take precedence over those defined in `syntask.yaml`.
 
 Note that deployment triggers contribute to the total number of automations in your workspace.
 
@@ -733,7 +733,7 @@ Automation notifications support sending notifications via any predefined block 
 - Microsoft Teams message to a channel
 - Email to a configured email address
 
-![Configuring notifications for an automation in Prefect Cloud.](/img/ui/automations-notifications.png)
+![Configuring notifications for an automation in Syntask Cloud.](/img/ui/automations-notifications.png)
 
 ## Templating with Jinja
 
@@ -743,15 +743,15 @@ Jinja templated variable syntax wraps the variable name in double curly brackets
 
 You can access properties of the underlying flow run objects including:
 
-- [flow_run](/api-ref/server/schemas/core/#prefect.server.schemas.core.FlowRun)
-- [flow](/api-ref/server/schemas/core/#prefect.server.schemas.core.Flow)
-- [deployment](/api-ref/server/schemas/core/#prefect.server.schemas.core.Deployment)
-- [work_queue](/api-ref/server/schemas/core/#prefect.server.schemas.core.WorkQueue)
-- [work_pool](/api-ref/server/schemas/core/#prefect.server.schemas.core.WorkPool)
+- [flow_run](/api-ref/server/schemas/core/#syntask.server.schemas.core.FlowRun)
+- [flow](/api-ref/server/schemas/core/#syntask.server.schemas.core.Flow)
+- [deployment](/api-ref/server/schemas/core/#syntask.server.schemas.core.Deployment)
+- [work_queue](/api-ref/server/schemas/core/#syntask.server.schemas.core.WorkQueue)
+- [work_pool](/api-ref/server/schemas/core/#syntask.server.schemas.core.WorkPool)
 
 In addition to its native properties, each object includes an `id` along with `created` and `updated` timestamps.
 
-The `flow_run|ui_url` token returns the URL for viewing the flow run in Prefect Cloud.
+The `flow_run|ui_url` token returns the URL for viewing the flow run in Syntask Cloud.
 
 Here’s an example for something that would be relevant to a flow run state-based notification:
 
@@ -766,7 +766,7 @@ Flow run {{ flow_run.name }} entered state {{ flow_run.state.name }}.
 
 The resulting Slack webhook notification would look something like this:
 
-![Configuring notifications for an automation in Prefect Cloud.](/img/ui/templated-notification.png)
+![Configuring notifications for an automation in Syntask Cloud.](/img/ui/templated-notification.png)
 
 You could include `flow` and `deployment` properties.
 
@@ -790,7 +790,7 @@ Name: {{ work_pool.name }}
 Last polled: {{ work_pool.last_polled }}
 ```
 
-In addition to those shortcuts for flows, deployments, and work pools, you have access to the automation and the event that triggered the automation. See the [Automations API](https://app.prefect.cloud/api/docs#tag/Automations) for additional details.
+In addition to those shortcuts for flows, deployments, and work pools, you have access to the automation and the event that triggered the automation. See the [Automations API](https://app.syntask.cloud/api/docs#tag/Automations) for additional details.
 
 ```
 Automation: {{ automation.name }}

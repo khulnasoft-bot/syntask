@@ -3,11 +3,11 @@ requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prefect"
+name = "syntask"
 description = "Workflow orchestration and management."
 readme = "README.md"
 authors = [
-    {name = "Prefect Technologies, Inc.", email = "help@prefect.io"}
+    {name = "Syntask Technologies, Inc.", email = "dev.sulaiman@icloud.com"}
 ]
 classifiers = [
     "Natural Language :: English",
@@ -83,17 +83,17 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://www.prefect.io"
-"Changelog" = "https://github.com/PrefectHQ/prefect/blob/main/RELEASE-NOTES.md"
-"Documentation" = "https://docs.prefect.io"
-"Source" = "https://github.com/PrefectHQ/prefect"
-"Tracker" = "https://github.com/PrefectHQ/prefect/issues"
+"Homepage" = "https://www.syntask.io"
+"Changelog" = "https://github.com/Synopkg/syntask/blob/main/RELEASE-NOTES.md"
+"Documentation" = "https://docs.syntask.io"
+"Source" = "https://github.com/Synopkg/syntask"
+"Tracker" = "https://github.com/Synopkg/syntask/issues"
 
 [project.scripts]
-prefect = "prefect.cli:app"
+syntask = "syntask.cli:app"
 
 [project.entry-points."mkdocs.plugins"]
-"render_swagger" = "prefect.utilities.render_swagger:SwaggerPlugin"
+"render_swagger" = "syntask.utilities.render_swagger:SwaggerPlugin"
 
 
 [project.optional-dependencies]
@@ -136,7 +136,7 @@ dev = [
 ]
 
 [tool.setuptools_scm]
-write_to = "src/prefect/_version.py"
+write_to = "src/syntask/_version.py"
 
 [tool.black]
 preview = true
@@ -145,10 +145,10 @@ preview = true
 disallow_untyped_defs = false
 check_untyped_defs = false
 
-[tool.mypy-prefect.flows]
+[tool.mypy-syntask.flows]
 ignore_errors = true
 
-[tool.mypy-prefect.tasks]
+[tool.mypy-syntask.tasks]
 ignore_errors = true
 
 [tool.pytest.ini_options]
@@ -178,8 +178,8 @@ markers = [
 ]
 
 env = [
-    "PREFECT_TEST_MODE=1",
-    "PREFECT_LOGGING_SERVER_LEVEL=DEBUG",
+    "SYNTASK_TEST_MODE=1",
+    "SYNTASK_LOGGING_SERVER_LEVEL=DEBUG",
     'PYTEST_TIMEOUT=20',
 ]
 
@@ -213,9 +213,9 @@ filterwarnings = [
     "ignore:Use setlocale:DeprecationWarning",
     "ignore:Skipped unsupported reflection of expression-based index:sqlalchemy.exc.SAWarning",
     "ignore:The --rsyncdir command line argument and rsyncdirs config variable are deprecated.:DeprecationWarning",
-    "ignore:Prefect will drop support for Python 3.7:FutureWarning",
-    "ignore:`PREFECT_API_URL` uses `/account/` but should use `/accounts/`.:UserWarning",
-    "ignore:`PREFECT_API_URL` should have `/api` after the base URL.:UserWarning",
+    "ignore:Syntask will drop support for Python 3.7:FutureWarning",
+    "ignore:`SYNTASK_API_URL` uses `/account/` but should use `/accounts/`.:UserWarning",
+    "ignore:`SYNTASK_API_URL` should have `/api` after the base URL.:UserWarning",
     "ignore:datetime\\.datetime\\.utcnow\\(\\) is deprecated and scheduled for removal in a future version\\..*:DeprecationWarning",
     "ignore:datetime\\.datetime\\.utcfromtimestamp\\(\\) is deprecated and scheduled for removal in a future version\\..*:DeprecationWarning",
     "ignore::sqlalchemy.exc.SAWarning",
@@ -230,7 +230,7 @@ exclude_lines = [
 ]
 
 omit = [
-    "src/prefect/server/database/migrations/versions/*",
+    "src/syntask/server/database/migrations/versions/*",
 ]
 
 ignore_errors = true
@@ -247,4 +247,4 @@ format = "parsable"
 eval_annotations = true
 only_show_violations = true
 targets = "3.8-"
-exclusion_regex = "^src/prefect/_vendor/.*$|^src/prefect/utilities/compat\\.py$"
+exclusion_regex = "^src/syntask/_vendor/.*$|^src/syntask/utilities/compat\\.py$"

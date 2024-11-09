@@ -35,7 +35,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { media } from '@prefecthq/prefect-design'
+  import { media } from '@syntaskhq/syntask-design'
   import {
     useWorkspaceApi,
     PageHeadingWorkPool,
@@ -48,8 +48,8 @@
     CodeBanner,
     DeploymentsList,
     useDeploymentsFilter
-  } from '@prefecthq/prefect-ui-library'
-  import { useRouteParam, useRouteQueryParam, useSubscription } from '@prefecthq/vue-compositions'
+  } from '@syntaskhq/syntask-ui-library'
+  import { useRouteParam, useRouteQueryParam, useSubscription } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
 
@@ -61,7 +61,7 @@
   }
   const workPoolSubscription = useSubscription(api.workPools.getWorkPoolByName, [workPoolName.value], subscriptionOptions)
   const workPool = computed(() => workPoolSubscription.response)
-  const isAgentWorkPool = computed(() => workPool.value?.type === 'prefect-agent')
+  const isAgentWorkPool = computed(() => workPool.value?.type === 'syntask-agent')
 
   const computedTabs = computed(() => [
     { label: 'Details', hidden: media.xl },
@@ -75,7 +75,7 @@
   const { tabs } = useTabs(computedTabs, tab)
 
   const showCodeBanner = computed(() => workPool.value?.status !== 'ready')
-  const codeBannerCliCommand = computed(() => `prefect ${isAgentWorkPool.value ? 'agent' : 'worker'} start --pool "${workPool.value?.name}"`)
+  const codeBannerCliCommand = computed(() => `syntask ${isAgentWorkPool.value ? 'agent' : 'worker'} start --pool "${workPool.value?.name}"`)
 
   const { filter: flowRunFilter } = useFlowRunsFilter({
     workPools: {

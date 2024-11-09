@@ -1,1 +1,1 @@
-::: prefect.server.services.scheduler
+::: syntask.server.services.scheduler

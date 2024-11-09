@@ -8,11 +8,11 @@ from typing import Any, Optional
 import anyio
 import httpx
 import pytest
-from prefect._vendor.fastapi import Body, FastAPI, status
-from prefect._vendor.fastapi.exceptions import RequestValidationError
+from syntask._vendor.fastapi import Body, FastAPI, status
+from syntask._vendor.fastapi.exceptions import RequestValidationError
 
-from prefect.filesystems import LocalFileSystem
-from prefect.server.api.server import validation_exception_handler
+from syntask.filesystems import LocalFileSystem
+from syntask.server.api.server import validation_exception_handler
 
 
 @pytest.fixture

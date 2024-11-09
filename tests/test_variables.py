@@ -1,6 +1,6 @@
 import pytest
 
-from prefect import flow, variables
+from syntask import flow, variables
 
 
 @pytest.fixture

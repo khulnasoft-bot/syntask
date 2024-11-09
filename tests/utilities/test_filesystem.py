@@ -4,7 +4,7 @@ from pathlib import Path, PosixPath, WindowsPath
 
 import pytest
 
-from prefect.utilities.filesystem import (
+from syntask.utilities.filesystem import (
     filter_files,
     get_open_file_limit,
     relative_path_to_current_platform,

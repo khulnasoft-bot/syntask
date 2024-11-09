@@ -1,4 +1,4 @@
-import { RouteGuardExecutioner, createWorkspaceRouteRecords } from '@prefecthq/prefect-ui-library'
+import { RouteGuardExecutioner, createWorkspaceRouteRecords } from '@syntaskhq/syntask-ui-library'
 import { RouteRecordRaw, createRouter, createWebHistory, RouteComponent } from 'vue-router'
 import { routes, NamedRoute, AppRouteLocation, AppRouteRecord } from '@/router/routes'
 import { BASE_URL } from '@/utilities/meta'
@@ -73,7 +73,7 @@ router.beforeEach(async (to, from) => {
 
 router.afterEach((to, from) => {
   if (to.fullPath !== from.fullPath) {
-    document.title = 'Prefect Server'
+    document.title = 'Syntask Server'
   }
 
   return RouteGuardExecutioner.after(to, from)

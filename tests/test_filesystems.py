@@ -5,10 +5,10 @@ from typing import Tuple
 
 import pytest
 
-import prefect
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
-from prefect.exceptions import InvalidRepositoryURLError
-from prefect.filesystems import (
+import syntask
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
+from syntask.exceptions import InvalidRepositoryURLError
+from syntask.filesystems import (
     GCS,
     S3,
     Azure,
@@ -16,10 +16,10 @@ from prefect.filesystems import (
     LocalFileSystem,
     RemoteFileSystem,
 )
-from prefect.testing.utilities import AsyncMock, MagicMock
-from prefect.utilities.filesystem import tmpchdir
+from syntask.testing.utilities import AsyncMock, MagicMock
+from syntask.utilities.filesystem import tmpchdir
 
-TEST_PROJECTS_DIR = prefect.__development_base_path__ / "tests" / "test-projects"
+TEST_PROJECTS_DIR = syntask.__development_base_path__ / "tests" / "test-projects"
 
 
 def setup_test_directory(tmp_src: str, sub_dir: str = "puppy") -> Tuple[str, str]:
@@ -57,35 +57,35 @@ def setup_test_directory(tmp_src: str, sub_dir: str = "puppy") -> Tuple[str, str
         (
             S3,
             {"bucket_path": "bucket/path"},
-            "prefect.filesystems.S3 has been deprecated."
+            "syntask.filesystems.S3 has been deprecated."
             " It will not be available after Sep 2024."
-            " Use the `S3Bucket` block from prefect-aws instead.",
+            " Use the `S3Bucket` block from syntask-aws instead.",
         ),
         (
             GCS,
             {"bucket_path": "bucket/path"},
-            "prefect.filesystems.GCS has been deprecated."
+            "syntask.filesystems.GCS has been deprecated."
             " It will not be available after Sep 2024."
-            " Use the `GcsBucket` block from prefect-gcp instead.",
+            " Use the `GcsBucket` block from syntask-gcp instead.",
         ),
         (
             Azure,
             {"bucket_path": "bucket/path"},
-            "prefect.filesystems.Azure has been deprecated."
+            "syntask.filesystems.Azure has been deprecated."
             " It will not be available after Sep 2024."
-            " Use the `AzureBlobStorageContainer` block from prefect-azure instead.",
+            " Use the `AzureBlobStorageContainer` block from syntask-azure instead.",
         ),
         (
             GitHub,
             {"repository": "https://github.com/org/repo.git"},
-            "prefect.filesystems.GitHub has been deprecated."
+            "syntask.filesystems.GitHub has been deprecated."
             " It will not be available after Sep 2024."
-            " Use the `GitHubRepository` block from prefect-github instead.",
+            " Use the `GitHubRepository` block from syntask-github instead.",
         ),
     ],
 )
 def test_deprecated_filesystems_raise_a_warning(Filesystem, kwargs, expected_message):
-    with pytest.warns(PrefectDeprecationWarning, match=expected_message):
+    with pytest.warns(SyntaskDeprecationWarning, match=expected_message):
         Filesystem(**kwargs)
 
 
@@ -337,7 +337,7 @@ class TestRemoteFileSystem:
         await fs.put_directory(
             os.path.join(TEST_PROJECTS_DIR, "flat-project"),
             ignore_file=os.path.join(
-                TEST_PROJECTS_DIR, "flat-project", ".prefectignore"
+                TEST_PROJECTS_DIR, "flat-project", ".syntaskignore"
             ),
         )
         copied_files = set(fs.filesystem.glob("/flat/**"))
@@ -357,7 +357,7 @@ class TestRemoteFileSystem:
         await fs.put_directory(
             os.path.join(TEST_PROJECTS_DIR, "tree-project"),
             ignore_file=os.path.join(
-                TEST_PROJECTS_DIR, "tree-project", ".prefectignore"
+                TEST_PROJECTS_DIR, "tree-project", ".syntaskignore"
             ),
         )
         copied_files = set(fs.filesystem.glob("/tree/**"))
@@ -377,7 +377,7 @@ class TestRemoteFileSystem:
         }
 
     async def test_put_directory_put_file_count(self):
-        ignore_file = os.path.join(TEST_PROJECTS_DIR, "tree-project", ".prefectignore")
+        ignore_file = os.path.join(TEST_PROJECTS_DIR, "tree-project", ".syntaskignore")
 
         # Put files
         fs = RemoteFileSystem(basepath="memory://tree")
@@ -388,7 +388,7 @@ class TestRemoteFileSystem:
 
         # Expected files
         ignore_patterns = Path(ignore_file).read_text().splitlines(keepends=False)
-        included_files = prefect.utilities.filesystem.filter_files(
+        included_files = syntask.utilities.filesystem.filter_files(
             os.path.join(TEST_PROJECTS_DIR, "tree-project"),
             ignore_patterns,
             include_dirs=False,
@@ -519,12 +519,12 @@ class TestGitHub:
             returncode = 0
 
         mock = AsyncMock(return_value=p())
-        monkeypatch.setattr(prefect.filesystems, "run_process", mock)
-        g = GitHub(repository="prefect")
+        monkeypatch.setattr(syntask.filesystems, "run_process", mock)
+        g = GitHub(repository="syntask")
         await g.get_directory()
 
         assert mock.await_count == 1
-        expected_cmd = ["git", "clone", "prefect"]
+        expected_cmd = ["git", "clone", "syntask"]
         assert mock.await_args[0][0][: len(expected_cmd)] == expected_cmd
 
     async def test_reference_default(self, monkeypatch):
@@ -532,12 +532,12 @@ class TestGitHub:
             returncode = 0
 
         mock = AsyncMock(return_value=p())
-        monkeypatch.setattr(prefect.filesystems, "run_process", mock)
-        g = GitHub(repository="prefect", reference="2.0.0")
+        monkeypatch.setattr(syntask.filesystems, "run_process", mock)
+        g = GitHub(repository="syntask", reference="2.0.0")
         await g.get_directory()
 
         assert mock.await_count == 1
-        expected_cmd = ["git", "clone", "prefect", "-b", "2.0.0", "--depth", "1"]
+        expected_cmd = ["git", "clone", "syntask", "-b", "2.0.0", "--depth", "1"]
         assert mock.await_args[0][0][: len(expected_cmd)] == expected_cmd
 
     async def test_token_added_correctly_from_credential(self, monkeypatch):
@@ -547,9 +547,9 @@ class TestGitHub:
             returncode = 0
 
         mock = AsyncMock(return_value=p())
-        monkeypatch.setattr(prefect.filesystems, "run_process", mock)
+        monkeypatch.setattr(syntask.filesystems, "run_process", mock)
         credential = "XYZ"
-        repo = "https://github.com/PrefectHQ/prefect.git"
+        repo = "https://github.com/Synopkg/syntask.git"
         g = GitHub(
             repository=repo,
             access_token=credential,
@@ -559,7 +559,7 @@ class TestGitHub:
         expected_cmd = [
             "git",
             "clone",
-            f"https://{credential}@github.com/PrefectHQ/prefect.git",
+            f"https://{credential}@github.com/Synopkg/syntask.git",
             "--depth",
             "1",
         ]
@@ -574,12 +574,12 @@ class TestGitHub:
             returncode = 0
 
         mock = AsyncMock(return_value=p())
-        monkeypatch.setattr(prefect.filesystems, "run_process", mock)
+        monkeypatch.setattr(syntask.filesystems, "run_process", mock)
         credential = "XYZ"
         error_msg = "Crendentials can only be used with GitHub repositories using the 'HTTPS' format"  # noqa
         with pytest.raises(InvalidRepositoryURLError, match=error_msg):
             GitHub(
-                repository="git@github.com:PrefectHQ/prefect.git",
+                repository="git@github.com:Synopkg/syntask.git",
                 access_token=credential,
             )
 
@@ -592,7 +592,7 @@ class TestGitHub:
             returncode = 0
 
         mock = AsyncMock(return_value=p())
-        monkeypatch.setattr(prefect.filesystems, "run_process", mock)
+        monkeypatch.setattr(syntask.filesystems, "run_process", mock)
 
         sub_dir_name = "puppy"
 
@@ -602,13 +602,13 @@ class TestGitHub:
         # move file contents to tmp_dst
         with TemporaryDirectory() as tmp_dst:
             monkeypatch.setattr(
-                prefect.filesystems,
+                syntask.filesystems,
                 "TemporaryDirectory",
                 self.MockTmpDir,
             )
 
             g = GitHub(
-                repository="https://github.com/PrefectHQ/prefect.git",
+                repository="https://github.com/Synopkg/syntask.git",
             )
             await g.get_directory(local_path=tmp_dst)
 
@@ -629,7 +629,7 @@ class TestGitHub:
             returncode = 0
 
         mock = AsyncMock(return_value=p())
-        monkeypatch.setattr(prefect.filesystems, "run_process", mock)
+        monkeypatch.setattr(syntask.filesystems, "run_process", mock)
 
         sub_dir_name = "puppy"
 
@@ -639,13 +639,13 @@ class TestGitHub:
         # move file contents to tmp_dst
         with TemporaryDirectory() as tmp_dst:
             monkeypatch.setattr(
-                prefect.filesystems,
+                syntask.filesystems,
                 "TemporaryDirectory",
                 self.MockTmpDir,
             )
 
             g = GitHub(
-                repository="https://github.com/PrefectHQ/prefect.git",
+                repository="https://github.com/Synopkg/syntask.git",
             )
             await g.get_directory(local_path=tmp_dst, from_path=sub_dir_name)
 
@@ -673,7 +673,7 @@ class TestGitHub:
             returncode = 0
 
         mock = AsyncMock(return_value=p())
-        monkeypatch.setattr(prefect.filesystems, "run_process", mock)
+        monkeypatch.setattr(syntask.filesystems, "run_process", mock)
 
         sub_dir_name = "puppy"
 
@@ -688,7 +688,7 @@ class TestGitHub:
         # move file contents to tmp_dst
         with TemporaryDirectory() as tmp_dst:
             monkeypatch.setattr(
-                prefect.filesystems,
+                syntask.filesystems,
                 "TemporaryDirectory",
                 self.MockTmpDir,
             )
@@ -696,11 +696,11 @@ class TestGitHub:
             if include_git_objects is None:
                 # Check default behavior is to include git objects
                 g = GitHub(
-                    repository="https://github.com/PrefectHQ/prefect.git",
+                    repository="https://github.com/Synopkg/syntask.git",
                 )
             else:
                 g = GitHub(
-                    repository="https://github.com/PrefectHQ/prefect.git",
+                    repository="https://github.com/Synopkg/syntask.git",
                     include_git_objects=include_git_objects,
                 )
             await g.get_directory(local_path=tmp_dst)
@@ -711,7 +711,7 @@ class TestGitHub:
 class TestAzure:
     def test_init(self, monkeypatch):
         remote_storage_mock = MagicMock()
-        monkeypatch.setattr("prefect.filesystems.RemoteFileSystem", remote_storage_mock)
+        monkeypatch.setattr("syntask.filesystems.RemoteFileSystem", remote_storage_mock)
         Azure(
             azure_storage_tenant_id="tenant",
             azure_storage_account_name="account",
@@ -734,7 +734,7 @@ class TestAzure:
 
     def test_init_with_anon(self, monkeypatch):
         remote_storage_mock = MagicMock()
-        monkeypatch.setattr("prefect.filesystems.RemoteFileSystem", remote_storage_mock)
+        monkeypatch.setattr("syntask.filesystems.RemoteFileSystem", remote_storage_mock)
         Azure(
             azure_storage_tenant_id="tenant",
             azure_storage_account_name="account",
@@ -758,7 +758,7 @@ class TestAzure:
 
     def test_init_with_container(self, monkeypatch):
         remote_storage_mock = MagicMock()
-        monkeypatch.setattr("prefect.filesystems.RemoteFileSystem", remote_storage_mock)
+        monkeypatch.setattr("syntask.filesystems.RemoteFileSystem", remote_storage_mock)
         Azure(
             azure_storage_tenant_id="tenant",
             azure_storage_account_name="account",

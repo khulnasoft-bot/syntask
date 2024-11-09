@@ -1,5 +1,5 @@
 ---
-description: Prefect states contain information about the status of a flow or task run.
+description: Syntask states contain information about the status of a flow or task run.
 tags:
     - orchestration
     - flow runs
@@ -16,7 +16,7 @@ search:
 
 ## Overview
 
-States are rich objects that contain information about the status of a particular [task](/concepts/tasks) run or [flow](/concepts/flows/) run. While you don't need to know the details of the states to use Prefect, you can give your workflows superpowers by taking advantage of it.
+States are rich objects that contain information about the status of a particular [task](/concepts/tasks) run or [flow](/concepts/flows/) run. While you don't need to know the details of the states to use Syntask, you can give your workflows superpowers by taking advantage of it.
 
 At any moment, you can learn anything you need to know about a task or flow by examining its current state or the history of its states. For example, a state could tell you that a task:
 
@@ -32,7 +32,7 @@ At any moment, you can learn anything you need to know about a task or flow by e
 - failed because it timed out
 
 
-By manipulating a relatively small number of task states, Prefect flows can harness the complexity that emerges in workflows.
+By manipulating a relatively small number of task states, Syntask flows can harness the complexity that emerges in workflows.
 
 !!! note "Only runs have states"
     Though we often refer to the "state" of a flow or a task, what we really mean is the state of a flow _run_ or a task _run_. Flows and tasks are templates that describe what a system does; only when we run the system does it also take on a state. So while we might refer to a task as "running" or being "successful", we really mean that a specific instance of the task is in that state.
@@ -70,21 +70,21 @@ The full complement of states and state types includes:
 When calling a task or a flow, there are three types of returned values:
 
 - Data: A Python object (such as `int`, `str`, `dict`, `list`, and so on).
-- `State`: A Prefect object indicating the state of a flow or task run.
-- [`PrefectFuture`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture): A Prefect object that contains both _data_ and _State_.
+- `State`: A Syntask object indicating the state of a flow or task run.
+- [`SyntaskFuture`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture): A Syntask object that contains both _data_ and _State_.
 
 Returning data  is the default behavior any time you call `your_task()`.
 
-Returning Prefect [`State`](/api-ref/server/schemas/states/) occurs anytime you call your task or flow with the argument `return_state=True`.
+Returning Syntask [`State`](/api-ref/server/schemas/states/) occurs anytime you call your task or flow with the argument `return_state=True`.
 
-Returning [`PrefectFuture`](/api-ref/prefect/futures/#prefect.futures.PrefectFuture) is achieved by calling `your_task.submit()`.
+Returning [`SyntaskFuture`](/api-ref/syntask/futures/#syntask.futures.SyntaskFuture) is achieved by calling `your_task.submit()`.
 
 ### Return Data
 
 By default, running a task will return data:
 
 ```python hl_lines="3-5"
-from prefect import flow, task 
+from syntask import flow, task 
 
 @task 
 def add_one(x):
@@ -107,7 +107,7 @@ def my_flow():
     result = subflow() # return data
 ```
 
-### Return Prefect State
+### Return Syntask State
 
 To return a `State` instead, add `return_state=True` as a parameter of your task call.
 
@@ -139,31 +139,31 @@ def my_flow():
     result = state.result() # return int
 ```
 
-### Return a PrefectFuture
+### Return a SyntaskFuture
 
-To get a `PrefectFuture`, add `.submit()` to your task call.
+To get a `SyntaskFuture`, add `.submit()` to your task call.
 
 ```python hl_lines="3-5"
 @flow 
 def my_flow():
-    future = add_one.submit(1) # return PrefectFuture
+    future = add_one.submit(1) # return SyntaskFuture
 ```
 
-To get data from a `PrefectFuture`, call `.result()`.
+To get data from a `SyntaskFuture`, call `.result()`.
 
 ```python hl_lines="4-5"
 @flow 
 def my_flow():
-    future = add_one.submit(1) # return PrefectFuture
+    future = add_one.submit(1) # return SyntaskFuture
     result = future.result() # return data
 ```
 
-To get a `State` from a `PrefectFuture`, call `.wait()`.
+To get a `State` from a `SyntaskFuture`, call `.wait()`.
 
 ```python hl_lines="4-5"
 @flow 
 def my_flow():
-    future = add_one.submit(1) # return PrefectFuture
+    future = add_one.submit(1) # return SyntaskFuture
     state = future.wait() # return State
 ```
 
@@ -187,7 +187,7 @@ State change hooks execute code in response to changes in flow or task run state
 #### A simple example
 
 ```python
-from prefect import flow
+from syntask import flow
 
 def my_success_hook(flow, flow_run, state):
     print("Flow run succeeded!")
@@ -257,12 +257,12 @@ def my_succeed_or_fail_hook(task, task_run, state):
 
 #### Pass `kwargs` to your hooks
 
-The Prefect engine will call your hooks for you upon the state change, passing in the flow, flow run, and state objects.
+The Syntask engine will call your hooks for you upon the state change, passing in the flow, flow run, and state objects.
 
 However, you can define your hook to have additional default arguments:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 data = {}
 
@@ -282,7 +282,7 @@ assert data == {"my_arg": "custom_value", "state": state}
 
 ```python
 from functools import partial
-from prefect import flow, task
+from syntask import flow, task
 
 data = {}
 

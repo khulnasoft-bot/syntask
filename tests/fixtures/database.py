@@ -13,25 +13,25 @@ import pytest
 from sqlalchemy.exc import InterfaceError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.blocks.notifications import NotificationBlock
-from prefect.filesystems import LocalFileSystem
-from prefect.infrastructure import DockerContainer, Process
-from prefect.server import models, schemas
-from prefect.server.database.configurations import ENGINES, TRACKER
-from prefect.server.database.dependencies import (
-    PrefectDBInterface,
+from syntask.blocks.notifications import NotificationBlock
+from syntask.filesystems import LocalFileSystem
+from syntask.infrastructure import DockerContainer, Process
+from syntask.server import models, schemas
+from syntask.server.database.configurations import ENGINES, TRACKER
+from syntask.server.database.dependencies import (
+    SyntaskDBInterface,
     provide_database_interface,
 )
-from prefect.server.models.block_registration import run_block_auto_registration
-from prefect.server.models.concurrency_limits_v2 import create_concurrency_limit
-from prefect.server.orchestration.rules import (
+from syntask.server.models.block_registration import run_block_auto_registration
+from syntask.server.models.concurrency_limits_v2 import create_concurrency_limit
+from syntask.server.orchestration.rules import (
     FlowOrchestrationContext,
     TaskOrchestrationContext,
 )
-from prefect.server.schemas import states
-from prefect.server.schemas.core import ConcurrencyLimitV2
-from prefect.utilities.callables import parameter_schema
-from prefect.workers.process import ProcessWorker
+from syntask.server.schemas import states
+from syntask.server.schemas.core import ConcurrencyLimitV2
+from syntask.utilities.callables import parameter_schema
+from syntask.workers.process import ProcessWorker
 
 AsyncSessionGetter = Callable[[], AsyncContextManager[AsyncSession]]
 
@@ -42,7 +42,7 @@ def db(test_database_connection_url, safety_check_settings):
 
 
 @pytest.fixture(scope="session", autouse=True)
-async def database_engine(db: PrefectDBInterface):
+async def database_engine(db: SyntaskDBInterface):
     """Produce a database engine"""
     TRACKER.active = True
 
@@ -396,23 +396,23 @@ async def task_run_states(session, task_run, task_run_state):
 
 
 @pytest.fixture
-async def storage_document_id(prefect_client, tmpdir):
+async def storage_document_id(syntask_client, tmpdir):
     return await LocalFileSystem(basepath=str(tmpdir)).save(
-        name=f"local-test-{uuid.uuid4()}", client=prefect_client
+        name=f"local-test-{uuid.uuid4()}", client=syntask_client
     )
 
 
 @pytest.fixture
-async def infrastructure_document_id(prefect_client):
+async def infrastructure_document_id(syntask_client):
     return await Process(env={"MY_TEST_VARIABLE": 1})._save(
-        is_anonymous=True, client=prefect_client
+        is_anonymous=True, client=syntask_client
     )
 
 
 @pytest.fixture
-async def infrastructure_document_id_2(prefect_client):
+async def infrastructure_document_id_2(syntask_client):
     return await DockerContainer(env={"MY_TEST_VARIABLE": 1})._save(
-        is_anonymous=True, client=prefect_client
+        is_anonymous=True, client=syntask_client
     )
 
 
@@ -791,12 +791,12 @@ async def managed_work_pool(session):
 
 
 @pytest.fixture
-async def prefect_agent_work_pool(session):
+async def syntask_agent_work_pool(session):
     model = await models.workers.create_work_pool(
         session=session,
         work_pool=schemas.actions.WorkPoolCreate(
             name="process-work-pool",
-            type="prefect-agent",
+            type="syntask-agent",
         ),
     )
     await session.commit()

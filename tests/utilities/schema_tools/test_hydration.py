@@ -1,6 +1,6 @@
 import pytest
 
-from prefect.utilities.schema_tools.hydration import (
+from syntask.utilities.schema_tools.hydration import (
     HydrationContext,
     InvalidJinja,
     InvalidJSON,
@@ -14,7 +14,7 @@ from prefect.utilities.schema_tools.hydration import (
 
 
 class TestHydratePassThrough:
-    # Hydrating without a `__prefect_kind` should just leave
+    # Hydrating without a `__syntask_kind` should just leave
     # all the values as is.
     @pytest.mark.parametrize(
         "input_object",
@@ -39,96 +39,96 @@ class TestHydratePassThrough:
     def test_hydrate_basic(self, input_object):
         assert hydrate(input_object) == input_object
 
-    def test_hydrate_unregistered_prefect_kind(self):
-        """We pass through the `value` key of any unrecognized `__prefect_kind`."""
+    def test_hydrate_unregistered_syntask_kind(self):
+        """We pass through the `value` key of any unrecognized `__syntask_kind`."""
         assert (
-            hydrate({"__prefect_kind": "never-heard-of-it", "value": "hello"})
+            hydrate({"__syntask_kind": "never-heard-of-it", "value": "hello"})
             == "hello"
         )
 
 
 class TestHydrateRaiseOnError:
     async def test_dont_raise_if_error(self):
-        values = {"param": {"__prefect_kind": "none"}}
+        values = {"param": {"__syntask_kind": "none"}}
 
         res = hydrate(values, ctx=HydrationContext(raise_on_error=False))
         assert res == {"param": ValueNotFound()}
 
     async def test_raise_if_error(self):
-        values = {"param": {"__prefect_kind": "none"}}
+        values = {"param": {"__syntask_kind": "none"}}
 
         with pytest.raises(ValueNotFound) as exc:
             hydrate(values, ctx=HydrationContext(raise_on_error=True))
-        assert str(exc.value) == "Missing 'value' key in __prefect object"
+        assert str(exc.value) == "Missing 'value' key in __syntask object"
 
     async def test_dont_raise_if_no_error(self):
-        values = {"param": {"__prefect_kind": "none", "value": "5"}}
+        values = {"param": {"__syntask_kind": "none", "value": "5"}}
 
         hydrate(values, ctx=HydrationContext(raise_on_error=False))
 
 
-class TestHydrateWithNonePrefectKind:
+class TestHydrateWithNoneSyntaskKind:
     @pytest.mark.parametrize(
         "input_object, expected_output",
         [
-            # __prefect_kind set to None, should be a simple pass-through
-            ({"param": {"__prefect_kind": "none", "value": None}}, {"param": None}),
-            ({"param": {"__prefect_kind": "none", "value": 10}}, {"param": 10}),
+            # __syntask_kind set to None, should be a simple pass-through
+            ({"param": {"__syntask_kind": "none", "value": None}}, {"param": None}),
+            ({"param": {"__syntask_kind": "none", "value": 10}}, {"param": 10}),
             (
-                {"param": {"__prefect_kind": "none", "value": "hello"}},
+                {"param": {"__syntask_kind": "none", "value": "hello"}},
                 {"param": "hello"},
             ),
             (
-                {"param": {"__prefect_kind": "none", "value": [1, 2, 3]}},
+                {"param": {"__syntask_kind": "none", "value": [1, 2, 3]}},
                 {"param": [1, 2, 3]},
             ),
             (
-                {"param": {"__prefect_kind": "none", "value": {"key": "value"}}},
+                {"param": {"__syntask_kind": "none", "value": {"key": "value"}}},
                 {"param": {"key": "value"}},
             ),
-            # Complex objects with __prefect_kind set to "none"
+            # Complex objects with __syntask_kind set to "none"
             (
                 {
                     "param": {
-                        "__prefect_kind": "none",
+                        "__syntask_kind": "none",
                         "value": {"nested": {"another_key": "another_value"}},
                     }
                 },
                 {"param": {"nested": {"another_key": "another_value"}}},
             ),
-            # Nested "none" __prefect_kinds
+            # Nested "none" __syntask_kinds
             (
                 {
                     "param": {
-                        "__prefect_kind": "none",
+                        "__syntask_kind": "none",
                         "value": {
                             "hello": "world",
-                            "goodbye": {"__prefect_kind": "none", "value": "moon"},
+                            "goodbye": {"__syntask_kind": "none", "value": "moon"},
                         },
                     }
                 },
                 {"param": {"hello": "world", "goodbye": "moon"}},
             ),
-            ({"param": {"__prefect_kind": "none"}}, {"param": ValueNotFound()}),
+            ({"param": {"__syntask_kind": "none"}}, {"param": ValueNotFound()}),
         ],
     )
-    def test_hydrate_with_null_prefect_kind(self, input_object, expected_output):
+    def test_hydrate_with_null_syntask_kind(self, input_object, expected_output):
         assert hydrate(input_object) == expected_output
 
 
-class TestHydrateWithJsonPrefectKind:
+class TestHydrateWithJsonSyntaskKind:
     @pytest.mark.parametrize(
         "input_object, expected_output",
         [
-            # __prefect_kind set to "json", JSON string should be parsed
+            # __syntask_kind set to "json", JSON string should be parsed
             (
-                {"param": {"__prefect_kind": "json", "value": '{"key": "value"}'}},
+                {"param": {"__syntask_kind": "json", "value": '{"key": "value"}'}},
                 {"param": {"key": "value"}},
             ),
             (
                 {
                     "param": {
-                        "__prefect_kind": "json",
+                        "__syntask_kind": "json",
                         "value": '{"nested": {"another_key": "another_value"}}',
                     }
                 },
@@ -138,27 +138,27 @@ class TestHydrateWithJsonPrefectKind:
             (
                 {
                     "param": {
-                        "__prefect_kind": "json",
+                        "__syntask_kind": "json",
                         "value": '{\n  "key": "value",\n  "nested": {\n    "another_key": "another_value"\n  }\n}',
                     }
                 },
                 {"param": {"key": "value", "nested": {"another_key": "another_value"}}},
             ),
-            # JSON string containing `__prefect_kind` which should be treated as a regular field
+            # JSON string containing `__syntask_kind` which should be treated as a regular field
             (
                 {
                     "param": {
-                        "__prefect_kind": "json",
-                        "value": '{"__prefect_kind": "some_value", "key": "value"}',
+                        "__syntask_kind": "json",
+                        "value": '{"__syntask_kind": "some_value", "key": "value"}',
                     }
                 },
-                {"param": {"__prefect_kind": "some_value", "key": "value"}},
+                {"param": {"__syntask_kind": "some_value", "key": "value"}},
             ),
             # Invalid JSON
             (
                 {
                     "param": {
-                        "__prefect_kind": "json",
+                        "__syntask_kind": "json",
                         "value": '{"key": unquotedvalue}',
                     }
                 },
@@ -169,34 +169,34 @@ class TestHydrateWithJsonPrefectKind:
                 },
             ),
             (
-                {"param": {"__prefect_kind": "json", "value": 12346}},
+                {"param": {"__syntask_kind": "json", "value": 12346}},
                 {
                     "param": InvalidJSON(
                         detail="the JSON object must be str, bytes or bytearray, not int"
                     )
                 },
             ),
-            # Cases where __prefect_kind is "json", but value is missing
-            ({"param": {"__prefect_kind": "json"}}, {}),
-            ({"__prefect_kind": "json"}, {}),
+            # Cases where __syntask_kind is "json", but value is missing
+            ({"param": {"__syntask_kind": "json"}}, {}),
+            ({"__syntask_kind": "json"}, {}),
         ],
     )
-    def test_hydrate_with_json_prefect_kind(self, input_object, expected_output):
+    def test_hydrate_with_json_syntask_kind(self, input_object, expected_output):
         assert hydrate(input_object) == expected_output
 
 
-class TestHydrateWithJinjaPrefectKind:
+class TestHydrateWithJinjaSyntaskKind:
     @pytest.mark.parametrize(
         "input_object, expected_output",
         [
             # Valid Jinja template
             (
-                {"param": {"__prefect_kind": "jinja", "template": "Hello {{ name }}"}},
+                {"param": {"__syntask_kind": "jinja", "template": "Hello {{ name }}"}},
                 {"param": ValidJinja("Hello {{ name }}")},
             ),
             # Jinja template with syntax error
             (
-                {"param": {"__prefect_kind": "jinja", "template": "Hello {{ name"}},
+                {"param": {"__syntask_kind": "jinja", "template": "Hello {{ name"}},
                 {
                     "param": InvalidJinja(
                         "unexpected end of template, expected 'end of print statement'."
@@ -207,7 +207,7 @@ class TestHydrateWithJinjaPrefectKind:
             (
                 {
                     "param": {
-                        "__prefect_kind": "jinja",
+                        "__syntask_kind": "jinja",
                         "template": """
                         {% for i in range(1) %}
                             Level 1
@@ -229,16 +229,16 @@ class TestHydrateWithJinjaPrefectKind:
             ),
             # Missing template
             (
-                {"param": {"__prefect_kind": "jinja"}},
+                {"param": {"__syntask_kind": "jinja"}},
                 {"param": TemplateNotFound()},
             ),
         ],
     )
-    def test_hydrate_with_jinja_prefect_kind(self, input_object, expected_output):
+    def test_hydrate_with_jinja_syntask_kind(self, input_object, expected_output):
         assert hydrate(input_object) == expected_output
 
     def test_render_jinja(self):
-        values = {"param": {"__prefect_kind": "jinja", "template": "Hello {{ name }}"}}
+        values = {"param": {"__syntask_kind": "jinja", "template": "Hello {{ name }}"}}
 
         ctx = HydrationContext(render_jinja=False, jinja_context={"name": "world"})
         assert hydrate(values, ctx) == {"param": ValidJinja("Hello {{ name }}")}
@@ -252,24 +252,24 @@ class TestHydrateWithJinjaPrefectKind:
         assert hydrate(values, ctx) == {"param": "Hello "}
 
 
-class TestHydrateWithWorkspaceVariablePrefectKind:
+class TestHydrateWithWorkspaceVariableSyntaskKind:
     @pytest.mark.parametrize(
         "input_object, expected_output, ctx",
         [
-            # Cases where __prefect_kind is "workspace_variable",
+            # Cases where __syntask_kind is "workspace_variable",
             # but "variable_name"" is missing
             (
-                {"param": {"__prefect_kind": "workspace_variable"}},
+                {"param": {"__syntask_kind": "workspace_variable"}},
                 {},
                 HydrationContext(),
             ),
-            ({"__prefect_kind": "workspace_variable"}, {}, HydrationContext()),
+            ({"__syntask_kind": "workspace_variable"}, {}, HydrationContext()),
             # variable not found in context and we don't render it
             # we just assume it's fine
             (
                 {
                     "param": {
-                        "__prefect_kind": "workspace_variable",
+                        "__syntask_kind": "workspace_variable",
                         "variable_name": "my-var",
                     }
                 },
@@ -281,7 +281,7 @@ class TestHydrateWithWorkspaceVariablePrefectKind:
             (
                 {
                     "param": {
-                        "__prefect_kind": "workspace_variable",
+                        "__syntask_kind": "workspace_variable",
                         "variable_name": "my-var",
                     }
                 },
@@ -295,7 +295,7 @@ class TestHydrateWithWorkspaceVariablePrefectKind:
             (
                 {
                     "param": {
-                        "__prefect_kind": "workspace_variable",
+                        "__syntask_kind": "workspace_variable",
                         "variable_name": "my-var",
                     }
                 },
@@ -306,7 +306,7 @@ class TestHydrateWithWorkspaceVariablePrefectKind:
             (
                 {
                     "param": {
-                        "__prefect_kind": "workspace_variable",
+                        "__syntask_kind": "workspace_variable",
                         "variable_name": "my-var",
                     }
                 },
@@ -318,7 +318,7 @@ class TestHydrateWithWorkspaceVariablePrefectKind:
             ),
         ],
     )
-    def test_hydrate_with_null_prefect_kind(self, input_object, expected_output, ctx):
+    def test_hydrate_with_null_syntask_kind(self, input_object, expected_output, ctx):
         hydrated_value = hydrate(input_object, ctx)
         assert hydrated_value == expected_output
 
@@ -335,11 +335,11 @@ class TestNestedHydration:
                 # an actual integer value.
                 {
                     "param": {
-                        "__prefect_kind": "json",
+                        "__syntask_kind": "json",
                         "value": {
-                            "__prefect_kind": "jinja",
+                            "__syntask_kind": "jinja",
                             "template": {
-                                "__prefect_kind": "workspace_variable",
+                                "__syntask_kind": "workspace_variable",
                                 "variable_name": "2_plus_2",
                             },
                         },

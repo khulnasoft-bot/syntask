@@ -1,5 +1,5 @@
 ---
-description: Prefect work pools route deployment flow runs to workers. Prefect workers poll work pools for new runs to execute.
+description: Syntask work pools route deployment flow runs to workers. Syntask workers poll work pools for new runs to execute.
 tags:
     - work pools
     - workers
@@ -16,11 +16,11 @@ search:
 
 # Work Pools &  Workers
 
-Work pools and workers bridge the Prefect _orchestration environment_ with your _execution environment_. When a [deployment](/concepts/deployments/) creates a flow run, it is submitted to a specific work pool for scheduling. A worker running in the execution environment can poll its respective work pool for new runs to execute, or the work pool can submit flow runs to serverless infrastructure directly, depending on your configuration.
+Work pools and workers bridge the Syntask _orchestration environment_ with your _execution environment_. When a [deployment](/concepts/deployments/) creates a flow run, it is submitted to a specific work pool for scheduling. A worker running in the execution environment can poll its respective work pool for new runs to execute, or the work pool can submit flow runs to serverless infrastructure directly, depending on your configuration.
 
 ## Work pool overview
 
-Work pools organize work for execution. Work pools have types corresponding to the infrastructure that will execute the flow code, as well as the delivery method of work to that environment. Pull work pools require [workers](#worker-overview) (or less ideally, [agents](/concepts/agents)) to poll the work pool for flow runs to execute. [Push work pools](/guides/deployment/push-work-pools) can submit runs directly to your serverless infrastructure providers such as Google Cloud Run, Azure Container Instances, and AWS ECS without the need for an agent or worker. [Managed work pools](/guides/managed-execution) are administered by Prefect and handle the submission and execution of code on your behalf.
+Work pools organize work for execution. Work pools have types corresponding to the infrastructure that will execute the flow code, as well as the delivery method of work to that environment. Pull work pools require [workers](#worker-overview) (or less ideally, [agents](/concepts/agents)) to poll the work pool for flow runs to execute. [Push work pools](/guides/deployment/push-work-pools) can submit runs directly to your serverless infrastructure providers such as Google Cloud Run, Azure Container Instances, and AWS ECS without the need for an agent or worker. [Managed work pools](/guides/managed-execution) are administered by Syntask and handle the submission and execution of code on your behalf.
 
 !!! tip "Work pools are like pub/sub topics"
     It's helpful to think of work pools as a way to coordinate (potentially many) deployments with (potentially many) workers through a known channel: the pool itself. This is similar to how "topics" are used to connect producers and consumers in a pub/sub or message-based system. By switching a deployment's work pool, users can quickly change the worker that will execute their runs, making it easy to promote runs through environments or even debug locally.
@@ -31,10 +31,10 @@ In addition, users can control aspects of work pool behavior, such as how many r
 
 You can configure work pools by using any of the following:
 
-- Prefect UI
-- Prefect CLI commands
-- [Prefect REST API](/api-ref/rest-api/)
-- [Terraform provider for Prefect Cloud](https://registry.terraform.io/providers/PrefectHQ/prefect/latest/docs/resources/work_pool)
+- Syntask UI
+- Syntask CLI commands
+- [Syntask REST API](/api-ref/rest-api/)
+- [Terraform provider for Syntask Cloud](https://registry.terraform.io/providers/Synopkg/syntask/latest/docs/resources/work_pool)
 
 To manage work pools in the UI, click the **Work Pools** icon. This displays a list of currently configured work pools.
 
@@ -44,12 +44,12 @@ You can pause a work pool from this page by using the toggle.
 
 Select the **+** button to create a new work pool. You'll be able to specify the details for work served by this work pool.
 
-To create a work pool via the Prefect CLI, use the `prefect work-pool create` command:
+To create a work pool via the Syntask CLI, use the `syntask work-pool create` command:
 
 <div class="terminal">
 
 ```bash
-prefect work-pool create [OPTIONS] NAME
+syntask work-pool create [OPTIONS] NAME
 ```
 
 </div>
@@ -63,14 +63,14 @@ Optional configuration parameters you can specify to filter work on the pool inc
 | `--paused`                                         | If provided, the work pool will be created in a paused state.                                                                                              |
 | `--type`                                           | The type of infrastructure that can execute runs from this work pool.                                                             |
 | `--set-as-default`                                 | Whether to use the created work pool as the local default for deployment.                                         |
-| <span class="no-wrap">`--base-job-template`</span> | The path to a JSON file containing the base job template to use. If unspecified, Prefect will use the default base job template for the given worker type. |
+| <span class="no-wrap">`--base-job-template`</span> | The path to a JSON file containing the base job template to use. If unspecified, Syntask will use the default base job template for the given worker type. |
 
 For example, to create a work pool called `test-pool`, you would run this command:
 
 <div class="terminal">
 
 ```bash
-prefect work-pool create test-pool
+syntask work-pool create test-pool
 ```
 
 </div>
@@ -79,11 +79,11 @@ prefect work-pool create test-pool
 
 If you don't use the `--type` flag to specify an infrastructure type, you are prompted to select from the following options:
 
-=== "Prefect Cloud"
+=== "Syntask Cloud"
 
     | Infrastructure Type                  | Description                                                                                                                |
     | ------------------------------       | -------------------------------------------------------------------------------------------------------------------------- |
-    | Prefect Agent                        | Execute flow runs on heterogeneous infrastructure using infrastructure blocks.                                              |
+    | Syntask Agent                        | Execute flow runs on heterogeneous infrastructure using infrastructure blocks.                                              |
     | Local Subprocess                     | Execute flow runs as subprocesses on a worker. Works well for local execution when first getting started.                    |
     | AWS Elastic Container Service        | Execute flow runs within containers on AWS ECS. Works with EC2 and Fargate clusters. Requires an AWS account.               |
     | Azure Container Instances            | Execute flow runs within containers on Azure's Container Instances service. Requires an Azure account.                      |
@@ -92,17 +92,17 @@ If you don't use the `--type` flag to specify an infrastructure type, you are pr
     | Google Cloud Run V2                  | Execute flow runs within containers on Google Cloud Run (V2 API). Requires a Google Cloud Platform account.                 |
     | Google Vertex AI                     | Execute flow runs within containers on Google Vertex AI. Requires a Google Cloud Platform account.                          |
     | Kubernetes                           | Execute flow runs within jobs scheduled on a Kubernetes cluster. Requires a Kubernetes cluster.                             |
-    | Google Cloud Run - Push              | Execute flow runs within containers on Google Cloud Run. Requires a Google Cloud Platform account. Flow runs are pushed directly to your environment, without the need for a Prefect worker.  |
-    | AWS Elastic Container Service - Push | Execute flow runs within containers on AWS ECS. Works with existing ECS clusters and serverless execution via AWS Fargate. Requires an AWS account. Flow runs are pushed directly to your environment, without the need for a Prefect worker.   |
-    | Azure Container Instances - Push     | Execute flow runs within containers on Azure's Container Instances service. Requires an Azure account. Flow runs are pushed directly to your environment, without the need for a Prefect worker.    |
-    | Modal - Push                         | Execute flow runs on Modal. Requires a Modal account. Flow runs are pushed directly to your Modal workspace, without the need for a Prefect worker.  |
-    | Prefect Managed                      | Execute flow runs within containers on Prefect managed infrastructure.                                                      |
+    | Google Cloud Run - Push              | Execute flow runs within containers on Google Cloud Run. Requires a Google Cloud Platform account. Flow runs are pushed directly to your environment, without the need for a Syntask worker.  |
+    | AWS Elastic Container Service - Push | Execute flow runs within containers on AWS ECS. Works with existing ECS clusters and serverless execution via AWS Fargate. Requires an AWS account. Flow runs are pushed directly to your environment, without the need for a Syntask worker.   |
+    | Azure Container Instances - Push     | Execute flow runs within containers on Azure's Container Instances service. Requires an Azure account. Flow runs are pushed directly to your environment, without the need for a Syntask worker.    |
+    | Modal - Push                         | Execute flow runs on Modal. Requires a Modal account. Flow runs are pushed directly to your Modal workspace, without the need for a Syntask worker.  |
+    | Syntask Managed                      | Execute flow runs within containers on Syntask managed infrastructure.                                                      |
 
-=== "Prefect server instance"
+=== "Syntask server instance"
 
     | Infrastructure Type           | Description              |
     | ----------------------------  | ------------------------ |
-    | Prefect Agent                 | Execute flow runs on heterogeneous infrastructure using infrastructure blocks.                                                  |
+    | Syntask Agent                 | Execute flow runs on heterogeneous infrastructure using infrastructure blocks.                                                  |
     | Local Subprocess              | Execute flow runs as subprocesses on a worker. Works well for local execution when first getting started.                       |
     | AWS Elastic Container Service | Execute flow runs within containers on AWS ECS. Works with EC2 and Fargate clusters. Requires an AWS account.                  |
     | Azure Container Instances     | Execute flow runs within containers on Azure's Container Instances service. Requires an Azure account.                         |
@@ -123,10 +123,10 @@ Created work pool with properties:
     concurrency limit - None
 
 Start a worker to pick up flows from the work pool:
-    prefect worker start -p 'test-pool'
+    syntask worker start -p 'test-pool'
 
 Inspect the work pool:
-    prefect work-pool inspect 'test-pool'
+    syntask work-pool inspect 'test-pool'
 ```
 
 </div>
@@ -142,17 +142,17 @@ Set 'test-pool' as default work pool for profile 'default'
 
 To change your default work pool, run:
 
-        prefect config set PREFECT_DEFAULT_WORK_POOL_NAME=<work-pool-name>
+        syntask config set SYNTASK_DEFAULT_WORK_POOL_NAME=<work-pool-name>
 ```
 
 </div>
 
-To update a work pool via the Prefect CLI, use the `prefect work-pool update` command:
+To update a work pool via the Syntask CLI, use the `syntask work-pool update` command:
 
 <div class="terminal">
 
 ```bash
-prefect work-pool update [OPTIONS] NAME
+syntask work-pool update [OPTIONS] NAME
 ```
 
 </div>
@@ -163,17 +163,17 @@ Optional configuration parameters you can specify to update the work pool includ
 
 | Option                                             | Description                                                                                                                                                |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <span class="no-wrap">`--base-job-template`</span> | The path to a JSON file containing the base job template to use. If unspecified, Prefect will use the default base job template for the given worker type. |
+| <span class="no-wrap">`--base-job-template`</span> | The path to a JSON file containing the base job template to use. If unspecified, Syntask will use the default base job template for the given worker type. |
 | `--description`                                    | A description of the work pool.                                                                                                                            |
 | `--concurrency-limit`                              | The maximum number of flow runs to run simultaneously in the work pool.                                                                                    |
 
 !!! tip "Managing work pools in CI/CD"
-    You can version control your base job template by committing it as a JSON file to your repository and control updates to your work pools' base job templates by using the `prefect work-pool update` command in your CI/CD pipeline. For example, you could use the following command to update a work pool's base job template to the contents of a file named `base-job-template.json`:
+    You can version control your base job template by committing it as a JSON file to your repository and control updates to your work pools' base job templates by using the `syntask work-pool update` command in your CI/CD pipeline. For example, you could use the following command to update a work pool's base job template to the contents of a file named `base-job-template.json`:
 
     <div class="terminal">
 
     ```bash
-    prefect work-pool update --base-job-template base-job-template.json my-work-pool
+    syntask work-pool update --base-job-template base-job-template.json my-work-pool
     ```
 
     </div>
@@ -199,12 +199,12 @@ For example, if we create a `process` work pool named 'above-ground' via the CLI
 <div class="terminal">
 
 ```bash
-prefect work-pool create --type process above-ground
+syntask work-pool create --type process above-ground
 ```
 
 </div>
 
-We see these configuration options available in the Prefect UI:
+We see these configuration options available in the Syntask UI:
 ![process work pool configuration options](/img/ui/process-work-pool-config.png)
 
 For a `process` work pool with the default base job template, we can set environment variables for spawned processes, set the working directory to execute flows, and control whether the flow run output is streamed to workers' standard output. You can also see an example of JSON formatted base job template with the 'Advanced' tab.
@@ -213,7 +213,7 @@ You can examine the default base job template for a given worker type by running
 
 <div class="terminal">
 ```bash
-prefect work-pool get-default-base-job-template --type process
+syntask work-pool get-default-base-job-template --type process
 ```
 </div>
 
@@ -275,9 +275,9 @@ prefect work-pool get-default-base-job-template --type process
 ```
 </div>
 
-You can override each of these attributes on a per-deployment or per-flow run basis. When creating a deployment, you can specify these overrides in the `deployments.work_pool.job_variables` section of a `prefect.yaml` file or in the `job_variables` argument of a Python `flow.deploy` method. 
+You can override each of these attributes on a per-deployment or per-flow run basis. When creating a deployment, you can specify these overrides in the `deployments.work_pool.job_variables` section of a `syntask.yaml` file or in the `job_variables` argument of a Python `flow.deploy` method. 
 
-For example, to turn off streaming output for a specific deployment, we could add the following to our `prefect.yaml`:
+For example, to turn off streaming output for a specific deployment, we could add the following to our `syntask.yaml`:
 
 ```yaml
 deployments:
@@ -292,31 +292,31 @@ deployments:
 See more about overriding job variables in the [Overriding Job Variables Guide](/guides/deployment/overriding-job-variables/).
 
 !!! tip "Advanced Customization of the Base Job Template"
-    For advanced use cases, you can create work pools with fully customizable job templates. This customization is available when creating or editing a work pool on the 'Advanced' tab within the UI or when updating a work pool via the Prefect CLI.
+    For advanced use cases, you can create work pools with fully customizable job templates. This customization is available when creating or editing a work pool on the 'Advanced' tab within the UI or when updating a work pool via the Syntask CLI.
 
     Advanced customization is useful anytime the underlying infrastructure supports a high degree of customization. In these scenarios a work pool job template allows you to expose a minimal and easy-to-digest set of options to deployment authors.  Additionally, these options are the _only_ customizable aspects for deployment infrastructure, which can be useful for restricting functionality in secure environments. For example, the `kubernetes` worker type allows users to specify a custom job template that can be used to configure the manifest that workers use to create jobs for flow execution.
 
-    For more information and advanced configuration examples, see the [Kubernetes Worker](https://prefecthq.github.io/prefect-kubernetes/worker/) documentation.
+    For more information and advanced configuration examples, see the [Kubernetes Worker](https://syntaskhq.github.io/syntask-kubernetes/worker/) documentation.
 
     For more information on overriding a work pool's job variables see this [guide](/guides/deployment/overriding-job-variables/).
 
 ### Viewing work pools
 
-At any time, users can see and edit configured work pools in the Prefect UI.
+At any time, users can see and edit configured work pools in the Syntask UI.
 
 ![The UI displays a list of configured work pools](/img/ui/work-pool-list.png)
 
-To view work pools with the Prefect CLI, you can:
+To view work pools with the Syntask CLI, you can:
 
 - List (`ls`) all available pools
 - Inspect (`inspect`) the details of a single pool
 - Preview (`preview`) scheduled work for a single pool
 
-`prefect work-pool ls` lists all configured work pools for the server.
+`syntask work-pool ls` lists all configured work pools for the server.
 
 <div class="terminal">
 ```bash
-prefect work-pool ls
+syntask work-pool ls
 ```
 </div>
 
@@ -331,7 +331,7 @@ For example:
 ┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
 │ barbeque   │ docker         │ 72c0a101-b3e2-4448-b5f8-a8c5184abd17 │ None              │
 │ k8s-pool   │ kubernetes     │ 7b6e3523-d35b-4882-84a7-7a107325bb3f │ None              │
-│ test-pool  │ prefect-agent  │ a51adf8c-58bb-4949-abe6-1b87af46eabd │ None              |
+│ test-pool  │ syntask-agent  │ a51adf8c-58bb-4949-abe6-1b87af46eabd │ None              |
 | my-pool    │ process        │ cd6ff9e8-bfd8-43be-9be3-69375f7a11cd │ None              │
 └────────────┴────────────────┴──────────────────────────────────────┴───────────────────┘
                        (**) denotes a paused pool
@@ -339,11 +339,11 @@ For example:
 
 </div>
 
-`prefect work-pool inspect` provides all configuration metadata for a specific work pool by ID.
+`syntask work-pool inspect` provides all configuration metadata for a specific work pool by ID.
 
 <div class="terminal">
 ```bash
-prefect work-pool inspect 'test-pool'
+syntask work-pool inspect 'test-pool'
 ```
 </div>
 
@@ -361,11 +361,11 @@ Workpool(
 ```
 </div>
 
-`prefect work-pool preview` displays scheduled flow runs for a specific work pool by ID for the upcoming hour. The optional `--hours` flag lets you specify the number of hours to look ahead.
+`syntask work-pool preview` displays scheduled flow runs for a specific work pool by ID for the upcoming hour. The optional `--hours` flag lets you specify the number of hours to look ahead.
 
 <div class="terminal">
 ```bash
-prefect work-pool preview 'test-pool' --hours 12
+syntask work-pool preview 'test-pool' --hours 12
 ```
 </div>
 
@@ -397,17 +397,17 @@ Work pools have three statuses: `READY`, `NOT_READY`, and `PAUSED`. A work pool 
 
 A work pool can be paused at any time to stop the delivery of work to workers. Workers will not receive any work when polling a paused pool.
 
-To pause a work pool through the Prefect CLI, use the `prefect work-pool pause` command:
+To pause a work pool through the Syntask CLI, use the `syntask work-pool pause` command:
 
 <div class="terminal">
 ```bash
-prefect work-pool pause 'test-pool'
+syntask work-pool pause 'test-pool'
 ```
 </div>
 
-To resume a work pool through the Prefect CLI, use the `prefect work-pool resume` command with the work pool name.
+To resume a work pool through the Syntask CLI, use the `syntask work-pool resume` command with the work pool name.
 
-To delete a work pool through the Prefect CLI, use the `prefect work-pool delete` command with the work pool name.
+To delete a work pool through the Syntask CLI, use the `syntask work-pool delete` command with the work pool name.
 
 ### Managing concurrency
 
@@ -415,7 +415,7 @@ Each work pool can optionally restrict concurrent runs of matching flows.
 
 For example, a work pool with a concurrency limit of 5 will only release new work if fewer than 5 matching runs are currently in a `Running` or `Pending` state. If 3 runs are `Running` or `Pending`, polling the pool for work will only result in 2 new runs, even if there are many more available, to ensure that the concurrency limit is not exceeded.
 
-When using the `prefect work-pool` Prefect CLI command to configure a work pool, the following subcommands set concurrency limits:
+When using the `syntask work-pool` Syntask CLI command to configure a work pool, the following subcommands set concurrency limits:
 
 - `set-concurrency-limit`  sets a concurrency limit on a work pool.
 - `clear-concurrency-limit` clears any concurrency limits from a work pool.
@@ -423,7 +423,7 @@ When using the `prefect work-pool` Prefect CLI command to configure a work pool,
 ### Work queues
 
 !!! tip "Advanced topic"
-    Prefect will automatically create a default work queue if needed.
+    Syntask will automatically create a default work queue if needed.
 
 Work queues offer advanced control over how runs are executed. Each work pool has a "default" queue that all work will be sent to by default. Additional queues can be added to a work pool to enable greater control over work delivery through fine grained priority and concurrency. Each work queue has a priority indicated by a unique positive integer. Lower numbers take greater priority in the allocation of work. Accordingly, new queues can be added without changing the rank of the higher-priority queues (e.g. no matter how many queues you add, the queue with priority `1` will always be the highest priority).
 
@@ -444,7 +444,7 @@ If new flow runs are received on the "critical" queue while flow runs are still 
 
 ### Local debugging
 
-As long as your deployment's infrastructure block supports it, you can use work pools to temporarily send runs to a worker running on your local machine for debugging by running `prefect worker start -p my-local-machine` and updating the deployment's work pool to `my-local-machine`.
+As long as your deployment's infrastructure block supports it, you can use work pools to temporarily send runs to a worker running on your local machine for debugging by running `syntask worker start -p my-local-machine` and updating the deployment's work pool to `my-local-machine`.
 
 ## Worker overview
 
@@ -460,13 +460,13 @@ Below is a list of available worker types. Note that most worker types will requ
 
 | Worker Type | Description | Required Package |
 | --- | --- | --- |
-| [`process`](/api-ref/prefect/workers/process/) | Executes flow runs in subprocesses | |
-| [`kubernetes`](https://prefecthq.github.io/prefect-kubernetes/worker/) | Executes flow runs as Kubernetes jobs | `prefect-kubernetes` |
-| [`docker`](https://prefecthq.github.io/prefect-docker/worker/) | Executes flow runs within Docker containers | `prefect-docker` |
-| [`ecs`](https://prefecthq.github.io/prefect-aws/ecs_worker/) | Executes flow runs as ECS tasks | `prefect-aws` |
-| [`cloud-run`](https://prefecthq.github.io/prefect-gcp/cloud_run_worker/) | Executes flow runs as Google Cloud Run jobs | `prefect-gcp` |
-| [`vertex-ai`](https://prefecthq.github.io/prefect-gcp/vertex_worker/) | Executes flow runs as Google Cloud Vertex AI jobs | `prefect-gcp` |
-| [`azure-container-instance`](https://prefecthq.github.io/prefect-azure/container_instance_worker/) | Execute flow runs in ACI containers | `prefect-azure` |
+| [`process`](/api-ref/syntask/workers/process/) | Executes flow runs in subprocesses | |
+| [`kubernetes`](https://syntaskhq.github.io/syntask-kubernetes/worker/) | Executes flow runs as Kubernetes jobs | `syntask-kubernetes` |
+| [`docker`](https://syntaskhq.github.io/syntask-docker/worker/) | Executes flow runs within Docker containers | `syntask-docker` |
+| [`ecs`](https://syntaskhq.github.io/syntask-aws/ecs_worker/) | Executes flow runs as ECS tasks | `syntask-aws` |
+| [`cloud-run`](https://syntaskhq.github.io/syntask-gcp/cloud_run_worker/) | Executes flow runs as Google Cloud Run jobs | `syntask-gcp` |
+| [`vertex-ai`](https://syntaskhq.github.io/syntask-gcp/vertex_worker/) | Executes flow runs as Google Cloud Vertex AI jobs | `syntask-gcp` |
+| [`azure-container-instance`](https://syntaskhq.github.io/syntask-azure/container_instance_worker/) | Execute flow runs in ACI containers | `syntask-azure` |
 
 If you don’t see a worker type that meets your needs, consider [developing a new worker type](/guides/deployment/developing-a-new-worker-type/)!
 
@@ -482,37 +482,37 @@ Configuration parameters you can specify when starting a worker include:
 | `--pool`, `-p`                                    | The work pool the started worker should poll.                                                                                               |
 | `--work-queue`, `-q`                              | One or more work queue names for the worker to pull from. If not provided, the worker will pull from all work queues in the work pool.      |
 | `--type`, `-t`                                    | The type of worker to start. If not provided, the worker type will be inferred from the work pool.                                          |
-| <span class="no-wrap">`--prefetch-seconds`</span> | The amount of time before a flow run's scheduled start time to begin submission. Default is the value of `PREFECT_WORKER_PREFETCH_SECONDS`. |
+| <span class="no-wrap">`--prefetch-seconds`</span> | The amount of time before a flow run's scheduled start time to begin submission. Default is the value of `SYNTASK_WORKER_PREFETCH_SECONDS`. |
 | `--run-once`                                      | Only run worker polling once. By default, the worker runs forever.                                                                          |
 | `--limit`, `-l`                                   | The maximum number of flow runs to start simultaneously.                                                                                    |
 | `--with-healthcheck`                                   | Start a healthcheck server for the worker.                                                                                    |
-| `--install-policy`                                   | Install policy to use workers from Prefect integration packages.                                                                                    |
+| `--install-policy`                                   | Install policy to use workers from Syntask integration packages.                                                                                    |
 
 You must start a worker within an environment that can access or create the infrastructure needed to execute flow runs. The worker will deploy flow runs to the infrastructure corresponding to the worker type. For example, if you start a worker with type `kubernetes`, the worker will deploy flow runs to a Kubernetes cluster.
 
-!!! tip "Prefect must be installed in execution environments"
-    Prefect must be installed in any environment (virtual environment, Docker container, etc.) where you intend to run the worker or execute a flow run.
+!!! tip "Syntask must be installed in execution environments"
+    Syntask must be installed in any environment (virtual environment, Docker container, etc.) where you intend to run the worker or execute a flow run.
 
-!!! tip "`PREFECT_API_URL` and `PREFECT_API_KEY`settings for workers"
-    `PREFECT_API_URL` must be set for the environment in which your worker is running. You must also have a user or service account with the `Worker` role, which can be configured by setting the `PREFECT_API_KEY`.
+!!! tip "`SYNTASK_API_URL` and `SYNTASK_API_KEY`settings for workers"
+    `SYNTASK_API_URL` must be set for the environment in which your worker is running. You must also have a user or service account with the `Worker` role, which can be configured by setting the `SYNTASK_API_KEY`.
 
 ### Worker status
 
-Workers have two statuses: `ONLINE` and `OFFLINE`. A worker is online if it sends regular heartbeat messages to the Prefect API. If a worker has missed three heartbeats, it is considered offline. By default, a worker is considered offline a maximum of 90 seconds after it stopped sending heartbeats, but the threshold can be configured via the `PREFECT_WORKER_HEARTBEAT_SECONDS` setting.
+Workers have two statuses: `ONLINE` and `OFFLINE`. A worker is online if it sends regular heartbeat messages to the Syntask API. If a worker has missed three heartbeats, it is considered offline. By default, a worker is considered offline a maximum of 90 seconds after it stopped sending heartbeats, but the threshold can be configured via the `SYNTASK_WORKER_HEARTBEAT_SECONDS` setting.
 
 ### Starting a worker
 
-Use the `prefect worker start` CLI command to start a worker. You must pass at least the work pool name. If the work pool does not exist, it will be created if the `--type` flag is used.
+Use the `syntask worker start` CLI command to start a worker. You must pass at least the work pool name. If the work pool does not exist, it will be created if the `--type` flag is used.
 <div class="terminal">
 ```bash
-prefect worker start -p [work pool name]
+syntask worker start -p [work pool name]
 ```
 </div>
 
 For example:
 <div class="terminal">
 ```bash
-prefect worker start -p "my-pool"
+syntask worker start -p "my-pool"
 ```
 </div>
 
@@ -525,19 +525,19 @@ Worker 'ProcessWorker 65716280-96f8-420b-9300-7e94417f2673' started!
 ```
 </div>
 
-In this case, Prefect automatically discovered the worker type from the work pool.
+In this case, Syntask automatically discovered the worker type from the work pool.
 To create a work pool and start a worker in one command, use the `--type` flag:
 
 <div class="terminal">
 ```bash
-prefect worker start -p "my-pool" --type "process"
+syntask worker start -p "my-pool" --type "process"
 ```
 </div>
 
 <div class="terminal">
 ```bash
 Worker 'ProcessWorker d24f3768-62a9-4141-9480-a056b9539a25' started!
-06:57:53.289 | INFO    | prefect.worker.process.processworker d24f3768-62a9-4141-9480-a056b9539a25 - Worker pool 'my-pool' created.
+06:57:53.289 | INFO    | syntask.worker.process.processworker d24f3768-62a9-4141-9480-a056b9539a25 - Worker pool 'my-pool' created.
 ```
 </div>
 
@@ -546,7 +546,7 @@ For example, to limit a worker to five concurrent flow runs:
 
 <div class="terminal">
 ```bash
-prefect worker start --pool "my-pool" --limit 5
+syntask worker start --pool "my-pool" --limit 5
 ```
 </div>
 
@@ -554,28 +554,28 @@ prefect worker start --pool "my-pool" --limit 5
 
 By default, the worker begins submitting flow runs a short time (10 seconds) before they are scheduled to run. This behavior allows time for the infrastructure to be created so that the flow run can start on time.
 
-In some cases, infrastructure will take longer than 10 seconds to start the flow run. The prefetch can be increased using the `--prefetch-seconds` option or the `PREFECT_WORKER_PREFETCH_SECONDS` setting.
+In some cases, infrastructure will take longer than 10 seconds to start the flow run. The prefetch can be increased using the `--prefetch-seconds` option or the `SYNTASK_WORKER_PREFETCH_SECONDS` setting.
 
 If this value is _more_ than the amount of time it takes for the infrastructure to start, the flow run will _wait_ until its scheduled start time.
 
 ### Polling for work
 
 Workers poll for work every 15 seconds by default. This interval is configurable in your [profile settings](/concepts/settings/) with the
-`PREFECT_WORKER_QUERY_SECONDS` setting.
+`SYNTASK_WORKER_QUERY_SECONDS` setting.
 
 ### Install policy
 
-The Prefect CLI can install the required package for Prefect-maintained worker types automatically. You can configure this behavior with the `--install-policy` option. The following are valid install policies
+The Syntask CLI can install the required package for Syntask-maintained worker types automatically. You can configure this behavior with the `--install-policy` option. The following are valid install policies
 
 | Install Policy | Description |
 | --- | --- |
 | `always` | Always install the required package. Will update the required package to the most recent version if already installed. |
 | <span class="no-wrap">`if-not-present`<span> | Install the required package if it is not already installed. |
 | `never` | Never install the required package. |
-| `prompt` | Prompt the user to choose whether to install the required package. This is the default install policy. If `prefect worker start` is run non-interactively, the `prompt` install policy will behave the same as `never`. |
+| `prompt` | Prompt the user to choose whether to install the required package. This is the default install policy. If `syntask worker start` is run non-interactively, the `prompt` install policy will behave the same as `never`. |
 
 ### Additional resources
 
-See how to daemonize a Prefect worker in [this guide](/guides/deployment/daemonize/).
+See how to daemonize a Syntask worker in [this guide](/guides/deployment/daemonize/).
 
 For more information on overriding a work pool's job variables see this [guide](/guides/deployment/overriding-job-variables/).

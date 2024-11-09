@@ -1,9 +1,9 @@
 ---
-description: Prefect logging captures information about flows and tasks for monitoring, troubleshooting, and auditing.
+description: Syntask logging captures information about flows and tasks for monitoring, troubleshooting, and auditing.
 tags:
     - UI
     - dashboard
-    - Prefect Cloud
+    - Syntask Cloud
     - flows
     - tasks
     - logging
@@ -16,23 +16,23 @@ search:
 
 # Logging
 
-Prefect enables you to log a variety of useful information about your flow and task runs, capturing information about your workflows for purposes such as monitoring, troubleshooting, and auditing.
+Syntask enables you to log a variety of useful information about your flow and task runs, capturing information about your workflows for purposes such as monitoring, troubleshooting, and auditing.
 
-Prefect captures logs for your flow and task runs by default, even if you have not started a Prefect server with `prefect server start`.
+Syntask captures logs for your flow and task runs by default, even if you have not started a Syntask server with `syntask server start`.
 
-You can view and filter logs in the [Prefect UI](/ui/flow-runs/#inspect-a-flow-run) or Prefect Cloud, or access log records via the API.
+You can view and filter logs in the [Syntask UI](/ui/flow-runs/#inspect-a-flow-run) or Syntask Cloud, or access log records via the API.
 
-Prefect enables fine-grained customization of log levels for flows and tasks, including configuration for default levels and log message formatting.
+Syntask enables fine-grained customization of log levels for flows and tasks, including configuration for default levels and log message formatting.
 
 ## Logging overview
 
-Whenever you run a flow, Prefect automatically logs events for flow runs and task runs, along with any custom log handlers you have configured. No configuration is needed to enable Prefect logging.
+Whenever you run a flow, Syntask automatically logs events for flow runs and task runs, along with any custom log handlers you have configured. No configuration is needed to enable Syntask logging.
 
-For example, say you created a simple flow in a file `flow.py`. If you create a local flow run with `python flow.py`, you'll see an example of the log messages created automatically by Prefect:
+For example, say you created a simple flow in a file `flow.py`. If you create a local flow run with `python flow.py`, you'll see an example of the log messages created automatically by Syntask:
 
 <div class='terminal'>
 ```bash
-16:45:44.534 | INFO    | prefect.engine - Created flow run 'gray-dingo' for flow
+16:45:44.534 | INFO    | syntask.engine - Created flow run 'gray-dingo' for flow
 'hello-flow'
 16:45:44.534 | INFO    | Flow run 'gray-dingo' - Using task runner 'SequentialTaskRunner'
 16:45:44.598 | INFO    | Flow run 'gray-dingo' - Created task run 'hello-task-54135dc1-0'
@@ -45,46 +45,46 @@ Completed('All states completed.')
 ```
 </div>
 
-You can see logs for a flow run in the Prefect UI by navigating to the [**Flow Runs**](/ui/flow-runs/#inspect-a-flow-run) page and selecting a specific flow run to inspect.
+You can see logs for a flow run in the Syntask UI by navigating to the [**Flow Runs**](/ui/flow-runs/#inspect-a-flow-run) page and selecting a specific flow run to inspect.
 
-![Viewing logs for a flow run in the Prefect UI](/img/ui/flow-run-details.png)
+![Viewing logs for a flow run in the Syntask UI](/img/ui/flow-run-details.png)
 
 These log messages reflect the logging configuration for log levels and message formatters. You may customize the log levels captured and the default message format through configuration, and you can capture custom logging events by explicitly emitting log messages during flow and task runs.
 
-Prefect supports the standard Python logging levels `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`. By default, Prefect displays `INFO`-level and above events. You can configure the root logging level as well as specific logging levels for flow and task runs.
+Syntask supports the standard Python logging levels `CRITICAL`, `ERROR`, `WARNING`, `INFO`, and `DEBUG`. By default, Syntask displays `INFO`-level and above events. You can configure the root logging level as well as specific logging levels for flow and task runs.
 
 ## Logging configuration
 
 ### Logging settings
 
-Prefect provides several settings for configuring [logging level and loggers](/concepts/logs/).
+Syntask provides several settings for configuring [logging level and loggers](/concepts/logs/).
 
-By default, Prefect displays `INFO`-level and above logging records. You may change this level to `DEBUG` and `DEBUG`-level logs created by Prefect will be shown as well. You may need to change the log level used by loggers from other libraries to see their log records.
+By default, Syntask displays `INFO`-level and above logging records. You may change this level to `DEBUG` and `DEBUG`-level logs created by Syntask will be shown as well. You may need to change the log level used by loggers from other libraries to see their log records.
 
-You can override any logging configuration by setting an environment variable or [Prefect Profile](/concepts/settings/) setting using the syntax `PREFECT_LOGGING_[PATH]_[TO]_[KEY]`, with `[PATH]_[TO]_[KEY]` corresponding to the nested address of any setting.
+You can override any logging configuration by setting an environment variable or [Syntask Profile](/concepts/settings/) setting using the syntax `SYNTASK_LOGGING_[PATH]_[TO]_[KEY]`, with `[PATH]_[TO]_[KEY]` corresponding to the nested address of any setting.
 
-For example, to change the default logging levels for Prefect to `DEBUG`, you can set the environment variable `PREFECT_LOGGING_LEVEL="DEBUG"`.
+For example, to change the default logging levels for Syntask to `DEBUG`, you can set the environment variable `SYNTASK_LOGGING_LEVEL="DEBUG"`.
 
-You may also configure the "root" Python logger. The root logger receives logs from all loggers unless they explicitly opt out by disabling propagation. By default, the root logger is configured to output `WARNING` level logs to the console. As with other logging settings, you can override this from the environment or in the logging configuration file. For example, you can change the level with the variable `PREFECT_LOGGING_ROOT_LEVEL`.
+You may also configure the "root" Python logger. The root logger receives logs from all loggers unless they explicitly opt out by disabling propagation. By default, the root logger is configured to output `WARNING` level logs to the console. As with other logging settings, you can override this from the environment or in the logging configuration file. For example, you can change the level with the variable `SYNTASK_LOGGING_ROOT_LEVEL`.
 
-You may adjust the log level used by specific handlers. For example, you could set `PREFECT_LOGGING_HANDLERS_API_LEVEL=ERROR` to have only `ERROR` logs reported to the Prefect API. The console handlers will still default to level `INFO`.
+You may adjust the log level used by specific handlers. For example, you could set `SYNTASK_LOGGING_HANDLERS_API_LEVEL=ERROR` to have only `ERROR` logs reported to the Syntask API. The console handlers will still default to level `INFO`.
 
-There is a [`logging.yml`](https://github.com/PrefectHQ/prefect/blob/main/src/prefect/logging/logging.yml) file packaged with Prefect that defines the default logging configuration.
+There is a [`logging.yml`](https://github.com/Synopkg/syntask/blob/main/src/syntask/logging/logging.yml) file packaged with Syntask that defines the default logging configuration.
 
-You can customize logging configuration by creating your own version of `logging.yml` with custom settings, by either creating the file at the default location (`/.prefect/logging.yml`) or by specifying the path to the file with `PREFECT_LOGGING_SETTINGS_PATH`. (If the file does not exist at the specified location, Prefect ignores the setting and uses the default configuration.)
+You can customize logging configuration by creating your own version of `logging.yml` with custom settings, by either creating the file at the default location (`/.syntask/logging.yml`) or by specifying the path to the file with `SYNTASK_LOGGING_SETTINGS_PATH`. (If the file does not exist at the specified location, Syntask ignores the setting and uses the default configuration.)
 
 See the Python [Logging configuration](https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig) documentation for more information about the configuration options and syntax used by `logging.yml`.
 
-## Prefect loggers
+## Syntask loggers
 
-To access the Prefect logger, import `from prefect import get_run_logger`. You can send messages to the logger in both flows and tasks.
+To access the Syntask logger, import `from syntask import get_run_logger`. You can send messages to the logger in both flows and tasks.
 
 ### Logging in flows
 
 To log from a flow, retrieve a logger instance with `get_run_logger()`, then call the standard Python [logging methods](https://docs.python.org/3/library/logging.html).
 
 ```python
-from prefect import flow, get_run_logger
+from syntask import flow, get_run_logger
 
 @flow(name="log-example-flow")
 def logger_flow():
@@ -92,7 +92,7 @@ def logger_flow():
     logger.info("INFO level log message.")
 ```
 
-Prefect automatically uses the flow run logger based on the flow context. If you run the above code, Prefect captures the following as a log event.
+Syntask automatically uses the flow run logger based on the flow context. If you run the above code, Syntask captures the following as a log event.
 
 <div class='terminal'>
 ```bash
@@ -103,14 +103,14 @@ Prefect automatically uses the flow run logger based on the flow context. If you
 The default flow run log formatter uses the flow run name for log messages.
 
 !!! note
-        Starting in 2.7.11, if you use a logger that sends logs to the API outside of a flow or task run, a warning will be displayed instead of an error. You can silence this warning by setting `PREFECT_LOGGING_TO_API_WHEN_MISSING_FLOW=ignore` or have the logger raise an error by setting the value to `error`.
+        Starting in 2.7.11, if you use a logger that sends logs to the API outside of a flow or task run, a warning will be displayed instead of an error. You can silence this warning by setting `SYNTASK_LOGGING_TO_API_WHEN_MISSING_FLOW=ignore` or have the logger raise an error by setting the value to `error`.
 
 ### Logging in tasks
 
 Logging in tasks works much as logging in flows: retrieve a logger instance with `get_run_logger()`, then call the standard Python [logging methods](https://docs.python.org/3/library/logging.html).
 
 ```python
-from prefect import flow, task, get_run_logger
+from syntask import flow, task, get_run_logger
 
 @task(name="log-example-task")
 def logger_task():
@@ -122,7 +122,7 @@ def logger_flow():
     logger_task()
 ```
 
-Prefect automatically uses the task run logger based on the task context. The default task run log formatter uses the task run name for log messages.
+Syntask automatically uses the task run logger based on the task context. The default task run log formatter uses the task run name for log messages.
 
 <div class='terminal'>
 ```bash
@@ -134,12 +134,12 @@ The underlying log model for task runs captures the task name, task run ID, and 
 
 ### Logging print statements
 
-Prefect provides the `log_prints` option to enable the logging of `print` statements at the task or flow level. When `log_prints=True` for a given task or flow, the Python builtin `print` will be patched to redirect to the Prefect logger for the scope of that task or flow.
+Syntask provides the `log_prints` option to enable the logging of `print` statements at the task or flow level. When `log_prints=True` for a given task or flow, the Python builtin `print` will be patched to redirect to the Syntask logger for the scope of that task or flow.
 
 By default, tasks and subflows will inherit the `log_prints` setting from their parent flow, unless opted out with their own explicit `log_prints` setting.
 
 ```python
-from prefect import task, flow
+from syntask import task, flow
 
 @task
 def my_task():
@@ -155,7 +155,7 @@ Will output:
 
 <div class='terminal'>
 ```bash
-15:52:11.244 | INFO    | prefect.engine - Created flow run 'emerald-gharial' for flow 'my-flow'
+15:52:11.244 | INFO    | syntask.engine - Created flow run 'emerald-gharial' for flow 'my-flow'
 15:52:11.812 | INFO    | Flow run 'emerald-gharial' - we're logging print statements from a flow
 15:52:11.926 | INFO    | Flow run 'emerald-gharial' - Created task run 'my_task-20c6ece6-0' for task 'my_task'
 15:52:11.927 | INFO    | Flow run 'emerald-gharial' - Executing 'my_task-20c6ece6-0' immediately...
@@ -164,7 +164,7 @@ Will output:
 </div>
 
 ```python
-from prefect import task, flow
+from syntask import task, flow
 
 @task
 def my_task(log_prints=False):
@@ -180,7 +180,7 @@ Using `log_prints=False` at the task level will output:
 
 <div class='terminal'>
 ```bash
-15:52:11.244 | INFO    | prefect.engine - Created flow run 'emerald-gharial' for flow 'my-flow'
+15:52:11.244 | INFO    | syntask.engine - Created flow run 'emerald-gharial' for flow 'my-flow'
 15:52:11.812 | INFO    | Flow run 'emerald-gharial' - we're logging print statements from a flow
 15:52:11.926 | INFO    | Flow run 'emerald-gharial' - Created task run 'my_task-20c6ece6-0' for task 'my_task'
 15:52:11.927 | INFO    | Flow run 'emerald-gharial' - Executing 'my_task-20c6ece6-0' immediately...
@@ -188,17 +188,17 @@ not logging print statements in this task
 ```
 </div>
 
-You can also configure this behavior globally for all Prefect flows, tasks, and subflows.
+You can also configure this behavior globally for all Syntask flows, tasks, and subflows.
 
 <div class='terminal'>
 ```bash
-prefect config set PREFECT_LOGGING_LOG_PRINTS=True
+syntask config set SYNTASK_LOGGING_LOG_PRINTS=True
 ```
 </div>
 
 ## Formatters
 
-Prefect log formatters specify the format of log messages. You can see details of message formatting for different loggers in [`logging.yml`](https://github.com/PrefectHQ/prefect/blob/main/src/prefect/logging/logging.yml). For example, the default formatting for task run log records is:
+Syntask log formatters specify the format of log messages. You can see details of message formatting for different loggers in [`logging.yml`](https://github.com/Synopkg/syntask/blob/main/src/syntask/logging/logging.yml). For example, the default formatting for task run log records is:
 
 ```python
 "%(asctime)s.%(msecs)03d | %(levelname)-7s | Task run %(task_run_name)r - %(message)s"
@@ -225,7 +225,7 @@ You can specify custom formatting by setting an environment variable or by modif
 
 <div class='terminal'>
 ```bash
-PREFECT_LOGGING_FORMATTERS_STANDARD_FLOW_RUN_FMT="%(asctime)s.%(msecs)03d | %(levelname)-7s | %(flow_run_id)s - %(message)s"
+SYNTASK_LOGGING_FORMATTERS_STANDARD_FLOW_RUN_FMT="%(asctime)s.%(msecs)03d | %(levelname)-7s | %(flow_run_id)s - %(message)s"
 ```
 </div>
 
@@ -240,17 +240,17 @@ The resulting messages, using the flow run ID instead of name, would look like t
 
 ## Styles
 
-By default, Prefect highlights specific keywords in the console logs with a variety of colors.
+By default, Syntask highlights specific keywords in the console logs with a variety of colors.
 
-Highlighting can be toggled on/off with the `PREFECT_LOGGING_COLORS` setting, e.g.
+Highlighting can be toggled on/off with the `SYNTASK_LOGGING_COLORS` setting, e.g.
 
 <div class='terminal'>
 ```bash
-PREFECT_LOGGING_COLORS=False
+SYNTASK_LOGGING_COLORS=False
 ```
 </div>
 
-You can change what gets highlighted and also adjust the colors by updating the styles in a `logging.yml` file. Below lists the specific keys built-in to the `PrefectConsoleHighlighter`.
+You can change what gets highlighted and also adjust the colors by updating the styles in a `logging.yml` file. Below lists the specific keys built-in to the `SyntaskConsoleHighlighter`.
 
 URLs:
 
@@ -294,17 +294,17 @@ from typing import Dict, Union
 
 from rich.highlighter import Highlighter
 
-from prefect.logging.handlers import PrefectConsoleHandler
-from prefect.logging.highlighters import PrefectConsoleHighlighter
+from syntask.logging.handlers import SyntaskConsoleHandler
+from syntask.logging.highlighters import SyntaskConsoleHighlighter
 
-class CustomConsoleHighlighter(PrefectConsoleHighlighter):
+class CustomConsoleHighlighter(SyntaskConsoleHighlighter):
     base_style = "log."
-    highlights = PrefectConsoleHighlighter.highlights + [
+    highlights = SyntaskConsoleHighlighter.highlights + [
         # ?P<email> is naming this expression as `email`
         r"(?P<email>[\w-]+@([\w-]+\.)+[\w-]+)",
     ]
 
-class CustomConsoleHandler(PrefectConsoleHandler):
+class CustomConsoleHandler(SyntaskConsoleHandler):
     def __init__(
         self,
         highlighter: Highlighter = CustomConsoleHighlighter,
@@ -314,7 +314,7 @@ class CustomConsoleHandler(PrefectConsoleHandler):
         super().__init__(highlighter=highlighter, styles=styles, level=level)
 ```
 
-2. Update `/.prefect/logging.yml` to use `my_package_or_module.CustomConsoleHandler` and additionally reference the base_style and named expression: `log.email`.
+2. Update `/.syntask/logging.yml` to use `my_package_or_module.CustomConsoleHandler` and additionally reference the base_style and named expression: `log.email`.
 
 ```yaml
     console_flow_runs:
@@ -330,7 +330,7 @@ class CustomConsoleHandler(PrefectConsoleHandler):
 3. Then on your next flow run, text that looks like an email will be highlighted--e.g. `my@email.com` is colored in magenta here.
 
 ```python
-from prefect import flow, get_run_logger
+from syntask import flow, get_run_logger
 
 @flow
 def log_email_flow():
@@ -342,18 +342,18 @@ log_email_flow()
 
 ## Applying markup in logs
 
-To use [Rich's markup](https://rich.readthedocs.io/en/stable/markup.html#console-markup) in Prefect logs, first configure `PREFECT_LOGGING_MARKUP`.
+To use [Rich's markup](https://rich.readthedocs.io/en/stable/markup.html#console-markup) in Syntask logs, first configure `SYNTASK_LOGGING_MARKUP`.
 
 <div class='terminal'>
 ```bash
-PREFECT_LOGGING_MARKUP=True
+SYNTASK_LOGGING_MARKUP=True
 ```
 </div>
 
 Then, the following will highlight "fancy" in red.
 
 ```python
-from prefect import flow, get_run_logger
+from syntask import flow, get_run_logger
 
 @flow
 def my_flow():
@@ -368,7 +368,7 @@ my_flow()
 
 ## Log database schema
 
-Logged events are also persisted to the Prefect database. A log record includes the following data:
+Logged events are also persisted to the Syntask database. A log record includes the following data:
 
 | Column      | Description                                                                                                                  |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -382,19 +382,19 @@ Logged events are also persisted to the Prefect database. A log record includes 
 | message     | Log message.                                                                                                                 |
 | timestamp   | The client-side timestamp of this logged statement.                                                                          |
 
-For more information, see [Log schema](/api-ref/server/schemas/core/#prefect.server.schemas.core.Log) in the API documentation.
+For more information, see [Log schema](/api-ref/server/schemas/core/#syntask.server.schemas.core.Log) in the API documentation.
 
 ## Including logs from other libraries
 
-By default, Prefect won't capture log statements from libraries that your flows
-and tasks use. You can tell Prefect to include logs from these libraries with
-the `PREFECT_LOGGING_EXTRA_LOGGERS` setting.
+By default, Syntask won't capture log statements from libraries that your flows
+and tasks use. You can tell Syntask to include logs from these libraries with
+the `SYNTASK_LOGGING_EXTRA_LOGGERS` setting.
 
 To use this setting, specify one or more Python library names to include,
-separated by commas. For example, if you want to make sure Prefect captures Dask
+separated by commas. For example, if you want to make sure Syntask captures Dask
 and SciPy logging statements with your flow and task run logs:
 
-    PREFECT_LOGGING_EXTRA_LOGGERS=dask,scipy
+    SYNTASK_LOGGING_EXTRA_LOGGERS=dask,scipy
 
 You can set this setting as an environment variable or in a profile. See
 [Settings](/concepts/settings/) for more details about how to use settings.

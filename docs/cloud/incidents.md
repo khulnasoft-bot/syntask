@@ -1,5 +1,5 @@
 ---
-description: Incidents in Prefect Cloud help identify, rectify and document issues in mission-critical workflows.
+description: Incidents in Syntask Cloud help identify, rectify and document issues in mission-critical workflows.
 tags:
     - incidents
 search:
@@ -10,15 +10,15 @@ search:
 
 ## Overview
 
-Incidents are a Prefect Cloud feature to help your team manage workflow disruptions. Incidents help you identify, resolve, and document issues with mission-critical workflows. This system enhances operational efficiency by automating the incident management process and providing a centralized platform for collaboration and compliance.
+Incidents are a Syntask Cloud feature to help your team manage workflow disruptions. Incidents help you identify, resolve, and document issues with mission-critical workflows. This system enhances operational efficiency by automating the incident management process and providing a centralized platform for collaboration and compliance.
 
 ## What are incidents?
 
 Incidents are formal declarations of disruptions to a workspace. With [automations](#incident-automations), activity in a workspace can be paused when an incident is created and resumed when it is resolved.
 
-Incidents vary in nature and severity, ranging from minor glitches to critical system failures. Prefect Cloud enables users to effectively and automatically track and manage these incidents, ensuring minimal impact on operational continuity.
+Incidents vary in nature and severity, ranging from minor glitches to critical system failures. Syntask Cloud enables users to effectively and automatically track and manage these incidents, ensuring minimal impact on operational continuity.
 
-![Incidents in the Prefect Cloud UI](/img/ui/incidents-dashboard.png)
+![Incidents in the Syntask Cloud UI](/img/ui/incidents-dashboard.png)
 
 ## Why use incident management?
 
@@ -32,9 +32,9 @@ Incidents vary in nature and severity, ranging from minor glitches to critical s
 
 5. **Enhanced operational transparency**: The system provides a transparent view of both ongoing and resolved incidents, promoting accountability and continuous improvement.
 
-![An active incident in the Prefect Cloud UI](/img/ui/incidents-active.png)
+![An active incident in the Syntask Cloud UI](/img/ui/incidents-active.png)
 
-## How to use incident management in Prefect Cloud
+## How to use incident management in Syntask Cloud
 
 ### Creating an incident
 
@@ -42,7 +42,7 @@ There are several ways to create an incident:
 
 1. **From the Incidents page:**
     - Click on the **+** button.
-    - Fill in required fields and attach any Prefect resources related to your incident.
+    - Fill in required fields and attach any Syntask resources related to your incident.
 
 2. **From a flow run, work pool, or block:**
     - Initiate an incident directly from a failed flow run, automatically linking it as a resource, by clicking on the menu button and selecting "Declare an incident".
@@ -59,10 +59,10 @@ To automatically take action when an incident is declared, set up a custom trigg
 ```json
 {
   "match": {
-    "prefect.resource.id": "prefect-cloud.incident.*"
+    "syntask.resource.id": "syntask-cloud.incident.*"
   },
   "expect": [
-    "prefect-cloud.incident.declared"
+    "syntask-cloud.incident.declared"
   ],
   "posture": "Reactive",
   "threshold": 1,
@@ -73,12 +73,12 @@ To automatically take action when an incident is declared, set up a custom trigg
 !!! tip "Building custom triggers"
     To get started with incident automations, you only need to specify two fields in your trigger:
 
-      - **match**: The resource emitting your event of interest. You can match on specific resource IDs, use wildcards to match on all resources of a given type, and even match on other resource attributes, like `prefect.resource.name`.
+      - **match**: The resource emitting your event of interest. You can match on specific resource IDs, use wildcards to match on all resources of a given type, and even match on other resource attributes, like `syntask.resource.name`.
 
       - **expect**: The event type to listen for. For example, you could listen for any (or all) of the following event types:
-          - `prefect-cloud.incident.declared`
-          - `prefect-cloud.incident.resolved`
-          - `prefect-cloud.incident.updated.severity`
+          - `syntask-cloud.incident.declared`
+          - `syntask-cloud.incident.resolved`
+          - `syntask-cloud.incident.updated.severity`
 
     See [Event Triggers](/concepts/automations/#custom-triggers) for more information on custom triggers, and check out your Event Feed to see the event types emitted by your incidents and other resources (i.e. events that you can react to).
 

@@ -31,13 +31,13 @@ from typing import List
 
 import httpx
 
-REPO_ORG = "PrefectHQ"
+REPO_ORG = "Synopkg"
 REPO_NAMES = [
-    "prefect",
-    "prefect-ui-library",
-    "prefect-azure",
-    "prefect-aws",
-    "prefect-gcp",
+    "syntask",
+    "syntask-ui-library",
+    "syntask-azure",
+    "syntask-aws",
+    "syntask-gcp",
 ]
 DEFAULT_TAG = "preview"
 
@@ -45,7 +45,7 @@ TOKEN_REGEX = re.compile(r"\s* Token:\s(.*)")
 ENTRY_REGEX = re.compile(r"^\* (.*) by @(.*) in (.*)$", re.MULTILINE)
 
 
-PREFECTIONISTS = {
+SYNTASKIONISTS = {
     "aaazzam",
     "abrookins",
     "aimeemcmanus",
@@ -64,21 +64,21 @@ PREFECTIONISTS = {
     "jeanluciano",
     "jimid27",
     "jlowin",
-    "justin-prefect",
+    "justin-syntask",
     "kevingrismore",
     "marvin-robot",
     "masonmenges",
     "neha-julka",
     "parkedwards",
     "pleek91",
-    "prefectcboyd",
+    "syntaskcboyd",
     "robfreedy",
     "Sahiler",
     "sarahbanana09",
     "sarahmk125",
     "seanpwlms",
     "serinamarie",
-    "SMPrefect",
+    "SMSyntask",
     "taylor-curran",
     "tess-dicker",
     "thomas-te",
@@ -118,16 +118,16 @@ def generate_release_notes(
     """
     integrations_section = []
 
-    latest_prefect_release_date = get_latest_repo_release_date(repo_org, "prefect")
+    latest_syntask_release_date = get_latest_repo_release_date(repo_org, "syntask")
 
     for repo_name in repo_names:
-        if latest_prefect_release_date:
+        if latest_syntask_release_date:
             latest_repo_release_date = get_latest_repo_release_date(repo_org, repo_name)
 
-            repo_has_release_since_latest_prefect_release = (
-                latest_repo_release_date >= latest_prefect_release_date
+            repo_has_release_since_latest_syntask_release = (
+                latest_repo_release_date >= latest_syntask_release_date
             )
-            if not repo_has_release_since_latest_prefect_release:
+            if not repo_has_release_since_latest_syntask_release:
                 continue
 
         request = {"tag_name": tag_name, "target_commitish": target_commit}
@@ -152,7 +152,7 @@ def generate_release_notes(
 
         release_notes = response.json()["body"]
 
-        if repo_name == "prefect":
+        if repo_name == "syntask":
             # Drop the first line of the release notes ("## What's Changed")
             release_notes = "\n".join(release_notes.splitlines()[1:])
             # Add newlines before all categories
@@ -166,7 +166,7 @@ def generate_release_notes(
             # Generate a contributors section
             contributors = ""
             for contributor in sorted(set(user for _, user, _ in entries)):
-                if contributor not in PREFECTIONISTS:
+                if contributor not in SYNTASKIONISTS:
                     contributors += f"\n- @{contributor}"
 
             # Replace the heading of the existing contributors section; append contributors
@@ -179,7 +179,7 @@ def generate_release_notes(
                 lambda match: f"- {match.group(1)} — {match.group(3)}",
                 release_notes,
             )
-            prefect_release_notes = release_notes
+            syntask_release_notes = release_notes
 
         else:
             # Drop the first line of the release notes ("## What's Changed")
@@ -199,18 +199,18 @@ def generate_release_notes(
             integrations_section.append(release_notes)
 
     if integrations_section != [""]:
-        parts = prefect_release_notes.split("### Contributors")
+        parts = syntask_release_notes.split("### Contributors")
         # ensure that Integrations section is before Contributors
-        # Print all accumulated non-Prefect changes under "Integrations"
+        # Print all accumulated non-Syntask changes under "Integrations"
         integrations_heading = (
             "### Integrations" + "\n" + "\n\n".join(integrations_section)
         )
 
-        prefect_release_notes = (
+        syntask_release_notes = (
             parts[0] + integrations_heading + "\n\n### Contributors" + parts[1]
         )
 
-    print(prefect_release_notes)
+    print(syntask_release_notes)
 
 
 def get_github_token() -> str:

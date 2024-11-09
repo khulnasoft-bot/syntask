@@ -8,22 +8,22 @@ from unittest.mock import ANY, call
 
 import pytest
 
-from prefect._internal.compatibility.deprecated import PrefectDeprecationWarning
-from prefect.blocks.core import Block
-from prefect.blocks.system import Secret
-from prefect.client.orchestration import PrefectClient
-from prefect.deployments.steps import run_step
-from prefect.deployments.steps.core import StepExecutionError, run_steps
-from prefect.deployments.steps.utility import run_shell_script
-from prefect.testing.utilities import AsyncMock, MagicMock
+from syntask._internal.compatibility.deprecated import SyntaskDeprecationWarning
+from syntask.blocks.core import Block
+from syntask.blocks.system import Secret
+from syntask.client.orchestration import SyntaskClient
+from syntask.deployments.steps import run_step
+from syntask.deployments.steps.core import StepExecutionError, run_steps
+from syntask.deployments.steps.utility import run_shell_script
+from syntask.testing.utilities import AsyncMock, MagicMock
 
 
 @pytest.fixture
-async def variables(prefect_client: PrefectClient):
-    await prefect_client._client.post(
+async def variables(syntask_client: SyntaskClient):
+    await syntask_client._client.post(
         "/variables/", json={"name": "test_variable_1", "value": "test_value_1"}
     )
-    await prefect_client._client.post(
+    await syntask_client._client.post(
         "/variables/", json={"name": "test_variable_2", "value": "test_value_2"}
     )
 
@@ -39,7 +39,7 @@ class TestRunStep:
     async def test_run_step_runs_importable_functions(self):
         output = await run_step(
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": "echo 'this is a test'",
                 }
             },
@@ -54,7 +54,7 @@ class TestRunStep:
         with pytest.raises(ValueError, match="unexpected"):
             await run_step(
                 {
-                    "prefect.deployments.steps.run_shell_script": {
+                    "syntask.deployments.steps.run_shell_script": {
                         "script": "echo 'this is a test'"
                     },
                     "jedi": 0,
@@ -66,8 +66,8 @@ class TestRunStep:
 
         output = await run_step(
             {
-                "prefect.deployments.steps.run_shell_script": {
-                    "script": "{{ prefect.blocks.secret.test-secret }}",
+                "syntask.deployments.steps.run_shell_script": {
+                    "script": "{{ syntask.blocks.secret.test-secret }}",
                 }
             }
         )
@@ -83,7 +83,7 @@ class TestRunStep:
         monkeypatch.setenv("TEST_ENV_VAR", "test_value")
         output = await run_step(
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": 'echo "{{ $TEST_ENV_VAR }}"',
                 }
             }
@@ -97,10 +97,10 @@ class TestRunStep:
     async def test_run_step_resolves_variables_before_running(self, variables):
         output = await run_step(
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": (
-                        "echo '{{ prefect.variables.test_variable_1 }}:{{"
-                        " prefect.variables.test_variable_2 }}'"
+                        "echo '{{ syntask.variables.test_variable_1 }}:{{"
+                        " syntask.variables.test_variable_2 }}'"
                     ),
                 }
             }
@@ -128,14 +128,14 @@ class TestRunStep:
         """
         import_module_mock = MagicMock()
         monkeypatch.setattr(
-            "prefect.deployments.steps.core.import_module", import_module_mock
+            "syntask.deployments.steps.core.import_module", import_module_mock
         )
 
         monkeypatch.setattr(subprocess, "check_call", MagicMock())
 
         import_object_mock = MagicMock(side_effect=[ImportError, lambda x: x])
         monkeypatch.setattr(
-            "prefect.deployments.steps.core.import_object", import_object_mock
+            "syntask.deployments.steps.core.import_object", import_object_mock
         )
 
         await run_step(
@@ -156,14 +156,14 @@ class TestRunStep:
         """
         import_module_mock = MagicMock(side_effect=[None, ImportError])
         monkeypatch.setattr(
-            "prefect.deployments.steps.core.import_module", import_module_mock
+            "syntask.deployments.steps.core.import_module", import_module_mock
         )
 
         monkeypatch.setattr(subprocess, "check_call", MagicMock())
 
         import_object_mock = MagicMock(side_effect=[lambda x: x])
         monkeypatch.setattr(
-            "prefect.deployments.steps.core.import_object", import_object_mock
+            "syntask.deployments.steps.core.import_object", import_object_mock
         )
 
         await run_step(
@@ -186,7 +186,7 @@ class TestRunStep:
         """
         # Mocking the import_module function to always raise ImportError
         monkeypatch.setattr(
-            "prefect.deployments.steps.core.import_module",
+            "syntask.deployments.steps.core.import_module",
             MagicMock(side_effect=ImportError),
         )
 
@@ -223,13 +223,13 @@ class TestRunSteps:
     async def test_run_steps_runs_multiple_steps(self):
         steps = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": "echo 'this is a test'",
                     "id": "why_not_to_panic",
                 }
             },
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": r"echo Don\'t Panic: {{ why_not_to_panic.stdout }}"
                 }
             },
@@ -247,7 +247,7 @@ class TestRunSteps:
     async def test_run_steps_handles_error_gracefully(self, variables):
         steps = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": "echo 'this is a test'",
                     "id": "why_not_to_panic",
                 }
@@ -268,13 +268,13 @@ class TestRunSteps:
         mock_print = MagicMock()
         steps = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": "echo 'this is a test'",
                     "id": "why_not_to_panic",
                 }
             },
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": (
                         'bash -c echo "Don\'t Panic: {{ why_not_to_panic.stdout }}"'
                     )
@@ -289,12 +289,12 @@ class TestRunSteps:
             warnings.warn("this is a warning", DeprecationWarning)
             return {}
 
-        monkeypatch.setattr("prefect.deployments.steps.run_shell_script", func)
+        monkeypatch.setattr("syntask.deployments.steps.run_shell_script", func)
 
         mock_print = MagicMock()
         steps = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": "echo 'this is a test'",
                     "id": "why_not_to_panic",
                 }
@@ -303,17 +303,17 @@ class TestRunSteps:
         await run_steps(steps, {}, print_function=mock_print)
         mock_print.assert_any_call("this is a warning", style="yellow")
 
-    async def test_run_steps_prints_prefect_deprecation_warnings(self, monkeypatch):
+    async def test_run_steps_prints_syntask_deprecation_warnings(self, monkeypatch):
         def func(*args, **kwargs):
-            warnings.warn("this is a warning", PrefectDeprecationWarning)
+            warnings.warn("this is a warning", SyntaskDeprecationWarning)
             return {}
 
-        monkeypatch.setattr("prefect.deployments.steps.run_shell_script", func)
+        monkeypatch.setattr("syntask.deployments.steps.run_shell_script", func)
 
         mock_print = MagicMock()
         steps = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": "echo 'this is a test'",
                     "id": "why_not_to_panic",
                 }
@@ -324,10 +324,10 @@ class TestRunSteps:
 
     async def test_run_steps_can_print_warnings_without_style(self, monkeypatch):
         def func(*args, **kwargs):
-            warnings.warn("this is a warning", PrefectDeprecationWarning)
+            warnings.warn("this is a warning", SyntaskDeprecationWarning)
             return {}
 
-        monkeypatch.setattr("prefect.deployments.steps.run_shell_script", func)
+        monkeypatch.setattr("syntask.deployments.steps.run_shell_script", func)
 
         # raise an exception when style is passed. exception type is irrelevant
         mock_print = MagicMock(
@@ -335,7 +335,7 @@ class TestRunSteps:
         )
         steps = [
             {
-                "prefect.deployments.steps.run_shell_script": {
+                "syntask.deployments.steps.run_shell_script": {
                     "script": "echo 'this is a test'",
                     "id": "why_not_to_panic",
                 }
@@ -373,7 +373,7 @@ def git_repository_mock(monkeypatch):
     git_repository_mock.return_value.pull_code = pull_code_mock
     git_repository_mock.return_value.destination = Path.cwd() / "repo"
     monkeypatch.setattr(
-        "prefect.deployments.steps.pull.GitRepository",
+        "syntask.deployments.steps.pull.GitRepository",
         git_repository_mock,
     )
     return git_repository_mock
@@ -383,7 +383,7 @@ class TestGitCloneStep:
     async def test_git_clone(self, git_repository_mock):
         output = await run_step(
             {
-                "prefect.deployments.steps.git_clone": {
+                "syntask.deployments.steps.git_clone": {
                     "repository": "https://github.com/org/repo.git",
                 }
             }
@@ -400,7 +400,7 @@ class TestGitCloneStep:
     async def test_git_clone_include_submodules(self, git_repository_mock):
         output = await run_step(
             {
-                "prefect.deployments.steps.git_clone": {
+                "syntask.deployments.steps.git_clone": {
                     "repository": "https://github.com/org/has-submodules.git",
                     "include_submodules": True,
                 }
@@ -419,9 +419,9 @@ class TestGitCloneStep:
         await Secret(value="my-access-token").save(name="my-access-token")
         await run_step(
             {
-                "prefect.deployments.steps.git_clone": {
+                "syntask.deployments.steps.git_clone": {
                     "repository": "https://github.com/org/repo.git",
-                    "access_token": "{{ prefect.blocks.secret.my-access-token }}",
+                    "access_token": "{{ syntask.blocks.secret.my-access-token }}",
                 }
             }
         )
@@ -443,10 +443,10 @@ class TestGitCloneStep:
         )
         await run_step(
             {
-                "prefect.deployments.steps.git_clone": {
+                "syntask.deployments.steps.git_clone": {
                     "repository": "https://github.com/org/repo.git",
                     "credentials": (
-                        "{{ prefect.blocks.mockgitcredentials.my-credentials }}"
+                        "{{ syntask.blocks.mockgitcredentials.my-credentials }}"
                     ),
                 }
             }
@@ -468,7 +468,7 @@ class TestPullFromRemoteStorage:
         remote_storage_mock.return_value.pull_code = pull_code_mock
         remote_storage_mock.return_value.destination = Path.cwd() / "bucket" / "folder"
         monkeypatch.setattr(
-            "prefect.deployments.steps.pull.RemoteStorage",
+            "syntask.deployments.steps.pull.RemoteStorage",
             remote_storage_mock,
         )
         return remote_storage_mock
@@ -477,7 +477,7 @@ class TestPullFromRemoteStorage:
     def subprocess_mock(self, monkeypatch):
         subprocess_mock = MagicMock()
         monkeypatch.setattr(
-            "prefect.deployments.steps.core.subprocess",
+            "syntask.deployments.steps.core.subprocess",
             subprocess_mock,
         )
         return subprocess_mock
@@ -486,7 +486,7 @@ class TestPullFromRemoteStorage:
     def import_module_mock(self, monkeypatch):
         import_module_mock = MagicMock(side_effect=ImportError())
         monkeypatch.setattr(
-            "prefect.deployments.steps.core.import_module",
+            "syntask.deployments.steps.core.import_module",
             import_module_mock,
         )
         return import_module_mock
@@ -496,7 +496,7 @@ class TestPullFromRemoteStorage:
     ):
         output = await run_step(
             {
-                "prefect.deployments.steps.pull_from_remote_storage": {
+                "syntask.deployments.steps.pull_from_remote_storage": {
                     "requires": "s3fs<3.0",
                     "url": "s3://bucket/folder",
                     "key": "my-access-key-id",
@@ -627,7 +627,7 @@ class TestRunShellScript:
         # return type needs to be mocked to avoid TypeError
         shex_split_mock = MagicMock(return_value=["echo", "Hello", "World"])
         monkeypatch.setattr(
-            "prefect.deployments.steps.utility.shlex.split",
+            "syntask.deployments.steps.utility.shlex.split",
             shex_split_mock,
         )
         result = await run_shell_script("echo Hello World")
@@ -655,20 +655,20 @@ class TestPipInstallRequirements:
     async def test_pip_install_reqs_runs_expected_command(self, monkeypatch):
         open_process_mock = MagicMock(return_value=MockProcess(0))
         monkeypatch.setattr(
-            "prefect.deployments.steps.utility.open_process",
+            "syntask.deployments.steps.utility.open_process",
             open_process_mock,
         )
 
         mock_stream_capture = AsyncMock()
 
         monkeypatch.setattr(
-            "prefect.deployments.steps.utility._stream_capture_process_output",
+            "syntask.deployments.steps.utility._stream_capture_process_output",
             mock_stream_capture,
         )
 
         await run_step(
             {
-                "prefect.deployments.steps.pip_install_requirements": {
+                "syntask.deployments.steps.pip_install_requirements": {
                     "id": "pip-install-step"
                 }
             }
@@ -684,20 +684,20 @@ class TestPipInstallRequirements:
     async def test_pip_install_reqs_custom_requirements_file(self, monkeypatch):
         open_process_mock = MagicMock(return_value=MockProcess(0))
         monkeypatch.setattr(
-            "prefect.deployments.steps.utility.open_process",
+            "syntask.deployments.steps.utility.open_process",
             open_process_mock,
         )
 
         mock_stream_capture = AsyncMock()
 
         monkeypatch.setattr(
-            "prefect.deployments.steps.utility._stream_capture_process_output",
+            "syntask.deployments.steps.utility._stream_capture_process_output",
             mock_stream_capture,
         )
 
         await run_step(
             {
-                "prefect.deployments.steps.pip_install_requirements": {
+                "syntask.deployments.steps.pip_install_requirements": {
                     "id": "pip-install-step",
                     "requirements_file": "dev-requirements.txt",
                 }
@@ -716,26 +716,26 @@ class TestPipInstallRequirements:
     ):
         open_process_mock = MagicMock(return_value=MockProcess(0))
         monkeypatch.setattr(
-            "prefect.deployments.steps.utility.open_process",
+            "syntask.deployments.steps.utility.open_process",
             open_process_mock,
         )
 
         mock_stream_capture = AsyncMock()
 
         monkeypatch.setattr(
-            "prefect.deployments.steps.utility._stream_capture_process_output",
+            "syntask.deployments.steps.utility._stream_capture_process_output",
             mock_stream_capture,
         )
 
         steps = [
             {
-                "prefect.deployments.steps.git_clone": {
+                "syntask.deployments.steps.git_clone": {
                     "id": "clone-step",
-                    "repository": "https://github.com/PrefectHQ/hello-projects.git",
+                    "repository": "https://github.com/Synopkg/hello-projects.git",
                 }
             },
             {
-                "prefect.deployments.steps.pip_install_requirements": {
+                "syntask.deployments.steps.pip_install_requirements": {
                     "id": "pip-install-step",
                     "directory": "{{ clone-step.directory }}",
                     "requirements_file": "requirements.txt",
@@ -775,7 +775,7 @@ class TestPipInstallRequirements:
         with pytest.raises(RuntimeError) as exc:
             await run_step(
                 {
-                    "prefect.deployments.steps.pip_install_requirements": {
+                    "syntask.deployments.steps.pip_install_requirements": {
                         "id": "pip-install-step",
                         "requirements_file": "doesnt-exist.txt",
                     }
@@ -796,7 +796,7 @@ class TestPullWithBlock:
 
             code: str = dedent(
                 """\
-                from prefect import flow
+                from syntask import flow
 
                 @flow
                 def test_flow():
@@ -820,7 +820,7 @@ class TestPullWithBlock:
         try:
             output = await run_step(
                 {
-                    "prefect.deployments.steps.pull_with_block": {
+                    "syntask.deployments.steps.pull_with_block": {
                         "block_type_slug": test_block.get_block_type_slug(),
                         "block_document_name": test_block._block_document_name,
                     }
@@ -829,7 +829,7 @@ class TestPullWithBlock:
             assert "directory" in output
             assert Path(f"{output['directory']}/flows.py").read_text() == dedent(
                 """\
-                from prefect import flow
+                from syntask import flow
 
                 @flow
                 def test_flow():
@@ -849,7 +849,7 @@ class TestPullWithBlock:
         with pytest.raises(ValueError):
             await run_step(
                 {
-                    "prefect.deployments.steps.pull_with_block": {
+                    "syntask.deployments.steps.pull_with_block": {
                         "block_type_slug": "in-the",
                         "block_document_name": "wind",
                     }
@@ -874,7 +874,7 @@ class TestPullWithBlock:
         with pytest.raises(ValueError):
             await run_step(
                 {
-                    "prefect.deployments.steps.pull_with_block": {
+                    "syntask.deployments.steps.pull_with_block": {
                         "block_type_slug": block.get_block_type_slug(),
                         "block_document_name": block._block_document_name,
                     }

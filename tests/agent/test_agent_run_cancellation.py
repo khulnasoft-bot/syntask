@@ -5,19 +5,19 @@ from unittest.mock import call
 import anyio
 import pytest
 
-from prefect.agent import PrefectAgent
-from prefect.blocks.core import Block
-from prefect.client.orchestration import PrefectClient
-from prefect.client.schemas.objects import Deployment
-from prefect.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
-from prefect.infrastructure.base import Infrastructure
-from prefect.server.database.orm_models import ORMDeployment
-from prefect.settings import (
-    PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION,
-    PREFECT_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION,
+from syntask.agent import SyntaskAgent
+from syntask.blocks.core import Block
+from syntask.client.orchestration import SyntaskClient
+from syntask.client.schemas.objects import Deployment
+from syntask.exceptions import InfrastructureNotAvailable, InfrastructureNotFound
+from syntask.infrastructure.base import Infrastructure
+from syntask.server.database.orm_models import ORMDeployment
+from syntask.settings import (
+    SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION,
+    SYNTASK_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION,
     temporary_settings,
 )
-from prefect.states import (
+from syntask.states import (
     Cancelled,
     Cancelling,
     Completed,
@@ -26,16 +26,16 @@ from prefect.states import (
     Scheduled,
     StateType,
 )
-from prefect.testing.utilities import AsyncMock
-from prefect.utilities.dispatch import get_registry_for_type
+from syntask.testing.utilities import AsyncMock
+from syntask.utilities.dispatch import get_registry_for_type
 
 
 @pytest.fixture
 def enable_enhanced_cancellation():
     with temporary_settings(
         updates={
-            PREFECT_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: True,
-            PREFECT_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: False,
+            SYNTASK_EXPERIMENTAL_ENABLE_ENHANCED_CANCELLATION: True,
+            SYNTASK_EXPERIMENTAL_WARN_ENHANCED_CANCELLATION: False,
         }
     ):
         yield
@@ -46,12 +46,12 @@ def legacy_named_cancelling_state(**kwargs):
 
 
 async def _create_test_deployment_from_orm(
-    prefect_client: PrefectClient, orm_deployment: ORMDeployment, **kwargs
+    syntask_client: SyntaskClient, orm_deployment: ORMDeployment, **kwargs
 ) -> Deployment:
     api_deployment = Deployment.from_orm(orm_deployment)
     updated_deployment = api_deployment.copy(update=kwargs)
 
-    deployment_id = await prefect_client.create_deployment(
+    deployment_id = await syntask_client.create_deployment(
         **updated_deployment.dict(
             exclude=api_deployment._reset_fields().union(
                 {
@@ -78,16 +78,16 @@ async def _create_test_deployment_from_orm(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_called_for_cancelling_run(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
@@ -112,14 +112,14 @@ async def test_agent_cancel_run_called_for_cancelling_run(
     ],
 )
 async def test_agent_cancel_run_not_called_for_other_states(
-    prefect_client: PrefectClient, deployment: ORMDeployment, state
+    syntask_client: SyntaskClient, deployment: ORMDeployment, state
 ):
-    await prefect_client.create_flow_run_from_deployment(
+    await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=state,
     )
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name], prefetch_seconds=10
     ) as agent:
         agent.cancel_run = AsyncMock()
@@ -132,20 +132,20 @@ async def test_agent_cancel_run_not_called_for_other_states(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_called_for_cancelling_run_with_multiple_work_queues(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     cancelling_constructor,
 ):
     work_queue = f"foo-{uuid.uuid4()}"
     deployment.work_queue_name = work_queue
-    await prefect_client.update_deployment(deployment)
+    await syntask_client.update_deployment(deployment)
 
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         # one existing and one non-existing work queue
         work_queues=[work_queue, str(uuid.uuid4())],
         prefetch_seconds=10,
@@ -160,29 +160,29 @@ async def test_agent_cancel_run_called_for_cancelling_run_with_multiple_work_que
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_called_for_each_cancelling_run_in_multiple_work_queues(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     cancelling_constructor,
 ):
     wq1 = f"foo-{uuid.uuid4()}"
     wq2 = f"bar-{uuid.uuid4()}"
     deployment_foo = await _create_test_deployment_from_orm(
-        prefect_client, deployment, work_queue_name=wq1
+        syntask_client, deployment, work_queue_name=wq1
     )
     deployment_bar = await _create_test_deployment_from_orm(
-        prefect_client, deployment, work_queue_name=wq2
+        syntask_client, deployment, work_queue_name=wq2
     )
 
-    flow_run_foo = await prefect_client.create_flow_run_from_deployment(
+    flow_run_foo = await syntask_client.create_flow_run_from_deployment(
         deployment_foo.id,
         state=cancelling_constructor(),
     )
-    flow_run_bar = await prefect_client.create_flow_run_from_deployment(
+    flow_run_bar = await syntask_client.create_flow_run_from_deployment(
         deployment_bar.id,
         state=cancelling_constructor(),
     )
 
-    async with PrefectAgent(work_queues=[wq1, wq2], prefetch_seconds=10) as agent:
+    async with SyntaskAgent(work_queues=[wq1, wq2], prefetch_seconds=10) as agent:
         agent.cancel_run = AsyncMock()
         await agent.check_for_cancelled_flow_runs()
 
@@ -195,26 +195,26 @@ async def test_agent_cancel_run_called_for_each_cancelling_run_in_multiple_work_
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_called_for_each_cancelling_run_in_a_work_queue(
-    prefect_client: PrefectClient, deployment: ORMDeployment, cancelling_constructor
+    syntask_client: SyntaskClient, deployment: ORMDeployment, cancelling_constructor
 ):
     deployment_foo = await _create_test_deployment_from_orm(
-        prefect_client, deployment, work_queue_name="foo"
+        syntask_client, deployment, work_queue_name="foo"
     )
 
-    flow_run_1 = await prefect_client.create_flow_run_from_deployment(
+    flow_run_1 = await syntask_client.create_flow_run_from_deployment(
         deployment_foo.id,
         state=cancelling_constructor(),
     )
-    flow_run_2 = await prefect_client.create_flow_run_from_deployment(
+    flow_run_2 = await syntask_client.create_flow_run_from_deployment(
         deployment_foo.id,
         state=cancelling_constructor(),
     )
-    flow_run_3 = await prefect_client.create_flow_run_from_deployment(
+    flow_run_3 = await syntask_client.create_flow_run_from_deployment(
         deployment_foo.id,
         state=cancelling_constructor(),
     )
 
-    async with PrefectAgent(work_queues=["foo"], prefetch_seconds=10) as agent:
+    async with SyntaskAgent(work_queues=["foo"], prefetch_seconds=10) as agent:
         agent.cancel_run = AsyncMock()
         await agent.check_for_cancelled_flow_runs()
 
@@ -227,14 +227,14 @@ async def test_agent_cancel_run_called_for_each_cancelling_run_in_a_work_queue(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_not_called_for_other_work_queues(
-    prefect_client: PrefectClient, deployment, cancelling_constructor
+    syntask_client: SyntaskClient, deployment, cancelling_constructor
 ):
-    await prefect_client.create_flow_run_from_deployment(
+    await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[f"not-{deployment.work_queue_name}"], prefetch_seconds=10
     ) as agent:
         agent.cancel_run = AsyncMock()
@@ -267,19 +267,19 @@ def mock_infrastructure_kill(monkeypatch) -> Generator[AsyncMock, None, None]:
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_kills_run_with_infrastructure_pid(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     mock_infrastructure_kill: AsyncMock,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
@@ -293,18 +293,18 @@ async def test_agent_cancel_run_kills_run_with_infrastructure_pid(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_with_missing_infrastructure_pid(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     mock_infrastructure_kill: AsyncMock,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
@@ -314,7 +314,7 @@ async def test_agent_cancel_run_with_missing_infrastructure_pid(
     mock_infrastructure_kill.assert_not_awaited()
 
     # State name updated to prevent further attempts
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelled"
 
     # Information broadcasted to user in logs and state message
@@ -330,25 +330,25 @@ async def test_agent_cancel_run_with_missing_infrastructure_pid(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_updates_state_type(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
     ) as agent:
         await agent.check_for_cancelled_flow_runs()
 
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.type == StateType.CANCELLED
 
 
@@ -357,25 +357,25 @@ async def test_agent_cancel_run_updates_state_type(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_preserves_other_state_properties(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     cancelling_constructor,
 ):
     expected_changed_fields = {"type", "name", "timestamp", "id"}
 
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(message="test"),
     )
 
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name], prefetch_seconds=10
     ) as agent:
         await agent.check_for_cancelled_flow_runs()
 
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.dict(
         exclude=expected_changed_fields
     ) == flow_run.state.dict(exclude=expected_changed_fields)
@@ -385,21 +385,21 @@ async def test_agent_cancel_run_preserves_other_state_properties(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_with_infrastructure_not_available_during_kill(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     mock_infrastructure_kill: AsyncMock,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
     mock_infrastructure_kill.side_effect = InfrastructureNotAvailable("Test!")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
@@ -413,7 +413,7 @@ async def test_agent_cancel_run_with_infrastructure_not_available_during_kill(
     mock_infrastructure_kill.assert_awaited_once_with("test")
 
     # State name not updated; other agents may attempt the kill
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
     # Exception message is included with note on agent action
@@ -427,21 +427,21 @@ async def test_agent_cancel_run_with_infrastructure_not_available_during_kill(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_with_infrastructure_not_found_during_kill(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     mock_infrastructure_kill: AsyncMock,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
     mock_infrastructure_kill.side_effect = InfrastructureNotFound("Test!")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
@@ -454,7 +454,7 @@ async def test_agent_cancel_run_with_infrastructure_not_found_during_kill(
     mock_infrastructure_kill.assert_awaited_once_with("test")
 
     # State name updated to prevent further attempts
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelled"
 
     # Exception message is included with note on agent action
@@ -468,20 +468,20 @@ async def test_agent_cancel_run_with_infrastructure_not_found_during_kill(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_with_unknown_error_during_kill(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     mock_infrastructure_kill: AsyncMock,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
     mock_infrastructure_kill.side_effect = ValueError("Oh no!")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
@@ -494,7 +494,7 @@ async def test_agent_cancel_run_with_unknown_error_during_kill(
     mock_infrastructure_kill.assert_has_awaits([call("test"), call("test")])
 
     # State name not updated
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
     assert (
@@ -508,7 +508,7 @@ async def test_agent_cancel_run_with_unknown_error_during_kill(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_cancel_run_without_infrastructure_support_for_kill(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     caplog,
     monkeypatch,
@@ -521,13 +521,13 @@ async def test_agent_cancel_run_without_infrastructure_support_for_kill(
             continue
         monkeypatch.delattr(t, "kill", raising=False)
 
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
@@ -536,7 +536,7 @@ async def test_agent_cancel_run_without_infrastructure_support_for_kill(
 
     # State name not updated; another agent may have a code version that supports
     # killing this flow run
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
     assert (
@@ -550,25 +550,25 @@ async def test_agent_cancel_run_without_infrastructure_support_for_kill(
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_started_in_work_pool_without_work_queue_puts_flow_run_into_cancelled_state(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     caplog,
     cancelling_constructor,
     work_pool,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
     # agent with work pool but no work queue
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_pool_name=work_pool.name, prefetch_seconds=10
     ) as agent:
         await agent.check_for_cancelled_flow_runs()
     # make sure it is actually cancelled
     assert "Found 1 flow runs awaiting cancellation" in caplog.text
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelled"
 
 
@@ -576,23 +576,23 @@ async def test_agent_started_in_work_pool_without_work_queue_puts_flow_run_into_
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_started_in_different_work_pool_without_work_queue_does_not_cancel_flow_run(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
 
     # agent with work pool but no work queue
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_pool_name="another-work-pool", prefetch_seconds=10
     ) as agent:
         await agent.check_for_cancelled_flow_runs()
     assert "Found 1 flow runs awaiting cancellation" not in caplog.text
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
 
@@ -600,18 +600,18 @@ async def test_agent_started_in_different_work_pool_without_work_queue_does_not_
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_started_in_different_work_pool_with_same_work_queue_name_does_not_cancel_flow_run(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
     assert flow_run.work_pool_name == deployment.work_queue.work_pool.name
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_pool_name="another-work-pool",
         work_queues=[flow_run.work_queue_name],
         prefetch_seconds=10,
@@ -619,7 +619,7 @@ async def test_agent_started_in_different_work_pool_with_same_work_queue_name_do
         await agent.check_for_cancelled_flow_runs()
 
     assert "Found 1 flow runs awaiting cancellation" not in caplog.text
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
 
@@ -627,18 +627,18 @@ async def test_agent_started_in_different_work_pool_with_same_work_queue_name_do
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_started_in_same_work_pool_with_same_work_queue_name_cancels_flow_run(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
     assert flow_run.work_pool_name == deployment.work_queue.work_pool.name
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_pool_name=flow_run.work_pool_name,
         work_queues=[flow_run.work_queue_name],
         prefetch_seconds=10,
@@ -647,7 +647,7 @@ async def test_agent_started_in_same_work_pool_with_same_work_queue_name_cancels
 
     # make sure it is actually cancelled
     assert "Found 1 flow runs awaiting cancellation" in caplog.text
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelled"
 
 
@@ -655,18 +655,18 @@ async def test_agent_started_in_same_work_pool_with_same_work_queue_name_cancels
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_started_in_same_work_pool_with_different_work_queue_name_does_not_cancel_flow_run(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
     assert flow_run.work_queue_name == deployment.work_queue.name
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_pool_name=flow_run.work_pool_name,
         work_queues=["wq-2"],
         prefetch_seconds=10,
@@ -674,7 +674,7 @@ async def test_agent_started_in_same_work_pool_with_different_work_queue_name_do
         await agent.check_for_cancelled_flow_runs()
 
     assert "Found 1 flow runs awaiting cancellation" not in caplog.text
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
 
@@ -682,19 +682,19 @@ async def test_agent_started_in_same_work_pool_with_different_work_queue_name_do
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_started_without_work_pool_does_not_cancel_flow_run_in_nondefault_work_pool(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment: ORMDeployment,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment.id,
         state=cancelling_constructor(),
     )
     assert flow_run.work_queue_name == deployment.work_queue.name
     assert flow_run.work_pool_name == deployment.work_queue.work_pool.name
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment.work_queue.name],
         prefetch_seconds=10,
     ) as agent:
@@ -702,7 +702,7 @@ async def test_agent_started_without_work_pool_does_not_cancel_flow_run_in_nonde
         await agent.check_for_cancelled_flow_runs()
 
     assert "Found 1 flow runs awaiting cancellation" not in caplog.text
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
 
@@ -710,19 +710,19 @@ async def test_agent_started_without_work_pool_does_not_cancel_flow_run_in_nonde
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_started_with_nondefault_work_pool_does_not_cancel_flow_run_in_default_work_pool(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment_in_default_work_pool: ORMDeployment,
     caplog,
     cancelling_constructor,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment_in_default_work_pool.id,
         state=cancelling_constructor(),
     )
     assert flow_run.work_queue_name == deployment_in_default_work_pool.work_queue.name
     assert flow_run.work_pool_name == "default-agent-pool"
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_pool_name=f"non-default-{uuid.uuid4()}",
         work_queues=[deployment_in_default_work_pool.work_queue.name],
         prefetch_seconds=10,
@@ -730,7 +730,7 @@ async def test_agent_started_with_nondefault_work_pool_does_not_cancel_flow_run_
         await agent.check_for_cancelled_flow_runs()
 
     assert "Found 1 flow runs awaiting cancellation" not in caplog.text
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     assert post_flow_run.state.name == "Cancelling"
 
 
@@ -738,27 +738,27 @@ async def test_agent_started_with_nondefault_work_pool_does_not_cancel_flow_run_
     "cancelling_constructor", [legacy_named_cancelling_state, Cancelling]
 )
 async def test_agent_skips_cancellation_when_enhanced_cancellation_is_enabled(
-    prefect_client: PrefectClient,
+    syntask_client: SyntaskClient,
     deployment_2: ORMDeployment,
     cancelling_constructor,
     enable_enhanced_cancellation,
     caplog,
 ):
-    flow_run = await prefect_client.create_flow_run_from_deployment(
+    flow_run = await syntask_client.create_flow_run_from_deployment(
         deployment_2.id,
         state=cancelling_constructor(),
     )
 
-    await prefect_client.update_flow_run(flow_run.id, infrastructure_pid="test")
+    await syntask_client.update_flow_run(flow_run.id, infrastructure_pid="test")
 
-    async with PrefectAgent(
+    async with SyntaskAgent(
         work_queues=[deployment_2.work_queue_name],
         work_pool_name=flow_run.work_pool_name,
         prefetch_seconds=10,
     ) as agent:
         await agent.check_for_cancelled_flow_runs()
 
-    post_flow_run = await prefect_client.read_flow_run(flow_run.id)
+    post_flow_run = await syntask_client.read_flow_run(flow_run.id)
     # state type shouldn't change
     assert post_flow_run.state.type == cancelling_constructor().type
 

@@ -4,7 +4,7 @@ import jsonschema
 import numpy as np
 import pytest
 
-from prefect.server.schemas.actions import (
+from syntask.server.schemas.actions import (
     BlockTypeUpdate,
     DeploymentCreate,
     DeploymentUpdate,

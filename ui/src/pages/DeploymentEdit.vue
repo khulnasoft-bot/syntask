@@ -9,9 +9,9 @@
 </template>
 
 <script lang="ts" setup>
-  import { showToast } from '@prefecthq/prefect-design'
-  import { PageHeadingDeploymentEdit, useWorkspaceApi, DeploymentUpdateV2, getApiErrorMessage, DeploymentFormV2 } from '@prefecthq/prefect-ui-library'
-  import { useSubscription, useRouteParam } from '@prefecthq/vue-compositions'
+  import { showToast } from '@syntaskhq/syntask-design'
+  import { PageHeadingDeploymentEdit, useWorkspaceApi, DeploymentUpdateV2, getApiErrorMessage, DeploymentFormV2 } from '@syntaskhq/syntask-ui-library'
+  import { useSubscription, useRouteParam } from '@syntaskhq/vue-compositions'
   import { computed } from 'vue'
   import { usePageTitle } from '@/compositions/usePageTitle'
   import router, { routes } from '@/router'

@@ -5,11 +5,11 @@ from uuid import uuid4
 import pendulum
 import pytest
 
-from prefect.server.events import messaging
-from prefect.server.events.messaging import create_event_publisher
-from prefect.server.events.schemas.events import ReceivedEvent, Resource
-from prefect.server.utilities.messaging import CapturingPublisher
-from prefect.settings import PREFECT_EVENTS_MAXIMUM_SIZE_BYTES, temporary_settings
+from syntask.server.events import messaging
+from syntask.server.events.messaging import create_event_publisher
+from syntask.server.events.schemas.events import ReceivedEvent, Resource
+from syntask.server.utilities.messaging import CapturingPublisher
+from syntask.settings import SYNTASK_EVENTS_MAXIMUM_SIZE_BYTES, temporary_settings
 
 from .conftest import assert_message_represents_event
 
@@ -19,7 +19,7 @@ def event1() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="was.tubular",
-        resource=Resource.parse_obj({"prefect.resource.id": "my.kickflip"}),
+        resource=Resource.parse_obj({"syntask.resource.id": "my.kickflip"}),
         payload={"goodbye": "yellow brick road"},
         id=uuid4(),
     )
@@ -30,7 +30,7 @@ def event2() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="was.super.gnarly",
-        resource=Resource.parse_obj({"prefect.resource.id": "my.ollie"}),
+        resource=Resource.parse_obj({"syntask.resource.id": "my.ollie"}),
         payload={"where": "the dogs of society howl"},
         id=uuid4(),
     )
@@ -41,7 +41,7 @@ def event3() -> ReceivedEvent:
     return ReceivedEvent(
         occurred=pendulum.now("UTC"),
         event="was.extra.spicy",
-        resource=Resource.parse_obj({"prefect.resource.id": "my.heelflip"}),
+        resource=Resource.parse_obj({"syntask.resource.id": "my.heelflip"}),
         payload={"you": "can't plant me in your penthouse"},
         id=uuid4(),
     )
@@ -50,7 +50,7 @@ def event3() -> ReceivedEvent:
 @pytest.fixture
 def capturing_publisher() -> Generator[Type[CapturingPublisher], None, None]:
     with mock.patch(
-        "prefect.server.events.messaging.create_publisher",
+        "syntask.server.events.messaging.create_publisher",
         CapturingPublisher,
     ):
         CapturingPublisher.messages = []
@@ -75,7 +75,7 @@ async def test_publishing_events(
 
 @pytest.fixture
 def tiny_event_size() -> Generator[int, None, None]:
-    with temporary_settings(updates={PREFECT_EVENTS_MAXIMUM_SIZE_BYTES: 10000}):
+    with temporary_settings(updates={SYNTASK_EVENTS_MAXIMUM_SIZE_BYTES: 10000}):
         yield 10_000
 
 

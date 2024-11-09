@@ -29,12 +29,12 @@ This guide provides an overview of the differences between agents and workers. I
 ### Work pools
 
 - Work pools allow greater customization and governance of infrastructure parameters for deployments via their [base job template](/concepts/work-pools/#base-job-template).
-- Prefect Cloud [push work pools](/guides/deployment/push-work-pools/) enable flow execution in your cloud provider environment without needing to host a worker.
-- Prefect Cloud [managed work pools](/guides/managed-execution/) allow you to run flows on Prefect's infrastructure, without needing to host a worker or configure cloud provider infrastructure.
+- Syntask Cloud [push work pools](/guides/deployment/push-work-pools/) enable flow execution in your cloud provider environment without needing to host a worker.
+- Syntask Cloud [managed work pools](/guides/managed-execution/) allow you to run flows on Syntask's infrastructure, without needing to host a worker or configure cloud provider infrastructure.
 
 ### Improved deployment interfaces
 
-- The Python deployment experience with `.deploy()` or the alternative deployment experience with `prefect.yaml` are more flexible and easier to use than block and agent-based deployments.
+- The Python deployment experience with `.deploy()` or the alternative deployment experience with `syntask.yaml` are more flexible and easier to use than block and agent-based deployments.
 - Both options allow you to [deploy multiple flows](/concepts/deployments/#working-with-multiple-deployments) with a single command.
 - Both options allow you to build Docker images for your flows to create portable execution environments.
 - The YAML-based API supports [templating](/concepts/deployments/#templating-options) to enable [dryer deployment definitions](/concepts/deployments/#reusing-configuration-across-deployments).
@@ -45,17 +45,17 @@ This guide provides an overview of the differences between agents and workers. I
 
 1. **Deployment CLI and Python SDK:**
 
-    `prefect deployment build <entrypoint>`/`prefect deployment apply` --> [`prefect deploy`](/concepts/deployments/#deployment-declaration-reference)
+    `syntask deployment build <entrypoint>`/`syntask deployment apply` --> [`syntask deploy`](/concepts/deployments/#deployment-declaration-reference)
 
-    Prefect will now automatically detect flows in your repo and provide a [wizard](/#step-5-deploy-the-flow) 🧙 to guide you through setting required attributes for your deployments.
+    Syntask will now automatically detect flows in your repo and provide a [wizard](/#step-5-deploy-the-flow) 🧙 to guide you through setting required attributes for your deployments.
 
-    `Deployment.build_from_flow` --> [`flow.deploy`](/api-ref/prefect/flows/#prefect.flows.Flow.deploy)
+    `Deployment.build_from_flow` --> [`flow.deploy`](/api-ref/syntask/flows/#syntask.flows.Flow.deploy)
 
 2. **Configuring remote flow code storage:**
 
     storage blocks --> [pull action](/concepts/deployments/#the-pull-action)
 
-    When using the YAML-based deployment API, you can configure a pull action in your `prefect.yaml` file to specify how to retrieve flow code for your deployments. You can use configuration from your existing storage blocks to define your pull action [via templating](/guides/prefect-deploy/#templating-options).
+    When using the YAML-based deployment API, you can configure a pull action in your `syntask.yaml` file to specify how to retrieve flow code for your deployments. You can use configuration from your existing storage blocks to define your pull action [via templating](/guides/syntask-deploy/#templating-options).
 
     When using the Python deployment API, you can pass any storage block to the `flow.deploy` method to specify how to retrieve flow code for your deployment.
 
@@ -67,11 +67,11 @@ This guide provides an overview of the differences between agents and workers. I
 
 4. **Managing multiple deployments:**
 
-    Create and/or update many deployments at once through a [`prefect.yaml`](/concepts/deployments/#working-with-multiple-deployments) file or use the [`deploy`](/api-ref/prefect/deployments/runner/#prefect.deployments.runner.deploy) function.
+    Create and/or update many deployments at once through a [`syntask.yaml`](/concepts/deployments/#working-with-multiple-deployments) file or use the [`deploy`](/api-ref/syntask/deployments/runner/#syntask.deployments.runner.deploy) function.
 
 ## What's similar
 
-- Storage blocks can be set as the pull action in a `prefect.yaml` file.
+- Storage blocks can be set as the pull action in a `syntask.yaml` file.
 - Infrastructure blocks have configuration fields similar to typed work pools.
 - Deployment-level infrastructure overrides operate in much the same way.
 
@@ -79,10 +79,10 @@ This guide provides an overview of the differences between agents and workers. I
 
 - The process for starting an agent and [starting a worker](/concepts/work-pools/#starting-a-worker) in your environment are virtually identical.
 
-    `prefect agent start --pool <work pool name>` --> `prefect worker start --pool <work pool name>`
+    `syntask agent start --pool <work pool name>` --> `syntask worker start --pool <work pool name>`
 
     !!! Tip "Worker Helm chart"
-        If you host your agents in a Kubernetes cluster, you can use the [Prefect worker Helm chart](https://github.com/PrefectHQ/prefect-helm/tree/main/charts/prefect-worker) to host workers in your cluster.
+        If you host your agents in a Kubernetes cluster, you can use the [Syntask worker Helm chart](https://github.com/Synopkg/syntask-helm/tree/main/charts/syntask-worker) to host workers in your cluster.
 
 ## Upgrade guide
 
@@ -92,12 +92,12 @@ If you have existing deployments that use infrastructure blocks, you can quickly
 
 This new work pool will replace your infrastructure block.
 
-You can use the [`.publish_as_work_pool`](/api-ref/prefect/infrastructure/#prefect.infrastructure.Infrastructure.publish_as_work_pool) method on any infrastructure block to create a work pool with the same configuration.
+You can use the [`.publish_as_work_pool`](/api-ref/syntask/infrastructure/#syntask.infrastructure.Infrastructure.publish_as_work_pool) method on any infrastructure block to create a work pool with the same configuration.
 
 For example, if you have a `KubernetesJob` infrastructure block named 'my-k8s-job', you can create a work pool with the same configuration with this script:
 
 ```python
-from prefect.infrastructure import KubernetesJob
+from syntask.infrastructure import KubernetesJob
 
 KubernetesJob.load("my-k8s-job").publish_as_work_pool()
 ```
@@ -105,7 +105,7 @@ KubernetesJob.load("my-k8s-job").publish_as_work_pool()
     Running this script will create a work pool named 'my-k8s-job' with the same configuration as your infrastructure block.
 
 !!! Tip "Serving flows"
-    If you are using a `Process` infrastructure block and a `LocalFilesystem` storage block (or aren't using an infrastructure and storage block at all), you can use [`flow.serve`](/api-ref/prefect/flows/#prefect.flows.Flow.deploy) to create a deployment without needing to specify a work pool name or start a worker.
+    If you are using a `Process` infrastructure block and a `LocalFilesystem` storage block (or aren't using an infrastructure and storage block at all), you can use [`flow.serve`](/api-ref/syntask/flows/#syntask.flows.Flow.deploy) to create a deployment without needing to specify a work pool name or start a worker.
 
     This is a quick way to create a deployment for a flow and is a great way to manage your deployments if you don't need the dynamic infrastructure creation or configuration offered by workers.
 
@@ -117,17 +117,17 @@ This worker will replace your agent and poll your new work pool for flow runs to
 
 <div class="terminal">
 ```bash
-prefect worker start -p <work pool name>
+syntask worker start -p <work pool name>
 ```
 </div>
 
 3. **Deploy your flows to the new work pool**
 
-To deploy your flows to the new work pool, you can use `flow.deploy` for a Pythonic deployment experience or `prefect deploy` for a YAML-based deployment experience.
+To deploy your flows to the new work pool, you can use `flow.deploy` for a Pythonic deployment experience or `syntask deploy` for a YAML-based deployment experience.
 
 If you currently use `Deployment.build_from_flow`, we recommend using `flow.deploy`.
 
-If you currently use `prefect deployment build` and `prefect deployment apply`, we recommend using `prefect deploy`.
+If you currently use `syntask deployment build` and `syntask deployment apply`, we recommend using `syntask deploy`.
 
 ### `flow.deploy`
 
@@ -138,7 +138,7 @@ Most arguments to `Deployment.build_from_flow` can be translated directly to `fl
 - Replace `infrastructure` with `work_pool_name`.
   - If you've used the `.publish_as_work_pool` method on your infrastructure block, use the name of the created work pool.
 - Replace `infra_overrides` with `job_variables`.
-- Replace `storage` with a call to [`flow.from_source`](/api-ref/prefect/flows/#prefect.flows.Flow.deploy).
+- Replace `storage` with a call to [`flow.from_source`](/api-ref/syntask/flows/#syntask.flows.Flow.deploy).
   - `flow.from_source` will load your flow from a remote storage location and make it deployable. Your existing storage block can be passed to the `source` argument of `flow.from_source`.
 
 Below are some examples of how to translate `Deployment.build_from_flow` to `flow.deploy`.
@@ -148,7 +148,7 @@ Below are some examples of how to translate `Deployment.build_from_flow` to `flo
 If you aren't using any blocks:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 @flow(log_prints=True)
 def my_flow(name: str = "world"):
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 You can replace `Deployment.build_from_flow` with `flow.serve` :
 
 ```python
-from prefect import flow
+from syntask import flow
 
 @flow(log_prints=True)
 def my_flow(name: str = "world"):
@@ -185,8 +185,8 @@ This will start a process that will serve your flow and execute any flow runs th
 If you currently use a storage block to load your flow code but no infrastructure block:
 
 ```python
-from prefect import flow
-from prefect.storage import GitHub
+from syntask import flow
+from syntask.storage import GitHub
 
 @flow(log_prints=True)
 def my_flow(name: str = "world"):
@@ -204,8 +204,8 @@ if __name__ == "__main__":
 you can use `flow.from_source` to load your flow from the same location and `flow.serve` to create a deployment:
 
 ```python
-from prefect import flow
-from prefect.storage import GitHub
+from syntask import flow
+from syntask.storage import GitHub
 
 if __name__ == "__main__":
     flow.from_source(
@@ -224,10 +224,10 @@ This will allow you to execute scheduled flow runs without starting a worker. Ad
 For the code below, we'll need to create a work pool from our infrastructure block and pass it to `flow.deploy` as the `work_pool_name` argument. We'll also need to pass our storage block to `flow.from_source` as the `source` argument.
 
 ```python
-from prefect import flow
-from prefect.deployments import Deployment
-from prefect.filesystems import GitHub
-from prefect.infrastructure.kubernetes import KubernetesJob
+from syntask import flow
+from syntask.deployments import Deployment
+from syntask.filesystems import GitHub
+from syntask.infrastructure.kubernetes import KubernetesJob
 
 
 @flow(log_prints=True)
@@ -250,8 +250,8 @@ if __name__ == "__main__":
 The equivalent deployment code using `flow.deploy` would look like this:
 
 ```python
-from prefect import flow
-from prefect.storage import GitHub
+from syntask import flow
+from syntask.storage import GitHub
 
 if __name__ == "__main__":
     flow.from_source(
@@ -272,7 +272,7 @@ Note that when using `flow.from_source(...).deploy(...)`, the flow you're deploy
 If you currently bake your flow code into a Docker image before deploying, you can use the `image` argument of `flow.deploy` to build a Docker image as part of your deployment process:
 
 ```python
-from prefect import flow
+from syntask import flow
 
 @flow(log_prints=True)
 def my_flow(name: str = "world"):
@@ -289,26 +289,26 @@ if __name__ == "__main__":
     )
 ```
 
-You can skip a `flow.from_source` call when building an image with `flow.deploy`. Prefect will keep track of the flow's source code location in the image and load it from that location when the flow is executed.
+You can skip a `flow.from_source` call when building an image with `flow.deploy`. Syntask will keep track of the flow's source code location in the image and load it from that location when the flow is executed.
 
-### Using `prefect deploy`
+### Using `syntask deploy`
 
-!!! warning "Always run `prefect deploy` commands from the **root** level of your repo!"
-    With agents, you might have had multiple `deployment.yaml` files, but under worker deployment patterns, each repo will have a single `prefect.yaml` file located at the **root** of the repo that contains [deployment configuration](/concepts/deployments/#working-with-multiple-deployments) for all flows in that repo.
+!!! warning "Always run `syntask deploy` commands from the **root** level of your repo!"
+    With agents, you might have had multiple `deployment.yaml` files, but under worker deployment patterns, each repo will have a single `syntask.yaml` file located at the **root** of the repo that contains [deployment configuration](/concepts/deployments/#working-with-multiple-deployments) for all flows in that repo.
 
-To set up a new `prefect.yaml` file for your deployments, run the following command from the root level of your repo:
+To set up a new `syntask.yaml` file for your deployments, run the following command from the root level of your repo:
 
 <div class="terminal">
 ```bash
-prefect deploy
+syntask deploy
 ```
 </div>
 
 This will start a wizard that will guide you through setting up your deployment.
 
 !!! Note "For step 4, select `y` on the last prompt to save the configuration for the deployment."
-    Saving the configuration for your deployment will result in a `prefect.yaml` file populated with your first deployment. You can use this YAML file to edit and [define multiple deployments](/concepts/deployments/#working-with-multiple-deployments) for this repo.
+    Saving the configuration for your deployment will result in a `syntask.yaml` file populated with your first deployment. You can use this YAML file to edit and [define multiple deployments](/concepts/deployments/#working-with-multiple-deployments) for this repo.
 
-You can add more [deployments](/concepts/deployments/#deployment-declaration-reference) to the `deployments` list in your `prefect.yaml` file and/or by continuing to use the deployment creation wizard.
+You can add more [deployments](/concepts/deployments/#deployment-declaration-reference) to the `deployments` list in your `syntask.yaml` file and/or by continuing to use the deployment creation wizard.
 
-For more information on deployments, check out our [in-depth guide for deploying flows to work pools](/guides/prefect-deploy/).
+For more information on deployments, check out our [in-depth guide for deploying flows to work pools](/guides/syntask-deploy/).

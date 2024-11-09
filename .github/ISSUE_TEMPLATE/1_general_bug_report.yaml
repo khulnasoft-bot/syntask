@@ -6,19 +6,19 @@ body:
     attributes:
       value: >
         Bug reports are often **usage questions, not bugs**. If you do not have a strong understanding 
-        of the interface you are reporting a bug for, please head to our [Community Slack](https://www.prefect.io/slack/)
-        or [Discourse](https://discourse.prefect.io/) and ask there first. You are likely to get a response
+        of the interface you are reporting a bug for, please head to our [Community Slack](https://www.syntask.io/slack/)
+        or [Discourse](https://discourse.syntask.io/) and ask there first. You are likely to get a response
         faster and learn more about the feature you're working with. If the issue is determined to be a bug,
         we will open an issue here.
 
         GitHub issues raised against this repository will receive community support. If you have an
-        [active support agreement](https://www.prefect.io/pricing/), we recommend creating a case to ensure
+        [active support agreement](https://www.syntask.io/pricing/), we recommend creating a case to ensure
         a faster response.
 
   - type: markdown
     attributes:
       value: >
-        If you are new to Prefect bug reports, please review our many examples of [well written bug reports](https://github.com/PrefectHQ/prefect/issues?q=is%3Aissue+label%3A%22great+writeup%22). 
+        If you are new to Syntask bug reports, please review our many examples of [well written bug reports](https://github.com/Synopkg/syntask/issues?q=is%3Aissue+label%3A%22great+writeup%22). 
         Each of these reports include the following features:
 
         1. A **succinct description of the problem** - typically a line or two at most
@@ -39,9 +39,9 @@ body:
           required: true
         - label: I used the GitHub search to find a similar issue and didn't find it.
           required: true
-        - label: I searched the Prefect documentation for this issue.
+        - label: I searched the Syntask documentation for this issue.
           required: true
-        - label: I checked that this issue is related to Prefect and not one of its dependencies.
+        - label: I checked that this issue is related to Syntask and not one of its dependencies.
           required: true
 
   - type: textarea
@@ -56,7 +56,7 @@ body:
       label: Reproduction
       description: >
         Provide your [minimal, complete, and verifiable](https://stackoverflow.com/help/mcve) example here. 
-        If you need help creating one, you can model yours after the code shared in one of our previous [well written bug reports](https://github.com/PrefectHQ/prefect/issues?q=is%3Aissue+label%3A%22great+writeup%22).
+        If you need help creating one, you can model yours after the code shared in one of our previous [well written bug reports](https://github.com/Synopkg/syntask/issues?q=is%3Aissue+label%3A%22great+writeup%22).
       placeholder: "# Insert code here"
       render: python3
     validations:
@@ -77,10 +77,10 @@ body:
     attributes:
       label: Versions
       description: >
-        Provide information about your Prefect version and environment. The easiest way to retrieve all of the information we require is the `prefect version` command.
-        If using Prefect 1.x, it is useful to also include the output of `prefect diagnostics`.
-        **Please do not just include your Prefect version number**. The command provides additional context such as your operating system, Prefect API type, Python version, etc. that we need to diagnose your problem.
-      placeholder: "# Copy output of the `prefect version` command here. Do not just include your Prefect version number."
+        Provide information about your Syntask version and environment. The easiest way to retrieve all of the information we require is the `syntask version` command.
+        If using Syntask 1.x, it is useful to also include the output of `syntask diagnostics`.
+        **Please do not just include your Syntask version number**. The command provides additional context such as your operating system, Syntask API type, Python version, etc. that we need to diagnose your problem.
+      placeholder: "# Copy output of the `syntask version` command here. Do not just include your Syntask version number."
       render: Text
     validations:
       required: true

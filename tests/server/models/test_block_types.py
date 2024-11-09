@@ -4,14 +4,14 @@ from uuid import uuid4
 import pytest
 import sqlalchemy as sa
 
-from prefect.blocks.core import Block
-from prefect.server import models, schemas
-from prefect.server.schemas.filters import BlockSchemaFilter, BlockTypeFilter
+from syntask.blocks.core import Block
+from syntask.server import models, schemas
+from syntask.server.schemas.filters import BlockSchemaFilter, BlockTypeFilter
 
 CODE_EXAMPLE = dedent(
     """\
         ```python
-        from prefect_collection import CoolBlock
+        from syntask_collection import CoolBlock
 
         rad_block = await CoolBlock.load("rad")
         rad_block.crush()

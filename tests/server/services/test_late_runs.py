@@ -1,10 +1,10 @@
 import pendulum
 import pytest
 
-from prefect.server import models, schemas
-from prefect.server.services.late_runs import MarkLateRuns
-from prefect.settings import (
-    PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS,
+from syntask.server import models, schemas
+from syntask.server.services.late_runs import MarkLateRuns
+from syntask.settings import (
+    SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS,
     temporary_settings,
 )
 
@@ -97,7 +97,7 @@ async def test_marks_late_run_at_buffer(session, late_run):
         late_run.next_scheduled_start_time == st
     ), "Next scheduled time is set by orchestration rules correctly"
 
-    with temporary_settings(updates={PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 60}):
+    with temporary_settings(updates={SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 60}):
         await MarkLateRuns(handle_signals=False).start(loops=1)
 
     await session.refresh(late_run)
@@ -113,7 +113,7 @@ async def test_does_not_mark_run_late_if_within_buffer(session, late_run):
         late_run.next_scheduled_start_time == st
     ), "Next scheduled time is set by orchestration rules correctly"
 
-    with temporary_settings(updates={PREFECT_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 61}):
+    with temporary_settings(updates={SYNTASK_API_SERVICES_LATE_RUNS_AFTER_SECONDS: 61}):
         await MarkLateRuns(handle_signals=False).start(loops=1)
 
     await session.refresh(late_run)

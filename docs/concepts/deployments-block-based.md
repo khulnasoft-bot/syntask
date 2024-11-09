@@ -1,5 +1,5 @@
 ---
-description: Prefect deployments encapsulate a flow, allowing flow runs to be scheduled and triggered via API.
+description: Syntask deployments encapsulate a flow, allowing flow runs to be scheduled and triggered via API.
 tags:
     - orchestration
     - flow runs
@@ -18,14 +18,14 @@ boost: .5
 !!! warning "Workers are recommended"
     This page is about the block-based deployment model. The [Work Pools and Workers](/concepts/work-pools/) based [deployment model](/concepts/deployments/) simplifies the specification of a flow's infrastructure and runtime environment. If you have existing agents, you can [upgrade from agents to workers](/guides/upgrade-guide-agents-to-workers/) to significantly enhance the experience of deploying flows.
 
-We encourage you to check out the new [deployment experience](/concepts/deployments/) with guided command line prompts and convenient CI/CD with `prefect.yaml` files.
+We encourage you to check out the new [deployment experience](/concepts/deployments/) with guided command line prompts and convenient CI/CD with `syntask.yaml` files.
 
 With remote storage blocks, you can package not only your flow code script but also any supporting files, including your custom modules, SQL scripts and any configuration files needed in your project.
 
-To define how your flow execution environment should be configured, you may either reference pre-configured infrastructure blocks or let Prefect create those automatically for you as anonymous blocks (this happens when you specify the infrastructure type using `--infra` flag during the build process).
+To define how your flow execution environment should be configured, you may either reference pre-configured infrastructure blocks or let Syntask create those automatically for you as anonymous blocks (this happens when you specify the infrastructure type using `--infra` flag during the build process).
 
-!!! warning "Work queue affinity improved starting from Prefect 2.0.5"
-    Until Prefect 2.0.4, tags were used to associate flow runs with work queues. Starting in Prefect 2.0.5, tag-based work queues are deprecated. Instead, work queue names are used to explicitly direct flow runs from deployments into queues.
+!!! warning "Work queue affinity improved starting from Syntask 2.0.5"
+    Until Syntask 2.0.4, tags were used to associate flow runs with work queues. Starting in Syntask 2.0.5, tag-based work queues are deprecated. Instead, work queue names are used to explicitly direct flow runs from deployments into queues.
 
     Note that **backward compatibility is maintained** and work queues that use tag-based matching can still be created and will continue to work. However, those work queues are now considered legacy and we encourage you to use the new behavior by specifying work queues explicitly on agents and deployments.
 
@@ -57,10 +57,10 @@ This enables you to run a single flow with different parameters, based on multip
 
 ## Deployment definition
 
-A _deployment definition_ captures the settings for creating a [deployment object](#deployment-api-representation) on the Prefect API. You can create the deployment definition by:
+A _deployment definition_ captures the settings for creating a [deployment object](#deployment-api-representation) on the Syntask API. You can create the deployment definition by:
 
-- Run the [`prefect deployment build` CLI command](#create-a-deployment-on-the-cli) with deployment options to create a [`deployment.yaml`](#deploymentyaml) deployment definition file, then run `prefect deployment apply` to create a deployment on the API using the settings in `deployment.yaml`.
-- Define a [`Deployment`](/api-ref/prefect/deployments/deployments/) Python object, specifying the deployment options as properties of the object, then building and applying the object using methods of `Deployment`.
+- Run the [`syntask deployment build` CLI command](#create-a-deployment-on-the-cli) with deployment options to create a [`deployment.yaml`](#deploymentyaml) deployment definition file, then run `syntask deployment apply` to create a deployment on the API using the settings in `deployment.yaml`.
+- Define a [`Deployment`](/api-ref/syntask/deployments/deployments/) Python object, specifying the deployment options as properties of the object, then building and applying the object using methods of `Deployment`.
 
 The minimum required information to create a deployment includes:
 
@@ -81,11 +81,11 @@ To create a deployment on the CLI, there are two steps:
 
 ### Build the deployment
 
-To build the deployment definition file `deployment.yaml`, run the `prefect deployment build` Prefect CLI command from the folder containing your flow script and any dependencies of the script.
+To build the deployment definition file `deployment.yaml`, run the `syntask deployment build` Syntask CLI command from the folder containing your flow script and any dependencies of the script.
 
 <div class="terminal">
 ```bash
-$ prefect deployment build [OPTIONS] PATH
+$ syntask deployment build [OPTIONS] PATH
 ```
 </div>
 
@@ -95,11 +95,11 @@ For example:
 
 <div class="terminal">
 ```bash
-$ prefect deployment build -n marvin -p default-agent-pool -q test flows/marvin.py:say_hi
+$ syntask deployment build -n marvin -p default-agent-pool -q test flows/marvin.py:say_hi
 ```
 </div>
 
-When you run this command, Prefect:
+When you run this command, Syntask:
 
 - Creates a `marvin_flow-deployment.yaml` file for your deployment based on your flow code and options.
 - Uploads your flow files to the configured storage location (local by default).
@@ -109,9 +109,9 @@ When you run this command, Prefect:
     Note that the appropriate filesystem library supporting the storage location must be installed prior to building a deployment with a storage block. For example, the AWS S3 Storage block requires the [`s3fs`](https://s3fs.readthedocs.io/en/latest/) library.
 
 !!! tip "Ignore files or directories from a deployment"
-    By default, Prefect uploads _all files_ in the current folder to the configured storage location (local by default) when you build a deployment.
+    By default, Syntask uploads _all files_ in the current folder to the configured storage location (local by default) when you build a deployment.
 
-    If you want to omit certain files or directories from your deployments, add a `.prefectignore` file to the root directory. `.prefectignore` enables users to omit certain files or directories from their deployments.
+    If you want to omit certain files or directories from your deployments, add a `.syntaskignore` file to the root directory. `.syntaskignore` enables users to omit certain files or directories from their deployments.
 
     Similar to other `.ignore` files, the syntax supports pattern matching, so an entry of `*.pyc` will ensure all `.pyc` files are ignored by the deployment call when uploading to remote storage.
 
@@ -178,11 +178,11 @@ A deployment's YAML file configures additional settings needed to create a deplo
 
 A single flow may have multiple deployments created for it, with different schedules, tags, and so on. A single flow definition may have multiple deployment YAML files referencing it, each specifying different settings. The only requirement is that each deployment must have a unique name.
 
-The default `{flow-name}-deployment.yaml` filename may be edited as needed with the `--output` flag to `prefect deployment build`.
+The default `{flow-name}-deployment.yaml` filename may be edited as needed with the `--output` flag to `syntask deployment build`.
 
 ```yaml
 ###
-### A complete description of a Prefect Deployment for flow 'Cat Facts'
+### A complete description of a Syntask Deployment for flow 'Cat Facts'
 ###
 name: catfact
 description: null
@@ -202,7 +202,7 @@ infrastructure:
   command:
   - python
   - -m
-  - prefect.engine
+  - syntask.engine
   stream_output: true
 ###
 ### DO NOT EDIT BELOW THIS LINE
@@ -224,9 +224,9 @@ parameter_openapi_schema:
 ```
 
 !!! note "Editing deployment.yaml"
-    Note the big **DO NOT EDIT** comment in your deployment's YAML: In practice, anything above this block can be freely edited _before_ running `prefect deployment apply` to create the deployment on the API.
+    Note the big **DO NOT EDIT** comment in your deployment's YAML: In practice, anything above this block can be freely edited _before_ running `syntask deployment apply` to create the deployment on the API.
 
-    We recommend editing most of these fields from the CLI or Prefect UI for convenience.
+    We recommend editing most of these fields from the CLI or Syntask UI for convenience.
 
 ### Parameters in deployments
 
@@ -245,23 +245,23 @@ parameters: {"name": "Marvin", "num": 42, "url": "https://catfact.ninja/fact"}
     parameters: {"name": "Marvin", "kwargs":{"cattype":"tabby","num": 42}
     ```
 
-You can edit default parameters for deployments in the Prefect UI, and you can override default parameter values when creating ad-hoc flow runs via the Prefect UI.
+You can edit default parameters for deployments in the Syntask UI, and you can override default parameter values when creating ad-hoc flow runs via the Syntask UI.
 
-To edit parameters in the Prefect UI, go the the details page for a deployment, then select **Edit** from the commands menu. If you change parameter values, the new values are used for all future flow runs based on the deployment.
+To edit parameters in the Syntask UI, go the the details page for a deployment, then select **Edit** from the commands menu. If you change parameter values, the new values are used for all future flow runs based on the deployment.
 
 To create an ad-hoc flow run with different parameter values, go the the details page for a deployment, select **Run**, then select **Custom**. You will be able to provide custom values for any editable deployment fields. Under **Parameters**, select **Custom**. Provide the new values, then select **Save**. Select **Run** to begin the flow run with custom values.
 
-If you want the Prefect API to verify the parameter values passed to a flow run against the schema defined by `parameter_openapi_schema`, set `enforce_parameter_schema` to `true`.
+If you want the Syntask API to verify the parameter values passed to a flow run against the schema defined by `parameter_openapi_schema`, set `enforce_parameter_schema` to `true`.
 
 ![Configuring custom parameter values for an ad-hoc flow run](/img/concepts/custom-parameters.png)
 
 ### Create a deployment
 
-When you've configured `deployment.yaml` for a deployment, you can create the deployment on the API by running the `prefect deployment apply` Prefect CLI command.
+When you've configured `deployment.yaml` for a deployment, you can create the deployment on the API by running the `syntask deployment apply` Syntask CLI command.
 
 <div class="terminal">
 ```bash
-$ prefect deployment apply catfacts_flow-deployment.yaml
+$ syntask deployment apply catfacts_flow-deployment.yaml
 ```
 </div>
 
@@ -269,19 +269,19 @@ For example:
 
 <div class="terminal">
 ```bash
-$ prefect deployment apply ./catfacts_flow-deployment.yaml
+$ syntask deployment apply ./catfacts_flow-deployment.yaml
 Successfully loaded 'catfact'
 Deployment '76a9f1ac-4d8c-4a92-8869-615bec502685' successfully created.
 ```
 </div>
 
-`prefect deployment apply` accepts an optional `--upload` flag that, when provided, uploads this deployment's files to remote storage.
+`syntask deployment apply` accepts an optional `--upload` flag that, when provided, uploads this deployment's files to remote storage.
 
-Once the deployment has been created, you'll see it in the [Prefect UI](/ui/flow-runs/) and can inspect it using the CLI.
+Once the deployment has been created, you'll see it in the [Syntask UI](/ui/flow-runs/) and can inspect it using the CLI.
 
 <div class="terminal">
 ```bash
-$ prefect deployment ls
+$ syntask deployment ls
                                Deployments
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Name                           ┃ ID                                   ┃
@@ -292,30 +292,30 @@ $ prefect deployment ls
 ```
 </div>
 
-![Viewing deployments in the Prefect UI](/img/concepts/deployments.png)
+![Viewing deployments in the Syntask UI](/img/concepts/deployments.png)
 
-When you run a deployed flow with Prefect, the following happens:
+When you run a deployed flow with Syntask, the following happens:
 
 - The user runs the deployment, which creates a flow run. (The API creates flow runs automatically for deployments with schedules.)
 - An agent picks up the flow run from a work queue and uses an infrastructure block to create infrastructure for the run.
 - The flow run executes within the infrastructure.
 
-[Agents and work pools](/concepts/work-pools/) enable the Prefect orchestration engine and API to run deployments in your local execution environments. To execute deployed flow runs you need to configure at least one agent.
+[Agents and work pools](/concepts/work-pools/) enable the Syntask orchestration engine and API to run deployments in your local execution environments. To execute deployed flow runs you need to configure at least one agent.
 
 !!! note "Scheduled flow runs"
-    Scheduled flow runs will not be created unless the scheduler is running with either Prefect Cloud or a local Prefect server started with `prefect server start`.
+    Scheduled flow runs will not be created unless the scheduler is running with either Syntask Cloud or a local Syntask server started with `syntask server start`.
 
     Scheduled flow runs will not run unless an appropriate [agent and work pool](/concepts/work-pools/) are configured.
 
 ## Create a deployment from a Python object
 
-You can also create deployments from Python scripts by using the [`prefect.deployments.Deployment`][prefect.deployments.Deployment] class.
+You can also create deployments from Python scripts by using the [`syntask.deployments.Deployment`][syntask.deployments.Deployment] class.
 
 Create a new deployment using configuration defaults for an imported flow:
 
 ```python
 from my_project.flows import my_flow
-from prefect.deployments import Deployment
+from syntask.deployments import Deployment
 
 deployment = Deployment.build_from_flow(
     flow=my_flow,
@@ -331,8 +331,8 @@ Create a new deployment with a pre-defined [storage block](/concepts/storage/) a
 
 ```python
 from my_project.flows import my_flow
-from prefect.deployments import Deployment
-from prefect.filesystems import S3
+from syntask.deployments import Deployment
+from syntask.filesystems import S3
 
 storage = S3.load("dev-bucket") # load a pre-defined block
 
@@ -365,7 +365,7 @@ deployment.load() # loads server-side settings
 
 Once the existing deployment settings are loaded, you may update them as needed by changing deployment properties.
 
-View all of the parameters for the `Deployment` object in the [Python API documentation](https://docs.prefect.io/api-ref/prefect/deployments/deployments/).
+View all of the parameters for the `Deployment` object in the [Python API documentation](https://docs.syntask.io/api-ref/syntask/deployments/deployments/).
 
 ## Deployment API representation
 
@@ -396,10 +396,10 @@ Deployment properties include:
 | <span class="no-wrap">`infrastructure_document_id`</span> | Infrastructure block configured for the deployment.                                                                            |
 
 
-You can inspect a deployment using the CLI with the `prefect deployment inspect` command, referencing the deployment with `<flow_name>/<deployment_name>`.
+You can inspect a deployment using the CLI with the `syntask deployment inspect` command, referencing the deployment with `<flow_name>/<deployment_name>`.
 
 ```bash
-$ prefect deployment inspect 'Cat Facts/catfact'
+$ syntask deployment inspect 'Cat Facts/catfact'
 {
     'id': '76a9f1ac-4d8c-4a92-8869-615bec502685',
     'created': '2022-07-26T03:48:14.723328+00:00',
@@ -430,7 +430,7 @@ $ prefect deployment inspect 'Cat Facts/catfact'
         'env': {},
         'labels': {},
         'name': None,
-        'command': ['python', '-m', 'prefect.engine'],
+        'command': ['python', '-m', 'syntask.engine'],
         'stream_output': True
     }
 }
@@ -440,11 +440,11 @@ $ prefect deployment inspect 'Cat Facts/catfact'
 
 ### Create a flow run with a schedule
 
-If you specify a schedule for a deployment, the deployment will execute its flow automatically on that schedule as long as a Prefect server and agent are running. Prefect Cloud creates schedules flow runs automatically, and they will run on schedule if an agent is configured to pick up flow runs for the deployment.
+If you specify a schedule for a deployment, the deployment will execute its flow automatically on that schedule as long as a Syntask server and agent are running. Syntask Cloud creates schedules flow runs automatically, and they will run on schedule if an agent is configured to pick up flow runs for the deployment.
 
 ### Create a flow run with an event trigger
 
-!!! cloud-ad "deployment triggers are only available in Prefect Cloud"
+!!! cloud-ad "deployment triggers are only available in Syntask Cloud"
 
 Deployments can optionally take a trigger specification, which will configure an automation to run the deployment based on the presence or absence of events, and optionally pass event data into the deployment run as parameters via jinja templating.
 
@@ -452,12 +452,12 @@ Deployments can optionally take a trigger specification, which will configure an
 triggers:
   - enabled: true
     match:
-      prefect.resource.id: prefect.flow-run.*
+      syntask.resource.id: syntask.flow-run.*
     expect:
-      - prefect.flow-run.Completed
+      - syntask.flow-run.Completed
     match_related:
-      prefect.resource.name: prefect.flow.etl-flow
-      prefect.resource.role: flow
+      syntask.resource.name: syntask.flow.etl-flow
+      syntask.resource.role: flow
     parameters:
       param_1: "{{ event }}"
 ```
@@ -466,11 +466,11 @@ triggers:
 When applied, this deployment will start a flow run upon the completion of the upstream flow specified in the `match_related` key, with the flow run passed in as a parameter. Triggers can be configured to respond to the presence or absence of arbitrary internal or external [events](/cloud/events). The trigger system and API are detailed in [Automations](/cloud/automations/).
 
 
-### Create a flow run with Prefect UI
+### Create a flow run with Syntask UI
 
-In the Prefect UI, you can click the **Run** button next to any deployment to execute an ad hoc flow run for that deployment.
+In the Syntask UI, you can click the **Run** button next to any deployment to execute an ad hoc flow run for that deployment.
 
-The `prefect deployment` CLI command provides commands for managing and running deployments locally.
+The `syntask deployment` CLI command provides commands for managing and running deployments locally.
 
 | Command           | Description                                                     |
 | ----------------- | --------------------------------------------------------------- |
@@ -486,14 +486,14 @@ The `prefect deployment` CLI command provides commands for managing and running 
 | `set-schedule`    | Set schedule for a given deployment.                            |
 
 !!! warning "Deprecated Schedule Commands"
-The pause-schedule, resume-schedule, and set-schedule commands are deprecated due to the introduction of multi-schedule support for deployments. Use the new `prefect deployment schedule` command for enhanced flexibility and control over your deployment schedules.
+The pause-schedule, resume-schedule, and set-schedule commands are deprecated due to the introduction of multi-schedule support for deployments. Use the new `syntask deployment schedule` command for enhanced flexibility and control over your deployment schedules.
 
 ### Create a flow run in a Python script 
 
 You can create a flow run from a deployment in a Python script with the `run_deployment` function.
 
 ```python
-from prefect.deployments import run_deployment
+from syntask.deployments import run_deployment
 
 
 def main():
@@ -505,14 +505,14 @@ if __name__ == "__main__":
    main()
 ``` 
 
-!!! tip "`PREFECT_API_URL` setting for agents"
-    You'll need to configure [agents and work pools](/concepts/work-pools/) that can create flow runs for deployments in remote environments. [`PREFECT_API_URL`](/concepts/settings/#prefect_api_url) must be set for the environment in which your agent is running.
+!!! tip "`SYNTASK_API_URL` setting for agents"
+    You'll need to configure [agents and work pools](/concepts/work-pools/) that can create flow runs for deployments in remote environments. [`SYNTASK_API_URL`](/concepts/settings/#syntask_api_url) must be set for the environment in which your agent is running.
 
-    If you want the agent to communicate with Prefect Cloud from a remote execution environment such as a VM or Docker container, you must configure `PREFECT_API_URL` in that environment.
+    If you want the agent to communicate with Syntask Cloud from a remote execution environment such as a VM or Docker container, you must configure `SYNTASK_API_URL` in that environment.
 
 ## Examples
 
-- [How to deploy Prefect flows to AWS](https://discourse.prefect.io/t/how-to-deploy-prefect-2-0-flows-to-aws/1252)
-- [How to deploy Prefect flows to GCP](https://discourse.prefect.io/t/how-to-deploy-prefect-2-0-flows-to-gcp/1251)
-- [How to deploy Prefect flows to Azure](https://discourse.prefect.io/t/how-to-deploy-prefect-2-0-flows-to-azure/1312)
-- [How to deploy Prefect flows using files stored locally](https://discourse.prefect.io/t/how-to-deploy-prefect-2-0-flows-to-run-as-a-local-process-docker-container-or-a-kubernetes-job/1246)
+- [How to deploy Syntask flows to AWS](https://discourse.syntask.io/t/how-to-deploy-syntask-2-0-flows-to-aws/1252)
+- [How to deploy Syntask flows to GCP](https://discourse.syntask.io/t/how-to-deploy-syntask-2-0-flows-to-gcp/1251)
+- [How to deploy Syntask flows to Azure](https://discourse.syntask.io/t/how-to-deploy-syntask-2-0-flows-to-azure/1312)
+- [How to deploy Syntask flows using files stored locally](https://discourse.syntask.io/t/how-to-deploy-syntask-2-0-flows-to-run-as-a-local-process-docker-container-or-a-kubernetes-job/1246)

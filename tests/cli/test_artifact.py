@@ -3,8 +3,8 @@ from uuid import uuid4
 import pendulum
 import pytest
 
-from prefect.server import models, schemas
-from prefect.testing.cli import invoke_and_assert
+from syntask.server import models, schemas
+from syntask.testing.cli import invoke_and_assert
 
 
 @pytest.fixture

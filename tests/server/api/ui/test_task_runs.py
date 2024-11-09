@@ -5,10 +5,10 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from prefect.server import models
-from prefect.server.api.ui.task_runs import TaskRunCount
-from prefect.server.schemas import actions, core, filters, states
-from prefect.server.utilities.schemas import DateTimeTZ
+from syntask.server import models
+from syntask.server.api.ui.task_runs import TaskRunCount
+from syntask.server.schemas import actions, core, filters, states
+from syntask.server.utilities.schemas import DateTimeTZ
 
 
 class TestReadDashboardTaskRunCounts:

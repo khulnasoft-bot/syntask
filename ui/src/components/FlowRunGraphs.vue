@@ -40,7 +40,7 @@
     FlowRunGraphArtifactDrawer,
     FlowRunGraphArtifactsPopover,
     FlowRunGraphStatePopover
-  } from '@prefecthq/prefect-ui-library'
+  } from '@syntaskhq/syntask-ui-library'
   import { computed, ref } from 'vue'
 
   defineProps<{

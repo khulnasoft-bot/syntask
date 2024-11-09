@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { PCode } from '@prefecthq/prefect-design'
+  import { PCode } from '@syntaskhq/syntask-design'
   import { computed } from 'vue'
   import { ServerSettings } from '@/models/ServerSettings'
 

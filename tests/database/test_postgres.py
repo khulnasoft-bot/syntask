@@ -1,12 +1,12 @@
 import pytest
 import sqlalchemy as sa
 
-import prefect.settings
-from prefect.settings import PREFECT_API_DATABASE_CONNECTION_URL
+import syntask.settings
+from syntask.settings import SYNTASK_API_DATABASE_CONNECTION_URL
 
 pytestmark = pytest.mark.skipif(
-    not PREFECT_API_DATABASE_CONNECTION_URL.value_from(
-        prefect.settings.get_settings_from_env()
+    not SYNTASK_API_DATABASE_CONNECTION_URL.value_from(
+        syntask.settings.get_settings_from_env()
     ).startswith("postgresql"),
     reason="These tests apply only to Postgres",
 )

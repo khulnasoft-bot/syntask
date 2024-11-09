@@ -3,7 +3,7 @@ module.exports = {
   env: {
     node: true
   },
-  extends: ["@prefecthq"],
+  extends: ["@syntaskhq"],
   parser: 'vue-eslint-parser',
   parserOptions: {
     ecmaVersion: 2020,

@@ -2,15 +2,15 @@ import uuid
 
 import pytest
 
-from prefect import flow
-from prefect.exceptions import CancelledRun, CrashedRun, FailedRun
-from prefect.results import (
+from syntask import flow
+from syntask.exceptions import CancelledRun, CrashedRun, FailedRun
+from syntask.results import (
     LiteralResult,
     PersistedResult,
     ResultFactory,
     UnpersistedResult,
 )
-from prefect.states import (
+from syntask.states import (
     Cancelled,
     Completed,
     Crashed,
@@ -25,7 +25,7 @@ from prefect.states import (
     raise_state_exception,
     return_value_to_state,
 )
-from prefect.utilities.annotations import quote
+from syntask.utilities.annotations import quote
 
 
 def test_is_state():
@@ -146,8 +146,8 @@ class TestRaiseStateException:
 
 class TestReturnValueToState:
     @pytest.fixture
-    async def factory(self, prefect_client):
-        return await ResultFactory.default_factory(client=prefect_client)
+    async def factory(self, syntask_client):
+        return await ResultFactory.default_factory(client=syntask_client)
 
     async def test_returns_single_state_unaltered(self, factory):
         state = Completed(data="hello!")
@@ -160,9 +160,9 @@ class TestReturnValueToState:
         assert isinstance(result_state.data, UnpersistedResult)
         assert await result_state.result() is None
 
-    async def test_returns_single_state_with_data_to_persist(self, prefect_client):
+    async def test_returns_single_state_with_data_to_persist(self, syntask_client):
         factory = await ResultFactory.default_factory(
-            client=prefect_client, persist_result=True
+            client=syntask_client, persist_result=True
         )
         state = Completed(data=1)
         result_state = await return_value_to_state(state, factory)
@@ -231,7 +231,7 @@ class TestReturnValueToState:
         assert result_state.is_completed()
         assert result_state.message == "All states completed."
 
-    async def test_non_prefect_types_return_completed_state(self, factory):
+    async def test_non_syntask_types_return_completed_state(self, factory):
         result_state = await return_value_to_state("foo", factory)
         assert result_state.is_completed()
         assert await result_state.result() == "foo"
